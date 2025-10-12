@@ -202,6 +202,16 @@ export interface DrawValidationDTO {
 }
 
 // ============================================================================
+// ASSIGNMENT DTOs
+// ============================================================================
+
+/**
+ * Base Assignment DTO - maps directly to database row
+ * Used to store Secret Santa draw results (who gives to whom)
+ */
+export type AssignmentDTO = Tables<"assignments">;
+
+// ============================================================================
 // RESULT DTOs
 // ============================================================================
 
@@ -330,7 +340,7 @@ export type GroupInsert = TablesInsert<"groups">;
 export type ParticipantInsert = TablesInsert<"participants">;
 export type ExclusionRuleInsert = TablesInsert<"exclusion_rules">;
 export type WishlistInsert = TablesInsert<"wishes">;
-
+export type AssignmentInsert = TablesInsert<"assignments">;
 /**
  * Type aliases for database update operations
  * These can be used directly for database updates

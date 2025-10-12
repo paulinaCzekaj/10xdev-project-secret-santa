@@ -1,0 +1,34 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import CreateGroupForm from "@/components/forms/CreateGroupForm";
+import { DEFAULT_USER_ID } from "@/db/supabase.client";
+
+// Protect the route - require user session
+const supabase = Astro.locals.supabase;
+const {
+  data: { session },
+} = await supabase.auth.getSession();
+
+// For now, we'll use the default user ID during development
+// In production, this should redirect to login if no session exists
+const userId = session?.user?.id || DEFAULT_USER_ID;
+
+if (!userId) {
+  return Astro.redirect("/login");
+}
+---
+
+<Layout title="Utwórz nową loterię - Secret Santa">
+  <main class="min-h-screen bg-gradient-to-br from-pink-50 to-red-50">
+    <div class="container mx-auto px-4 py-8 sm:py-12 max-w-xl">
+      <div class="text-center mb-8 sm:mb-10">
+        <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900">Utwórz nową loterię Secret Santa</h1>
+        <p class="text-gray-600 mt-3 text-sm sm:text-base max-w-md mx-auto">
+          Zacznij organizować wymianę prezentów wypełniając podstawowe informacje o wydarzeniu
+        </p>
+      </div>
+
+      <CreateGroupForm client:load />
+    </div>
+  </main>
+</Layout>

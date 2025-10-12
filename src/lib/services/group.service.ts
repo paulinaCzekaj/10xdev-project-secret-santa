@@ -1,5 +1,12 @@
 import type { SupabaseClient } from "../../db/supabase.client";
-import type { CreateGroupCommand, GroupListItemDTO, UserId, GroupInsert, ParticipantInsert } from "../../types";
+import type {
+  CreateGroupCommand,
+  GroupListItemDTO,
+  GroupDetailDTO,
+  UserId,
+  GroupInsert,
+  ParticipantInsert,
+} from "../../types";
 
 /**
  * Service for managing Secret Santa groups
@@ -68,6 +75,123 @@ export class GroupService {
       };
     } catch (error) {
       console.error("[GroupService.createGroup] Error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieves detailed information about a specific group
+   *
+   * Checks if the user has access to the group (is creator or participant)
+   * and returns complete group details with participants and exclusions.
+   *
+   * @param groupId - The ID of the group to retrieve
+   * @param userId - The ID of the user requesting the group
+   * @returns GroupDetailDTO if found and user has access, null otherwise
+   * @throws {Error} If database operation fails
+   */
+  async getGroupById(groupId: number, userId: UserId): Promise<GroupDetailDTO | null> {
+    // Guard: Check if groupId and userId exist
+    if (!groupId || !userId) {
+      throw new Error("Group ID and User ID are required");
+    }
+
+    try {
+      // Step 1: Fetch group from database
+      const { data: group, error: groupError } = await this.supabase
+        .from("groups")
+        .select("*")
+        .eq("id", groupId)
+        .single();
+
+      // Guard: Check if group exists
+      if (groupError || !group) {
+        console.log("[GroupService.getGroupById] Group not found", { groupId, error: groupError?.message });
+        return null;
+      }
+
+      console.log("[GroupService.getGroupById] Group found", { groupId, groupName: group.name });
+
+      // Step 2: Check user authorization
+      // Check if user is the creator
+      const isCreator = group.creator_id === userId;
+
+      // Check if user is a participant
+      const { data: participation } = await this.supabase
+        .from("participants")
+        .select("id")
+        .eq("group_id", groupId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      const isParticipant = participation !== null;
+
+      // Guard: Check if user has access (must be creator OR participant)
+      if (!isCreator && !isParticipant) {
+        console.log("[GroupService.getGroupById] User has no access", { userId, groupId, isCreator, isParticipant });
+        return null;
+      }
+
+      console.log("[GroupService.getGroupById] User authorized", { userId, isCreator, isParticipant });
+
+      // Step 3: Fetch participants
+      const { data: participants } = await this.supabase
+        .from("participants")
+        .select("*")
+        .eq("group_id", groupId)
+        .order("created_at", { ascending: true });
+
+      console.log("[GroupService.getGroupById] Fetched participants", { count: participants?.length || 0 });
+
+      // Step 4: Fetch exclusion rules
+      const { data: exclusions } = await this.supabase
+        .from("exclusion_rules")
+        .select("*")
+        .eq("group_id", groupId)
+        .order("created_at", { ascending: true });
+
+      console.log("[GroupService.getGroupById] Fetched exclusions", { count: exclusions?.length || 0 });
+
+      // Step 5: Calculate is_drawn field
+      // Check if any assignments exist for this group
+      const { data: hasAssignments } = await this.supabase
+        .from("assignments")
+        .select("id")
+        .eq("group_id", groupId)
+        .limit(1)
+        .maybeSingle();
+
+      const isDrawn = hasAssignments !== null;
+
+      console.log("[GroupService.getGroupById] Calculated is_drawn", { isDrawn, hasAssignments: !!hasAssignments });
+
+      // Step 6: Calculate can_edit field
+      // User can edit only if they're the creator AND the draw hasn't happened yet
+      const canEdit = isCreator && !isDrawn;
+
+      console.log("[GroupService.getGroupById] Calculated can_edit", { canEdit, isCreator, isDrawn });
+
+      // Step 7: Construct and return GroupDetailDTO
+      const groupDetailDTO: GroupDetailDTO = {
+        ...group,
+        is_drawn: isDrawn,
+        participants: participants || [],
+        exclusions: exclusions || [],
+        is_creator: isCreator,
+        can_edit: canEdit,
+      };
+
+      console.log("[GroupService.getGroupById] Returning GroupDetailDTO", {
+        groupId: groupDetailDTO.id,
+        participantsCount: groupDetailDTO.participants.length,
+        exclusionsCount: groupDetailDTO.exclusions.length,
+        isDrawn: groupDetailDTO.is_drawn,
+        canEdit: groupDetailDTO.can_edit,
+      });
+
+      return groupDetailDTO;
+    } catch (error) {
+      console.error("[GroupService.getGroupById] Error:", error);
       throw error;
     }
   }
