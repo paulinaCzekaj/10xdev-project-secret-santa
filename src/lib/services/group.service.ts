@@ -1,10 +1,13 @@
 import type { SupabaseClient } from "../../db/supabase.client";
 import type {
   CreateGroupCommand,
+  UpdateGroupCommand,
   GroupListItemDTO,
   GroupDetailDTO,
+  GroupDTO,
   UserId,
   GroupInsert,
+  GroupUpdate,
   ParticipantInsert,
 } from "../../types";
 
@@ -192,6 +195,147 @@ export class GroupService {
       return groupDetailDTO;
     } catch (error) {
       console.error("[GroupService.getGroupById] Error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Updates a Secret Santa group
+   * Only the creator can update the group, and only before the draw
+   *
+   * @param groupId - The ID of the group to update
+   * @param userId - The ID of the user attempting to update
+   * @param command - The update data (all fields optional)
+   * @returns Updated GroupDTO
+   * @throws {Error} If group not found, user unauthorized, or draw completed
+   */
+  async updateGroup(
+    groupId: number,
+    userId: UserId,
+    command: UpdateGroupCommand
+  ): Promise<GroupDTO> {
+    // Guard: Validate input
+    if (!groupId || !userId) {
+      throw new Error("Group ID and User ID are required");
+    }
+
+    try {
+      // Step 1: Fetch group and check authorization
+      const { data: group, error: groupError } = await this.supabase
+        .from("groups")
+        .select("*")
+        .eq("id", groupId)
+        .single();
+
+      // Guard: Check if group exists
+      if (groupError || !group) {
+        console.log("[GroupService.updateGroup] Group not found", { groupId });
+        throw new Error("GROUP_NOT_FOUND");
+      }
+
+      // Guard: Check if user is creator
+      if (group.creator_id !== userId) {
+        console.log("[GroupService.updateGroup] User not authorized", {
+          userId,
+          creatorId: group.creator_id,
+        });
+        throw new Error("FORBIDDEN");
+      }
+
+      // Step 2: Check if draw has been completed
+      const { data: hasAssignments } = await this.supabase
+        .from("assignments")
+        .select("id")
+        .eq("group_id", groupId)
+        .limit(1)
+        .maybeSingle();
+
+      // Guard: Check if draw completed
+      if (hasAssignments !== null) {
+        console.log("[GroupService.updateGroup] Draw already completed", { groupId });
+        throw new Error("DRAW_COMPLETED");
+      }
+
+      // Step 3: Prepare update data
+      const updateData: GroupUpdate = {};
+      if (command.name !== undefined) updateData.name = command.name;
+      if (command.budget !== undefined) updateData.budget = command.budget;
+      if (command.end_date !== undefined) updateData.end_date = command.end_date;
+
+      // Step 4: Update group
+      const { data: updatedGroup, error: updateError } = await this.supabase
+        .from("groups")
+        .update(updateData)
+        .eq("id", groupId)
+        .select()
+        .single();
+
+      if (updateError || !updatedGroup) {
+        console.error("[GroupService.updateGroup] Failed to update group:", updateError);
+        throw new Error("Failed to update group");
+      }
+
+      console.log("[GroupService.updateGroup] Group updated successfully", { groupId });
+
+      // Step 5: Return GroupDTO with is_drawn field
+      return {
+        ...updatedGroup,
+        is_drawn: false, // We already checked it's not drawn
+      };
+    } catch (error) {
+      console.error("[GroupService.updateGroup] Error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Deletes a Secret Santa group and all related data
+   * Only the creator can delete the group
+   *
+   * @param groupId - The ID of the group to delete
+   * @param userId - The ID of the user attempting to delete
+   * @throws {Error} If group not found or user unauthorized
+   */
+  async deleteGroup(groupId: number, userId: UserId): Promise<void> {
+    // Guard: Validate input
+    if (!groupId || !userId) {
+      throw new Error("Group ID and User ID are required");
+    }
+
+    try {
+      // Step 1: Fetch group and check authorization
+      const { data: group, error: groupError } = await this.supabase
+        .from("groups")
+        .select("id, creator_id")
+        .eq("id", groupId)
+        .single();
+
+      // Guard: Check if group exists
+      if (groupError || !group) {
+        console.log("[GroupService.deleteGroup] Group not found", { groupId });
+        throw new Error("GROUP_NOT_FOUND");
+      }
+
+      // Guard: Check if user is creator
+      if (group.creator_id !== userId) {
+        console.log("[GroupService.deleteGroup] User not authorized", {
+          userId,
+          creatorId: group.creator_id,
+        });
+        throw new Error("FORBIDDEN");
+      }
+
+      // Step 2: Delete group (CASCADE will handle related records)
+      const { error: deleteError } = await this.supabase.from("groups").delete().eq("id", groupId);
+
+      if (deleteError) {
+        console.error("[GroupService.deleteGroup] Failed to delete group:", deleteError);
+        throw new Error("Failed to delete group");
+      }
+
+      console.log("[GroupService.deleteGroup] Group deleted successfully", { groupId });
+    } catch (error) {
+      console.error("[GroupService.deleteGroup] Error:", error);
       throw error;
     }
   }
