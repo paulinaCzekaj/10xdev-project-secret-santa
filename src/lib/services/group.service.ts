@@ -9,6 +9,8 @@ import type {
   GroupInsert,
   GroupUpdate,
   ParticipantInsert,
+  GroupsListQuery,
+  PaginatedGroupsDTO,
 } from "../../types";
 
 /**
@@ -209,11 +211,7 @@ export class GroupService {
    * @returns Updated GroupDTO
    * @throws {Error} If group not found, user unauthorized, or draw completed
    */
-  async updateGroup(
-    groupId: number,
-    userId: UserId,
-    command: UpdateGroupCommand
-  ): Promise<GroupDTO> {
+  async updateGroup(groupId: number, userId: UserId, command: UpdateGroupCommand): Promise<GroupDTO> {
     // Guard: Validate input
     if (!groupId || !userId) {
       throw new Error("Group ID and User ID are required");
@@ -336,6 +334,202 @@ export class GroupService {
       console.log("[GroupService.deleteGroup] Group deleted successfully", { groupId });
     } catch (error) {
       console.error("[GroupService.deleteGroup] Error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Lists all groups user created or participates in with pagination
+   *
+   * Supports three filter modes:
+   * - "created": Only groups where user is the creator
+   * - "joined": Only groups where user is a participant (but not creator)
+   * - "all": All groups (created + joined)
+   *
+   * @param userId - The ID of the authenticated user
+   * @param query - Query parameters for filtering and pagination
+   * @returns Paginated list of groups with metadata
+   * @throws {Error} If database operation fails
+   *
+   * @example
+   * const result = await groupService.listGroups(userId, {
+   *   filter: "all",
+   *   page: 1,
+   *   limit: 20
+   * });
+   * // Returns: { data: [...], pagination: { page: 1, limit: 20, total: 45, total_pages: 3 } }
+   */
+  async listGroups(userId: UserId, query: GroupsListQuery): Promise<PaginatedGroupsDTO> {
+    // Guard: Check if userId exists
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+
+    // Extract query parameters with defaults
+    const filter = query.filter || "all";
+    const page = query.page || 1;
+    const limit = query.limit || 20;
+    const offset = (page - 1) * limit;
+
+    console.log("[GroupService.listGroups] Fetching groups", {
+      userId,
+      filter,
+      page,
+      limit,
+      offset,
+    });
+
+    try {
+      // Step 1: Build base query based on filter
+      let groupsQuery = this.supabase.from("groups").select("*");
+
+      let countQuery = this.supabase.from("groups").select("id", { count: "exact", head: true });
+
+      switch (filter) {
+        case "created":
+          // Only groups where user is creator
+          groupsQuery = groupsQuery.eq("creator_id", userId);
+          countQuery = countQuery.eq("creator_id", userId);
+          break;
+
+        case "joined":
+          // Only groups where user is participant but not creator
+          // This requires a subquery - we'll handle it differently
+          const { data: joinedGroupIds } = await this.supabase
+            .from("participants")
+            .select("group_id")
+            .eq("user_id", userId);
+
+          if (!joinedGroupIds || joinedGroupIds.length === 0) {
+            // User has no joined groups
+            return {
+              data: [],
+              pagination: {
+                page,
+                limit,
+                total: 0,
+                total_pages: 0,
+              },
+            };
+          }
+
+          const groupIds = joinedGroupIds.map((p) => p.group_id);
+          groupsQuery = groupsQuery.in("id", groupIds).neq("creator_id", userId);
+          countQuery = countQuery.in("id", groupIds).neq("creator_id", userId);
+          break;
+
+        case "all":
+        default:
+          // Groups where user is creator OR participant
+          const { data: allParticipations } = await this.supabase
+            .from("participants")
+            .select("group_id")
+            .eq("user_id", userId);
+
+          const participantGroupIds = allParticipations?.map((p) => p.group_id) || [];
+
+          // Get groups where creator_id = userId OR id IN (participantGroupIds)
+          if (participantGroupIds.length === 0) {
+            // User only has created groups (or none)
+            groupsQuery = groupsQuery.eq("creator_id", userId);
+            countQuery = countQuery.eq("creator_id", userId);
+          } else {
+            // User has both created and joined groups
+            groupsQuery = groupsQuery.or(`creator_id.eq.${userId},id.in.(${participantGroupIds.join(",")})`);
+            countQuery = countQuery.or(`creator_id.eq.${userId},id.in.(${participantGroupIds.join(",")})`);
+          }
+          break;
+      }
+
+      // Step 2: Execute count query
+      const { count: total, error: countError } = await countQuery;
+
+      if (countError) {
+        console.error("[GroupService.listGroups] Count query failed:", countError);
+        throw new Error("Failed to count groups");
+      }
+
+      const totalCount = total || 0;
+      const totalPages = Math.ceil(totalCount / limit);
+
+      console.log("[GroupService.listGroups] Total groups:", totalCount);
+
+      // Guard: If no groups, return empty result
+      if (totalCount === 0) {
+        return {
+          data: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            total_pages: 0,
+          },
+        };
+      }
+
+      // Step 3: Execute main query with pagination
+      const { data: groups, error: groupsError } = await groupsQuery
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (groupsError || !groups) {
+        console.error("[GroupService.listGroups] Groups query failed:", groupsError);
+        throw new Error("Failed to fetch groups");
+      }
+
+      console.log("[GroupService.listGroups] Fetched groups:", groups.length);
+
+      // Step 4: Enrich groups with additional fields
+      const groupIdsArray = groups.map((g) => g.id);
+
+      // 4a. Get participants count for all groups (bulk query)
+      const { data: participantCounts } = await this.supabase
+        .from("participants")
+        .select("group_id")
+        .in("group_id", groupIdsArray);
+
+      const countsByGroup = (participantCounts || []).reduce(
+        (acc, p) => {
+          acc[p.group_id] = (acc[p.group_id] || 0) + 1;
+          return acc;
+        },
+        {} as Record<number, number>
+      );
+
+      // 4b. Check is_drawn for all groups (bulk query)
+      const { data: drawnGroupsData } = await this.supabase
+        .from("assignments")
+        .select("group_id")
+        .in("group_id", groupIdsArray);
+
+      const drawnGroupIds = new Set(drawnGroupsData?.map((a) => a.group_id) || []);
+
+      // Step 5: Map to GroupListItemDTO
+      const groupListItems: GroupListItemDTO[] = groups.map((group) => ({
+        ...group,
+        is_drawn: drawnGroupIds.has(group.id),
+        participants_count: countsByGroup[group.id] || 0,
+        is_creator: group.creator_id === userId,
+      }));
+
+      console.log("[GroupService.listGroups] Returning", {
+        groupsCount: groupListItems.length,
+        page,
+        totalPages,
+      });
+
+      // Step 6: Return paginated response
+      return {
+        data: groupListItems,
+        pagination: {
+          page,
+          limit,
+          total: totalCount,
+          total_pages: totalPages,
+        },
+      };
+    } catch (error) {
+      console.error("[GroupService.listGroups] Error:", error);
       throw error;
     }
   }
