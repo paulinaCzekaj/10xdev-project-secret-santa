@@ -9,8 +9,10 @@ import type {
   GroupInsert,
   GroupUpdate,
   ParticipantInsert,
+  ParticipantDTO,
   GroupsListQuery,
   PaginatedGroupsDTO,
+  ExclusionRuleDTO,
 } from "../../types";
 
 /**
@@ -334,6 +336,89 @@ export class GroupService {
       console.log("[GroupService.deleteGroup] Group deleted successfully", { groupId });
     } catch (error) {
       console.error("[GroupService.deleteGroup] Error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieves participants for draw execution
+   *
+   * This is a simplified version of participant fetching specifically for the draw algorithm.
+   * Only fetches essential fields needed for the draw.
+   *
+   * @param groupId - The ID of the group
+   * @returns Array of participants for the group
+   * @throws {Error} If database operation fails
+   */
+  async getParticipantsForDraw(groupId: number): Promise<ParticipantDTO[]> {
+    // Guard: Validate groupId
+    if (!groupId) {
+      throw new Error("Group ID is required");
+    }
+
+    console.log("[GroupService.getParticipantsForDraw] Fetching participants for draw", { groupId });
+
+    try {
+      const { data: participants, error } = await this.supabase
+        .from("participants")
+        .select("*")
+        .eq("group_id", groupId)
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error("[GroupService.getParticipantsForDraw] Failed to fetch participants:", error);
+        throw new Error("Failed to fetch participants");
+      }
+
+      console.log("[GroupService.getParticipantsForDraw] Fetched participants", {
+        groupId,
+        count: participants?.length || 0,
+      });
+
+      return participants || [];
+    } catch (error) {
+      console.error("[GroupService.getParticipantsForDraw] Error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieves exclusion rules for draw execution
+   *
+   * Fetches all exclusion rules for a group to be used in the draw algorithm.
+   *
+   * @param groupId - The ID of the group
+   * @returns Array of exclusion rules for the group
+   * @throws {Error} If database operation fails
+   */
+  async getExclusionsForDraw(groupId: number): Promise<ExclusionRuleDTO[]> {
+    // Guard: Validate groupId
+    if (!groupId) {
+      throw new Error("Group ID is required");
+    }
+
+    console.log("[GroupService.getExclusionsForDraw] Fetching exclusion rules for draw", { groupId });
+
+    try {
+      const { data: exclusions, error } = await this.supabase
+        .from("exclusion_rules")
+        .select("*")
+        .eq("group_id", groupId)
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error("[GroupService.getExclusionsForDraw] Failed to fetch exclusion rules:", error);
+        throw new Error("Failed to fetch exclusion rules");
+      }
+
+      console.log("[GroupService.getExclusionsForDraw] Fetched exclusion rules", {
+        groupId,
+        count: exclusions?.length || 0,
+      });
+
+      return exclusions || [];
+    } catch (error) {
+      console.error("[GroupService.getExclusionsForDraw] Error:", error);
       throw error;
     }
   }

@@ -1,8 +1,8 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { GroupService } from "../../../lib/services/group.service";
-import { DEFAULT_USER_ID } from "../../../db/supabase.client";
-import type { ApiErrorResponse } from "../../../types";
+import { GroupService } from "../../../../lib/services/group.service";
+import { DEFAULT_USER_ID } from "../../../../db/supabase.client";
+import type { ApiErrorResponse } from "../../../../types";
 
 export const prerender = false;
 export const trailingSlash = "never";
