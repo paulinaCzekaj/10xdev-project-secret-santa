@@ -1,12 +1,22 @@
 ---
 import "../styles/global.css";
 import { Toaster } from "@/components/ui/sonner";
+import LogoutButton from "@/components/auth/LogoutButton";
 
 interface Props {
   title?: string;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const { title = "Secret Santa" } = Astro.props;
+
+// TODO: In the next phase, add session check
+// const { data: { session } } = await supabaseClient.auth.getSession();
+// const isLoggedIn = !!session;
+// const userEmail = session?.user?.email;
+
+// For now, we'll simulate logged in state for development
+const isLoggedIn = true; // Change to false to see logged out navigation
+const userEmail = "user@example.com"; // Mock email
 ---
 
 <!doctype html>
@@ -19,6 +29,40 @@ const { title = "10x Astro Starter" } = Astro.props;
     <title>{title}</title>
   </head>
   <body>
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200">
+      <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+          <!-- Logo -->
+          <a href={isLoggedIn ? '/dashboard' : '/'} class="text-xl font-bold text-red-600">
+            🎅 Secret Santa
+          </a>
+
+          <!-- Auth buttons -->
+          <div class="flex items-center gap-4">
+            {isLoggedIn ? (
+              <>
+                <span class="text-sm text-gray-600">{userEmail}</span>
+                <a href="/dashboard" class="text-sm text-gray-700 hover:text-red-600">
+                  Pulpit
+                </a>
+                <LogoutButton client:load />
+              </>
+            ) : (
+              <>
+                <a href="/login" class="text-sm text-gray-700 hover:text-red-600">
+                  Logowanie
+                </a>
+                <a href="/register" class="inline-flex items-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md hover:shadow-lg transition-all rounded-md">
+                  Rejestracja
+                </a>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </nav>
+
     <slot />
     <Toaster client:load />
   </body>

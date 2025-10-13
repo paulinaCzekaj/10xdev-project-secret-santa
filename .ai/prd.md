@@ -86,6 +86,9 @@ Aplikacja "Secret Santa" adresuje te problemy, oferując scentralizowaną, zauto
     1.  Formularz logowania zawiera pola: adres e-mail, hasło.
     2.  Po podaniu poprawnych danych jestem zalogowany i przekierowany na pulpit.
     3.  Po podaniu błędnych danych widzę stosowny komunikat o błędzie.
+    4.  Użytkownik może logować się do systemu poprzez przycisk w prawym górnym rogu.
+    5.  Użytkownik nie może wchodzić na widok grupy bez logowania (US-005, US-006, US-007, US-008, US-009)
+    6.  Użytkownik może widzieć swój wynik w losowaniu bez logowania (US-013)
 
 * ID: US-003
 * Tytuł: Resetowanie hasła
@@ -101,6 +104,7 @@ Aplikacja "Secret Santa" adresuje te problemy, oferując scentralizowaną, zauto
 * Kryteria akceptacji:
     1.  W interfejsie aplikacji znajduje się widoczny przycisk/link "Wyloguj".
     2.  Po kliknięciu zostaję wylogowany i przekierowany na stronę główną lub stronę logowania.
+    3.  Użytkownik może się wylogować z systemu poprzez przycisk w prawym górnym rogu w głównym @Layout.astro.
 
 ### Zarządzanie Grupą
 * ID: US-005
@@ -182,6 +186,17 @@ Aplikacja "Secret Santa" adresuje te problemy, oferując scentralizowaną, zauto
     2.  Po otwarciu linku widzę stronę z wynikiem losowania.
     3.  Strona zawiera te same informacje co dla użytkownika zalogowanego: imię wylosowanej osoby, jej listę życzeń, budżet, oraz moją listę życzeń z możliwością edycji.
     4.  System odnotowuje fakt, że link został otwarty.
+
+* ID: US-014: 
+- Tytuł: Grupy
+- Opis: Jako użytkownik chcę móc zapisywać i edytować grupy, członków grupy oraz wykluczenia
+- Kryteria akceptacji:
+  - Użytkownik może utworzyć grupę a potem ją edytować (US-005) oraz usunąć (US-009).
+  - Użytkownik, który jest twórcą grupy może dodawać uczestników (US-006) oraz definiować wykluczenia (US-007).
+  - Użytkownik, który jest twórca grupy moze uruchomić losowanie (US-008).
+  - Użytkownik może widzieć grupy do których należy i wyniki losowania (US-011).
+  - Użytkownik może szybko sprawdzić wyniki losowania (US-012)
+  - Funkcjonalność opisania w tym US nie jest dostępna bez logowania się do systemu (US-002).
 
 ## 6. Metryki sukcesu
 ### 6.1. Metryki Biznesowe / Produktowe

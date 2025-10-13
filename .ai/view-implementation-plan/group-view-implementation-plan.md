@@ -2344,12 +2344,12 @@ src/lib/utils/
 ### Krok 12: Testowanie, refinement i accessibility
 
 **Zadania:**
-1. **Testowanie manualne:**
+<!-- 1. **Testowanie manualne:**
    - Scenariusze wszystkich user stories (US-005 do US-009)
    - Testowanie responsywności (desktop, tablet, mobile)
    - Testowanie stanów: loading, error, empty, success
    - Testowanie walidacji formularzy
-   - Testowanie przepływu losowania
+   - Testowanie przepływu losowania -->
 
 2. **Accessibility:**
    - Dodanie ARIA labels do interaktywnych elementów
@@ -2364,12 +2364,12 @@ src/lib/utils/
    - Code review i refactoring
    - Dokumentacja komponentów (JSDoc)
 
-4. **Edge cases:**
+<!-- 4. **Edge cases:**
    - Testowanie z bardzo długimi nazwami
    - Testowanie z dużą liczbą uczestników (50+)
    - Testowanie z dużą liczbą wykluczeń
    - Testowanie timeout operacji
-   - Testowanie offline mode
+   - Testowanie offline mode -->
 
 **Czas: ~4 godziny**
 

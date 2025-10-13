@@ -1,0 +1,182 @@
+import * as React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Loader2, Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+
+interface LoginFormProps {
+  redirectTo?: string;
+  message?: {
+    type: "success" | "error" | "info";
+    text: string;
+  };
+}
+
+// Zod schema for login form validation
+const loginFormSchema = z.object({
+  email: z.string().min(1, "Email jest wymagany").email("Nieprawidłowy format email"),
+  password: z.string().min(6, "Hasło musi mieć co najmniej 6 znaków"),
+});
+
+type LoginFormData = z.infer<typeof loginFormSchema>;
+
+export default function LoginForm({ redirectTo, message }: LoginFormProps) {
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [apiError, setApiError] = React.useState<string | null>(null);
+  const [showPassword, setShowPassword] = React.useState(false);
+
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginFormSchema),
+    mode: "onChange",
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const isFormValid = form.formState.isValid && !isSubmitting;
+
+  // Display message from props if provided
+  React.useEffect(() => {
+    if (message) {
+      if (message.type === "success") {
+        toast.success(message.text);
+      } else if (message.type === "error") {
+        toast.error(message.text);
+      } else {
+        toast.info(message.text);
+      }
+    }
+  }, [message]);
+
+  const onSubmit = async (data: LoginFormData) => {
+    setIsSubmitting(true);
+    setApiError(null);
+
+    try {
+      // TODO: Implement Supabase Auth signInWithPassword
+      console.log("Login form submitted:", data);
+      console.log("Redirect to:", redirectTo || "/dashboard");
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Placeholder: In the next phase, this will call Supabase Auth
+      toast.success("Zalogowano pomyślnie!");
+      // window.location.href = redirectTo || '/dashboard';
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Wystąpił błąd podczas logowania";
+      setApiError(errorMessage);
+      toast.error("Błąd logowania", { description: errorMessage });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 shadow-lg">
+      {/* Welcome Header */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Witaj ponownie!</h2>
+        <p className="text-sm text-gray-600">Zaloguj się na swoje konto, aby kontynuować.</p>
+      </div>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          {/* Email Field */}
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-gray-900 font-medium">Email</FormLabel>
+                <FormControl>
+                  <Input
+                    type="email"
+                    placeholder="twoj@email.com"
+                    {...field}
+                    disabled={isSubmitting}
+                    autoComplete="email"
+                    className="h-11 bg-gray-50 border-gray-300 focus:border-red-500 focus:ring-red-500"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Password Field */}
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-gray-900 font-medium">Hasło</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Wprowadź hasło"
+                      {...field}
+                      disabled={isSubmitting}
+                      autoComplete="current-password"
+                      className="h-11 pr-10 bg-gray-50 border-gray-300 focus:border-red-500 focus:ring-red-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Forgot Password Link */}
+          <div className="flex justify-end">
+            <a href="/forgot-password" className="text-sm text-red-600 hover:text-red-700 font-medium">
+              Zapomniałeś hasła?
+            </a>
+          </div>
+
+          {/* API Error Message */}
+          {apiError && (
+            <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+              <p className="text-red-700 text-sm leading-relaxed">{apiError}</p>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+            disabled={!isFormValid}
+          >
+            {isSubmitting && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+            {isSubmitting ? "Logowanie..." : "Zaloguj się"}
+          </Button>
+
+          {/* Sign Up Link */}
+          <div className="text-center pt-4 border-t border-gray-200">
+            <p className="text-sm text-gray-600">
+              Nie masz konta?{" "}
+              <a href="/register" className="text-red-600 hover:text-red-700 font-semibold">
+                Zarejestruj się
+              </a>
+            </p>
+          </div>
+        </form>
+      </Form>
+    </div>
+  );
+}
