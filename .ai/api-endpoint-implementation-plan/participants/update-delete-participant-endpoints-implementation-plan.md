@@ -692,7 +692,7 @@ if (duration > 1000) {
    }
    ```
 
-2. **Napisanie testów jednostkowych dla serwisu** (jeśli testy są w scope projektu)
+2. **Napisanie testów jednostkowych dla serwisu** (jeśli testy są w scope projektu) - na tę chwilę bez testów
 
 ### Faza 2: Utworzenie Zod schemas
 
@@ -752,7 +752,7 @@ if (duration > 1000) {
 2. **Dodanie indeksów bazodanowych** (sekcja 8.2)
 3. **Implementacja równoległych walidacji** (sekcja 8.3)
 
-### Faza 6: Testowanie
+<!-- ### Faza 6: Testowanie
 
 1. **Testy jednostkowe service layer:**
    - Każda metoda ParticipantService
@@ -766,7 +766,7 @@ if (duration > 1000) {
 
 3. **Testy E2E (opcjonalne):**
    - Pełny flow aktualizacji uczestnika
-   - Pełny flow usuwania uczestnika
+   - Pełny flow usuwania uczestnika -->
 
 ### Faza 7: Dokumentacja i review
 
@@ -785,11 +785,11 @@ if (duration > 1000) {
 - [ ] Refaktoryzacja do pojedynczego JOIN query
 - [ ] Dodanie indeksów bazodanowych
 - [ ] Implementacja równoległych walidacji
-- [ ] Testy integracyjne dla obu endpointów
-- [ ] Testy E2E (opcjonalne)
+<!-- - [ ] Testy integracyjne dla obu endpointów -->
+<!-- - [ ] Testy E2E (opcjonalne) -->
 - [ ] Code review
 - [ ] Dokumentacja API
-- [ ] Deploy i smoke tests na staging
+<!-- - [ ] Deploy i smoke tests na staging -->
 
 ### Szacowany czas implementacji
 
@@ -800,7 +800,7 @@ if (duration > 1000) {
 | Faza 3: PATCH endpoint | 2h |
 | Faza 4: DELETE endpoint | 1.5h |
 | Faza 5: Optymalizacja | 1-2h |
-| Faza 6: Testowanie | 3-4h |
+<!-- | Faza 6: Testowanie | 3-4h | -->
 | Faza 7: Dokumentacja | 1h |
 | **Total** | **11-16h** |
 

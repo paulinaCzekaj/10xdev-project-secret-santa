@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { ParticipantService } from "../../../../lib/services/participant.service";
 import { DEFAULT_USER_ID } from "../../../../db/supabase.client";
-import type { CreateParticipantCommand, ApiErrorResponse } from "../../../../types";
+import type { CreateParticipantCommand, ApiErrorResponse, ParticipantListItemDTO } from "../../../../types";
 
 export const prerender = false;
 export const trailingSlash = "never";
@@ -23,6 +23,111 @@ const CreateParticipantSchema = z.object({
   name: z.string().min(1, "Name cannot be empty").max(255, "Name is too long").trim(),
   email: z.string().email("Invalid email format").optional(),
 });
+
+/**
+ * GET /api/groups/:groupId/participants
+ * Retrieves all participants of a Secret Santa group with wishlist status
+ *
+ * Only group participants can access this information. Each participant record
+ * includes a has_wishlist field indicating whether they have created a wishlist.
+ *
+ * @param {number} groupId - Group ID from URL parameter
+ * @returns {ParticipantListItemDTO[]} 200 - Array of participants with wishlist status
+ * @returns {ApiErrorResponse} 401 - Not authenticated
+ * @returns {ApiErrorResponse} 403 - User is not a participant in the group
+ * @returns {ApiErrorResponse} 404 - Group not found
+ * @returns {ApiErrorResponse} 500 - Internal server error
+ *
+ * @note Authentication is not implemented yet - uses DEFAULT_USER_ID
+ */
+export const GET: APIRoute = async ({ params, request, locals }) => {
+  console.log("[GET /api/groups/:groupId/participants] Endpoint hit", { groupId: params.groupId });
+
+  try {
+    // Guard 1: Validate groupId parameter
+    const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
+
+    // Guard 2: Check authentication
+    // TODO: Replace DEFAULT_USER_ID with actual user ID from auth when implemented
+    const userId = DEFAULT_USER_ID;
+    if (!userId) {
+      const errorResponse: ApiErrorResponse = {
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      };
+      return new Response(JSON.stringify(errorResponse), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Get Supabase client
+    const supabase = locals.supabase;
+
+    // Call service to get group participants
+    const participantService = new ParticipantService(supabase);
+    const participants = await participantService.getGroupParticipants(groupId, userId);
+
+    // Success - return participants list
+    return new Response(JSON.stringify({ data: participants }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+      },
+    });
+  } catch (error) {
+    // Handle service errors
+    if (error instanceof Error) {
+      if (error.message === "GROUP_NOT_FOUND") {
+        const errorResponse: ApiErrorResponse = {
+          error: {
+            code: "GROUP_NOT_FOUND",
+            message: "Group not found",
+          },
+        };
+        return new Response(JSON.stringify(errorResponse), {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      if (error.message === "FORBIDDEN") {
+        const errorResponse: ApiErrorResponse = {
+          error: {
+            code: "FORBIDDEN",
+            message: "Only group participants can view the participant list",
+          },
+        };
+        return new Response(JSON.stringify(errorResponse), {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // Log unexpected errors
+    console.error("[GET /api/groups/:groupId/participants] Error:", {
+      groupId: params.groupId,
+      userId: DEFAULT_USER_ID,
+      error,
+    });
+
+    // Generic error response
+    const errorResponse: ApiErrorResponse = {
+      error: {
+        code: "DATABASE_ERROR",
+        message: "Failed to retrieve participants. Please try again later.",
+      },
+    };
+    return new Response(JSON.stringify(errorResponse), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+};
 
 /**
  * POST /api/groups/:groupId/participants

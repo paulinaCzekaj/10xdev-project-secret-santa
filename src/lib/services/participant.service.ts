@@ -5,6 +5,7 @@ import type {
   ParticipantInsert,
   ParticipantUpdate,
   ParticipantDTO,
+  ParticipantListItemDTO,
   UserId,
 } from "../../types";
 import { generateAccessToken } from "../utils/token.utils";
@@ -520,6 +521,120 @@ export class ParticipantService {
       });
     } catch (error) {
       console.error("[ParticipantService.deleteParticipant] Error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieves all participants of a specific group with wishlist status
+   *
+   * Only group participants can access this information. Checks authorization
+   * before returning the list. Includes has_wishlist field indicating whether
+   * each participant has created a wishlist.
+   *
+   * @param groupId - The ID of the group to get participants for
+   * @param userId - The ID of the user requesting the list (must be group participant)
+   * @returns Promise resolving to array of participants with wishlist status
+   * @throws {Error} "GROUP_NOT_FOUND" - If group doesn't exist
+   * @throws {Error} "FORBIDDEN" - If user is not a participant in the group
+   * @throws {Error} "Failed to get group participants" - If database operation fails
+   *
+   * @example
+   * const participants = await participantService.getGroupParticipants(1, "user-123");
+   * // Returns: [{ id: 1, name: "John", ..., has_wishlist: true }, ...]
+   */
+  async getGroupParticipants(groupId: number, userId: UserId): Promise<ParticipantListItemDTO[]> {
+    console.log("[ParticipantService.getGroupParticipants] Starting", {
+      groupId,
+      userId,
+    });
+
+    try {
+      // Step 1: Check if group exists and user is authorized
+      const { data: isUserInGroup, error: authError } = await this.supabase.rpc("is_user_in_group", {
+        p_group_id: groupId,
+        p_user_id: userId,
+      });
+
+      if (authError) {
+        console.error("[ParticipantService.getGroupParticipants] Authorization check failed:", authError);
+        throw new Error("Failed to verify user access");
+      }
+
+      if (!isUserInGroup) {
+        // Check if group exists first
+        const { data: group } = await this.supabase
+          .from("groups")
+          .select("id")
+          .eq("id", groupId)
+          .maybeSingle();
+
+        if (!group) {
+          console.log("[ParticipantService.getGroupParticipants] Group not found", { groupId });
+          throw new Error("GROUP_NOT_FOUND");
+        }
+
+        console.log("[ParticipantService.getGroupParticipants] User not in group", {
+          groupId,
+          userId,
+        });
+        throw new Error("FORBIDDEN");
+      }
+
+      console.log("[ParticipantService.getGroupParticipants] User authorized to view participants");
+
+      // Step 2: Get all participants for the group with wishlist status in a single query
+      // Using LEFT JOIN to efficiently combine participant data with wishlist existence
+      const { data: participantsWithWishlist, error: queryError } = await this.supabase
+        .from("participants")
+        .select(`
+          id,
+          group_id,
+          user_id,
+          name,
+          email,
+          created_at,
+          wishes!left(participant_id)
+        `)
+        .eq("group_id", groupId)
+        .order("created_at", { ascending: true });
+
+      if (queryError) {
+        console.error("[ParticipantService.getGroupParticipants] Failed to get participants with wishlist:", queryError);
+        throw new Error("Failed to get group participants");
+      }
+
+      if (!participantsWithWishlist || participantsWithWishlist.length === 0) {
+        console.log("[ParticipantService.getGroupParticipants] No participants found", { groupId });
+        return [];
+      }
+
+      console.log("[ParticipantService.getGroupParticipants] Found participants", {
+        groupId,
+        participantCount: participantsWithWishlist.length,
+      });
+
+      // Step 3: Transform the data to match ParticipantListItemDTO format
+      // The LEFT JOIN returns wishes as an array (empty if no wishlist exists)
+      const participants: ParticipantListItemDTO[] = participantsWithWishlist.map(participant => ({
+        id: participant.id,
+        group_id: participant.group_id,
+        user_id: participant.user_id,
+        name: participant.name,
+        email: participant.email,
+        created_at: participant.created_at,
+        has_wishlist: Array.isArray(participant.wishes) && participant.wishes.length > 0,
+      }));
+
+      console.log("[ParticipantService.getGroupParticipants] Successfully retrieved participants", {
+        groupId,
+        participantCount: participants.length,
+        withWishlistCount: participants.filter(p => p.has_wishlist).length,
+      });
+
+      return participants;
+    } catch (error) {
+      console.error("[ParticipantService.getGroupParticipants] Error:", error);
       throw error;
     }
   }
