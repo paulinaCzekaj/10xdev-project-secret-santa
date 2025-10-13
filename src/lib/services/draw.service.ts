@@ -81,10 +81,7 @@ export class DrawService {
    * @param exclusions - List of exclusion rules
    * @returns Array of assignments if successful, null if impossible or timeout
    */
-  executeDrawAlgorithm(
-    participants: ParticipantDTO[],
-    exclusions: ExclusionRuleDTO[]
-  ): DrawAssignment[] | null {
+  executeDrawAlgorithm(participants: ParticipantDTO[], exclusions: ExclusionRuleDTO[]): DrawAssignment[] | null {
     // Guard: Quick validation check
     if (!this.isDrawPossible(participants, exclusions)) {
       return null;
@@ -185,10 +182,7 @@ export class DrawService {
   /**
    * Builds internal DrawParticipant representation with exclusions
    */
-  private buildDrawParticipants(
-    participants: ParticipantDTO[],
-    exclusions: ExclusionRuleDTO[]
-  ): DrawParticipant[] {
+  private buildDrawParticipants(participants: ParticipantDTO[], exclusions: ExclusionRuleDTO[]): DrawParticipant[] {
     const exclusionMap = this.buildExclusionMap(exclusions);
 
     return participants.map((p) => ({

@@ -1,0 +1,34 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import GroupView from "@/components/group/GroupView.tsx";
+import { supabaseClient } from "@/db/supabase.client";
+
+export const prerender = false;
+
+const { id } = Astro.params;
+const groupId = parseInt(id);
+
+if (!groupId || isNaN(groupId)) {
+  return Astro.redirect("/dashboard");
+}
+
+// Sprawdź czy użytkownik jest zalogowany
+const {
+  data: { session },
+} = await supabaseClient.auth.getSession();
+
+if (!session) {
+  return Astro.redirect("/login");
+}
+
+// TODO: Tutaj będziemy sprawdzać dostęp do grupy
+// Na razie przekierowujemy do dashboard jeśli nie ma dostępu
+---
+
+<Layout title={`Grupa ${groupId} | Secret Santa`}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+      <GroupView client:load groupId={groupId} />
+    </div>
+  </div>
+</Layout>

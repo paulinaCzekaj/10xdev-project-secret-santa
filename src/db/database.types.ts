@@ -144,6 +144,7 @@ export interface Database {
       };
       participants: {
         Row: {
+          access_token: string;
           created_at: string;
           email: string | null;
           group_id: number;
@@ -152,6 +153,7 @@ export interface Database {
           user_id: string | null;
         };
         Insert: {
+          access_token?: string;
           created_at?: string;
           email?: string | null;
           group_id: number;
@@ -160,6 +162,7 @@ export interface Database {
           user_id?: string | null;
         };
         Update: {
+          access_token?: string;
           created_at?: string;
           email?: string | null;
           group_id?: number;

@@ -122,7 +122,7 @@ export type ParticipantDTO = Tables<"participants">;
 /**
  * Participant DTO returned after creation, includes access token
  * POST /api/groups/:groupId/participants response
- * Note: access_token should be stored in DB but is not in current schema
+ * Note: access_token is now stored in DB (participants.access_token column)
  */
 export interface ParticipantWithTokenDTO extends ParticipantDTO {
   access_token: string;
@@ -131,9 +131,11 @@ export interface ParticipantWithTokenDTO extends ParticipantDTO {
 /**
  * Participant DTO for list views with wishlist status
  * GET /api/groups/:groupId/participants
+ * Note: access_token is included only when requested by group creator
  */
-export interface ParticipantListItemDTO extends ParticipantDTO {
+export interface ParticipantListItemDTO extends Omit<ParticipantDTO, "access_token"> {
   has_wishlist: boolean;
+  access_token?: string; // Only included for group creator
 }
 
 /**
@@ -368,3 +370,159 @@ export type UserId = string;
  * Participant access token type (for unregistered users)
  */
 export type ParticipantToken = string;
+
+// ============================================================================
+// VIEW MODELS (Rozszerzone typy dla frontendu)
+// ============================================================================
+
+/**
+ * Rozszerzony model grupy z dodatkowymi polami formatującymi dla widoku
+ */
+export interface GroupViewModel extends GroupDetailDTO {
+  // Formatowane wartości dla wyświetlania
+  formattedBudget: string; // np. "150 PLN"
+  formattedEndDate: string; // np. "25 grudnia 2025, 23:59"
+  formattedCreatedAt: string; // np. "10 października 2025"
+
+  // Pola obliczeniowe
+  isExpired: boolean; // czy data zakończenia minęła
+  daysUntilEnd: number; // ile dni do końca (-1 jeśli przeszła)
+  participantsCount: number; // liczba uczestników
+  exclusionsCount: number; // liczba wykluczeń
+
+  // Status
+  statusBadge: {
+    text: string; // "Przed losowaniem" | "Losowanie zakończone"
+    variant: "default" | "success"; // dla Shadcn badge
+  };
+}
+
+/**
+ * Rozszerzony model uczestnika z dodatkowymi polami dla widoku
+ */
+export interface ParticipantViewModel extends Omit<ParticipantListItemDTO, "access_token"> {
+  // Flagi
+  isCreator: boolean; // czy uczestnik jest twórcą grupy
+  isCurrentUser: boolean; // czy to zalogowany użytkownik
+  canDelete: boolean; // czy można usunąć (false dla twórcy)
+
+  // Formatowane wartości
+  displayEmail: string; // "j***@example.com" lub "john@example.com" lub "Brak"
+  displayName: string; // "John Doe" lub "John Doe (Ty)" dla current user
+  initials: string; // "JD" dla avatara
+
+  // Status (po losowaniu)
+  wishlistStatus?: {
+    hasWishlist: boolean;
+    text: string; // "Dodana" | "Brak"
+    variant: "success" | "secondary";
+  };
+
+  resultStatus?: {
+    // tylko po losowaniu
+    viewed: boolean;
+    text: string; // "Zobaczył" | "Nie zobaczył"
+    variant: "success" | "warning";
+  };
+
+  // Token (dla niezarejestrowanych)
+  resultLink?: string; // pełny URL: /results/:token
+}
+
+/**
+ * Rozszerzony model wykluczenia z formatowaniem dla widoku
+ */
+export interface ExclusionViewModel extends ExclusionRuleListItemDTO {
+  // Formatowane wartości
+  displayText: string; // "Jan Kowalski nie może wylosować Anny Nowak"
+  shortDisplayText: string; // "Jan → Anna" (dla mobile)
+
+  // Flagi
+  canDelete: boolean; // czy można usunąć (false po losowaniu)
+}
+
+/**
+ * Model statusu możliwości przeprowadzenia losowania
+ */
+export interface DrawStatusViewModel {
+  // Walidacja
+  canDraw: boolean; // czy można rozpocząć losowanie
+  isValid: boolean; // czy wykluczenia pozwalają na losowanie
+
+  // Przyczyna (jeśli !canDraw)
+  reason?: string; // np. "Minimum 3 uczestników wymagane"
+  validationMessage: string; // wiadomość z walidacji
+  validationDetails?: string; // szczegóły błędu walidacji
+
+  // Statystyki
+  participantsCount: number;
+  exclusionsCount: number;
+
+  // UI
+  buttonText: string; // tekst na przycisku
+  buttonDisabled: boolean;
+  alertVariant: "default" | "warning" | "destructive";
+}
+
+// ============================================================================
+// FORM VIEW MODELS (dla React Hook Form)
+// ============================================================================
+
+/**
+ * ViewModel dla formularza edycji grupy
+ */
+export interface EditGroupFormViewModel {
+  name: string;
+  budget: number;
+  end_date: Date;
+}
+
+/**
+ * ViewModel dla formularza dodawania uczestnika
+ */
+export interface AddParticipantFormViewModel {
+  name: string;
+  email?: string;
+}
+
+/**
+ * ViewModel dla formularza edycji uczestnika
+ */
+export interface EditParticipantFormViewModel {
+  name: string;
+  email?: string;
+}
+
+/**
+ * ViewModel dla formularza dodawania wykluczenia
+ */
+export interface AddExclusionFormViewModel {
+  blocker_participant_id: number;
+  blocked_participant_id: number;
+}
+
+// ============================================================================
+// HELPER TYPES (rozszerzone)
+// ============================================================================
+
+/**
+ * Status odpowiedzi API
+ */
+export type ApiStatus = "idle" | "loading" | "success" | "error";
+
+/**
+ * Standardowy error z API
+ */
+export interface ApiError {
+  code: string;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
+/**
+ * Typ dla akcji kopiowania
+ */
+export interface CopyToClipboardResult {
+  success: boolean;
+  message: string;
+}

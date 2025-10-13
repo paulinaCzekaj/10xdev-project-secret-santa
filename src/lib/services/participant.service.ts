@@ -142,12 +142,13 @@ export class ParticipantService {
         tokenLength: accessToken.length,
       });
 
-      // Step 7: Insert participant
+      // Step 7: Insert participant with access token
       const participantInsert: ParticipantInsert = {
         group_id: groupId,
         user_id: linkedUserId,
         name: command.name,
         email: command.email || null,
+        access_token: accessToken, // Store token in database
       };
 
       const { data: participant, error: insertError } = await this.supabase
@@ -550,7 +551,31 @@ export class ParticipantService {
     });
 
     try {
-      // Step 1: Check if group exists and user is authorized
+      // Step 1: Check if group exists and if user is creator
+      const { data: group, error: groupError } = await this.supabase
+        .from("groups")
+        .select("id, creator_id")
+        .eq("id", groupId)
+        .maybeSingle();
+
+      if (groupError) {
+        console.error("[ParticipantService.getGroupParticipants] Failed to get group:", groupError);
+        throw new Error("Failed to get group information");
+      }
+
+      if (!group) {
+        console.log("[ParticipantService.getGroupParticipants] Group not found", { groupId });
+        throw new Error("GROUP_NOT_FOUND");
+      }
+
+      const isCreator = group.creator_id === userId;
+
+      console.log("[ParticipantService.getGroupParticipants] Group found", {
+        groupId,
+        isCreator,
+      });
+
+      // Step 2: Check if user is authorized (participant or creator)
       const { data: isUserInGroup, error: authError } = await this.supabase.rpc("is_user_in_group", {
         p_group_id: groupId,
         p_user_id: userId,
@@ -562,18 +587,6 @@ export class ParticipantService {
       }
 
       if (!isUserInGroup) {
-        // Check if group exists first
-        const { data: group } = await this.supabase
-          .from("groups")
-          .select("id")
-          .eq("id", groupId)
-          .maybeSingle();
-
-        if (!group) {
-          console.log("[ParticipantService.getGroupParticipants] Group not found", { groupId });
-          throw new Error("GROUP_NOT_FOUND");
-        }
-
         console.log("[ParticipantService.getGroupParticipants] User not in group", {
           groupId,
           userId,
@@ -583,8 +596,8 @@ export class ParticipantService {
 
       console.log("[ParticipantService.getGroupParticipants] User authorized to view participants");
 
-      // Step 2: Get all participants for the group with wishlist status in a single query
-      // Using LEFT JOIN to efficiently combine participant data with wishlist existence
+      // Step 3: Get all participants for the group with wishlist status
+      // Include access_token in select - we'll conditionally include it in response
       const { data: participantsWithWishlist, error: queryError } = await this.supabase
         .from("participants")
         .select(`
@@ -594,6 +607,7 @@ export class ParticipantService {
           name,
           email,
           created_at,
+          access_token,
           wishes!left(participant_id)
         `)
         .eq("group_id", groupId)
@@ -614,22 +628,35 @@ export class ParticipantService {
         participantCount: participantsWithWishlist.length,
       });
 
-      // Step 3: Transform the data to match ParticipantListItemDTO format
-      // The LEFT JOIN returns wishes as an array (empty if no wishlist exists)
-      const participants: ParticipantListItemDTO[] = participantsWithWishlist.map(participant => ({
-        id: participant.id,
-        group_id: participant.group_id,
-        user_id: participant.user_id,
-        name: participant.name,
-        email: participant.email,
-        created_at: participant.created_at,
-        has_wishlist: Array.isArray(participant.wishes) && participant.wishes.length > 0,
-      }));
+      // Step 4: Transform the data to match ParticipantListItemDTO format
+      // Include access_token only if user is the group creator
+      const participants: ParticipantListItemDTO[] = participantsWithWishlist.map(participant => {
+        const baseData = {
+          id: participant.id,
+          group_id: participant.group_id,
+          user_id: participant.user_id,
+          name: participant.name,
+          email: participant.email,
+          created_at: participant.created_at,
+          has_wishlist: Array.isArray(participant.wishes) && participant.wishes.length > 0,
+        };
+
+        // Only include access_token if user is creator
+        if (isCreator) {
+          return {
+            ...baseData,
+            access_token: participant.access_token,
+          };
+        }
+
+        return baseData;
+      });
 
       console.log("[ParticipantService.getGroupParticipants] Successfully retrieved participants", {
         groupId,
         participantCount: participants.length,
         withWishlistCount: participants.filter(p => p.has_wishlist).length,
+        includesAccessToken: isCreator,
       });
 
       return participants;
