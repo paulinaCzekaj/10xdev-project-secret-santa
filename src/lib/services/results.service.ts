@@ -24,33 +24,22 @@ export class ResultsService {
    * @throws {Error} "FORBIDDEN" - If user is not a participant in the group
    * @throws {Error} "DRAW_NOT_COMPLETED" - If draw hasn't been completed yet
    */
-  async getAuthenticatedUserResult(
-    groupId: number,
-    userId: UserId
-  ): Promise<DrawResultResponseDTO> {
+  async getAuthenticatedUserResult(groupId: number, userId: UserId): Promise<DrawResultResponseDTO> {
     console.log("[ResultsService.getAuthenticatedUserResult] Starting", {
       groupId,
       userId,
     });
 
     // Step 1: Validate draw is completed and get basic data
-    const { participant, group } = await this.validateDrawCompletedAndGetParticipant(
-      "authenticated",
-      groupId,
-      userId
-    );
+    const { participant, group } = await this.validateDrawCompletedAndGetParticipant("authenticated", groupId, userId);
 
     // Step 2: Get assignment and assigned participant data
-    const { assignedParticipant, assignedWishlist } = await this.getAssignedParticipantData(
-      groupId,
-      participant.id
-    );
+    const { assignedParticipant, assignedWishlist } = await this.getAssignedParticipantData(groupId, participant.id);
 
     // Step 3: Get current participant's wishlist
     const myWishlist = await this.getParticipantWishlist(participant.id);
 
-    // Step 4: Update result viewed timestamp
-    await this.updateResultViewedAt(participant.id);
+    // Step 4: Note - result_viewed_at is now updated only when gift is revealed
 
     // Step 5: Format and return response
     const now = new Date();
@@ -118,8 +107,7 @@ export class ResultsService {
     // Step 3: Get current participant's wishlist
     const myWishlist = await this.getParticipantWishlist(participant.id);
 
-    // Step 4: Update result viewed timestamp
-    await this.updateResultViewedAt(participant.id);
+    // Step 4: Note - result_viewed_at is now updated only when gift is revealed
 
     // Step 5: Format and return response
     const now = new Date();
@@ -177,7 +165,10 @@ export class ResultsService {
       .limit(1);
 
     if (assignmentsError) {
-      console.error("[ResultsService.validateDrawCompletedAndGetParticipant] Error checking assignments:", assignmentsError);
+      console.error(
+        "[ResultsService.validateDrawCompletedAndGetParticipant] Error checking assignments:",
+        assignmentsError
+      );
       throw new Error("INTERNAL_ERROR");
     }
 
@@ -326,7 +317,28 @@ export class ResultsService {
   }
 
   /**
-   * Updates the result_viewed_at timestamp for a participant
+   * Updates the result_viewed_at timestamp when participant reveals their result
+   * This should only be called when the user actually opens the gift
+   */
+  async trackResultReveal(participantId: number): Promise<void> {
+    console.log("[ResultsService.trackResultReveal] Tracking result reveal", { participantId });
+
+    const { error } = await this.supabase
+      .from("participants")
+      .update({ result_viewed_at: new Date().toISOString() })
+      .eq("id", participantId);
+
+    if (error) {
+      console.error("[ResultsService.trackResultReveal] Error updating result_viewed_at:", error);
+      throw new Error("Failed to track result reveal");
+    }
+
+    console.log("[ResultsService.trackResultReveal] Successfully tracked result reveal", { participantId });
+  }
+
+  /**
+   * Updates the result_viewed_at timestamp for a participant (legacy method)
+   * @deprecated Use trackResultReveal instead
    */
   private async updateResultViewedAt(participantId: number): Promise<void> {
     const { error } = await this.supabase
@@ -359,16 +371,14 @@ export class ResultsService {
     return {
       id: participant.id,
       name: participant.name,
+      result_viewed_at: participant.result_viewed_at,
     };
   }
 
   /**
    * Formats assigned participant data for response
    */
-  private formatAssignedParticipant(
-    assignedParticipant: any,
-    wishlist: string | null
-  ): ResultAssignedParticipant {
+  private formatAssignedParticipant(assignedParticipant: any, wishlist: string | null): ResultAssignedParticipant {
     return {
       id: assignedParticipant.id,
       name: assignedParticipant.name,
@@ -379,10 +389,7 @@ export class ResultsService {
   /**
    * Formats current participant's wishlist for response
    */
-  private formatMyWishlist(
-    wishlist: string | null,
-    canEdit: boolean
-  ): ResultMyWishlist {
+  private formatMyWishlist(wishlist: string | null, canEdit: boolean): ResultMyWishlist {
     console.log("[ResultsService.formatMyWishlist] Formatting wishlist", {
       hasContent: !!wishlist,
       canEdit,

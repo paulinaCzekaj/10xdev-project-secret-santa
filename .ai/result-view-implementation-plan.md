@@ -2260,8 +2260,8 @@ class ErrorBoundary extends React.Component<
 
 ---
 
-### Krok 7: Integracja i testy manualne
-**Czas:** 2 godziny
+### Krok 7: Integracja i testy manualne - AKTUALNIE pomijamy testy
+<!-- **Czas:** 2 godziny
 
 **Zadania:**
 1. **Testy scenariuszy pozytywnych:**
@@ -2295,13 +2295,13 @@ class ErrorBoundary extends React.Component<
    - ♿ Nawigacja klawiaturą
    - ♿ Screen reader friendly
    - ♿ Kontrast kolorów (WCAG AA)
-   - ♿ Prefers-reduced-motion
+   - ♿ Prefers-reduced-motion -->
 
-**Weryfikacja:**
+<!-- **Weryfikacja:**
 - Wszystkie scenariusze testowe przechodzą
 - Brak błędów w konsoli
 - Brak błędów TypeScript
-- Brak błędów ESLint
+- Brak błędów ESLint -->
 
 ---
 
@@ -2396,7 +2396,7 @@ class ErrorBoundary extends React.Component<
 | 4 | Implementacja komponentów UI | 3h | Wysoki |
 | 5 | Implementacja ResultView | 2h | Wysoki |
 | 6 | Implementacja stron Astro | 1h | Wysoki |
-| 7 | Integracja i testy | 2h | Wysoki |
+<!-- | 7 | Integracja i testy | 2h | Wysoki | -->
 | 8 | Optymalizacja | 1h | Średni |
 | 9 | Dokumentacja | 30 min | Średni |
 | 10 | Code review i finalizacja | 1h | Wysoki |

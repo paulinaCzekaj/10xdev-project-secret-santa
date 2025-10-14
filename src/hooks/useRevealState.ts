@@ -1,149 +1,62 @@
 import { useState, useEffect, useCallback } from "react";
-import type { ResultRevealState, UseRevealStateReturn } from "../types";
+import type { UseRevealStateReturn } from "../types";
 
 /**
- * Custom hook do zarządzania stanem odkrycia wyniku w localStorage
- * Przechowuje informację czy użytkownik już odkrył swój wynik losowania
+ * Custom hook do zarządzania stanem odkrycia wyniku
+ * Sprawdza czy użytkownik już odkrył swój wynik na podstawie result_viewed_at z bazy danych
  */
-export function useRevealState(
-  groupId: number,
-  participantId: number
-): UseRevealStateReturn {
-  const [isRevealed, setIsRevealed] = useState(false);
+export function useRevealState(participantId: number, resultViewedAt?: string): UseRevealStateReturn {
+  // Stan odkrycia oparty na polu result_viewed_at z bazy danych
+  const [isRevealed, setIsRevealed] = useState(!!resultViewedAt);
 
   /**
-   * Generuje klucz localStorage dla danego uczestnika w grupie
+   * Wywołuje API do śledzenia odkrycia wyniku
    */
-  const getStorageKey = useCallback((): string => {
-    return `result_revealed_${groupId}_${participantId}`;
-  }, [groupId, participantId]);
-
-  /**
-   * Ładuje stan odkrycia z localStorage przy montowaniu
-   */
-  const loadRevealState = useCallback((): boolean => {
+  const trackReveal = useCallback(async (): Promise<void> => {
     try {
-      const key = getStorageKey();
-      const stored = localStorage.getItem(key);
-
-      if (!stored) {
-        return false;
-      }
-
-      const state: ResultRevealState = JSON.parse(stored);
-
-      // Walidacja danych z localStorage
-      if (
-        typeof state.revealed === 'boolean' &&
-        typeof state.revealedAt === 'number' &&
-        state.groupId === groupId &&
-        state.participantId === participantId
-      ) {
-        return state.revealed;
-      }
-
-      // Jeśli dane są nieprawidłowe, usuwamy je
-      localStorage.removeItem(key);
-      return false;
-    } catch (error) {
-      console.warn('Error loading reveal state from localStorage:', error);
-      // W przypadku błędu, usuwamy potencjalnie uszkodzone dane
-      const key = getStorageKey();
-      localStorage.removeItem(key);
-      return false;
-    }
-  }, [getStorageKey, groupId, participantId]);
-
-  /**
-   * Zapisuje stan odkrycia do localStorage
-   */
-  const saveRevealState = useCallback((revealed: boolean): void => {
-    try {
-      const key = getStorageKey();
-      const state: ResultRevealState = {
-        groupId,
-        participantId,
-        revealed,
-        revealedAt: Date.now(),
-      };
-
-      localStorage.setItem(key, JSON.stringify(state));
-    } catch (error) {
-      console.error('Error saving reveal state to localStorage:', error);
-
-      // Obsługa błędu QuotaExceededError
-      if (error instanceof Error && error.name === 'QuotaExceededError') {
-        console.warn('localStorage quota exceeded, cleaning up old reveal states');
-        clearOldRevealStates();
-        // Ponowna próba zapisu
-        try {
-          const key = getStorageKey();
-          const state: ResultRevealState = {
-            groupId,
-            participantId,
-            revealed,
-            revealedAt: Date.now(),
-          };
-          localStorage.setItem(key, JSON.stringify(state));
-        } catch (retryError) {
-          console.error('Failed to save reveal state even after cleanup:', retryError);
-          // W ostateczności, funkcja będzie działać bez localStorage
-        }
-      }
-    }
-  }, [getStorageKey, groupId, participantId]);
-
-  /**
-   * Czyści stare stany odkrycia (starsze niż 30 dni) aby zwolnić miejsce
-   */
-  const clearOldRevealStates = useCallback((): void => {
-    try {
-      const keys = Object.keys(localStorage);
-      const revealKeys = keys.filter(k => k.startsWith('result_revealed_'));
-
-      const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
-
-      revealKeys.forEach(key => {
-        try {
-          const stored = localStorage.getItem(key);
-          if (stored) {
-            const state: ResultRevealState = JSON.parse(stored);
-            if (state.revealedAt && state.revealedAt < thirtyDaysAgo) {
-              localStorage.removeItem(key);
-            }
-          }
-        } catch {
-          // Jeśli nie można sparsować, usuwamy
-          localStorage.removeItem(key);
-        }
+      const response = await fetch(`/api/participants/${participantId}/reveal`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Note: Authentication headers will be added by the browser for same-origin requests
+        },
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error?.message || "Failed to track result reveal");
+      }
+
+      console.log("Successfully tracked result reveal");
     } catch (error) {
-      console.warn('Error cleaning up old reveal states:', error);
+      console.error("Error tracking result reveal:", error);
+      // Don't throw - we still want to show the result even if tracking fails
     }
-  }, []);
+  }, [participantId]);
 
   /**
-   * Odkrywa wynik - zapisuje stan w localStorage i aktualizuje UI
+   * Odkrywa wynik - wywołuje API i aktualizuje UI
    */
-  const reveal = useCallback((): void => {
+  const reveal = useCallback(async (): Promise<void> => {
+    // Najpierw aktualizujemy UI
     setIsRevealed(true);
-    saveRevealState(true);
-  }, [saveRevealState]);
+
+    // Następnie śledzimy w bazie danych
+    await trackReveal();
+  }, [trackReveal]);
 
   /**
    * Resetuje stan odkrycia (głównie do celów debugowania)
+   * Uwaga: To nie resetuje bazy danych, tylko lokalny stan
    */
   const reset = useCallback((): void => {
     setIsRevealed(false);
-    const key = getStorageKey();
-    localStorage.removeItem(key);
-  }, [getStorageKey]);
+  }, []);
 
-  // Ładowanie stanu przy montowaniu komponentu
+  // Aktualizuj stan gdy zmieni się resultViewedAt
   useEffect(() => {
-    const revealed = loadRevealState();
-    setIsRevealed(revealed);
-  }, [loadRevealState]);
+    setIsRevealed(!!resultViewedAt);
+  }, [resultViewedAt]);
 
   return {
     isRevealed,

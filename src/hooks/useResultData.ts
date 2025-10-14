@@ -2,14 +2,32 @@ import { useState, useEffect, useCallback } from "react";
 import type { UseResultDataReturn, ResultViewModel, ApiError } from "../types";
 
 /**
+ * Mapuje błąd na odpowiedni obiekt ApiError
+ */
+function mapErrorToApiError(err: Error): ApiError {
+  switch (true) {
+    case err.message === "INVALID_PARAMS":
+      return { code: "INVALID_PARAMS", message: "Nieprawidłowe parametry dostępu" };
+    case err.message.includes("Draw not completed"):
+      return { code: "DRAW_NOT_COMPLETED", message: "Losowanie nie zostało przeprowadzone" };
+    case err.message.includes("Unauthorized"):
+      return { code: "UNAUTHORIZED", message: "Brak autoryzacji" };
+    case err.message.includes("Forbidden"):
+      return { code: "FORBIDDEN", message: "Brak dostępu do grupy" };
+    case err.message.includes("Invalid token"):
+      return { code: "INVALID_TOKEN", message: "Nieprawidłowy lub wygasły token dostępu" };
+    case err.message.includes("Group not found"):
+      return { code: "GROUP_NOT_FOUND", message: "Grupa nie została znaleziona" };
+    default:
+      return { code: "NETWORK_ERROR", message: err.message || "Błąd połączenia" };
+  }
+}
+
+/**
  * Custom hook do pobierania danych wyniku z API
  * Obsługuje zarówno dostęp dla zalogowanych jak i niezalogowanych użytkowników
  */
-export function useResultData(
-  groupId?: number,
-  token?: string,
-  isAuthenticated?: boolean
-): UseResultDataReturn {
+export function useResultData(groupId?: number, token?: string, isAuthenticated?: boolean): UseResultDataReturn {
   const [result, setResult] = useState<ResultViewModel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<ApiError | null>(null);
@@ -26,10 +44,10 @@ export function useResultData(
    */
   const formatEndDate = useCallback((endDate: string): string => {
     const date = new Date(endDate);
-    return date.toLocaleDateString('pl-PL', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return date.toLocaleDateString("pl-PL", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   }, []);
 
@@ -38,10 +56,10 @@ export function useResultData(
    */
   const formatShortEndDate = useCallback((endDate: string): string => {
     const date = new Date(endDate);
-    return date.toLocaleDateString('pl-PL', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
+    return date.toLocaleDateString("pl-PL", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
   }, []);
 
@@ -68,9 +86,9 @@ export function useResultData(
    */
   const getInitials = useCallback((name: string): string => {
     return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   }, []);
@@ -78,34 +96,45 @@ export function useResultData(
   /**
    * Transformuje DTO z API na ViewModel
    */
-  const transformToViewModel = useCallback((dto: DrawResultResponseDTO): ResultViewModel => {
-    return {
-      // Dane z API
-      group: dto.group,
-      participant: dto.participant,
-      assigned_to: dto.assigned_to,
-      my_wishlist: dto.my_wishlist,
+  const transformToViewModel = useCallback(
+    (dto: DrawResultResponseDTO): ResultViewModel => {
+      return {
+        // Dane z API
+        group: dto.group,
+        participant: dto.participant,
+        assigned_to: dto.assigned_to,
+        my_wishlist: dto.my_wishlist,
 
-      // Formatowane wartości
-      formattedBudget: formatBudget(dto.group.budget),
-      formattedEndDate: formatEndDate(dto.group.end_date),
-      formattedShortEndDate: formatShortEndDate(dto.group.end_date),
+        // Formatowane wartości
+        formattedBudget: formatBudget(dto.group.budget),
+        formattedEndDate: formatEndDate(dto.group.end_date),
+        formattedShortEndDate: formatShortEndDate(dto.group.end_date),
 
-      // Obliczone wartości
-      isExpired: isDateExpired(dto.group.end_date),
-      daysUntilEnd: calculateDaysUntilEnd(dto.group.end_date),
+        // Obliczone wartości
+        isExpired: isDateExpired(dto.group.end_date),
+        daysUntilEnd: calculateDaysUntilEnd(dto.group.end_date),
 
-      // Dane wylosowanej osoby
-      assignedPersonInitials: getInitials(dto.assigned_to.name),
-      assignedPersonWishlistHtml: dto.assigned_to.wishlist
-        ? convertUrlsToLinks(dto.assigned_to.wishlist)
-        : undefined,
+        // Dane wylosowanej osoby
+        assignedPersonInitials: getInitials(dto.assigned_to.name),
+        assignedPersonWishlistHtml: dto.assigned_to.wishlist ? convertUrlsToLinks(dto.assigned_to.wishlist) : undefined,
 
-      // Flagi dostępu
-      isAuthenticated: !!isAuthenticated,
-      accessToken: token,
-    };
-  }, [formatBudget, formatEndDate, formatShortEndDate, isDateExpired, calculateDaysUntilEnd, getInitials, isAuthenticated, token]);
+        // Flagi dostępu
+        isAuthenticated: !!isAuthenticated,
+        accessToken: token,
+        resultViewedAt: dto.participant.result_viewed_at,
+      };
+    },
+    [
+      formatBudget,
+      formatEndDate,
+      formatShortEndDate,
+      isDateExpired,
+      calculateDaysUntilEnd,
+      getInitials,
+      isAuthenticated,
+      token,
+    ]
+  );
 
   /**
    * Konwertuje URL-e w tekście na HTML linki
@@ -113,8 +142,10 @@ export function useResultData(
    */
   const convertUrlsToLinks = useCallback((text: string): string => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.replace(urlRegex, (url) =>
-      `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${url}</a>`
+    return text.replace(
+      urlRegex,
+      (url) =>
+        `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${url}</a>`
     );
   }, []);
 
@@ -127,7 +158,7 @@ export function useResultData(
       setError(null);
 
       let url: string;
-      let headers: Record<string, string> = {};
+      const headers: Record<string, string> = {};
 
       // Określenie endpointu na podstawie parametrów
       if (groupId && isAuthenticated) {
@@ -138,49 +169,33 @@ export function useResultData(
         // Dla niezalogowanych użytkowników
         url = `/api/results/${token}`;
       } else {
-        throw new Error('INVALID_PARAMS');
+        throw new Error("INVALID_PARAMS");
       }
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           ...headers,
         },
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Unknown error');
+        throw new Error(errorData.error?.message || "Unknown error");
       }
 
       const data: DrawResultResponseDTO = await response.json();
       const viewModel = transformToViewModel(data);
       setResult(viewModel);
-
     } catch (err) {
-      console.error('Error fetching result:', err);
+      console.error("Error fetching result:", err);
 
       let apiError: ApiError;
       if (err instanceof Error) {
-        // Mapowanie błędów na kody API
-        if (err.message === 'INVALID_PARAMS') {
-          apiError = { code: 'INVALID_PARAMS', message: 'Nieprawidłowe parametry dostępu' };
-        } else if (err.message.includes('Draw not completed')) {
-          apiError = { code: 'DRAW_NOT_COMPLETED', message: 'Losowanie nie zostało przeprowadzone' };
-        } else if (err.message.includes('Unauthorized')) {
-          apiError = { code: 'UNAUTHORIZED', message: 'Brak autoryzacji' };
-        } else if (err.message.includes('Forbidden')) {
-          apiError = { code: 'FORBIDDEN', message: 'Brak dostępu do grupy' };
-        } else if (err.message.includes('Invalid token')) {
-          apiError = { code: 'INVALID_TOKEN', message: 'Nieprawidłowy lub wygasły token dostępu' };
-        } else if (err.message.includes('Group not found')) {
-          apiError = { code: 'GROUP_NOT_FOUND', message: 'Grupa nie została znaleziona' };
-        } else {
-          apiError = { code: 'NETWORK_ERROR', message: err.message || 'Błąd połączenia' };
-        }
+        apiError = mapErrorToApiError(err);
       } else {
-        apiError = { code: 'UNKNOWN_ERROR', message: 'Wystąpił nieoczekiwany błąd' };
+        apiError = { code: "UNKNOWN_ERROR", message: "Wystąpił nieoczekiwany błąd" };
       }
 
       setError(apiError);

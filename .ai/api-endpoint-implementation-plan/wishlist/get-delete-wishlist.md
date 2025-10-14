@@ -277,15 +277,6 @@ DELETE FROM wishes WHERE participant_id = $1
    - Usunięcie wishlist
 4. **Response handling**: 204 No Content lub błędy
 
-### Faza 4: Testowanie
-1. **Unit tests** dla WishlistService metod
-2. **Integration tests** dla endpointów
-3. **Security testing**: Próby dostępu z nieprawidłowymi tokenami
-4. **Edge cases**: 
-   - Uczestnik bez wishlist
-   - Próba dostępu po end_date
-   - Nieprawidłowe tokens
-
 ### Faza 5: Dokumentacja i Deployment
 1. **Aktualizuj Postman collection** z nowymi endpointami
 2. **Dodaj JSDoc comments** do wszystkich metod
@@ -297,6 +288,5 @@ DELETE FROM wishes WHERE participant_id = $1
 - [ ] GET i DELETE handlers dodane i przetestowane
 - [ ] Error handling kompletne
 - [ ] Security measures zaimplementowane
-- [ ] Tests przechodzą
 - [ ] Dokumentacja zaktualizowana
 - [ ] Postman collection zawiera nowe requesty

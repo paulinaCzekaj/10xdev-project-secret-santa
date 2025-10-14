@@ -242,6 +242,7 @@ export interface ResultGroupInfo {
 export interface ResultParticipantInfo {
   id: number;
   name: string;
+  result_viewed_at?: string; // When the participant viewed their result
 }
 
 /**
@@ -567,6 +568,7 @@ export interface ResultViewModel {
   // Flagi dostępu i kontekstu
   isAuthenticated: boolean;           // czy użytkownik zalogowany
   accessToken?: string;               // token dla niezalogowanych
+  resultViewedAt?: string;            // kiedy wynik został odkryty
 }
 
 /**

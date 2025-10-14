@@ -46,26 +46,29 @@ export function ParticipantCard({
   };
 
   return (
-    <Card>
+    <Card className="border border-red-200 bg-gradient-to-r from-red-50/50 to-green-50/50 dark:from-red-950/50 dark:to-green-950/50 hover:shadow-lg transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarFallback>{participant.initials}</AvatarFallback>
+            <Avatar className="h-10 w-10 ring-2 ring-red-200 dark:ring-red-800">
+              <AvatarFallback className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                {participant.initials}
+              </AvatarFallback>
             </Avatar>
 
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-medium">{participant.displayName}</h3>
+                <h3 className="font-medium text-red-800 dark:text-red-200">{participant.displayName}</h3>
                 {participant.isCreator && (
-                  <Badge variant="secondary" className="text-xs">
-                    Twórca
+                  <Badge
+                    variant="secondary"
+                    className="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                  >
+                    🎅 Twórca
                   </Badge>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground">
-                {participant.displayEmail}
-              </p>
+              <p className="text-sm text-muted-foreground">{participant.displayEmail}</p>
             </div>
           </div>
 
@@ -75,15 +78,23 @@ export function ParticipantCard({
               <div className="flex gap-2">
                 <Badge
                   variant={participant.wishlistStatus?.variant || "secondary"}
-                  className="text-xs"
+                  className={`text-xs ${
+                    participant.wishlistStatus?.text === "Dodana"
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                      : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                  }`}
                 >
-                  Lista: {participant.wishlistStatus?.text || "Brak"}
+                  🎁 Lista: {participant.wishlistStatus?.text || "Brak"}
                 </Badge>
                 <Badge
                   variant={participant.resultStatus?.variant || "secondary"}
-                  className="text-xs"
+                  className={`text-xs ${
+                    participant.resultStatus?.text === "Zobaczył"
+                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                      : "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                  }`}
                 >
-                  Wynik: {participant.resultStatus?.text || "Nie zobaczył"}
+                  👀 Wynik: {participant.resultStatus?.text || "Nie zobaczył"}
                 </Badge>
               </div>
             )}
