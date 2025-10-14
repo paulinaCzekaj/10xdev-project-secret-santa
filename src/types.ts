@@ -49,7 +49,7 @@ export interface CreateGroupCommand {
 
 /**
  * Command for updating an existing group
- * PATCH /api/groups/:id
+ * PATCH /api/groups/:groupId
  * All fields are optional
  */
 export type UpdateGroupCommand = Partial<CreateGroupCommand>;
@@ -80,13 +80,14 @@ export interface GroupListItemDTO extends GroupDTO {
 
 /**
  * Detailed Group DTO with nested participants and exclusions
- * GET /api/groups/:id
+ * GET /api/groups/:groupId
  */
 export interface GroupDetailDTO extends GroupDTO {
   participants: ParticipantDTO[];
   exclusions: ExclusionRuleDTO[];
   is_creator: boolean;
   can_edit: boolean;
+  drawn_at?: string; // Only present when group is drawn
 }
 
 /**
@@ -109,7 +110,7 @@ export interface CreateParticipantCommand {
 
 /**
  * Command for updating participant details
- * PATCH /api/participants/:id
+ * PATCH /api/participants/:participantId
  * All fields are optional
  */
 export type UpdateParticipantCommand = Partial<CreateParticipantCommand>;
@@ -133,9 +134,17 @@ export interface ParticipantWithTokenDTO extends ParticipantDTO {
  * GET /api/groups/:groupId/participants
  * Note: access_token is included only when requested by group creator
  */
-export interface ParticipantListItemDTO extends Omit<ParticipantDTO, "access_token"> {
+export interface ParticipantListItemDTO {
+  id: number;
+  group_id: number;
+  user_id: string | null;
+  name: string;
+  email: string | null;
+  created_at: string;
+  result_viewed_at: string | null;
   has_wishlist: boolean;
   access_token?: string; // Only included for group creator
+  result_viewed?: boolean; // Only present when group is drawn
 }
 
 /**
@@ -393,7 +402,7 @@ export interface GroupViewModel extends GroupDetailDTO {
   // Status
   statusBadge: {
     text: string; // "Przed losowaniem" | "Losowanie zakończone"
-    variant: "default" | "success"; // dla Shadcn badge
+    variant: "default" | "secondary"; // dla Shadcn badge
   };
 }
 
@@ -415,14 +424,14 @@ export interface ParticipantViewModel extends Omit<ParticipantListItemDTO, "acce
   wishlistStatus?: {
     hasWishlist: boolean;
     text: string; // "Dodana" | "Brak"
-    variant: "success" | "secondary";
+    variant: "secondary";
   };
 
   resultStatus?: {
     // tylko po losowaniu
     viewed: boolean;
     text: string; // "Zobaczył" | "Nie zobaczył"
-    variant: "success" | "warning";
+    variant: "secondary";
   };
 
   // Token (dla niezarejestrowanych)

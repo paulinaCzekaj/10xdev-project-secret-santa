@@ -11,7 +11,7 @@ export const trailingSlash = "never";
  * Zod schema for validating participant ID parameter
  */
 const ParticipantIdParamSchema = z.object({
-  id: z.coerce.number().int().positive({
+  participantId: z.coerce.number().int().positive({
     message: "Participant ID must be a positive integer",
   }),
 });
@@ -32,13 +32,13 @@ const UpdateParticipantSchema = z
   });
 
 /**
- * PATCH /api/participants/:id
+ * PATCH /api/participants/:participantId
  * Updates an existing participant's information
  *
  * Only the group creator can update participants, and only before the draw.
  * Validates email uniqueness within the group if email is being updated.
  *
- * @param {number} id - Participant ID from URL parameter
+ * @param {number} participantId - Participant ID from URL parameter
  * @body UpdateParticipantCommand (optional fields: name, email)
  * @returns {ParticipantDTO} 200 - Updated participant details
  * @returns {ApiErrorResponse} 400 - Invalid input, email exists, or draw completed
@@ -50,13 +50,13 @@ const UpdateParticipantSchema = z
  * @note Authentication required
  */
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
-  console.log("[PATCH /api/participants/:id] Endpoint hit", { participantId: params.id });
+  console.log("[PATCH /api/participants/:participantId] Endpoint hit", { participantId: params.participantId });
 
   let userId: string | undefined;
 
   try {
-    // Guard 1: Validate ID parameter
-    const { id } = ParticipantIdParamSchema.parse({ id: params.id });
+    // Guard 1: Validate participantId parameter
+    const { participantId } = ParticipantIdParamSchema.parse({ participantId: params.participantId });
 
     // Guard 2: Authentication
     const userIdOrResponse = requireApiAuth({ locals, request } as any);
@@ -90,7 +90,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     const participantService = new ParticipantService(supabase);
 
     // Guard 5: Check if participant exists and get group info
-    const participant = await participantService.getParticipantWithGroupInfo(id);
+    const participant = await participantService.getParticipantWithGroupInfo(participantId);
     if (!participant) {
       const errorResponse: ApiErrorResponse = {
         error: {
@@ -127,7 +127,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
 
     // Guard 8: If email is being updated, check uniqueness
     if (validatedData.email) {
-      const emailExists = await participantService.checkEmailUniqueness(validatedData.email, participant.group_id, id);
+      const emailExists = await participantService.checkEmailUniqueness(validatedData.email, participant.group_id, participantId);
       if (emailExists) {
         const errorResponse: ApiErrorResponse = {
           error: {
@@ -144,7 +144,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Happy path: Update participant
-    const updatedParticipant = await participantService.updateParticipant(id, validatedData);
+    const updatedParticipant = await participantService.updateParticipant(participantId, validatedData);
 
     return new Response(JSON.stringify(updatedParticipant), {
       status: 200,
@@ -170,8 +170,8 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Log unexpected errors
-    console.error("[PATCH /api/participants/:id] Error:", {
-      participantId: params.id,
+    console.error("[PATCH /api/participants/:participantId] Error:", {
+      participantId: params.participantId,
       userId,
       error,
     });
@@ -191,14 +191,14 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
 };
 
 /**
- * DELETE /api/participants/:id
+ * DELETE /api/participants/:participantId
  * Deletes a participant from a Secret Santa group
  *
  * Only the group creator can delete participants, and only before the draw.
  * Prevents deletion of the group creator to avoid orphaning the group.
  * Cascades to delete related records (exclusion rules, wishes, assignments).
  *
- * @param {number} id - Participant ID from URL parameter
+ * @param {number} participantId - Participant ID from URL parameter
  * @returns 204 - No content (success)
  * @returns {ApiErrorResponse} 400 - Invalid ID, cannot delete creator, or draw completed
  * @returns {ApiErrorResponse} 401 - Not authenticated
@@ -209,13 +209,13 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
  * @note Authentication required
  */
 export const DELETE: APIRoute = async ({ params, locals, request }) => {
-  console.log("[DELETE /api/participants/:id] Endpoint hit", { participantId: params.id });
+  console.log("[DELETE /api/participants/:participantId] Endpoint hit", { participantId: params.participantId });
 
   let userId: string | undefined;
 
   try {
-    // Guard 1: Validate ID parameter
-    const { id } = ParticipantIdParamSchema.parse({ id: params.id });
+    // Guard 1: Validate participantId parameter
+    const { participantId } = ParticipantIdParamSchema.parse({ participantId: params.participantId });
 
     // Guard 2: Authentication
     const userIdOrResponse = requireApiAuth({ locals, request } as any);
@@ -229,7 +229,7 @@ export const DELETE: APIRoute = async ({ params, locals, request }) => {
     const participantService = new ParticipantService(supabase);
 
     // Guard 3: Check if participant exists and get group info
-    const participant = await participantService.getParticipantWithGroupInfo(id);
+    const participant = await participantService.getParticipantWithGroupInfo(participantId);
     if (!participant) {
       const errorResponse: ApiErrorResponse = {
         error: {
@@ -265,7 +265,7 @@ export const DELETE: APIRoute = async ({ params, locals, request }) => {
     }
 
     // Guard 6: Check if participant is group creator
-    const isParticipantCreator = await participantService.isParticipantCreator(id, participant.group_id);
+    const isParticipantCreator = await participantService.isParticipantCreator(participantId, participant.group_id);
     if (isParticipantCreator) {
       const errorResponse: ApiErrorResponse = {
         error: {
@@ -280,7 +280,7 @@ export const DELETE: APIRoute = async ({ params, locals, request }) => {
     }
 
     // Happy path: Delete participant
-    await participantService.deleteParticipant(id);
+    await participantService.deleteParticipant(participantId);
 
     return new Response(null, {
       status: 204,
@@ -305,8 +305,8 @@ export const DELETE: APIRoute = async ({ params, locals, request }) => {
     }
 
     // Log unexpected errors
-    console.error("[DELETE /api/participants/:id] Error:", {
-      participantId: params.id,
+    console.error("[DELETE /api/participants/:participantId] Error:", {
+      participantId: params.participantId,
       userId,
       error,
     });

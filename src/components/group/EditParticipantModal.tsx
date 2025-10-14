@@ -21,7 +21,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { User, Mail } from "lucide-react";
-import type { ParticipantViewModel, EditParticipantFormViewModel, ParticipantDTO } from "@/types";
+import { toast } from "sonner";
+import type { ParticipantViewModel, EditParticipantFormViewModel, ParticipantDTO, UpdateParticipantCommand } from "@/types";
 
 // Schema walidacji dla formularza edycji uczestnika
 const editParticipantFormSchema = z.object({
@@ -40,7 +41,8 @@ interface EditParticipantModalProps {
   participant: ParticipantViewModel | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (updatedParticipant: ParticipantDTO) => void;
+  onSave: () => void; // Zmiana - tylko callback bez parametrów
+  updateParticipant: (participantId: number, command: UpdateParticipantCommand) => Promise<{ success: boolean; error?: string }>;
 }
 
 export function EditParticipantModal({
@@ -48,6 +50,7 @@ export function EditParticipantModal({
   isOpen,
   onClose,
   onSave,
+  updateParticipant,
 }: EditParticipantModalProps) {
   const form = useForm<EditParticipantFormViewModel>({
     resolver: zodResolver(editParticipantFormSchema),
@@ -71,33 +74,23 @@ export function EditParticipantModal({
     if (!participant) return;
 
     try {
-      // Tutaj będzie wywołanie API
-      // const response = await fetch(`/api/participants/${participant.id}`, {
-      //   method: "PATCH",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //     // Authorization header
-      //   },
-      //   body: JSON.stringify({
-      //     name: values.name,
-      //     email: values.email || undefined,
-      //   }),
-      // });
-
-      // const updatedParticipant: ParticipantDTO = await response.json();
-
-      // Na razie symuluję odpowiedź API
-      const updatedParticipant: ParticipantDTO = {
-        ...participant,
+      const command: UpdateParticipantCommand = {
         name: values.name,
-        email: values.email || null,
-        updated_at: new Date().toISOString(),
+        email: values.email || undefined,
       };
 
-      onSave(updatedParticipant);
-      onClose();
+      const result = await updateParticipant(participant.id, command);
+
+      if (result.success) {
+        toast.success("Uczestnik został zaktualizowany");
+        onSave();
+        onClose();
+      } else {
+        toast.error(result.error || "Nie udało się zaktualizować uczestnika");
+      }
     } catch (error) {
       console.error("Błąd podczas aktualizacji uczestnika:", error);
+      toast.error("Wystąpił błąd podczas aktualizacji uczestnika");
     }
   };
 

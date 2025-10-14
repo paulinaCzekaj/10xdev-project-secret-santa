@@ -1,0 +1,72 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import GroupView from "@/components/group/GroupView.tsx";
+import { createSupabaseServerInstance } from "@/db/supabase.client";
+
+export const prerender = false;
+
+const { groupId } = Astro.params;
+const groupIdNum = parseInt(groupId);
+
+if (!groupIdNum || isNaN(groupIdNum)) {
+  return Astro.redirect("/dashboard");
+}
+
+// Użyj server-side Supabase instance dla autoryzacji
+const supabase = createSupabaseServerInstance({
+  cookies: Astro.cookies,
+  headers: Astro.request.headers,
+});
+
+// Sprawdź czy użytkownik jest zalogowany
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+if (!user) {
+  return Astro.redirect("/login");
+}
+
+// Sprawdź dostęp do grupy
+try {
+  // Sprawdź czy użytkownik jest twórcą grupy
+  const { data: group, error: groupError } = await supabase
+    .from("groups")
+    .select("creator_id")
+    .eq("id", groupIdNum)
+    .single();
+
+  if (groupError || !group) {
+    return Astro.redirect("/dashboard");
+  }
+
+  // Jeśli użytkownik jest twórcą - OK
+  if (group.creator_id === user.id) {
+    // OK - użytkownik ma dostęp
+  } else {
+    // Sprawdź czy użytkownik jest uczestnikiem
+    const { data: participant, error: participantError } = await supabase
+      .from("participants")
+      .select("id")
+      .eq("group_id", groupIdNum)
+      .eq("user_id", user.id)
+      .single();
+
+    if (participantError || !participant) {
+      // Brak dostępu - przekieruj do dashboard
+      return Astro.redirect("/dashboard");
+    }
+  }
+} catch (error) {
+  console.error("Error checking group access:", error);
+  return Astro.redirect("/dashboard");
+}
+---
+
+<Layout title={`Grupa ${groupIdNum} | Secret Santa`}>
+  <div class="min-h-screen bg-gradient-to-br from-red-50 via-white to-green-50">
+    <div class="container mx-auto px-4 py-8">
+      <GroupView client:load groupId={groupIdNum} />
+    </div>
+  </div>
+</Layout>

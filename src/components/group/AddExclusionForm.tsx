@@ -2,26 +2,20 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Ban, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
-import type { AddExclusionFormViewModel, ExclusionRuleDTO, ParticipantViewModel, ExclusionViewModel } from "@/types";
+import { useExclusions } from "@/hooks/useExclusions";
+import type {
+  AddExclusionFormViewModel,
+  ExclusionRuleDTO,
+  ParticipantViewModel,
+  ExclusionViewModel,
+  CreateExclusionRuleCommand,
+} from "@/types";
 
 // Schema walidacji dla formularza dodawania wykluczenia
 const addExclusionFormSchema = z
@@ -39,13 +33,10 @@ const addExclusionFormSchema = z
       })
       .positive("Wybierz osobę"),
   })
-  .refine(
-    (data) => data.blocker_participant_id !== data.blocked_participant_id,
-    {
-      message: "Osoba nie może wykluczyć samej siebie",
-      path: ["blocked_participant_id"],
-    }
-  );
+  .refine((data) => data.blocker_participant_id !== data.blocked_participant_id, {
+    message: "Osoba nie może wykluczyć samej siebie",
+    path: ["blocked_participant_id"],
+  });
 
 interface AddExclusionFormProps {
   groupId: number;
@@ -54,12 +45,9 @@ interface AddExclusionFormProps {
   onSuccess: (exclusion: ExclusionRuleDTO) => void;
 }
 
-export function AddExclusionForm({
-  groupId,
-  participants,
-  existingExclusions,
-  onSuccess,
-}: AddExclusionFormProps) {
+export function AddExclusionForm({ groupId, participants, existingExclusions, onSuccess }: AddExclusionFormProps) {
+  const { addExclusion } = useExclusions(groupId);
+
   const form = useForm<AddExclusionFormViewModel>({
     resolver: zodResolver(addExclusionFormSchema),
     defaultValues: {
@@ -71,9 +59,7 @@ export function AddExclusionForm({
   // Sprawdzamy czy wykluczenie już istnieje
   const isExclusionDuplicate = (blockerId: number, blockedId: number): boolean => {
     return existingExclusions.some(
-      (exclusion) =>
-        exclusion.blocker_participant_id === blockerId &&
-        exclusion.blocked_participant_id === blockedId
+      (exclusion) => exclusion.blocker_participant_id === blockerId && exclusion.blocked_participant_id === blockedId
     );
   };
 
@@ -85,32 +71,21 @@ export function AddExclusionForm({
     }
 
     try {
-      // Tutaj będzie wywołanie API
-      // const response = await fetch(`/api/groups/${groupId}/exclusions`, {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //     // Authorization header
-      //   },
-      //   body: JSON.stringify(values),
-      // });
-
-      // const exclusion: ExclusionRuleDTO = await response.json();
-
-      // Na razie symuluję odpowiedź API
-      const exclusion: ExclusionRuleDTO = {
-        id: Math.random(),
-        group_id: groupId,
+      const command: CreateExclusionRuleCommand = {
         blocker_participant_id: values.blocker_participant_id,
         blocked_participant_id: values.blocked_participant_id,
-        created_at: new Date().toISOString(),
       };
 
-      form.reset();
-      onSuccess(exclusion);
-      toast.success("Wykluczenie zostało dodane");
+      const result = await addExclusion(command);
+
+      if (result.success && result.data) {
+        form.reset();
+        onSuccess(result.data);
+        toast.success("Wykluczenie zostało dodane");
+      } else {
+        toast.error(result.error || "Nie udało się dodać wykluczenia. Spróbuj ponownie.");
+      }
     } catch (error) {
-      console.error("Błąd podczas dodawania wykluczenia:", error);
       toast.error("Nie udało się dodać wykluczenia. Spróbuj ponownie.");
     }
   };
@@ -138,10 +113,7 @@ export function AddExclusionForm({
                       </FormControl>
                       <SelectContent>
                         {participants.map((participant) => (
-                          <SelectItem
-                            key={participant.id}
-                            value={participant.id.toString()}
-                          >
+                          <SelectItem key={participant.id} value={participant.id.toString()}>
                             {participant.name}
                             {participant.email && ` (${participant.email})`}
                           </SelectItem>
@@ -174,10 +146,7 @@ export function AddExclusionForm({
                       </FormControl>
                       <SelectContent>
                         {participants.map((participant) => (
-                          <SelectItem
-                            key={participant.id}
-                            value={participant.id.toString()}
-                          >
+                          <SelectItem key={participant.id} value={participant.id.toString()}>
                             {participant.name}
                             {participant.email && ` (${participant.email})`}
                           </SelectItem>
@@ -190,11 +159,7 @@ export function AddExclusionForm({
               />
 
               <div className="flex items-end">
-                <Button
-                  type="submit"
-                  disabled={form.formState.isSubmitting}
-                  className="flex items-center gap-2"
-                >
+                <Button type="submit" disabled={form.formState.isSubmitting} className="flex items-center gap-2">
                   <Ban className="h-4 w-4" />
                   {form.formState.isSubmitting ? "Dodawanie..." : "Dodaj wykluczenie"}
                 </Button>
@@ -202,8 +167,8 @@ export function AddExclusionForm({
             </div>
 
             <p className="text-sm text-muted-foreground">
-              Wykluczenia są jednokierunkowe. Osoba A nie może wylosować osoby B,
-              ale osoba B może wylosować osobę A (chyba że zostanie dodane odwrotne wykluczenie).
+              Wykluczenia są jednokierunkowe. Osoba A nie może wylosować osoby B, ale osoba B może wylosować osobę A
+              (chyba że zostanie dodane odwrotne wykluczenie).
             </p>
           </form>
         </Form>

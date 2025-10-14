@@ -30,7 +30,9 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import type { GroupViewModel, EditGroupFormViewModel } from "@/types";
+import { toast } from "sonner";
+import { useGroupData } from "@/hooks/useGroupData";
+import type { GroupViewModel, EditGroupFormViewModel, UpdateGroupCommand } from "@/types";
 
 // Schema walidacji dla formularza edycji grupy
 const editGroupFormSchema = z.object({
@@ -63,7 +65,7 @@ interface GroupEditModalProps {
   group: GroupViewModel;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (updatedGroup: GroupViewModel) => void;
+  onSave: () => void; // Zmiana - tylko callback bez parametrów
 }
 
 export function GroupEditModal({
@@ -72,6 +74,8 @@ export function GroupEditModal({
   onClose,
   onSave,
 }: GroupEditModalProps) {
+  const { updateGroup } = useGroupData(group.id);
+
   const form = useForm<EditGroupFormViewModel>({
     resolver: zodResolver(editGroupFormSchema),
     defaultValues: {
@@ -94,26 +98,24 @@ export function GroupEditModal({
 
   const onSubmit = async (values: EditGroupFormViewModel) => {
     try {
-      // Tutaj będzie wywołanie API
-      // const updatedGroup = await updateGroup(group.id, {
-      //   name: values.name,
-      //   budget: values.budget,
-      //   end_date: values.end_date.toISOString(),
-      // });
-
-      // Na razie symuluję sukces
-      const updatedGroup = {
-        ...group,
+      const command: UpdateGroupCommand = {
         name: values.name,
         budget: values.budget,
         end_date: values.end_date.toISOString(),
       };
 
-      onSave(updatedGroup);
-      onClose();
+      const result = await updateGroup(command);
+
+      if (result.success) {
+        toast.success("Grupa została zaktualizowana");
+        onSave();
+        onClose();
+      } else {
+        toast.error(result.error || "Nie udało się zaktualizować grupy");
+      }
     } catch (error) {
-      // Obsługa błędów
       console.error("Błąd podczas aktualizacji grupy:", error);
+      toast.error("Wystąpił błąd podczas aktualizacji grupy");
     }
   };
 

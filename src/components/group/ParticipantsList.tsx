@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -26,7 +19,7 @@ interface ParticipantsListProps {
   isDrawn: boolean;
   isCreator: boolean;
   onEdit: (participant: ParticipantViewModel) => void;
-  onDelete: (participantId: number) => void;
+  onDelete: (participant: ParticipantViewModel) => void;
   onCopyToken: (participant: ParticipantViewModel) => void;
 }
 
@@ -77,9 +70,7 @@ export function ParticipantsList({
             <TableCell>
               <div className="flex items-center gap-3">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="text-xs">
-                    {participant.initials}
-                  </AvatarFallback>
+                  <AvatarFallback className="text-xs">{participant.initials}</AvatarFallback>
                 </Avatar>
                 <div>
                   <div className="font-medium">
@@ -94,21 +85,14 @@ export function ParticipantsList({
               </div>
             </TableCell>
 
-            <TableCell className="text-muted-foreground">
-              {participant.displayEmail}
-            </TableCell>
+            <TableCell className="text-muted-foreground">{participant.displayEmail}</TableCell>
 
             {!isDrawn ? (
               // Kolumna akcji przed losowaniem
               <TableCell>
                 <div className="flex items-center gap-1">
                   {canEdit && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEdit(participant)}
-                      className="h-8 w-8 p-0"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => onEdit(participant)} className="h-8 w-8 p-0">
                       <Edit className="h-4 w-4" />
                       <span className="sr-only">Edytuj uczestnika</span>
                     </Button>
@@ -118,7 +102,7 @@ export function ParticipantsList({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onDelete(participant.id)}
+                      onClick={() => onDelete(participant)}
                       disabled={participant.isCreator}
                       className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                     >
@@ -132,17 +116,13 @@ export function ParticipantsList({
               // Kolumny statusu po losowaniu
               <>
                 <TableCell>
-                  <Badge
-                    variant={participant.wishlistStatus?.variant || "secondary"}
-                  >
+                  <Badge variant={participant.wishlistStatus?.variant || "secondary"}>
                     {participant.wishlistStatus?.text || "Brak"}
                   </Badge>
                 </TableCell>
 
                 <TableCell>
-                  <Badge
-                    variant={participant.resultStatus?.variant || "warning"}
-                  >
+                  <Badge variant={participant.resultStatus?.variant || "secondary"}>
                     {participant.resultStatus?.text || "Nie zobaczył"}
                   </Badge>
                 </TableCell>

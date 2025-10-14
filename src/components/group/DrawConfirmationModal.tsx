@@ -10,52 +10,39 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Shuffle, AlertTriangle, Users, Ban } from "lucide-react";
+import { toast } from "sonner";
 import type { DrawResultDTO } from "@/types";
 
 interface DrawConfirmationModalProps {
   isOpen: boolean;
-  groupId: number;
   participantsCount: number;
   exclusionsCount: number;
   onClose: () => void;
-  onConfirm: (result: DrawResultDTO) => void;
+  onConfirm: () => void;
+  executeDraw: () => Promise<{ success: boolean; error?: string; data?: DrawResultDTO }>;
 }
 
 export function DrawConfirmationModal({
   isOpen,
-  groupId,
   participantsCount,
   exclusionsCount,
   onClose,
   onConfirm,
+  executeDraw,
 }: DrawConfirmationModalProps) {
   const handleConfirm = async () => {
     try {
-      // Tutaj będzie wywołanie API do wykonania losowania
-      // const response = await fetch(`/api/groups/${groupId}/draw`, {
-      //   method: "POST",
-      //   headers: {
-      //     // Authorization header
-      //   },
-      // });
+      const result = await executeDraw();
 
-      // const result: DrawResultDTO = await response.json();
-
-      // Na razie symuluję odpowiedź API
-      const result: DrawResultDTO = {
-        success: true,
-        message: "Losowanie zostało pomyślnie wykonane",
-        group_id: groupId,
-        drawn_at: new Date().toISOString(),
-        participants_notified: participantsCount,
-      };
-
-      onConfirm(result);
+      if (result.success && result.data) {
+        toast.success("Losowanie zostało pomyślnie wykonane!");
+        onConfirm();
+      } else {
+        toast.error(result.error || "Nie udało się wykonać losowania");
+      }
     } catch (error) {
-      console.error("Błąd podczas wykonania losowania:", error);
-      // Tutaj można dodać obsługę błędu
+      toast.error("Wystąpił błąd podczas wykonania losowania");
     }
   };
 
@@ -70,8 +57,8 @@ export function DrawConfirmationModal({
             <div>
               <AlertDialogTitle>Czy na pewno chcesz rozpocząć losowanie?</AlertDialogTitle>
               <AlertDialogDescription className="mt-2">
-                Ta operacja jest nieodwracalna. Po rozpoczęciu losowania nie będzie można
-                dodawać/usunąć uczestników ani zmieniać wykluczeń.
+                Ta operacja jest nieodwracalna. Po rozpoczęciu losowania nie będzie można dodawać/usunąć uczestników ani
+                zmieniać wykluczeń.
               </AlertDialogDescription>
             </div>
           </div>
@@ -83,13 +70,13 @@ export function DrawConfirmationModal({
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm">
-                <strong>{participantsCount}</strong> {participantsCount === 1 ? 'uczestnik' : 'uczestników'}
+                <strong>{participantsCount}</strong> {participantsCount === 1 ? "uczestnik" : "uczestników"}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Ban className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm">
-                <strong>{exclusionsCount}</strong> {exclusionsCount === 1 ? 'wykluczenie' : 'wykluczeń'}
+                <strong>{exclusionsCount}</strong> {exclusionsCount === 1 ? "wykluczenie" : "wykluczeń"}
               </span>
             </div>
           </div>
@@ -98,9 +85,8 @@ export function DrawConfirmationModal({
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              <strong>Uwaga!</strong> Po potwierdzeniu wszyscy uczestnicy otrzymają
-              informacje o swoich wynikach losowania. Upewnij się, że wszyscy uczestnicy
-              są gotowi i że lista jest kompletna.
+              <strong>Uwaga!</strong> Po potwierdzeniu wszyscy uczestnicy otrzymają informacje o swoich wynikach
+              losowania. Upewnij się, że wszyscy uczestnicy są gotowi i że lista jest kompletna.
             </AlertDescription>
           </Alert>
 
@@ -119,10 +105,7 @@ export function DrawConfirmationModal({
 
         <AlertDialogFooter>
           <AlertDialogCancel>Anuluj</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleConfirm}
-            className="bg-red-600 text-white hover:bg-red-700"
-          >
+          <AlertDialogAction onClick={handleConfirm} className="bg-red-600 text-white hover:bg-red-700">
             Potwierdź i rozpocznij losowanie
           </AlertDialogAction>
         </AlertDialogFooter>

@@ -13,13 +13,13 @@ export const trailingSlash = "never";
  * Zod schema for validating group ID parameter
  */
 const GroupIdParamSchema = z.object({
-  id: z.coerce.number().int().positive({
+  groupId: z.coerce.number().int().positive({
     message: "Group ID must be a positive integer",
   }),
 });
 
 /**
- * POST /api/groups/:id/draw
+ * POST /api/groups/:groupId/draw
  * Executes Secret Santa draw for a group
  *
  * This endpoint performs the complete draw operation:
@@ -30,7 +30,7 @@ const GroupIdParamSchema = z.object({
  * - Executes backtracking algorithm to find assignments
  * - Saves all assignments atomically in database
  *
- * @param {number} id - Group ID from URL parameter
+ * @param {number} groupId - Group ID from URL parameter
  * @returns {DrawResultDTO} 200 - Draw completed successfully
  * @returns {ApiErrorResponse} 400 - Invalid input, insufficient participants, draw already completed, or impossible draw
  * @returns {ApiErrorResponse} 401 - Not authenticated
@@ -41,7 +41,7 @@ const GroupIdParamSchema = z.object({
  * @note Authentication required
  */
 export const POST: APIRoute = async ({ params, locals, request }) => {
-  console.log("[POST /api/groups/:id/draw] Endpoint hit", { groupId: params.id });
+  console.log("[POST /api/groups/:groupId/draw] Endpoint hit", { groupId: params.groupId });
 
   let userId: string | undefined;
 
@@ -50,8 +50,8 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
     // STEP 1: Validate Parameters and Authentication
     // ========================================================================
 
-    // Guard 1: Validate id parameter
-    const { id: groupId } = GroupIdParamSchema.parse({ id: params.id });
+    // Guard 1: Validate groupId parameter
+    const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
     // Guard 2: Authentication
     const userIdOrResponse = requireApiAuth({ locals, request } as any);
@@ -60,7 +60,7 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
     }
     userId = userIdOrResponse;
 
-    console.log("[POST /api/groups/:id/draw] User authenticated", { userId, groupId });
+    console.log("[POST /api/groups/:groupId/draw] User authenticated", { userId, groupId });
 
     // Guard 3: Check if user is group owner
     const ownerOrResponse = await requireGroupOwner({ locals, request } as any, groupId);
@@ -74,7 +74,7 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
     const assignmentsService = new AssignmentsService(supabase);
     const drawService = new DrawService();
 
-    console.log("[POST /api/groups/:id/draw] User is creator - authorized", { groupId });
+    console.log("[POST /api/groups/:groupId/draw] User is creator - authorized", { groupId });
 
     // ========================================================================
     // STEP 3: Pre-Draw Validation
@@ -84,7 +84,7 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
     const hasDrawn = await assignmentsService.hasDrawBeenExecuted(groupId);
     if (hasDrawn) {
       const drawnAt = await assignmentsService.getDrawTimestamp(groupId);
-      console.log("[POST /api/groups/:id/draw] Draw already completed", {
+      console.log("[POST /api/groups/:groupId/draw] Draw already completed", {
         groupId,
         drawnAt,
       });
@@ -103,12 +103,12 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
       });
     }
 
-    console.log("[POST /api/groups/:id/draw] Draw not yet executed - proceeding", { groupId });
+    console.log("[POST /api/groups/:groupId/draw] Draw not yet executed - proceeding", { groupId });
 
     // Guard 6: Fetch participants and validate count
     const participants = await groupService.getParticipantsForDraw(groupId);
     if (participants.length < 3) {
-      console.log("[POST /api/groups/:id/draw] Insufficient participants", {
+      console.log("[POST /api/groups/:groupId/draw] Insufficient participants", {
         groupId,
         count: participants.length,
       });
@@ -128,7 +128,7 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
       });
     }
 
-    console.log("[POST /api/groups/:id/draw] Participant count valid", {
+    console.log("[POST /api/groups/:groupId/draw] Participant count valid", {
       groupId,
       count: participants.length,
     });
@@ -136,7 +136,7 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
     // Fetch exclusion rules
     const exclusions = await groupService.getExclusionsForDraw(groupId);
 
-    console.log("[POST /api/groups/:id/draw] Exclusion rules fetched", {
+    console.log("[POST /api/groups/:groupId/draw] Exclusion rules fetched", {
       groupId,
       exclusionsCount: exclusions.length,
     });
@@ -147,7 +147,7 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
 
     // Guard 7: Check if draw is possible with current exclusion rules
     if (!drawService.isDrawPossible(participants, exclusions)) {
-      console.log("[POST /api/groups/:id/draw] Draw is impossible with current rules", {
+      console.log("[POST /api/groups/:groupId/draw] Draw is impossible with current rules", {
         groupId,
         participantsCount: participants.length,
         exclusionsCount: exclusions.length,
@@ -168,7 +168,7 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
       });
     }
 
-    console.log("[POST /api/groups/:id/draw] Draw is possible - executing algorithm", { groupId });
+    console.log("[POST /api/groups/:groupId/draw] Draw is possible - executing algorithm", { groupId });
 
     // ========================================================================
     // STEP 5: Execute Draw Algorithm
@@ -178,7 +178,7 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
 
     // Guard 8: Check if algorithm found a solution
     if (!assignments) {
-      console.error("[POST /api/groups/:id/draw] Algorithm failed to find solution", {
+      console.error("[POST /api/groups/:groupId/draw] Algorithm failed to find solution", {
         groupId,
         participantsCount: participants.length,
         exclusionsCount: exclusions.length,
@@ -195,7 +195,7 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
       });
     }
 
-    console.log("[POST /api/groups/:id/draw] Algorithm completed successfully", {
+    console.log("[POST /api/groups/:groupId/draw] Algorithm completed successfully", {
       groupId,
       assignmentsCount: assignments.length,
     });
@@ -206,12 +206,12 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
 
     try {
       await assignmentsService.createBatch(groupId, assignments);
-      console.log("[POST /api/groups/:id/draw] Assignments saved to database", {
+      console.log("[POST /api/groups/:groupId/draw] Assignments saved to database", {
         groupId,
         assignmentsCount: assignments.length,
       });
     } catch (error) {
-      console.error("[POST /api/groups/:id/draw] Failed to save assignments", {
+      console.error("[POST /api/groups/:groupId/draw] Failed to save assignments", {
         groupId,
         error,
       });
@@ -239,7 +239,7 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
       participants_notified: participants.length,
     };
 
-    console.log("[POST /api/groups/:id/draw] Draw completed successfully", {
+    console.log("[POST /api/groups/:groupId/draw] Draw completed successfully", {
       groupId,
       participantsNotified: participants.length,
     });
@@ -259,8 +259,8 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
       const firstError = error.errors[0];
-      console.log("[POST /api/groups/:id/draw] Validation error", {
-        groupId: params.id,
+      console.log("[POST /api/groups/:groupId/draw] Validation error", {
+        groupId: params.groupId,
         error: firstError.message,
       });
       const errorResponse: ApiErrorResponse = {
@@ -280,7 +280,7 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
     }
 
     // Log unexpected errors
-    console.error("[POST /api/groups/:id/draw] Unexpected error", {
+    console.error("[POST /api/groups/:groupId/draw] Unexpected error", {
       groupId: params.id,
       userId,
       error,

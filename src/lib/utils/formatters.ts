@@ -165,7 +165,7 @@ export function formatWishlistStatus(hasWishlist: boolean) {
   return {
     hasWishlist,
     text: hasWishlist ? "Dodana" : "Brak",
-    variant: hasWishlist ? "success" : "secondary" as const,
+    variant: (hasWishlist ? "secondary" : "secondary") as "secondary",
   };
 }
 
@@ -178,7 +178,7 @@ export function formatResultStatus(viewed: boolean) {
   return {
     viewed,
     text: viewed ? "Zobaczył" : "Nie zobaczył",
-    variant: viewed ? "success" : "warning" as const,
+    variant: (viewed ? "secondary" : "secondary") as "secondary",
   };
 }
 
@@ -190,6 +190,6 @@ export function formatResultStatus(viewed: boolean) {
 export function formatGroupStatusBadge(isDrawn: boolean) {
   return {
     text: isDrawn ? "Losowanie zakończone" : "Przed losowaniem",
-    variant: isDrawn ? "success" : "default" as const,
+    variant: (isDrawn ? "secondary" : "default") as "default" | "secondary",
   };
 }

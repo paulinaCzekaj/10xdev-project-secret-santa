@@ -6,6 +6,7 @@ import type {
   ParticipantUpdate,
   ParticipantDTO,
   ParticipantListItemDTO,
+  ResultAccessTrackingDTO,
   UserId,
 } from "../../types";
 import { generateAccessToken } from "../utils/token.utils";
@@ -600,7 +601,8 @@ export class ParticipantService {
       // Include access_token in select - we'll conditionally include it in response
       const { data: participantsWithWishlist, error: queryError } = await this.supabase
         .from("participants")
-        .select(`
+        .select(
+          `
           id,
           group_id,
           user_id,
@@ -608,13 +610,18 @@ export class ParticipantService {
           email,
           created_at,
           access_token,
+          result_viewed_at,
           wishes!left(participant_id)
-        `)
+        `
+        )
         .eq("group_id", groupId)
         .order("created_at", { ascending: true });
 
       if (queryError) {
-        console.error("[ParticipantService.getGroupParticipants] Failed to get participants with wishlist:", queryError);
+        console.error(
+          "[ParticipantService.getGroupParticipants] Failed to get participants with wishlist:",
+          queryError
+        );
         throw new Error("Failed to get group participants");
       }
 
@@ -630,7 +637,7 @@ export class ParticipantService {
 
       // Step 4: Transform the data to match ParticipantListItemDTO format
       // Include access_token only if user is the group creator
-      const participants: ParticipantListItemDTO[] = participantsWithWishlist.map(participant => {
+      const participants: ParticipantListItemDTO[] = participantsWithWishlist.map((participant) => {
         const baseData = {
           id: participant.id,
           group_id: participant.group_id,
@@ -638,7 +645,9 @@ export class ParticipantService {
           name: participant.name,
           email: participant.email,
           created_at: participant.created_at,
+          result_viewed_at: participant.result_viewed_at,
           has_wishlist: Array.isArray(participant.wishes) && participant.wishes.length > 0,
+          result_viewed: participant.result_viewed_at !== null,
         };
 
         // Only include access_token if user is creator
@@ -655,13 +664,83 @@ export class ParticipantService {
       console.log("[ParticipantService.getGroupParticipants] Successfully retrieved participants", {
         groupId,
         participantCount: participants.length,
-        withWishlistCount: participants.filter(p => p.has_wishlist).length,
+        withWishlistCount: participants.filter((p) => p.has_wishlist).length,
         includesAccessToken: isCreator,
       });
 
       return participants;
     } catch (error) {
       console.error("[ParticipantService.getGroupParticipants] Error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Tracks when an unregistered participant accesses their Secret Santa result
+   *
+   * Updates the result_viewed_at timestamp for the participant.
+   * Returns access tracking information including count and timestamps.
+   *
+   * @param accessToken - The participant's access token
+   * @returns ResultAccessTrackingDTO with access information
+   * @throws {Error} "PARTICIPANT_NOT_FOUND" - If token doesn't match any participant
+   * @throws {Error} "Failed to track result access" - If database operation fails
+   *
+   * @example
+   * const tracking = await participantService.trackResultAccess("uuid-token");
+   * // Returns: { participant_id: 1, access_count: 3, first_accessed_at: "2025-10-14T10:00:00Z", last_accessed_at: "2025-10-14T10:30:00Z" }
+   */
+  async trackResultAccess(accessToken: string): Promise<ResultAccessTrackingDTO> {
+    console.log("[ParticipantService.trackResultAccess] Starting", { accessToken: accessToken.substring(0, 8) + "..." });
+
+    try {
+      // Find participant by access token
+      const { data: participant, error: findError } = await this.supabase
+        .from("participants")
+        .select("id, result_viewed_at")
+        .eq("access_token", accessToken)
+        .maybeSingle();
+
+      if (findError) {
+        console.error("[ParticipantService.trackResultAccess] Failed to find participant:", findError);
+        throw new Error("Failed to find participant");
+      }
+
+      if (!participant) {
+        console.log("[ParticipantService.trackResultAccess] Participant not found", { accessToken: accessToken.substring(0, 8) + "..." });
+        throw new Error("PARTICIPANT_NOT_FOUND");
+      }
+
+      const now = new Date().toISOString();
+
+      // Update result_viewed_at if not set yet, or just track the access
+      const { error: updateError } = await this.supabase
+        .from("participants")
+        .update({ result_viewed_at: now })
+        .eq("id", participant.id);
+
+      if (updateError) {
+        console.error("[ParticipantService.trackResultAccess] Failed to update result_viewed_at:", updateError);
+        throw new Error("Failed to track result access");
+      }
+
+      // For now, we just return basic tracking info
+      // In a more advanced implementation, we could track access history in a separate table
+      const result: ResultAccessTrackingDTO = {
+        participant_id: participant.id,
+        access_count: participant.result_viewed_at ? 2 : 1, // Simple count - could be improved
+        first_accessed_at: participant.result_viewed_at || now,
+        last_accessed_at: now,
+      };
+
+      console.log("[ParticipantService.trackResultAccess] Successfully tracked result access", {
+        participantId: participant.id,
+        wasFirstAccess: !participant.result_viewed_at,
+      });
+
+      return result;
+    } catch (error) {
+      console.error("[ParticipantService.trackResultAccess] Error:", error);
       throw error;
     }
   }

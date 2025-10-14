@@ -11,36 +11,29 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import type { ParticipantViewModel } from "@/types";
 
-interface DeleteGroupModalProps {
+interface DeleteParticipantModalProps {
+  participant: ParticipantViewModel | null;
   isOpen: boolean;
-  groupName: string;
   onClose: () => void;
-  onConfirm: () => void;
-  deleteGroup: () => Promise<{ success: boolean; error?: string }>;
+  onConfirm: (participantId: number) => void;
 }
 
-export function DeleteGroupModal({
+export function DeleteParticipantModal({
+  participant,
   isOpen,
-  groupName,
   onClose,
   onConfirm,
-  deleteGroup,
-}: DeleteGroupModalProps) {
-  const handleConfirm = async () => {
-    try {
-      const result = await deleteGroup();
-
-      if (result.success) {
-        toast.success("Grupa została usunięta");
-        onConfirm();
-      } else {
-        toast.error(result.error || "Nie udało się usunąć grupy");
-      }
-    } catch (error) {
-      toast.error("Wystąpił błąd podczas usuwania grupy");
+}: DeleteParticipantModalProps) {
+  const handleConfirm = () => {
+    if (participant) {
+      onConfirm(participant.id);
+      onClose();
     }
   };
+
+  if (!participant) return null;
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
@@ -51,11 +44,10 @@ export function DeleteGroupModal({
               <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
             <div>
-              <AlertDialogTitle>Czy na pewno chcesz usunąć tę grupę?</AlertDialogTitle>
+              <AlertDialogTitle>Czy na pewno chcesz usunąć tego uczestnika?</AlertDialogTitle>
               <AlertDialogDescription className="mt-2">
-                Ta akcja jest nieodwracalna. Spowoduje trwałe usunięcie grupy{" "}
-                <strong>"{groupName}"</strong> wraz ze wszystkimi uczestnikami,
-                wykluczeniami i wynikami losowania.
+                Uczestnik <strong>"{participant.displayName}"</strong> zostanie trwale usunięty z grupy.
+                Tej operacji nie można cofnąć.
               </AlertDialogDescription>
             </div>
           </div>
@@ -67,7 +59,7 @@ export function DeleteGroupModal({
             onClick={handleConfirm}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Usuń grupę
+            Usuń uczestnika
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

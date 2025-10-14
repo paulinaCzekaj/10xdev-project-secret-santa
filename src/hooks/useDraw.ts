@@ -70,12 +70,12 @@ export function useDraw(groupId: number) {
 
       return { success: true, data: result };
     } catch (err) {
-      const errorObj = {
+      const errorMessage = err instanceof Error ? err.message : "Nieznany błąd";
+      setError({
         code: "DRAW_ERROR",
-        message: err instanceof Error ? err.message : "Nieznany błąd",
-      };
-      setError(errorObj);
-      return { success: false, error: errorObj };
+        message: errorMessage,
+      });
+      return { success: false, error: errorMessage };
     } finally {
       setIsDrawing(false);
     }

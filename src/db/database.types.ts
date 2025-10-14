@@ -150,6 +150,7 @@ export interface Database {
           group_id: number;
           id: number;
           name: string;
+          result_viewed_at: string | null;
           user_id: string | null;
         };
         Insert: {
@@ -159,6 +160,7 @@ export interface Database {
           group_id: number;
           id?: number;
           name: string;
+          result_viewed_at?: string | null;
           user_id?: string | null;
         };
         Update: {
@@ -168,6 +170,7 @@ export interface Database {
           group_id?: number;
           id?: number;
           name?: string;
+          result_viewed_at?: string | null;
           user_id?: string | null;
         };
         Relationships: [

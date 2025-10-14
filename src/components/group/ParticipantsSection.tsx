@@ -4,7 +4,7 @@ import { AddParticipantForm } from "./AddParticipantForm";
 import { ParticipantsList } from "./ParticipantsList";
 import { ParticipantCard } from "./ParticipantCard";
 import { Users } from "lucide-react";
-import type { ParticipantViewModel } from "@/types";
+import type { ParticipantViewModel, ParticipantWithTokenDTO } from "@/types";
 
 interface ParticipantsSectionProps {
   groupId: number;
@@ -16,9 +16,8 @@ interface ParticipantsSectionProps {
   onParticipantUpdated: () => void;
   onParticipantDeleted: () => void;
   onEditParticipant: (participant: ParticipantViewModel) => void;
-  onDeleteParticipant: (participantId: number) => void;
+  onDeleteParticipant: (participant: ParticipantViewModel) => void;
   onCopyParticipantToken: (participant: ParticipantViewModel) => void;
-  onRefresh: () => void;
 }
 
 export function ParticipantsSection({
@@ -33,9 +32,8 @@ export function ParticipantsSection({
   onEditParticipant,
   onDeleteParticipant,
   onCopyParticipantToken,
-  onRefresh,
 }: ParticipantsSectionProps) {
-  const handleParticipantAdded = (participant: any) => {
+  const handleParticipantAdded = (participant: ParticipantWithTokenDTO) => {
     onParticipantAdded();
   };
 

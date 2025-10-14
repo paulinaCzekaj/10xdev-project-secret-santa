@@ -19,7 +19,7 @@ interface ParticipantCardProps {
   isDrawn: boolean;
   isCreator: boolean;
   onEdit: (participant: ParticipantViewModel) => void;
-  onDelete: (participantId: number) => void;
+  onDelete: (participant: ParticipantViewModel) => void;
   onCopyToken: (participant: ParticipantViewModel) => void;
 }
 
@@ -80,7 +80,7 @@ export function ParticipantCard({
                   Lista: {participant.wishlistStatus?.text || "Brak"}
                 </Badge>
                 <Badge
-                  variant={participant.resultStatus?.variant || "warning"}
+                  variant={participant.resultStatus?.variant || "secondary"}
                   className="text-xs"
                 >
                   Wynik: {participant.resultStatus?.text || "Nie zobaczył"}
@@ -106,7 +106,7 @@ export function ParticipantCard({
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
-                      onClick={() => onDelete(participant.id)}
+                      onClick={() => onDelete(participant)}
                       disabled={participant.isCreator}
                       className="text-destructive focus:text-destructive"
                     >

@@ -11,7 +11,7 @@ export const trailingSlash = "never";
  * Zod schema for validating group ID parameter
  */
 const GroupIdParamSchema = z.object({
-  id: z.coerce.number().int().positive({
+  groupId: z.coerce.number().int().positive({
     message: "Group ID must be a positive integer",
   }),
 });
@@ -30,13 +30,13 @@ const UpdateGroupSchema = z
   });
 
 /**
- * GET /api/groups/:id
+ * GET /api/groups/:groupId
  * Retrieves detailed information about a specific Secret Santa group
  *
  * Requires authentication and membership/ownership of the group.
  * Returns group details with participants, exclusions, and computed fields.
  *
- * @param {number} id - Group ID from URL parameter
+ * @param {number} groupId - Group ID from URL parameter
  * @returns {GroupDetailDTO} 200 - Group details with participants and exclusions
  * @returns {ApiErrorResponse} 400 - Invalid group ID format
  * @returns {ApiErrorResponse} 401 - Not authenticated
@@ -47,21 +47,23 @@ const UpdateGroupSchema = z
  * @note Authentication required
  */
 export const GET: APIRoute = async ({ params, locals, request }) => {
-  console.log("[GET /api/groups/:id] Endpoint hit", { groupId: params.id });
+  console.log("[GET /api/groups/:groupId] Endpoint hit", { groupId: params.groupId });
+
+  let userId: string | undefined;
 
   try {
     // Guard 1: Validate ID parameter
-    const { id } = GroupIdParamSchema.parse({ id: params.id });
+    const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
     // Guard 2: Authentication
     const userIdOrResponse = requireApiAuth({ locals, request } as any);
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }
-    const userId = userIdOrResponse;
+    userId = userIdOrResponse;
 
     // Guard 3: Check group access (owner or participant)
-    const accessOrResponse = await requireGroupAccess({ locals, request } as any, id);
+    const accessOrResponse = await requireGroupAccess({ locals, request } as any, groupId);
     if (accessOrResponse !== true) {
       return accessOrResponse;
     }
@@ -71,7 +73,7 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
 
     // Call service to get group details
     const groupService = new GroupService(supabase);
-    const groupDetails = await groupService.getGroupById(id, userId);
+    const groupDetails = await groupService.getGroupById(groupId, userId);
 
     // Guard 3: Check if group exists and user has access
     if (!groupDetails) {
@@ -112,8 +114,8 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
     }
 
     // Log unexpected errors
-    console.error("[GET /api/groups/:id] Error:", {
-      groupId: params.id,
+    console.error("[GET /api/groups/:groupId] Error:", {
+      groupId: params.groupId,
       userId,
       error,
     });
@@ -133,13 +135,13 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
 };
 
 /**
- * PATCH /api/groups/:id
+ * PATCH /api/groups/:groupId
  * Updates an existing Secret Santa group
  *
  * Only the group creator can update the group, and only before the draw.
  * All fields in the request body are optional, but at least one must be provided.
  *
- * @param {number} id - Group ID from URL parameter
+ * @param {number} groupId - Group ID from URL parameter
  * @body UpdateGroupCommand (optional fields: name, budget, end_date)
  * @returns {GroupDTO} 200 - Updated group details
  * @returns {ApiErrorResponse} 400 - Invalid input or draw already completed
@@ -151,21 +153,23 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
  * @note Authentication required
  */
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
-  console.log("[PATCH /api/groups/:id] Endpoint hit", { groupId: params.id });
+  console.log("[PATCH /api/groups/:groupId] Endpoint hit", { groupId: params.groupId });
+
+  let userId: string | undefined;
 
   try {
     // Guard 1: Validate ID parameter
-    const { id } = GroupIdParamSchema.parse({ id: params.id });
+    const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
     // Guard 2: Authentication
     const userIdOrResponse = requireApiAuth({ locals, request } as any);
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }
-    const userId = userIdOrResponse;
+    userId = userIdOrResponse;
 
     // Guard 3: Check if user is group owner
-    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, id);
+    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, groupId);
     if (ownerOrResponse !== true) {
       return ownerOrResponse;
     }
@@ -195,7 +199,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
 
     // Call service to update group
     const groupService = new GroupService(supabase);
-    const updatedGroup = await groupService.updateGroup(id, userId, validatedData);
+    const updatedGroup = await groupService.updateGroup(groupId, userId, validatedData);
 
     // Success - return updated group
     return new Response(JSON.stringify(updatedGroup), {
@@ -264,8 +268,8 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Log unexpected errors
-    console.error("[PATCH /api/groups/:id] Error:", {
-      groupId: params.id,
+    console.error("[PATCH /api/groups/:groupId] Error:", {
+      groupId: params.groupId,
       userId,
       error,
     });
@@ -285,7 +289,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
 };
 
 /**
- * DELETE /api/groups/:id
+ * DELETE /api/groups/:groupId
  * Deletes a Secret Santa group and all related data
  *
  * Only the group creator can delete the group.
@@ -295,7 +299,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
  * - assignments
  * - wishes (via participants cascade)
  *
- * @param {number} id - Group ID from URL parameter
+ * @param {number} groupId - Group ID from URL parameter
  * @returns 204 - No content (success)
  * @returns {ApiErrorResponse} 400 - Invalid group ID
  * @returns {ApiErrorResponse} 401 - Not authenticated
@@ -306,21 +310,23 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
  * @note Authentication required
  */
 export const DELETE: APIRoute = async ({ params, locals, request }) => {
-  console.log("[DELETE /api/groups/:id] Endpoint hit", { groupId: params.id });
+  console.log("[DELETE /api/groups/:groupId] Endpoint hit", { groupId: params.groupId });
+
+  let userId: string | undefined;
 
   try {
     // Guard 1: Validate ID parameter
-    const { id } = GroupIdParamSchema.parse({ id: params.id });
+    const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
     // Guard 2: Authentication
     const userIdOrResponse = requireApiAuth({ locals, request } as any);
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }
-    const userId = userIdOrResponse;
+    userId = userIdOrResponse;
 
     // Guard 3: Check if user is group owner
-    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, id);
+    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, groupId);
     if (ownerOrResponse !== true) {
       return ownerOrResponse;
     }
@@ -330,7 +336,7 @@ export const DELETE: APIRoute = async ({ params, locals, request }) => {
 
     // Call service to delete group
     const groupService = new GroupService(supabase);
-    await groupService.deleteGroup(id, userId);
+    await groupService.deleteGroup(groupId, userId);
 
     // Success - return 204 No Content
     return new Response(null, {
@@ -385,8 +391,8 @@ export const DELETE: APIRoute = async ({ params, locals, request }) => {
     }
 
     // Log unexpected errors
-    console.error("[DELETE /api/groups/:id] Error:", {
-      groupId: params.id,
+    console.error("[DELETE /api/groups/:groupId] Error:", {
+      groupId: params.groupId,
       userId,
       error,
     });

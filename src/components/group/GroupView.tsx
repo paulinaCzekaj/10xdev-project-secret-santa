@@ -7,6 +7,7 @@ import { DrawSection } from "./DrawSection";
 import { ResultsSection } from "./ResultsSection";
 import { GroupEditModal } from "./GroupEditModal";
 import { DeleteGroupModal } from "./DeleteGroupModal";
+import { DeleteParticipantModal } from "./DeleteParticipantModal";
 import { EditParticipantModal } from "./EditParticipantModal";
 import { DrawConfirmationModal } from "./DrawConfirmationModal";
 import { useGroupData } from "@/hooks/useGroupData";
@@ -47,19 +48,11 @@ export default function GroupView({ groupId }: GroupViewProps) {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Custom hooks dla danych
-  const {
-    group,
-    loading: groupLoading,
-    error: groupError,
-    refetch: refetchGroup,
-    updateGroup,
-    deleteGroup,
-  } = useGroupData(groupId);
+  const { group, loading: groupLoading, error: groupError, refetch: refetchGroup, deleteGroup } = useGroupData(groupId);
   const {
     participants,
     loading: participantsLoading,
     refetch: refetchParticipants,
-    addParticipant,
     updateParticipant,
     deleteParticipant,
   } = useParticipants(groupId);
@@ -67,17 +60,18 @@ export default function GroupView({ groupId }: GroupViewProps) {
     exclusions,
     loading: exclusionsLoading,
     refetch: refetchExclusions,
-    addExclusion,
     deleteExclusion,
   } = useExclusions(groupId);
-  const { validation, isValidating, isDrawing, validateDraw, executeDraw } = useDraw(groupId);
+  const { executeDraw } = useDraw(groupId);
 
   // Stan modalów
   const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
   const [isDeleteGroupModalOpen, setIsDeleteGroupModalOpen] = useState(false);
+  const [isDeleteParticipantModalOpen, setIsDeleteParticipantModalOpen] = useState(false);
   const [isDrawConfirmationModalOpen, setIsDrawConfirmationModalOpen] = useState(false);
   const [isEditParticipantModalOpen, setIsEditParticipantModalOpen] = useState(false);
   const [selectedParticipant, setSelectedParticipant] = useState<ParticipantViewModel | null>(null);
+  const [participantToDelete, setParticipantToDelete] = useState<ParticipantViewModel | null>(null);
 
   // Pobierz ID zalogowanego użytkownika
   useEffect(() => {
@@ -125,13 +119,13 @@ export default function GroupView({ groupId }: GroupViewProps) {
             canDelete: !isCreator, // Twórca nie może być usunięty
 
             // Formatowane wartości
-            displayEmail: formatParticipantEmail(participant.email, isCurrentUser),
+            displayEmail: formatParticipantEmail(participant.email || undefined, isCurrentUser),
             displayName: formatParticipantName(participant.name, isCurrentUser),
             initials: getInitials(participant.name),
 
             // Status (po losowaniu)
             wishlistStatus: group?.is_drawn ? formatWishlistStatus(participant.has_wishlist) : undefined,
-            resultStatus: group?.is_drawn ? formatResultStatus(false) : undefined, // TODO: Implement result status
+            resultStatus: group?.is_drawn ? formatResultStatus(participant.result_viewed || false) : undefined,
 
             // Token (dla niezarejestrowanych)
             resultLink: participant.access_token
@@ -222,13 +216,24 @@ export default function GroupView({ groupId }: GroupViewProps) {
     setIsEditParticipantModalOpen(true);
   };
 
-  const handleDeleteParticipant = async (participantId: number) => {
+  const handleDeleteParticipant = (participant: ParticipantViewModel) => {
+    setParticipantToDelete(participant);
+    setIsDeleteParticipantModalOpen(true);
+  };
+
+  const handleConfirmDeleteParticipant = async () => {
+    if (!participantToDelete) return;
+
     // Optimistic update
-    const result = await deleteParticipant(participantId);
+    const result = await deleteParticipant(participantToDelete.id);
     if (!result.success) {
       // Przywróć stan w przypadku błędu
       refetchParticipants();
     }
+
+    // Zamknij modal
+    setIsDeleteParticipantModalOpen(false);
+    setParticipantToDelete(null);
   };
 
   const handleCopyParticipantToken = async (participant: ParticipantViewModel) => {
@@ -236,9 +241,9 @@ export default function GroupView({ groupId }: GroupViewProps) {
       try {
         await navigator.clipboard.writeText(participant.resultLink);
         // TODO: Show success toast
-      } catch (error) {
+      } catch {
         // Fallback: show link in input field
-        console.error("Failed to copy to clipboard:", error);
+        // TODO: Show fallback UI for clipboard error
       }
     }
   };
@@ -360,7 +365,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Nagłówek grupy */}
         <GroupHeader
-          group={groupViewModel!}
+          group={groupViewModel as GroupViewModel}
           isCreator={isCreator}
           canEdit={canEdit}
           isDrawn={isDrawn}
@@ -417,7 +422,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
 
       {/* Modals */}
       <GroupEditModal
-        group={groupViewModel!}
+        group={groupViewModel as GroupViewModel}
         isOpen={isEditGroupModalOpen}
         onClose={() => setIsEditGroupModalOpen(false)}
         onSave={handleGroupUpdated}
@@ -426,9 +431,19 @@ export default function GroupView({ groupId }: GroupViewProps) {
       <DeleteGroupModal
         isOpen={isDeleteGroupModalOpen}
         groupName={group.name}
-        groupId={groupId}
         onClose={() => setIsDeleteGroupModalOpen(false)}
         onConfirm={handleGroupDeleted}
+        deleteGroup={deleteGroup}
+      />
+
+      <DeleteParticipantModal
+        participant={participantToDelete}
+        isOpen={isDeleteParticipantModalOpen}
+        onClose={() => {
+          setIsDeleteParticipantModalOpen(false);
+          setParticipantToDelete(null);
+        }}
+        onConfirm={handleConfirmDeleteParticipant}
       />
 
       <EditParticipantModal
@@ -439,15 +454,16 @@ export default function GroupView({ groupId }: GroupViewProps) {
           setSelectedParticipant(null);
         }}
         onSave={handleParticipantUpdated}
+        updateParticipant={updateParticipant}
       />
 
       <DrawConfirmationModal
         isOpen={isDrawConfirmationModalOpen}
-        groupId={groupId}
         participantsCount={participants.length}
         exclusionsCount={exclusions.length}
         onClose={() => setIsDrawConfirmationModalOpen(false)}
         onConfirm={handleDrawComplete}
+        executeDraw={executeDraw}
       />
     </>
   );
