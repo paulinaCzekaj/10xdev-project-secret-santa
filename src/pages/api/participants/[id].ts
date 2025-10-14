@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { ParticipantService } from "../../../lib/services/participant.service";
-import { DEFAULT_USER_ID } from "../../../db/supabase.client";
+import { requireApiAuth, requireGroupOwner } from "../../../lib/utils/api-auth.utils";
 import type { ApiErrorResponse, UpdateParticipantCommand } from "../../../types";
 
 export const prerender = false;
@@ -47,32 +47,25 @@ const UpdateParticipantSchema = z
  * @returns {ApiErrorResponse} 404 - Participant not found
  * @returns {ApiErrorResponse} 500 - Internal server error
  *
- * @note Authentication is not implemented yet - uses DEFAULT_USER_ID
+ * @note Authentication required
  */
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
   console.log("[PATCH /api/participants/:id] Endpoint hit", { participantId: params.id });
+
+  let userId: string | undefined;
 
   try {
     // Guard 1: Validate ID parameter
     const { id } = ParticipantIdParamSchema.parse({ id: params.id });
 
-    // Guard 2: Check authentication
-    // TODO: Replace DEFAULT_USER_ID with actual user ID from auth when implemented
-    const userId = DEFAULT_USER_ID;
-    if (!userId) {
-      const errorResponse: ApiErrorResponse = {
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    // Guard 2: Authentication
+    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    if (typeof userIdOrResponse !== "string") {
+      return userIdOrResponse;
     }
+    userId = userIdOrResponse;
 
-    // Guard 3: Parse request body
+    // Guard 4: Parse request body
     let body: unknown;
     try {
       body = await request.json();
@@ -111,19 +104,10 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       });
     }
 
-    // Guard 6: Check authorization - user must be group creator
-    const isCreator = await participantService.checkUserIsGroupCreator(userId, participant.group_id);
-    if (!isCreator) {
-      const errorResponse: ApiErrorResponse = {
-        error: {
-          code: "FORBIDDEN",
-          message: "Only group creator can update participants",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
+    // Guard 6: Check if user is group owner
+    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, participant.group_id);
+    if (ownerOrResponse !== true) {
+      return ownerOrResponse;
     }
 
     // Guard 7: Check if draw has been completed
@@ -188,7 +172,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     // Log unexpected errors
     console.error("[PATCH /api/participants/:id] Error:", {
       participantId: params.id,
-      userId: DEFAULT_USER_ID,
+      userId,
       error,
     });
 
@@ -222,30 +206,23 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
  * @returns {ApiErrorResponse} 404 - Participant not found
  * @returns {ApiErrorResponse} 500 - Internal server error
  *
- * @note Authentication is not implemented yet - uses DEFAULT_USER_ID
+ * @note Authentication required
  */
-export const DELETE: APIRoute = async ({ params, locals }) => {
+export const DELETE: APIRoute = async ({ params, locals, request }) => {
   console.log("[DELETE /api/participants/:id] Endpoint hit", { participantId: params.id });
+
+  let userId: string | undefined;
 
   try {
     // Guard 1: Validate ID parameter
     const { id } = ParticipantIdParamSchema.parse({ id: params.id });
 
-    // Guard 2: Check authentication
-    // TODO: Replace DEFAULT_USER_ID with actual user ID from auth when implemented
-    const userId = DEFAULT_USER_ID;
-    if (!userId) {
-      const errorResponse: ApiErrorResponse = {
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    // Guard 2: Authentication
+    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    if (typeof userIdOrResponse !== "string") {
+      return userIdOrResponse;
     }
+    userId = userIdOrResponse;
 
     // Get Supabase client and create service
     const supabase = locals.supabase;
@@ -266,19 +243,10 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
       });
     }
 
-    // Guard 4: Check authorization - user must be group creator
-    const isCreator = await participantService.checkUserIsGroupCreator(userId, participant.group_id);
-    if (!isCreator) {
-      const errorResponse: ApiErrorResponse = {
-        error: {
-          code: "FORBIDDEN",
-          message: "Only group creator can delete participants",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
+    // Guard 4: Check if user is group owner
+    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, participant.group_id);
+    if (ownerOrResponse !== true) {
+      return ownerOrResponse;
     }
 
     // Guard 5: Check if draw has been completed
@@ -339,7 +307,7 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     // Log unexpected errors
     console.error("[DELETE /api/participants/:id] Error:", {
       participantId: params.id,
-      userId: DEFAULT_USER_ID,
+      userId,
       error,
     });
 

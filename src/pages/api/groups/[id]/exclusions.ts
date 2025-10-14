@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { ExclusionRuleService } from "../../../../lib/services/exclusion-rule.service";
-import { DEFAULT_USER_ID } from "../../../../db/supabase.client";
+import { requireApiAuth, requireGroupAccess, requireGroupOwner } from "../../../../lib/utils/api-auth.utils";
 import type {
   CreateExclusionRuleCommand,
   ApiErrorResponse,
@@ -55,29 +55,28 @@ const CreateExclusionRuleSchema = z
  * @returns {ApiErrorResponse} 404 - Group not found
  * @returns {ApiErrorResponse} 500 - Internal server error
  *
- * @note Authentication is not implemented yet - uses DEFAULT_USER_ID
+ * @note Authentication required
  */
 export const GET: APIRoute = async ({ params, request, locals }) => {
   console.log("[GET /api/groups/:groupId/exclusions] Endpoint hit", { groupId: params.groupId });
+
+  let userId: string | undefined;
 
   try {
     // Guard 1: Validate groupId parameter
     const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
-    // Guard 2: Check authentication
-    // TODO: Replace DEFAULT_USER_ID with actual user ID from auth when implemented
-    const userId = DEFAULT_USER_ID;
-    if (!userId) {
-      const errorResponse: ApiErrorResponse = {
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    // Guard 2: Authentication
+    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    if (typeof userIdOrResponse !== "string") {
+      return userIdOrResponse;
+    }
+    userId = userIdOrResponse;
+
+    // Guard 3: Check group access (owner or participant)
+    const accessOrResponse = await requireGroupAccess({ locals, request } as any, groupId);
+    if (accessOrResponse !== true) {
+      return accessOrResponse;
     }
 
     // Get Supabase client
@@ -146,7 +145,7 @@ export const GET: APIRoute = async ({ params, request, locals }) => {
     // Log unexpected errors
     console.error("[GET /api/groups/:groupId/exclusions] Error:", {
       groupId: params.groupId,
-      userId: DEFAULT_USER_ID,
+      userId,
       error,
     });
 
@@ -182,32 +181,31 @@ export const GET: APIRoute = async ({ params, request, locals }) => {
  * @returns {ApiErrorResponse} 422 - Missing required fields
  * @returns {ApiErrorResponse} 500 - Internal server error
  *
- * @note Authentication is not implemented yet - uses DEFAULT_USER_ID
+ * @note Authentication required
  */
 export const POST: APIRoute = async ({ params, request, locals }) => {
   console.log("[POST /api/groups/:groupId/exclusions] Endpoint hit", { groupId: params.groupId });
+
+  let userId: string | undefined;
 
   try {
     // Guard 1: Validate groupId parameter
     const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
-    // Guard 2: Check authentication
-    // TODO: Replace DEFAULT_USER_ID with actual user ID from auth when implemented
-    const userId = DEFAULT_USER_ID;
-    if (!userId) {
-      const errorResponse: ApiErrorResponse = {
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    // Guard 2: Authentication
+    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    if (typeof userIdOrResponse !== "string") {
+      return userIdOrResponse;
+    }
+    userId = userIdOrResponse;
+
+    // Guard 3: Check if user is group owner
+    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, groupId);
+    if (ownerOrResponse !== true) {
+      return ownerOrResponse;
     }
 
-    // Guard 3: Parse request body
+    // Guard 4: Parse request body
     let body: unknown;
     try {
       body = await request.json();
@@ -360,7 +358,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     // Log unexpected errors
     console.error("[POST /api/groups/:groupId/exclusions] Error:", {
       groupId: params.groupId,
-      userId: DEFAULT_USER_ID,
+      userId,
       error,
     });
 

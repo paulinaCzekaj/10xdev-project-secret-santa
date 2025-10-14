@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { GroupService } from "../../../../lib/services/group.service";
-import { DEFAULT_USER_ID } from "../../../../db/supabase.client";
+import { requireApiAuth, requireGroupAccess, requireGroupOwner } from "../../../../lib/utils/api-auth.utils";
 import type { ApiErrorResponse } from "../../../../types";
 
 export const prerender = false;
@@ -44,29 +44,26 @@ const UpdateGroupSchema = z
  * @returns {ApiErrorResponse} 404 - Group not found
  * @returns {ApiErrorResponse} 500 - Internal server error
  *
- * @note Authentication is not implemented yet - uses DEFAULT_USER_ID
+ * @note Authentication required
  */
-export const GET: APIRoute = async ({ params, locals }) => {
+export const GET: APIRoute = async ({ params, locals, request }) => {
   console.log("[GET /api/groups/:id] Endpoint hit", { groupId: params.id });
 
   try {
     // Guard 1: Validate ID parameter
     const { id } = GroupIdParamSchema.parse({ id: params.id });
 
-    // Guard 2: Check authentication
-    // TODO: Replace DEFAULT_USER_ID with actual user ID from auth when implemented
-    const userId = DEFAULT_USER_ID;
-    if (!userId) {
-      const errorResponse: ApiErrorResponse = {
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    // Guard 2: Authentication
+    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    if (typeof userIdOrResponse !== "string") {
+      return userIdOrResponse;
+    }
+    const userId = userIdOrResponse;
+
+    // Guard 3: Check group access (owner or participant)
+    const accessOrResponse = await requireGroupAccess({ locals, request } as any, id);
+    if (accessOrResponse !== true) {
+      return accessOrResponse;
     }
 
     // Get Supabase client
@@ -117,7 +114,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
     // Log unexpected errors
     console.error("[GET /api/groups/:id] Error:", {
       groupId: params.id,
-      userId: DEFAULT_USER_ID,
+      userId,
       error,
     });
 
@@ -151,7 +148,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
  * @returns {ApiErrorResponse} 404 - Group not found
  * @returns {ApiErrorResponse} 500 - Internal server error
  *
- * @note Authentication is not implemented yet - uses DEFAULT_USER_ID
+ * @note Authentication required
  */
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
   console.log("[PATCH /api/groups/:id] Endpoint hit", { groupId: params.id });
@@ -160,23 +157,20 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     // Guard 1: Validate ID parameter
     const { id } = GroupIdParamSchema.parse({ id: params.id });
 
-    // Guard 2: Check authentication
-    // TODO: Replace DEFAULT_USER_ID with actual user ID from auth when implemented
-    const userId = DEFAULT_USER_ID;
-    if (!userId) {
-      const errorResponse: ApiErrorResponse = {
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    // Guard 2: Authentication
+    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    if (typeof userIdOrResponse !== "string") {
+      return userIdOrResponse;
+    }
+    const userId = userIdOrResponse;
+
+    // Guard 3: Check if user is group owner
+    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, id);
+    if (ownerOrResponse !== true) {
+      return ownerOrResponse;
     }
 
-    // Guard 3: Parse request body
+    // Guard 4: Parse request body
     let body: unknown;
     try {
       body = await request.json();
@@ -272,7 +266,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     // Log unexpected errors
     console.error("[PATCH /api/groups/:id] Error:", {
       groupId: params.id,
-      userId: DEFAULT_USER_ID,
+      userId,
       error,
     });
 
@@ -309,29 +303,26 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
  * @returns {ApiErrorResponse} 404 - Group not found
  * @returns {ApiErrorResponse} 500 - Internal server error
  *
- * @note Authentication is not implemented yet - uses DEFAULT_USER_ID
+ * @note Authentication required
  */
-export const DELETE: APIRoute = async ({ params, locals }) => {
+export const DELETE: APIRoute = async ({ params, locals, request }) => {
   console.log("[DELETE /api/groups/:id] Endpoint hit", { groupId: params.id });
 
   try {
     // Guard 1: Validate ID parameter
     const { id } = GroupIdParamSchema.parse({ id: params.id });
 
-    // Guard 2: Check authentication
-    // TODO: Replace DEFAULT_USER_ID with actual user ID from auth when implemented
-    const userId = DEFAULT_USER_ID;
-    if (!userId) {
-      const errorResponse: ApiErrorResponse = {
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    // Guard 2: Authentication
+    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    if (typeof userIdOrResponse !== "string") {
+      return userIdOrResponse;
+    }
+    const userId = userIdOrResponse;
+
+    // Guard 3: Check if user is group owner
+    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, id);
+    if (ownerOrResponse !== true) {
+      return ownerOrResponse;
     }
 
     // Get Supabase client
@@ -396,7 +387,7 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     // Log unexpected errors
     console.error("[DELETE /api/groups/:id] Error:", {
       groupId: params.id,
-      userId: DEFAULT_USER_ID,
+      userId,
       error,
     });
 

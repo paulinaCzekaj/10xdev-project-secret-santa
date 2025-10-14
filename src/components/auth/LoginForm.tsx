@@ -59,16 +59,30 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
     setApiError(null);
 
     try {
-      // TODO: Implement Supabase Auth signInWithPassword
-      console.log("Login form submitted:", data);
-      console.log("Redirect to:", redirectTo || "/dashboard");
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const result = await response.json();
 
-      // Placeholder: In the next phase, this will call Supabase Auth
+      if (!response.ok) {
+        // Handle API error
+        const errorMessage = result.error?.message || "Wystąpił błąd podczas logowania";
+        setApiError(errorMessage);
+        toast.error("Błąd logowania", { description: errorMessage });
+        return;
+      }
+
+      // Success - redirect to dashboard
       toast.success("Zalogowano pomyślnie!");
-      // window.location.href = redirectTo || '/dashboard';
+      window.location.href = redirectTo || "/dashboard";
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Wystąpił błąd podczas logowania";
       setApiError(errorMessage);

@@ -1,20 +1,11 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import CreateGroupForm from "@/components/forms/CreateGroupForm";
-import { DEFAULT_USER_ID } from "@/db/supabase.client";
 
-// Protect the route - require user session
-const supabase = Astro.locals.supabase;
-const {
-  data: { session },
-} = await supabase.auth.getSession();
-
-// For now, we'll use the default user ID during development
-// In production, this should redirect to login if no session exists
-const userId = session?.user?.id || DEFAULT_USER_ID;
-
-if (!userId) {
-  return Astro.redirect("/login");
+// Protect the route - require user session (handled by middleware)
+const { user } = Astro.locals;
+if (!user) {
+  return Astro.redirect("/login?redirectTo=/groups/new");
 }
 ---
 

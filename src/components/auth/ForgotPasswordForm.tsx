@@ -40,13 +40,27 @@ export default function ForgotPasswordForm({ isLoggedIn }: ForgotPasswordFormPro
     setApiError(null);
 
     try {
-      // TODO: Implement Supabase Auth resetPasswordForEmail
-      console.log("Forgot password form submitted:", data);
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: data.email,
+        }),
+      });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const result = await response.json();
 
-      // Placeholder: In the next phase, this will call Supabase Auth
+      if (!response.ok) {
+        // Handle API error
+        const errorMessage = result.error?.message || "Wystąpił błąd podczas wysyłania emaila";
+        setApiError(errorMessage);
+        toast.error("Błąd", { description: errorMessage });
+        return;
+      }
+
+      // Success
       setEmailSent(true);
       toast.success("Email wysłany!", {
         description: "Sprawdź swoją skrzynkę i kliknij w link resetujący.",

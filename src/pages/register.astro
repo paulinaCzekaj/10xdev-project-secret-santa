@@ -5,18 +5,16 @@ import RegisterForm from "@/components/auth/RegisterForm";
 // Enable SSR for this page
 export const prerender = false;
 
-// Get query parameters
-const redirectTo = Astro.url.searchParams.get("redirectTo") || undefined;
-
-// TODO: In the next phase, add session check
-// const { data: { session } } = await supabaseClient.auth.getSession();
-// if (session) {
-//   return Astro.redirect('/dashboard');
-// }
+// Check if user is already logged in
+const { user } = Astro.locals;
+if (user) {
+  // User is already logged in - redirect to dashboard
+  return Astro.redirect("/dashboard");
+}
 ---
 
 <AuthLayout title="Rejestracja | Secret Santa">
-  <RegisterForm client:load redirectTo={redirectTo} />
+  <RegisterForm client:load />
 
   <div slot="footer-links">
     <p class="text-gray-600">

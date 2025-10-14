@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { supabaseClient } from "@/db/supabase.client";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -82,11 +83,49 @@ export default function ResetPasswordForm({ accessToken }: ResetPasswordFormProp
       }
 
       try {
-        // TODO: Implement Supabase Auth setSession
-        // Placeholder: In the next phase, this will call Supabase Auth
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Supabase automatically handles token verification through the URL
+        // The token in the URL hash will be processed by Supabase Auth
+        // We just need to check if we're in a valid session
 
-        setTokenValid(true);
+        const {
+          data: { session },
+          error,
+        } = await supabaseClient.auth.getSession();
+
+        if (error) {
+          throw error;
+        }
+
+        // If we have a session, the token was valid
+        if (session) {
+          setTokenValid(true);
+        } else {
+          // Check URL hash for tokens (Supabase puts them there)
+          const hash = window.location.hash;
+          if (hash.includes("access_token")) {
+            // Try to set session with tokens from URL
+            const urlParams = new URLSearchParams(hash.substring(1));
+            const accessToken = urlParams.get("access_token");
+            const refreshToken = urlParams.get("refresh_token") || "";
+
+            if (accessToken) {
+              const { error: sessionError } = await supabaseClient.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              });
+
+              if (sessionError) {
+                throw sessionError;
+              }
+
+              setTokenValid(true);
+            } else {
+              throw new Error("Token has expired or is invalid");
+            }
+          } else {
+            throw new Error("Token has expired or is invalid");
+          }
+        }
       } catch (error) {
         const errorMessage = getAuthErrorMessage(error);
         setTokenError(errorMessage);
@@ -96,17 +135,22 @@ export default function ResetPasswordForm({ accessToken }: ResetPasswordFormProp
     verifyToken();
   }, [accessToken]);
 
-  const onSubmit = async () => {
+  const onSubmit = async (data: ResetPasswordFormData) => {
     setIsSubmitting(true);
     setApiError(null);
 
     try {
-      // TODO: Implement Supabase Auth updateUser
-      // Placeholder: In the next phase, this will call Supabase Auth
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const { error } = await supabaseClient.auth.updateUser({
+        password: data.password,
+      });
 
+      if (error) {
+        throw error;
+      }
+
+      // Success
       toast.success("Hasło zmienione pomyślnie!");
-      // window.location.href = '/login?message=password_reset_success';
+      window.location.href = "/login?message=password_reset_success";
     } catch (error) {
       const errorMessage = getAuthErrorMessage(error);
       setApiError(errorMessage);

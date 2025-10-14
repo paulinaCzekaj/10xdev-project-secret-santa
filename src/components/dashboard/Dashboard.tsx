@@ -1,19 +1,17 @@
 import * as React from "react";
-import { Plus, Users, Calendar, Trophy } from "lucide-react";
+import { Link } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-// Types for dashboard data
 interface GroupListItemDTO {
   id: number;
   name: string;
-  description?: string;
-  budget?: number;
-  end_date?: string;
-  participant_count: number;
-  creator_name: string;
-  is_creator: boolean;
+  budget: number;
+  end_date: string;
+  participants_count: number;
+  is_drawn: boolean;
+  created_at: string;
 }
 
 interface DashboardProps {
@@ -25,167 +23,158 @@ interface DashboardProps {
   joinedGroups: GroupListItemDTO[];
 }
 
-// Helper component for group card
-function GroupCard({ group }: { group: GroupListItemDTO }) {
+export default function Dashboard({ user, createdGroups, joinedGroups }: DashboardProps) {
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold text-gray-900 truncate">
-          {group.name}
-        </CardTitle>
-        <CardDescription className="text-sm text-gray-600 line-clamp-2">
-          {group.description || "Brak opisu"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4 text-sm text-gray-500">
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              <span>{group.participant_count} osób</span>
-            </div>
-            {group.budget && (
-              <div className="flex items-center gap-1">
-                <span>{group.budget} zł</span>
+    <div className="container mx-auto px-4 py-8">
+      {/* Header with welcome message */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Witaj, {user.email.split("@")[0]}!</h1>
+        <p className="text-lg text-gray-600">Zarządzaj swoimi grupami Secret Santa i sprawdzaj wyniki losowań.</p>
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-2">
+        {/* Created Groups Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span>🎄</span>
+              Grupy, które stworzyłem
+            </CardTitle>
+            <CardDescription>Zarządzaj grupami, które utworzyłeś</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {createdGroups.length === 0 ? (
+              <EmptyState
+                title="Brak utworzonych grup"
+                description="Utwórz swoją pierwszą grupę Secret Santa"
+                action={
+                  <Button asChild className="bg-red-500 hover:bg-red-600">
+                    <a href="/groups/new">Utwórz nową grupę</a>
+                  </Button>
+                }
+              />
+            ) : (
+              <div className="space-y-4">
+                {createdGroups.map((group) => (
+                  <GroupCard key={group.id} group={group} isCreator={true} />
+                ))}
               </div>
             )}
-          </div>
+          </CardContent>
+        </Card>
+
+        {/* Joined Groups Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span>🎁</span>
+              Grupy, do których należę
+            </CardTitle>
+            <CardDescription>Grupy, do których zostałeś dodany przez innych organizatorów</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {joinedGroups.length === 0 ? (
+              <EmptyState title="Brak grup" description="Nie należysz jeszcze do żadnej grupy" action={null} />
+            ) : (
+              <div className="space-y-4">
+                {joinedGroups.map((group) => (
+                  <GroupCard key={group.id} group={group} isCreator={false} />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* CTA Section */}
+      <div className="mt-12 text-center">
+        <div className="bg-gradient-to-r from-red-50 to-green-50 rounded-xl p-8 border border-red-100">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Gotowy na nowe losowanie?</h2>
+          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            Utwórz nową grupę Secret Santa i zaproś swoich znajomych lub rodzinę.
+          </p>
+          <Button asChild size="lg" className="bg-red-500 hover:bg-red-600 text-white">
+            <a href="/groups/new">
+              <span className="mr-2">🎅</span>
+              Utwórz nową grupę Secret Santa
+            </a>
+          </Button>
         </div>
-
-        {group.end_date && (
-          <div className="flex items-center gap-1 text-sm text-gray-500 mb-4">
-            <Calendar className="h-4 w-4" />
-            <span>Losowanie: {new Date(group.end_date).toLocaleDateString('pl-PL')}</span>
-          </div>
-        )}
-
-        <Button
-          asChild
-          className="w-full bg-red-500 hover:bg-red-600 text-white"
-          size="sm"
-        >
-          <a href={`/groups/${group.id}`}>
-            {group.is_creator ? "Zarządzaj grupą" : "Zobacz szczegóły"}
-          </a>
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Helper component for empty state
-function EmptyState({
-  title,
-  description,
-  actionText,
-  actionHref
-}: {
-  title: string;
-  description: string;
-  actionText: string;
-  actionHref: string;
-}) {
-  return (
-    <div className="text-center py-12">
-      <Trophy className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-      <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600 mb-6 max-w-sm mx-auto">{description}</p>
-      <Button asChild className="bg-red-500 hover:bg-red-600 text-white">
-        <a href={actionHref}>{actionText}</a>
-      </Button>
+      </div>
     </div>
   );
 }
 
-export default function Dashboard({ user, createdGroups, joinedGroups }: DashboardProps) {
-  const hasCreatedGroups = createdGroups.length > 0;
-  const hasJoinedGroups = joinedGroups.length > 0;
+interface GroupCardProps {
+  group: GroupListItemDTO;
+  isCreator: boolean;
+}
+
+function GroupCard({ group, isCreator }: GroupCardProps) {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("pl-PL", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("pl-PL", {
+      style: "currency",
+      currency: "PLN",
+    }).format(amount);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50">
-      <div className="container mx-auto px-4 py-8 sm:py-12 max-w-6xl">
-        {/* Header */}
-        <div className="text-center mb-8 sm:mb-10">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 mb-4">
-            Witaj, {user.email.split('@')[0]}! 🎄
-          </h1>
-          <p className="text-gray-600 text-sm sm:text-base max-w-2xl mx-auto">
-            Zarządzaj swoimi grupami Secret Santa lub dołącz do nowych wydarzeń.
-          </p>
+    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <h3 className="font-semibold text-gray-900">{group.name}</h3>
+          <p className="text-sm text-gray-500">{group.participants_count} uczestników</p>
         </div>
-
-        <div className="space-y-8">
-          {/* Created Groups Section */}
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Grupy, które stworzyłem</h2>
-              <Button asChild className="bg-red-500 hover:bg-red-600 text-white">
-                <a href="/groups/new">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Utwórz nową grupę
-                </a>
-              </Button>
-            </div>
-
-            {hasCreatedGroups ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {createdGroups.map((group) => (
-                  <GroupCard key={group.id} group={group} />
-                ))}
-              </div>
-            ) : (
-              <Card className="border-2 border-dashed border-gray-300">
-                <CardContent className="pt-6">
-                  <EmptyState
-                    title="Nie masz jeszcze żadnych grup"
-                    description="Rozpocznij przygodę z Secret Santa tworząc swoją pierwszą grupę! Zaproś przyjaciół i rodzinę na wymianę prezentów."
-                    actionText="Utwórz pierwszą grupę"
-                    actionHref="/groups/new"
-                  />
-                </CardContent>
-              </Card>
-            )}
-          </section>
-
-          {/* Joined Groups Section */}
-          {hasJoinedGroups && (
-            <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                Grupy, do których należę
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {joinedGroups.map((group) => (
-                  <GroupCard key={group.id} group={group} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Quick Stats */}
-          {(hasCreatedGroups || hasJoinedGroups) && (
-            <section className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Twoje statystyki</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">{createdGroups.length}</div>
-                  <div className="text-sm text-gray-600">Utworzonych grup</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{joinedGroups.length}</div>
-                  <div className="text-sm text-gray-600">Dołączonych grup</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {createdGroups.length + joinedGroups.length}
-                  </div>
-                  <div className="text-sm text-gray-600">Razem grup</div>
-                </div>
-              </div>
-            </section>
-          )}
+        <div className="text-right">
+          <p className="font-medium text-red-600">{formatCurrency(group.budget)}</p>
+          <p className="text-xs text-gray-500">budżet</p>
         </div>
       </div>
+
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-gray-600">
+          <span className="font-medium">Zakończenie:</span> {formatDate(group.end_date)}
+        </div>
+        <div className="flex gap-2">
+          {group.is_drawn ? (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              Wylosowano
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+              W trakcie
+            </span>
+          )}
+          <Button asChild variant="outline" size="sm">
+            <a href={`/groups/${group.id}`}>{isCreator ? "Zarządzaj" : "Zobacz"}</a>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface EmptyStateProps {
+  title: string;
+  description: string;
+  action: React.ReactNode | null;
+}
+
+function EmptyState({ title, description, action }: EmptyStateProps) {
+  return (
+    <div className="text-center py-8">
+      <div className="text-4xl mb-4">🎄</div>
+      <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
+      <p className="text-gray-500 mb-4">{description}</p>
+      {action}
     </div>
   );
 }

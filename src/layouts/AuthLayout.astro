@@ -16,19 +16,16 @@ const { title } = Astro.props;
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="robots" content="noindex, nofollow" />
     <title>{title}</title>
+    <meta name="robots" content="noindex, nofollow" />
   </head>
   <body class="bg-gradient-to-br from-red-50 via-white to-green-50 min-h-screen">
     <div class="container mx-auto px-4 py-8 md:py-16">
       <div class="max-w-md mx-auto">
         <!-- Logo -->
         <div class="text-center mb-8">
-          <a href="/" class="inline-block">
-            <h1 class="text-3xl font-bold text-red-600 flex items-center justify-center gap-2">
-              <span class="text-4xl">🎁</span>
-              <span>Secret Santa</span>
-            </h1>
+          <a href="/">
+            <h1 class="text-3xl font-bold text-red-600">🎅 Secret Santa</h1>
           </a>
         </div>
 
@@ -50,6 +47,6 @@ const { title } = Astro.props;
   body {
     margin: 0;
     width: 100%;
-    min-height: 100%;
+    height: 100%;
   }
 </style>

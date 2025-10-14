@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { GroupService } from "../../../lib/services/group.service";
-import { DEFAULT_USER_ID } from "../../../db/supabase.client";
+import { requireApiAuth } from "../../../lib/utils/api-auth.utils";
 import type { CreateGroupCommand, ApiErrorResponse, GroupsListQuery } from "../../../types";
 
 export const prerender = false;
@@ -41,10 +41,18 @@ const GroupsListQuerySchema = z.object({
  * @returns 422 if missing required fields
  * @returns 500 if server error
  *
- * @note Authentication is not implemented yet - uses DEFAULT_USER_ID
+ * @note Authentication required
  */
 export const POST: APIRoute = async ({ request, locals }) => {
   console.log("[POST /api/groups] Endpoint hit");
+
+  // Guard 0: Authentication
+  const userIdOrResponse = requireApiAuth({ locals, request } as any);
+  if (typeof userIdOrResponse !== "string") {
+    return userIdOrResponse;
+  }
+  const userId = userIdOrResponse;
+
   const supabase = locals.supabase;
 
   // Guard 1: Parse request body
@@ -103,8 +111,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   // Call service to create group
   try {
     const groupService = new GroupService(supabase);
-    // TODO: Replace DEFAULT_USER_ID with actual user ID from auth when implemented
-    const group = await groupService.createGroup(DEFAULT_USER_ID, validatedData);
+    const group = await groupService.createGroup(userId, validatedData);
 
     return new Response(JSON.stringify(group), {
       status: 201,
@@ -138,10 +145,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
  * @returns 401 if unauthorized (when auth is implemented)
  * @returns 500 if server error
  *
- * @note Authentication is not implemented yet - uses DEFAULT_USER_ID
+ * @note Authentication required
  */
 export const GET: APIRoute = async ({ request, locals }) => {
   console.log("[GET /api/groups] Endpoint hit");
+
+  // Guard 0: Authentication
+  const userIdOrResponse = requireApiAuth({ locals, request } as any);
+  if (typeof userIdOrResponse !== "string") {
+    return userIdOrResponse;
+  }
+  const userId = userIdOrResponse;
+
   const supabase = locals.supabase;
 
   // Guard 1: Parse and validate query parameters
@@ -190,8 +205,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   // Call service to fetch groups
   try {
     const groupService = new GroupService(supabase);
-    // TODO: Replace DEFAULT_USER_ID with actual user ID from auth when implemented
-    const result = await groupService.listGroups(DEFAULT_USER_ID, validatedQuery);
+    const result = await groupService.listGroups(userId, validatedQuery);
 
     return new Response(JSON.stringify(result), {
       status: 200,

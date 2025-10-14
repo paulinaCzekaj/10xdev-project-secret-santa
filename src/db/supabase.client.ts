@@ -1,4 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
+import { createServerClient, type CookieOptionsWithName } from "@supabase/ssr";
+import type { AstroCookies } from "astro";
 
 import type { Database } from "./database.types";
 
@@ -12,6 +14,40 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+// Cookie options for SSR
+export const cookieOptions: CookieOptionsWithName = {
+  path: "/",
+  secure: true,
+  httpOnly: true,
+  sameSite: "lax",
+};
+
+// Helper function to parse cookie header
+function parseCookieHeader(cookieHeader: string): { name: string; value: string }[] {
+  return cookieHeader.split(";").map((cookie) => {
+    const [name, ...rest] = cookie.trim().split("=");
+    return { name, value: rest.join("=") };
+  });
+}
+
+// Create server-side Supabase client instance
+export const createSupabaseServerInstance = (context: { headers: Headers; cookies: AstroCookies }) => {
+  const supabase = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+    cookieOptions,
+    cookies: {
+      getAll() {
+        return parseCookieHeader(context.headers.get("Cookie") ?? "");
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => context.cookies.set(name, value, options));
+      },
+    },
+  });
+
+  return supabase;
+};
+
+// Legacy client-side client (temporary backward compatibility)
 export const supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 /**
@@ -19,5 +55,3 @@ export const supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKe
  * Use this type instead of importing from @supabase/supabase-js
  */
 export type SupabaseClient = typeof supabaseClient;
-
-export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";

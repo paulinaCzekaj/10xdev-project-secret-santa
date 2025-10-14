@@ -3,7 +3,7 @@ import { z } from "zod";
 import { GroupService } from "../../../../lib/services/group.service";
 import { AssignmentsService } from "../../../../lib/services/assignments.service";
 import { DrawService } from "../../../../lib/services/draw.service";
-import { DEFAULT_USER_ID } from "../../../../db/supabase.client";
+import { requireApiAuth, requireGroupOwner } from "../../../../lib/utils/api-auth.utils";
 import type { DrawResultDTO, ApiErrorResponse } from "../../../../types";
 
 export const prerender = false;
@@ -38,10 +38,12 @@ const GroupIdParamSchema = z.object({
  * @returns {ApiErrorResponse} 404 - Group not found
  * @returns {ApiErrorResponse} 500 - Internal server error or algorithm timeout
  *
- * @note Authentication is not implemented yet - uses DEFAULT_USER_ID
+ * @note Authentication required
  */
-export const POST: APIRoute = async ({ params, locals }) => {
+export const POST: APIRoute = async ({ params, locals, request }) => {
   console.log("[POST /api/groups/:id/draw] Endpoint hit", { groupId: params.id });
+
+  let userId: string | undefined;
 
   try {
     // ========================================================================
@@ -51,75 +53,26 @@ export const POST: APIRoute = async ({ params, locals }) => {
     // Guard 1: Validate id parameter
     const { id: groupId } = GroupIdParamSchema.parse({ id: params.id });
 
-    // Guard 2: Check authentication
-    // TODO: Replace DEFAULT_USER_ID with actual user ID from auth when implemented
-    const userId = DEFAULT_USER_ID;
-    if (!userId) {
-      const errorResponse: ApiErrorResponse = {
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    // Guard 2: Authentication
+    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    if (typeof userIdOrResponse !== "string") {
+      return userIdOrResponse;
     }
+    userId = userIdOrResponse;
 
     console.log("[POST /api/groups/:id/draw] User authenticated", { userId, groupId });
+
+    // Guard 3: Check if user is group owner
+    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, groupId);
+    if (ownerOrResponse !== true) {
+      return ownerOrResponse;
+    }
 
     // Get Supabase client and initialize services
     const supabase = locals.supabase;
     const groupService = new GroupService(supabase);
     const assignmentsService = new AssignmentsService(supabase);
     const drawService = new DrawService();
-
-    // ========================================================================
-    // STEP 2: Verify Group and Authorization
-    // ========================================================================
-
-    // Fetch group to verify it exists
-    const group = await groupService.getGroupById(groupId, userId);
-
-    // Guard 3: Check if group exists
-    if (!group) {
-      console.log("[POST /api/groups/:id/draw] Group not found", { groupId });
-      const errorResponse: ApiErrorResponse = {
-        error: {
-          code: "GROUP_NOT_FOUND",
-          message: "Group not found",
-          details: { group_id: groupId },
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Guard 4: Verify user is the group creator
-    if (!group.is_creator) {
-      console.log("[POST /api/groups/:id/draw] User is not creator", {
-        userId,
-        groupId,
-        creatorId: group.creator_id,
-      });
-      const errorResponse: ApiErrorResponse = {
-        error: {
-          code: "FORBIDDEN",
-          message: "Only the group creator can execute the draw",
-          details: {
-            creator_id: group.creator_id,
-            current_user: userId,
-          },
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
 
     console.log("[POST /api/groups/:id/draw] User is creator - authorized", { groupId });
 
@@ -329,7 +282,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
     // Log unexpected errors
     console.error("[POST /api/groups/:id/draw] Unexpected error", {
       groupId: params.id,
-      userId: DEFAULT_USER_ID,
+      userId,
       error,
     });
 

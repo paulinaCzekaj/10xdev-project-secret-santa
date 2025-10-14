@@ -11,13 +11,17 @@ export default function LogoutButton() {
     setIsLoading(true);
 
     try {
-      // TODO: Implement Supabase Auth signOut
-      console.log("Logging out user");
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      if (!response.ok) {
+        throw new Error("Logout failed");
+      }
 
-      // Placeholder: In the next phase, this will call Supabase Auth
       toast.success("Wylogowano pomyślnie");
       window.location.href = "/";
     } catch (error) {

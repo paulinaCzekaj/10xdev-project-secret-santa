@@ -1,69 +1,54 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import DashboardComponent from "@/components/dashboard/Dashboard";
+import type { GroupListItemDTO } from "@/types";
 
 // Enable SSR for this page
 export const prerender = false;
 
-// TODO: In the next phase, add session check and redirect if not authenticated
-// const { data: { session } } = await supabaseClient.auth.getSession();
+// Check authentication - redirect to login if not authenticated
+const { user } = Astro.locals;
+if (!user) {
+  return Astro.redirect("/login?redirectTo=/dashboard");
+}
 
-// if (!session) {
-//   return Astro.redirect('/login?redirectTo=/dashboard');
-// }
-
-// const userId = session.user.id;
-
-// TODO: In the next phase, fetch user data and groups from services
-// const groupService = new GroupService(supabaseClient);
-// const { data: groups } = await groupService.listGroups(userId, { filter: 'all' });
-
-// const createdGroups = groups.filter(g => g.is_creator);
-// const joinedGroups = groups.filter(g => !g.is_creator);
-
-// For now, we'll use mock data
-const user = {
-  id: "user-123",
-  email: "user@example.com",
+// Get user data
+const userData = {
+  id: user.id,
+  email: user.email || "",
 };
 
-const createdGroups = [
-  {
-    id: 1,
-    name: "Rodzinne Święta 2024",
-    description: "Tradycyjna wymiana prezentów w naszej rodzinie",
-    budget: 200,
-    end_date: "2024-12-24T00:00:00Z",
-    participant_count: 8,
-    creator_name: "Jan Kowalski",
-    is_creator: true,
+// Fetch created groups
+const createdGroupsResponse = await fetch(`${Astro.url.origin}/api/groups?filter=created`, {
+  headers: {
+    Cookie: Astro.request.headers.get("Cookie") || "",
   },
-  {
-    id: 2,
-    name: "Przyjaciele z pracy",
-    description: "Mała wymiana prezentów między kolegami",
-    budget: 50,
-    end_date: "2024-12-20T00:00:00Z",
-    participant_count: 5,
-    creator_name: "Jan Kowalski",
-    is_creator: true,
-  },
-];
+});
 
-const joinedGroups = [
-  {
-    id: 3,
-    name: "Kółko przyjaciół",
-    description: "Grupa znajomych z liceum",
-    budget: 100,
-    end_date: "2024-12-22T00:00:00Z",
-    participant_count: 12,
-    creator_name: "Anna Nowak",
-    is_creator: false,
+let createdGroups: GroupListItemDTO[] = [];
+if (createdGroupsResponse.ok) {
+  const createdGroupsData = await createdGroupsResponse.json();
+  createdGroups = createdGroupsData.data || [];
+} else {
+  console.error("Failed to fetch created groups:", createdGroupsResponse.status);
+}
+
+// Fetch joined groups
+const joinedGroupsResponse = await fetch(`${Astro.url.origin}/api/groups?filter=joined`, {
+  headers: {
+    Cookie: Astro.request.headers.get("Cookie") || "",
   },
-];
+});
+
+let joinedGroups: GroupListItemDTO[] = [];
+if (joinedGroupsResponse.ok) {
+  const joinedGroupsData = await joinedGroupsResponse.json();
+  joinedGroups = joinedGroupsData.data || [];
+} else {
+  console.error("Failed to fetch joined groups:", joinedGroupsResponse.status);
+}
 ---
 
 <Layout title="Mój pulpit | Secret Santa">
-  <DashboardComponent client:load user={user} createdGroups={createdGroups} joinedGroups={joinedGroups} />
+  <DashboardComponent client:load user={userData} createdGroups={createdGroups} joinedGroups={joinedGroups} />
 </Layout>

@@ -8,12 +8,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 
-interface RegisterFormProps {
-  redirectTo?: string;
-}
-
-// Zod schema for registration form validation
+// Zod schema for register form validation
 const registerFormSchema = z
   .object({
     email: z.string().min(1, "Email jest wymagany").email("Nieprawidłowy format email"),
@@ -22,6 +19,9 @@ const registerFormSchema = z
       .min(8, "Hasło musi mieć co najmniej 8 znaków")
       .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Hasło musi zawierać małą literę, dużą literę i cyfrę"),
     confirmPassword: z.string().min(1, "Potwierdzenie hasła jest wymagane"),
+    acceptTerms: z.boolean().refine((val) => val === true, {
+      message: "Musisz zaakceptować regulamin",
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Hasła nie są identyczne",
@@ -30,7 +30,7 @@ const registerFormSchema = z
 
 type RegisterFormData = z.infer<typeof registerFormSchema>;
 
-export default function RegisterForm({ redirectTo }: RegisterFormProps) {
+export default function RegisterForm() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [apiError, setApiError] = React.useState<string | null>(null);
   const [showPassword, setShowPassword] = React.useState(false);
@@ -43,6 +43,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
       email: "",
       password: "",
       confirmPassword: "",
+      acceptTerms: false,
     },
   });
 
@@ -53,16 +54,30 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
     setApiError(null);
 
     try {
-      // TODO: Implement Supabase Auth signUp
-      console.log("Register form submitted:", { email: data.email, password: "***" });
-      console.log("Redirect to:", redirectTo || "/dashboard");
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const result = await response.json();
 
-      // Placeholder: In the next phase, this will call Supabase Auth
+      if (!response.ok) {
+        // Handle API error
+        const errorMessage = result.error?.message || "Wystąpił błąd podczas rejestracji";
+        setApiError(errorMessage);
+        toast.error("Błąd rejestracji", { description: errorMessage });
+        return;
+      }
+
+      // Success - auto-login enabled (no email confirmation for MVP)
       toast.success("Konto utworzone pomyślnie!");
-      // window.location.href = redirectTo || '/dashboard';
+      window.location.href = "/dashboard";
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Wystąpił błąd podczas rejestracji";
       setApiError(errorMessage);
@@ -76,8 +91,8 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
     <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 shadow-lg">
       {/* Welcome Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Utwórz konto</h2>
-        <p className="text-sm text-gray-600">Dołącz do Secret Santa i zacznij organizować wymianę prezentów.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Dołącz do Secret Santa!</h2>
+        <p className="text-sm text-gray-600">Utwórz konto i zacznij organizować wymiany prezentów.</p>
       </div>
 
       <Form {...form}>
@@ -115,7 +130,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Minimum 8 znaków"
+                      placeholder="Wprowadź hasło"
                       {...field}
                       disabled={isSubmitting}
                       autoComplete="new-password"
@@ -132,6 +147,68 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
                   </div>
                 </FormControl>
                 <FormMessage />
+                {/* Password Requirements */}
+                <div className="mt-2 text-xs text-gray-600">
+                  <p className="font-medium mb-1">Hasło musi zawierać:</p>
+                  <ul className="space-y-1">
+                    <li
+                      className={`flex items-center gap-2 ${
+                        form.watch("password")?.length >= 8 ? "text-green-600" : "text-gray-500"
+                      }`}
+                    >
+                      <span
+                        className={`text-xs ${
+                          form.watch("password")?.length >= 8 ? "text-green-600" : "text-gray-400"
+                        }`}
+                      >
+                        {form.watch("password")?.length >= 8 ? "✓" : "○"}
+                      </span>
+                      Co najmniej 8 znaków
+                    </li>
+                    <li
+                      className={`flex items-center gap-2 ${
+                        /(?=.*[a-z])/.test(form.watch("password") || "") ? "text-green-600" : "text-gray-500"
+                      }`}
+                    >
+                      <span
+                        className={`text-xs ${
+                          /(?=.*[a-z])/.test(form.watch("password") || "") ? "text-green-600" : "text-gray-400"
+                        }`}
+                      >
+                        {/(?=.*[a-z])/.test(form.watch("password") || "") ? "✓" : "○"}
+                      </span>
+                      Jedną małą literę (a-z)
+                    </li>
+                    <li
+                      className={`flex items-center gap-2 ${
+                        /(?=.*[A-Z])/.test(form.watch("password") || "") ? "text-green-600" : "text-gray-500"
+                      }`}
+                    >
+                      <span
+                        className={`text-xs ${
+                          /(?=.*[A-Z])/.test(form.watch("password") || "") ? "text-green-600" : "text-gray-400"
+                        }`}
+                      >
+                        {/(?=.*[A-Z])/.test(form.watch("password") || "") ? "✓" : "○"}
+                      </span>
+                      Jedną dużą literę (A-Z)
+                    </li>
+                    <li
+                      className={`flex items-center gap-2 ${
+                        /(?=.*\d)/.test(form.watch("password") || "") ? "text-green-600" : "text-gray-500"
+                      }`}
+                    >
+                      <span
+                        className={`text-xs ${
+                          /(?=.*\d)/.test(form.watch("password") || "") ? "text-green-600" : "text-gray-400"
+                        }`}
+                      >
+                        {/(?=.*\d)/.test(form.watch("password") || "") ? "✓" : "○"}
+                      </span>
+                      Jedną cyfrę (0-9)
+                    </li>
+                  </ul>
+                </div>
               </FormItem>
             )}
           />
@@ -147,7 +224,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
                   <div className="relative">
                     <Input
                       type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Wprowadź hasło ponownie"
+                      placeholder="Potwierdź hasło"
                       {...field}
                       disabled={isSubmitting}
                       autoComplete="new-password"
@@ -168,34 +245,39 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
             )}
           />
 
-          {/* Password Requirements Info */}
-          <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 mt-0.5">
-                <svg
-                  className="w-5 h-5 text-red-500"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                    clipRule="evenodd"
-                  ></path>
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">Wymagania hasła</h3>
-                <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
-                  <li>Co najmniej 8 znaków</li>
-                  <li>Jedna mała litera (a-z)</li>
-                  <li>Jedna duża litera (A-Z)</li>
-                  <li>Jedna cyfra (0-9)</li>
-                </ul>
-              </div>
-            </div>
-          </div>
+          {/* Terms Acceptance */}
+          <FormField
+            control={form.control}
+            name="acceptTerms"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isSubmitting} />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="text-sm text-gray-700 font-normal">
+                    Akceptuję{" "}
+                    <button
+                      type="button"
+                      className="text-red-600 hover:text-red-700 underline bg-transparent border-none p-0 font-normal"
+                      onClick={() => toast.info("Regulamin będzie dostępny wkrótce")}
+                    >
+                      regulamin
+                    </button>{" "}
+                    i{" "}
+                    <button
+                      type="button"
+                      className="text-red-600 hover:text-red-700 underline bg-transparent border-none p-0 font-normal"
+                      onClick={() => toast.info("Polityka prywatności będzie dostępna wkrótce")}
+                    >
+                      politykę prywatności
+                    </button>
+                  </FormLabel>
+                  <FormMessage />
+                </div>
+              </FormItem>
+            )}
+          />
 
           {/* API Error Message */}
           {apiError && (
@@ -214,7 +296,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
             {isSubmitting ? "Tworzenie konta..." : "Zarejestruj się"}
           </Button>
 
-          {/* Login Link */}
+          {/* Sign In Link */}
           <div className="text-center pt-4 border-t border-gray-200">
             <p className="text-sm text-gray-600">
               Masz już konto?{" "}
