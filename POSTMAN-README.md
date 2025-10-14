@@ -41,7 +41,10 @@ npm run dev
    - Skopiuj zwrócony `id` uczestnika jako `participant_id`
 2. **List Group Participants** - sprawdź listę uczestników
 3. **Update Participant** - edytuj dane uczestnika (opcjonalnie)
-4. **Delete Participant** - usuń uczestnika (opcjonalnie)
+4. **Get Participant Wishlist** - pobierz wishlist uczestnika (automatycznie linkuje URL-e)
+5. **Update Participant Wishlist** - zaktualizuj wishlist uczestnika
+6. **Delete Participant Wishlist** - usuń wishlist uczestnika (tylko przed datą zakończenia)
+7. **Delete Participant** - usuń uczestnika (opcjonalnie)
 
 ### 5. Reguły wykluczeń
 1. **Add Exclusion Rule** - dodaj reguły kto nie może komu dać prezentu
@@ -95,19 +98,105 @@ POST /api/groups
 # 3. Dodawanie uczestników (powtórz 3 razy)
 POST /api/groups/{group_id}/participants
 
-# 4. Dodawanie wykluczeń (opcjonalnie)
+# 4. Zarządzanie wishlistami (opcjonalnie, przed losowaniem)
+PUT /api/participants/{participant_id}/wishlist  # Dodaj/aktualizuj wishlist
+GET /api/participants/{participant_id}/wishlist  # Pobierz wishlist z HTML
+
+# 5. Dodawanie wykluczeń (opcjonalnie)
 POST /api/groups/{group_id}/exclusions
 
-# 5. Losowanie
+# 6. Losowanie
 POST /api/groups/{group_id}/draw
 
-# 6. Sprawdzanie wyników
+# 7. Sprawdzanie wyników
 GET /api/groups/{group_id}
 
-# 7. Pobieranie wyników losowania
+# 8. Pobieranie wyników losowania
 GET /api/groups/{group_id}/result          # Dla zalogowanych użytkowników
 GET /api/results/{access_token}            # Dla niezarejestrowanych uczestników
+
+# 9. Zarządzanie wishlistami po losowaniu (tylko przed end_date)
+DELETE /api/participants/{participant_id}/wishlist  # Usuń wishlist (jeśli potrzebne)
 ```
+
+## 📋 Dokumentacja API - Wishlist Endpoints
+
+### GET /api/participants/:participantId/wishlist
+
+Pobiera wishlist uczestnika z automatycznym renderowaniem HTML i informacją o możliwości edycji.
+
+**Autoryzacja:**
+- Dla zarejestrowanych użytkowników: `Authorization: Bearer {access_token}`
+- Dla niezarejestrowanych użytkowników: `?token={participant_token}`
+
+**Odpowiedź sukcesu (200):**
+```json
+{
+  "id": 1,
+  "participant_id": 1,
+  "wishlist": "I want a book and chocolates\nCheck my Amazon list: https://amazon.com/wishlist/123",
+  "wishlist_html": "I want a book and chocolates<br>Check my Amazon list: <a href='https://amazon.com/wishlist/123'>https://amazon.com/wishlist/123</a>",
+  "updated_at": "2025-10-14T10:00:00Z",
+  "can_edit": true
+}
+```
+
+**Kody błędów:**
+- `401` - Brak autoryzacji
+- `403` - Brak dostępu do wishlist
+- `404` - Uczestnik lub wishlist nie istnieje
+
+---
+
+### DELETE /api/participants/:participantId/wishlist
+
+Usuwa wishlist uczestnika. Dostępne tylko przed datą zakończenia grupy.
+
+**Autoryzacja:**
+- Dla zarejestrowanych użytkowników: `Authorization: Bearer {access_token}`
+- Dla niezarejestrowanych użytkowników: `?token={participant_token}`
+
+**Odpowiedź sukcesu (204):** Brak zawartości
+
+**Kody błędów:**
+- `400` - Próba usunięcia po dacie zakończenia grupy
+- `401` - Brak autoryzacji
+- `403` - Brak dostępu do wishlist
+- `404` - Uczestnik lub wishlist nie istnieje
+
+---
+
+### PUT /api/participants/:participantId/wishlist (istniejący)
+
+Aktualizuje lub tworzy wishlist uczestnika.
+
+**Autoryzacja:**
+- Dla zarejestrowanych użytkowników: `Authorization: Bearer {access_token}`
+- Dla niezarejestrowanych użytkowników: `?token={participant_token}`
+
+**Request body:**
+```json
+{
+  "wishlist": "Treść wishlist z opcjonalnymi URL-ami"
+}
+```
+
+**Odpowiedź sukcesu (200):**
+```json
+{
+  "id": 1,
+  "participant_id": 1,
+  "wishlist": "Treść wishlist...",
+  "updated_at": "2025-10-14T10:00:00Z"
+}
+```
+
+**Kody błędów:**
+- `400` - Próba edycji po dacie zakończenia grupy
+- `401` - Brak autoryzacji
+- `403` - Brak dostępu do wishlist
+- `404` - Uczestnik nie istnieje
+- `422` - Pusta treść wishlist
 
 ## 🔄 Testowanie błędów
 
