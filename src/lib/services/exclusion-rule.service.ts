@@ -311,4 +311,113 @@ export class ExclusionRuleService {
       throw error;
     }
   }
+
+  /**
+   * Deletes an exclusion rule from a Secret Santa group
+   *
+   * Only the group creator can delete exclusion rules, and only before the draw
+   * has been completed. This ensures the integrity of the Secret Santa process.
+   *
+   * @param exclusionRuleId - The ID of the exclusion rule to delete
+   * @param userId - The ID of the user attempting to delete the rule (must be creator)
+   * @throws {Error} "EXCLUSION_RULE_NOT_FOUND" - If exclusion rule doesn't exist
+   * @throws {Error} "GROUP_NOT_FOUND" - If associated group doesn't exist
+   * @throws {Error} "FORBIDDEN" - If user is not the group creator
+   * @throws {Error} "DRAW_COMPLETED" - If draw has already been completed
+   * @throws {Error} "Failed to delete exclusion rule" - If database operation fails
+   *
+   * @example
+   * await exclusionRuleService.deleteExclusionRule(1, "user-id-123");
+   * // Exclusion rule with ID 1 is deleted
+   */
+  async deleteExclusionRule(exclusionRuleId: number, userId: UserId): Promise<void> {
+    // Guard: Check if exclusionRuleId and userId exist
+    if (!exclusionRuleId || !userId) {
+      throw new Error("Exclusion rule ID and User ID are required");
+    }
+
+    console.log("[ExclusionRuleService.deleteExclusionRule] Starting", {
+      exclusionRuleId,
+      userId,
+    });
+
+    try {
+      // Step 1: Get exclusion rule with group information
+      const { data: exclusionRule, error: ruleError } = await this.supabase
+        .from("exclusion_rules")
+        .select(`
+          id,
+          group_id,
+          groups!inner(id, creator_id)
+        `)
+        .eq("id", exclusionRuleId)
+        .single();
+
+      // Guard: Check if exclusion rule exists
+      if (ruleError || !exclusionRule) {
+        console.log("[ExclusionRuleService.deleteExclusionRule] Exclusion rule not found", {
+          exclusionRuleId,
+          error: ruleError?.message,
+        });
+        throw new Error("EXCLUSION_RULE_NOT_FOUND");
+      }
+
+      const groupId = exclusionRule.group_id;
+      const groupCreatorId = (exclusionRule.groups as any).creator_id;
+
+      console.log("[ExclusionRuleService.deleteExclusionRule] Exclusion rule found", {
+        exclusionRuleId,
+        groupId,
+        groupCreatorId,
+      });
+
+      // Step 2: Check if user is the group creator
+      if (groupCreatorId !== userId) {
+        console.log("[ExclusionRuleService.deleteExclusionRule] User not authorized", {
+          userId,
+          groupCreatorId,
+        });
+        throw new Error("FORBIDDEN");
+      }
+
+      console.log("[ExclusionRuleService.deleteExclusionRule] User is creator - authorized");
+
+      // Step 3: Check if draw has been completed
+      const { data: hasAssignments } = await this.supabase
+        .from("assignments")
+        .select("id")
+        .eq("group_id", groupId)
+        .limit(1)
+        .maybeSingle();
+
+      // Guard: Check if draw completed
+      if (hasAssignments !== null) {
+        console.log("[ExclusionRuleService.deleteExclusionRule] Draw already completed", {
+          groupId,
+        });
+        throw new Error("DRAW_COMPLETED");
+      }
+
+      console.log("[ExclusionRuleService.deleteExclusionRule] Draw not completed - can delete exclusion rule");
+
+      // Step 4: Delete the exclusion rule
+      const { error: deleteError } = await this.supabase
+        .from("exclusion_rules")
+        .delete()
+        .eq("id", exclusionRuleId);
+
+      if (deleteError) {
+        console.error("[ExclusionRuleService.deleteExclusionRule] Failed to delete exclusion rule:", deleteError);
+        throw new Error("Failed to delete exclusion rule");
+      }
+
+      console.log("[ExclusionRuleService.deleteExclusionRule] Exclusion rule deleted successfully", {
+        exclusionRuleId,
+        groupId,
+      });
+    } catch (error) {
+      console.error("[ExclusionRuleService.deleteExclusionRule] Error:", error);
+      throw error;
+    }
+  }
 }
