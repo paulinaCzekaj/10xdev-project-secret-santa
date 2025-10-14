@@ -111,7 +111,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
   // Call service to create group
   try {
     const groupService = new GroupService(supabase);
-    const group = await groupService.createGroup(userId, validatedData);
+    const user = locals.user;
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const group = await groupService.createGroup(userId, validatedData, {
+      name: user.user_metadata?.full_name || user.email?.split('@')[0] || "Unknown User",
+      email: user.email || "user@example.com",
+    });
 
     return new Response(JSON.stringify(group), {
       status: 201,

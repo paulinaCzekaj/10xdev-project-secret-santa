@@ -201,7 +201,7 @@ minDate = jutro (dzisiejsza data + 1 dzień, godzina 00:00:00)
 - Data w request body jest w formacie ISO 8601: `2025-10-13T00:00:00.000Z`
 - Request przechodzi pomyślnie (status 201)
 - Toast notification: "Loteria została utworzona pomyślnie!"
-- Przekierowanie do `/groups/{id}/manage`
+- Przekierowanie do `/groups/{id}`
 
 ---
 

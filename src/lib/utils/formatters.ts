@@ -14,7 +14,7 @@ export function formatCurrency(amount: number): string {
 /**
  * Format date for display in a human-readable format
  * @param dateString - ISO date string
- * @returns Formatted date string like "25 grudnia 2025, 23:59"
+ * @returns Formatted date string like "25 grudnia 2025"
  */
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -23,8 +23,6 @@ export function formatDate(dateString: string): string {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
   });
 }
 
@@ -140,7 +138,7 @@ export function formatDuration(totalSeconds: number): string {
  * @returns Formatted exclusion text like "Jan Kowalski nie może wylosować Anny Nowak"
  */
 export function formatExclusionText(blockerName: string, blockedName: string): string {
-  return `${blockerName} nie może wylosować ${blockedName}`;
+  return `${blockerName} → ${blockedName}`;
 }
 
 /**
@@ -185,11 +183,33 @@ export function formatResultStatus(viewed: boolean) {
 /**
  * Format group status badge
  * @param isDrawn - Whether the draw has been completed
+ * @param isExpired - Whether the end date has passed
  * @returns Badge object with text and variant
  */
-export function formatGroupStatusBadge(isDrawn: boolean) {
+export function formatGroupStatusBadge(isDrawn: boolean, isExpired: boolean = false) {
+  if (isDrawn) {
+    if (isExpired) {
+      return {
+        text: "Losowanie zakończone",
+        variant: "secondary" as const,
+      };
+    } else {
+      return {
+        text: "Losowanie wykonane",
+        variant: "secondary" as const,
+      };
+    }
+  }
+
+  if (isExpired) {
+    return {
+      text: "Oczekiwanie na losowanie",
+      variant: "default" as const,
+    };
+  }
+
   return {
-    text: isDrawn ? "Losowanie zakończone" : "Przed losowaniem",
-    variant: (isDrawn ? "secondary" : "default") as "default" | "secondary",
+    text: "Przed losowaniem",
+    variant: "default" as const,
   };
 }

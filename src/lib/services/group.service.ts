@@ -29,7 +29,11 @@ export class GroupService {
    * @returns The created group with participants count
    * @throws {Error} If database operation fails
    */
-  async createGroup(userId: UserId, command: CreateGroupCommand): Promise<GroupListItemDTO> {
+  async createGroup(
+    userId: UserId,
+    command: CreateGroupCommand,
+    userInfo?: { name: string; email: string }
+  ): Promise<GroupListItemDTO> {
     // Guard: Check if userId exists
     if (!userId) {
       throw new Error("User ID is required");
@@ -56,12 +60,11 @@ export class GroupService {
       }
 
       // 2. Add creator as participant
-      // Using placeholder data until auth is implemented
       const participantInsert: ParticipantInsert = {
         group_id: group.id,
         user_id: userId,
-        name: "Default User", // Placeholder - will be replaced with real user data
-        email: "user@example.com", // Placeholder - will be replaced with real user email
+        name: userInfo?.name || "Unknown User",
+        email: userInfo?.email || "user@example.com",
       };
 
       const { error: participantError } = await this.supabase.from("participants").insert(participantInsert);
@@ -172,16 +175,34 @@ export class GroupService {
 
       console.log("[GroupService.getGroupById] Calculated is_drawn", { isDrawn, hasAssignments: !!hasAssignments });
 
-      // Step 6: Calculate can_edit field
+      // Step 6: Calculate drawn_at timestamp if draw has been executed
+      let drawnAt: string | undefined;
+      if (isDrawn) {
+        const { data: firstAssignment } = await this.supabase
+          .from("assignments")
+          .select("created_at")
+          .eq("group_id", groupId)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (firstAssignment) {
+          drawnAt = firstAssignment.created_at;
+          console.log("[GroupService.getGroupById] Found drawn_at", { drawnAt });
+        }
+      }
+
+      // Step 7: Calculate can_edit field
       // User can edit only if they're the creator AND the draw hasn't happened yet
       const canEdit = isCreator && !isDrawn;
 
       console.log("[GroupService.getGroupById] Calculated can_edit", { canEdit, isCreator, isDrawn });
 
-      // Step 7: Construct and return GroupDetailDTO
+      // Step 8: Construct and return GroupDetailDTO
       const groupDetailDTO: GroupDetailDTO = {
         ...group,
         is_drawn: isDrawn,
+        drawn_at: drawnAt,
         participants: participants || [],
         exclusions: exclusions || [],
         is_creator: isCreator,

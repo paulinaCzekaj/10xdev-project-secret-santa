@@ -9,6 +9,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Edit, Trash2, Copy, MoreHorizontal, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { ParticipantViewModel } from "@/types";
@@ -46,8 +52,9 @@ export function ParticipantsList({
   };
 
   return (
-    <Table>
-      <TableHeader>
+    <TooltipProvider>
+      <Table>
+        <TableHeader>
         <TableRow>
           <TableHead>Uczestnik</TableHead>
           <TableHead>Email</TableHead>
@@ -92,23 +99,37 @@ export function ParticipantsList({
               <TableCell>
                 <div className="flex items-center gap-1">
                   {canEdit && (
-                    <Button variant="ghost" size="sm" onClick={() => onEdit(participant)} className="h-8 w-8 p-0">
-                      <Edit className="h-4 w-4" />
-                      <span className="sr-only">Edytuj uczestnika</span>
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="sm" onClick={() => onEdit(participant)} className="h-8 w-8 p-0">
+                          <Edit className="h-4 w-4" />
+                          <span className="sr-only">Edytuj uczestnika</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Edytuj uczestnika</p>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
 
                   {canEdit && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onDelete(participant)}
-                      disabled={participant.isCreator}
-                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Usuń uczestnika</span>
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onDelete(participant)}
+                          disabled={participant.isCreator}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Usuń uczestnika</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{participant.isCreator ? "Nie można usunąć twórcy grupy" : "Usuń uczestnika"}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
               </TableCell>
@@ -129,15 +150,22 @@ export function ParticipantsList({
 
                 <TableCell>
                   {isCreator && participant.resultLink && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleCopyToken(participant)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Copy className="h-4 w-4" />
-                      <span className="sr-only">Kopiuj link dostępu</span>
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCopyToken(participant)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Copy className="h-4 w-4" />
+                          <span className="sr-only">Kopiuj link dostępu</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Kopiuj link dostępu</p>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </TableCell>
               </>
@@ -146,5 +174,6 @@ export function ParticipantsList({
         ))}
       </TableBody>
     </Table>
+    </TooltipProvider>
   );
 }

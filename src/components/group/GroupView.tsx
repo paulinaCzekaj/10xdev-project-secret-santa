@@ -98,7 +98,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
           exclusionsCount: group.exclusions.length,
 
           // Status
-          statusBadge: formatGroupStatusBadge(group.is_drawn),
+          statusBadge: formatGroupStatusBadge(group.is_drawn, isDateExpired(group.end_date)),
         };
       },
     []
@@ -108,7 +108,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
     () =>
       (participants: ParticipantListItemDTO[]): ParticipantViewModel[] => {
         return participants.map((participant): ParticipantViewModel => {
-          const isCurrentUser = participant.user_id === currentUserId;
+          const isCurrentUser = participant.user_id !== null && participant.user_id === currentUserId;
           const isCreator = participant.user_id === group?.creator_id;
 
           return {
@@ -404,10 +404,10 @@ export default function GroupView({ groupId }: GroupViewProps) {
         {isDrawn ? (
           <ResultsSection
             groupId={groupId}
-            drawnAt={group.drawn_at || ""}
-            participantsCount={participants.length}
+            drawnAt={group.drawn_at || null}
+            participants={participants}
             isParticipant={participantViewModels.some((p) => p.isCurrentUser)}
-            currentUserId={currentUserId || ""}
+            isCreator={isCreator}
           />
         ) : (
           <DrawSection

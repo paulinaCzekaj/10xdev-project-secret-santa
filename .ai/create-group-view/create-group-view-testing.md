@@ -117,7 +117,7 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
   - Tekst przycisku zmienia się na "Tworzenie..."
   - Po otrzymaniu odpowiedzi z API:
     - Wyświetla się toast sukcesu: "Grupa została utworzona pomyślnie!"
-    - Użytkownik jest przekierowywany do `/groups/{id}/manage`
+    - Użytkownik jest przekierowywany do `/groups/{id}`
 
 #### 2.2. Obsługa błędów API
 
@@ -327,6 +327,6 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
 
 1. W trybie development używany jest DEFAULT_USER_ID zamiast prawdziwej sesji
 2. Toast notifications mogą wymagać konfiguracji dark mode theme
-3. Przekierowanie do `/groups/{id}/manage` wymaga implementacji tego widoku
+3. Przekierowanie do `/groups/{id}` wymaga implementacji tego widoku
 4. Nieużywany import DayButton w calendar.tsx (ostrzeżenie podczas build)
 

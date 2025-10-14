@@ -104,7 +104,7 @@ export default function CreateGroupForm() {
       });
 
       // Redirect to group management page
-      window.location.href = `/groups/${result.id}/manage`;
+      window.location.href = `/groups/${result.id}`;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Wystąpił nieoczekiwany błąd. Spróbuj ponownie później.";

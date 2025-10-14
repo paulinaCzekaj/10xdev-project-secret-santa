@@ -107,7 +107,7 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
                       value={field.value?.toString() || ""}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="min-w-[200px]">
                           <SelectValue placeholder="Wybierz osobę" />
                         </SelectTrigger>
                       </FormControl>
@@ -140,7 +140,7 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
                       value={field.value?.toString() || ""}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="min-w-[200px]">
                           <SelectValue placeholder="Wybierz osobę" />
                         </SelectTrigger>
                       </FormControl>
@@ -167,7 +167,13 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
             </div>
 
             <p className="text-sm text-muted-foreground">
-              Wykluczenia są jednokierunkowe. Osoba A nie może wylosować osoby B, ale osoba B może wylosować osobę A
+              Wykluczenia są jednokierunkowe.{" "}
+              <span className="text-red-600 font-medium">Osoba A</span>{" "}
+              <span className="text-muted-foreground">nie może wylosować</span>{" "}
+              <span className="text-green-600 font-medium">osoby B</span>, ale{" "}
+              <span className="text-green-600 font-medium">osoba B</span>{" "}
+              <span className="text-muted-foreground">może wylosować</span>{" "}
+              <span className="text-red-600 font-medium">osobę A</span>{" "}
               (chyba że zostanie dodane odwrotne wykluczenie).
             </p>
           </form>

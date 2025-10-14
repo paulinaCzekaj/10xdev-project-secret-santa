@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Edit, Trash2, Calendar, DollarSign } from "lucide-react";
+import { formatDate } from "@/lib/utils/formatters";
 import type { GroupViewModel } from "@/types";
 
 interface GroupHeaderProps {
@@ -47,7 +48,7 @@ export function GroupHeader({
 
               {isDrawn && group.drawn_at && (
                 <div className="text-green-600 font-medium">
-                  Losowanie wykonane: {group.formattedCreatedAt}
+                  Data losowania: {formatDate(group.drawn_at)}
                 </div>
               )}
             </div>

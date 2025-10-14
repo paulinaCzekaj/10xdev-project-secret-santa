@@ -62,7 +62,7 @@ Widok umożliwia użytkownikom tworzenie nowej loterii Secret Santa poprzez form
 - [x] Wszystkie pola disabled podczas wysyłania
 
 ### 8. ✅ Obsługa odpowiedzi API
-- [x] **Sukces:** Toast notification + przekierowanie do `/groups/{id}/manage`
+- [x] **Sukces:** Toast notification + przekierowanie do `/groups/{id}`
 - [x] **Błąd:** Komunikat błędu w formularzu + toast notification
 - [x] Przycisk staje się ponownie aktywny po błędzie
 
@@ -177,10 +177,10 @@ Widok umożliwia użytkownikom tworzenie nowej loterii Secret Santa poprzez form
 - [ ] Test: Wypełnienie wszystkich pól poprawnie
 - [ ] Test: Wysłanie formularza
 - [ ] Test: Weryfikacja czy grupa tworzy się w bazie
-- [ ] Test: Sprawdzenie przekierowania (endpoint `/groups/{id}/manage` zwraca 404 - wymaga implementacji)
+- [ ] Test: Sprawdzenie przekierowania (endpoint `/groups/{id}` zwraca 404 - wymaga implementacji)
 
 #### 4. 📝 Implementacja brakującego widoku
-- [ ] Utworzyć widok `/groups/{id}/manage` (cel przekierowania po utworzeniu loterii)
+- [ ] Utworzyć widok `/groups/{id}` (cel przekierowania po utworzeniu loterii)
 - [ ] Lub zmienić przekierowanie na istniejący widok
 
 #### 5. 🔒 Bezpieczeństwo
@@ -250,7 +250,7 @@ PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 ### 2. Redirect do nieistniejącego widoku
 **Status:** EXPECTED  
-**Opis:** `/groups/{id}/manage` zwraca 404 (widok nie został jeszcze zaimplementowany)  
+**Opis:** `/groups/{id}` zwraca 404 (widok nie został jeszcze zaimplementowany)  
 **Impact:** LOW - formularz działa, tylko przekierowanie failuje
 
 ### 3. Logi debug w produkcji
@@ -293,7 +293,7 @@ PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ### Następny wątek powinien zacząć od:
 1. Testowania kalendarza przez użytkownika
 2. Usunięcia logów debug
-3. Implementacji brakującego widoku `/groups/{id}/manage`
+3. Implementacji brakującego widoku `/groups/{id}`
 
 ---
 

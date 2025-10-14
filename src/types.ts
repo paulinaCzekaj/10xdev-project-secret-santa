@@ -87,7 +87,7 @@ export interface GroupDetailDTO extends GroupDTO {
   exclusions: ExclusionRuleDTO[];
   is_creator: boolean;
   can_edit: boolean;
-  drawn_at?: string; // Only present when group is drawn
+  drawn_at?: string; // Timestamp when draw was executed, only present when group is drawn
 }
 
 /**

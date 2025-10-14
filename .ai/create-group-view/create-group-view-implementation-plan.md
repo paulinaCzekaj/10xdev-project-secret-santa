@@ -109,7 +109,7 @@ Do implementacji widoku wymagane będą następujące typy:
   5. **Typ żądania:** `CreateGroupCommand`
   6. **Typ odpowiedzi (sukces):** `GroupDTO`
 - **Obsługa odpowiedzi:**
-  - W przypadku sukcesu (status 201), komponent odczyta `id` nowej grupy z odpowiedzi i przekieruje użytkownika na stronę `/groups/{id}/manage`.
+  - W przypadku sukcesu (status 201), komponent odczyta `id` nowej grupy z odpowiedzi i przekieruje użytkownika na stronę `/groups/{id}`.
   - W przypadku błędu, odpowiedni komunikat zostanie wyświetlony użytkownikowi.
 
 ## 8. Interakcje użytkownika

@@ -56,7 +56,7 @@ Przejdź do: `http://localhost:4321/groups/new`
    - Dane są wysyłane do API
 4. Po sukcesie:
    - Pojawia się powiadomienie sukcesu (toast)
-   - Następuje przekierowanie do `/groups/{id}/manage`
+   - Następuje przekierowanie do `/groups/{id}`
 5. W przypadku błędu:
    - Pojawia się komunikat błędu
    - Można poprawić dane i spróbować ponownie
@@ -100,7 +100,7 @@ CreateGroupCommand (API DTO)
   ↓ [POST /api/groups]
 GroupDTO (odpowiedź)
   ↓ [przekierowanie]
-/groups/{id}/manage
+/groups/{id}
 ```
 
 ### Format danych
@@ -200,7 +200,7 @@ GroupDTO (odpowiedź)
 - Upewnij się, że pakiet "sonner" jest zainstalowany
 
 ### Problem: Przekierowanie nie działa po utworzeniu grupy
-- Sprawdź czy endpoint `/groups/{id}/manage` istnieje
+- Sprawdź czy endpoint `/groups/{id}` istnieje
 - Sprawdź konsole przeglądarki pod kątem błędów
 
 ## Dalszy rozwój

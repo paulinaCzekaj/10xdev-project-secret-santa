@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import { supabaseClient } from "@/db/supabase.client";
 import type { GroupDetailDTO, UpdateGroupCommand, GroupDTO, ApiError } from "@/types";
 
@@ -64,6 +65,7 @@ export function useGroupData(groupId: number) {
       // Odśwież pełne dane grupy
       await fetchGroup();
 
+      toast.success("Grupa została zaktualizowana");
       return { success: true, data: updatedGroup };
     } catch (err) {
       return {

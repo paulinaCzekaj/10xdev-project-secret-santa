@@ -1,36 +1,35 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Users, Gift, Eye, Calendar } from "lucide-react";
+import { CheckCircle, Eye, Calendar, Users, Gift, FileCheck } from "lucide-react";
 import { formatDate } from "@/lib/utils/formatters";
+import type { ParticipantListItemDTO } from "@/types";
 
 interface ResultsSectionProps {
   groupId: number;
-  drawnAt: string;
-  participantsCount: number;
+  drawnAt: string | null;
+  participants: ParticipantListItemDTO[];
   isParticipant: boolean;
-  currentUserId: string;
+  isCreator: boolean;
 }
 
-export function ResultsSection({
-  groupId,
-  drawnAt,
-  participantsCount,
-  isParticipant,
-  currentUserId,
-}: ResultsSectionProps) {
+export function ResultsSection({ groupId, drawnAt, participants, isParticipant, isCreator }: ResultsSectionProps) {
   const handleViewResult = () => {
     // Przekierowanie do strony z wynikiem
     window.location.href = `/groups/${groupId}/result`;
   };
 
-  // Symulowane statystyki - w rzeczywistości będą pobierane z API
+  // Obliczanie statystyk
   const stats = {
-    totalParticipants: participantsCount,
-    participantsWithWishlists: Math.floor(participantsCount * 0.7), // 70% ma listy życzeń
-    participantsViewedResults: Math.floor(participantsCount * 0.8), // 80% zobaczyło wyniki
+    totalParticipants: participants.length,
+    withWishlists: participants.filter((p) => p.has_wishlist).length,
+    viewedResults: participants.filter((p) => p.result_viewed).length,
   };
+
+  const wishlistPercentage =
+    stats.totalParticipants > 0 ? Math.round((stats.withWishlists / stats.totalParticipants) * 100) : 0;
+  const viewedPercentage =
+    stats.totalParticipants > 0 ? Math.round((stats.viewedResults / stats.totalParticipants) * 100) : 0;
 
   return (
     <section>
@@ -38,19 +37,19 @@ export function ResultsSection({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-600" />
-            Losowanie zakończone!
+            Losowanie wykonane
           </CardTitle>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4" />
-            <span>Losowanie wykonane: {formatDate(drawnAt)}</span>
+            <span>Data przeprowadzenia losowania: {drawnAt ? formatDate(drawnAt) : "Nieznana"}</span>
           </div>
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Statystyki */}
+          {/* Statystyki grupy */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center gap-3 p-4 border rounded-lg">
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 text-green-600">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600">
                 <Users className="h-5 w-5" />
               </div>
               <div>
@@ -60,22 +59,26 @@ export function ResultsSection({
             </div>
 
             <div className="flex items-center gap-3 p-4 border rounded-lg">
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-purple-100 text-purple-600">
                 <Gift className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-medium">{stats.participantsWithWishlists}</p>
+                <p className="font-medium">
+                  {stats.withWishlists} ({wishlistPercentage}%)
+                </p>
                 <p className="text-sm text-muted-foreground">ma listy życzeń</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3 p-4 border rounded-lg">
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-purple-100 text-purple-600">
-                <Eye className="h-5 w-5" />
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 text-green-600">
+                <FileCheck className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-medium">{stats.participantsViewedResults}</p>
-                <p className="text-sm text-muted-foreground">zobaczyło wyniki</p>
+                <p className="font-medium">
+                  {stats.viewedResults} ({viewedPercentage}%)
+                </p>
+                <p className="text-sm text-muted-foreground">przeczytało wyniki</p>
               </div>
             </div>
           </div>
@@ -92,13 +95,11 @@ export function ResultsSection({
           </div>
 
           {/* Przycisk zobaczenia wyniku */}
-          {isParticipant && (
+          {(isParticipant || isCreator) && (
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between p-6 bg-green-50 border border-green-200 rounded-lg">
               <div>
                 <h3 className="font-medium text-green-900 mb-1">Twój wynik losowania</h3>
-                <p className="text-sm text-green-800">
-                  Zobacz komu masz kupić prezent i czyją listę życzeń sprawdzić.
-                </p>
+                <p className="text-sm text-green-800">Zobacz komu masz kupić prezent i czyją listę życzeń sprawdzić.</p>
               </div>
 
               <Button
@@ -117,18 +118,15 @@ export function ResultsSection({
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
               <h3 className="font-medium text-amber-900 mb-2">Informacje dla uczestników:</h3>
               <p className="text-sm text-amber-800">
-                Jeśli jesteś uczestnikiem tej grupy, powinieneś otrzymać wiadomość email
-                z linkiem do swojego wyniku losowania. Sprawdź swoją skrzynkę odbiorczą
-                (w tym folder spam).
+                Jeśli jesteś uczestnikiem tej grupy, powinieneś otrzymać wiadomość email z linkiem do swojego wyniku
+                losowania. Sprawdź swoją skrzynkę odbiorczą (w tym folder spam).
               </p>
             </div>
           )}
 
           {/* Dodatkowe informacje */}
           <div className="text-center py-4">
-            <p className="text-sm text-muted-foreground">
-              🎄 Wesołych Świąt i udanych zakupów! 🎄
-            </p>
+            <p className="text-sm text-muted-foreground">🎄 Wesołych Świąt i udanych zakupów! 🎄</p>
             <p className="text-xs text-muted-foreground mt-1">
               Pamiętaj o limicie budżetu i sprawdź listy życzeń przed zakupami.
             </p>

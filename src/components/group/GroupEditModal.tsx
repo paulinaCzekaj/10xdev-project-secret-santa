@@ -107,7 +107,6 @@ export function GroupEditModal({
       const result = await updateGroup(command);
 
       if (result.success) {
-        toast.success("Grupa została zaktualizowana");
         onSave();
         onClose();
       } else {

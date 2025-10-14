@@ -63,7 +63,7 @@ c) **Wersja react-day-picker**
 ### Co wymaga poprawy (potencjalnie) 🔧
 1. **Logi debug w DatePicker** - powinny być usunięte w produkcji
 2. **Brak obsługi błędów Supabase** - jeśli zmienne są puste, tylko console.error
-3. **Redirect po utworzeniu** - endpoint `/groups/1/manage` zwraca 404 (nie istnieje jeszcze ten widok)
+3. **Redirect po utworzeniu** - endpoint `/groups/1` zwraca 404 (nie istnieje jeszcze ten widok)
 
 ## Analiza głębsza: Dlaczego kalendarz mógł nie działać?
 
@@ -295,7 +295,7 @@ Po rozwiązaniu problemu:
 2. Czy są jakieś błędy w konsoli przeglądarki?
 3. Czy wybór daty zapisuje się poprawnie w formularzu?
 4. Czy formularz submituje się i tworzy grupę w bazie?
-5. Czy przekierowanie do `/groups/{id}/manage` jest potrzebne teraz czy później?
+5. Czy przekierowanie do `/groups/{id}` jest potrzebne teraz czy później?
 
 **Gotowe do kontynuacji w kolejnym wątku! 🚀**
 

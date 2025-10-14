@@ -39,7 +39,9 @@ export function ExclusionsList({
               <Ban className="h-4 w-4 text-muted-foreground" />
             </div>
             <span className="text-sm font-medium">
-              {exclusion.displayText}
+              <span className="text-red-600 font-semibold">{exclusion.blocker_name}</span>
+              <span className="text-muted-foreground mx-1">→</span>
+              <span className="text-green-600 font-semibold">{exclusion.blocked_name}</span>
             </span>
           </div>
 
@@ -59,8 +61,14 @@ export function ExclusionsList({
 
       <div className="text-xs text-muted-foreground mt-4">
         <p>
-          <strong>Wykluczenia jednokierunkowe:</strong> Osoba A nie może wylosować osoby B,
-          ale osoba B może wylosować osobę A (chyba że istnieje odwrotne wykluczenie).
+          <strong>Wykluczenia jednokierunkowe:</strong>{" "}
+          <span className="text-red-600 font-medium">Osoba A</span>{" "}
+          <span className="text-muted-foreground">nie może wylosować</span>{" "}
+          <span className="text-green-600 font-medium">osoby B</span>, ale{" "}
+          <span className="text-green-600 font-medium">osoba B</span>{" "}
+          <span className="text-muted-foreground">może wylosować</span>{" "}
+          <span className="text-red-600 font-medium">osobę A</span>{" "}
+          (chyba że istnieje odwrotne wykluczenie).
         </p>
       </div>
     </div>
