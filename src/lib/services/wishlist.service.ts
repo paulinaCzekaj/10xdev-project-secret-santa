@@ -69,15 +69,19 @@ export class WishlistService {
       // Step 2: Validate access permissions
       await this.validateWishlistAccess(participantId, authUserId, participantToken, participantWithGroup);
 
-      // Step 3: Check if group end date has passed
+      // Step 3: Check if group end date has passed (compare only dates, ignore time)
       const now = new Date();
       const endDate = new Date(participantWithGroup.group.end_date);
+      // Compare only dates (ignore time) - end date is inclusive
+      const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
 
-      if (now > endDate) {
+      if (nowDate > endDateOnly) {
         console.log("[WishlistService.createOrUpdateWishlist] End date passed", {
           participantId,
           endDate: participantWithGroup.group.end_date,
-          now: now.toISOString(),
+          endDateOnly: endDateOnly.toISOString(),
+          nowDate: nowDate.toISOString(),
         });
         throw new Error("END_DATE_PASSED");
       }
@@ -381,12 +385,16 @@ export class WishlistService {
       // Step 3: Check if group end date has passed (DELETE is blocked after end_date)
       const now = new Date();
       const endDate = new Date(participantWithGroup.group.end_date);
+      // Compare only dates (ignore time) - end date is inclusive
+      const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
 
-      if (now > endDate) {
+      if (nowDate > endDateOnly) {
         console.log("[WishlistService.deleteWishlist] End date passed", {
           participantId,
           endDate: participantWithGroup.group.end_date,
-          now: now.toISOString(),
+          endDateOnly: endDateOnly.toISOString(),
+          nowDate: nowDate.toISOString(),
         });
         throw new Error("END_DATE_PASSED");
       }

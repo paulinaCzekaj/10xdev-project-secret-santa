@@ -53,11 +53,30 @@ export class ResultsService {
     await this.updateResultViewedAt(participant.id);
 
     // Step 5: Format and return response
+    const now = new Date();
+    const endDate = new Date(group.end_date);
+    // Compare only dates (ignore time) - end date is inclusive
+    const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+    const isExpired = endDateOnly < nowDate;
+
+    console.log("[ResultsService.getAuthenticatedUserResult] Date check", {
+      groupId,
+      participantId: participant.id,
+      endDate: group.end_date,
+      endDateParsed: endDate.toISOString(),
+      now: now.toISOString(),
+      endDateOnly: endDateOnly.toISOString(),
+      nowDate: nowDate.toISOString(),
+      isExpired,
+      canEdit: !isExpired,
+    });
+
     const result: DrawResultResponseDTO = {
       group: this.formatGroupInfo(group),
       participant: this.formatParticipantInfo(participant),
       assigned_to: this.formatAssignedParticipant(assignedParticipant, assignedWishlist),
-      my_wishlist: this.formatMyWishlist(myWishlist, true), // Authenticated users can edit
+      my_wishlist: this.formatMyWishlist(myWishlist, !isExpired), // Can edit only if not expired
     };
 
     console.log("[ResultsService.getAuthenticatedUserResult] Successfully retrieved result", {
@@ -103,11 +122,30 @@ export class ResultsService {
     await this.updateResultViewedAt(participant.id);
 
     // Step 5: Format and return response
+    const now = new Date();
+    const endDate = new Date(group.end_date);
+    // Compare only dates (ignore time) - end date is inclusive
+    const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+    const isExpired = endDateOnly < nowDate;
+
+    console.log("[ResultsService.getTokenBasedResult] Date check", {
+      groupId: participant.group_id,
+      participantId: participant.id,
+      endDate: group.end_date,
+      endDateParsed: endDate.toISOString(),
+      now: now.toISOString(),
+      endDateOnly: endDateOnly.toISOString(),
+      nowDate: nowDate.toISOString(),
+      isExpired,
+      canEdit: !isExpired,
+    });
+
     const result: DrawResultResponseDTO = {
       group: this.formatGroupInfo(group),
       participant: this.formatParticipantInfo(participant),
       assigned_to: this.formatAssignedParticipant(assignedParticipant, assignedWishlist),
-      my_wishlist: this.formatMyWishlist(myWishlist, false), // Token users cannot edit
+      my_wishlist: this.formatMyWishlist(myWishlist, !isExpired), // Can edit only if not expired
     };
 
     console.log("[ResultsService.getTokenBasedResult] Successfully retrieved result", {
@@ -345,6 +383,11 @@ export class ResultsService {
     wishlist: string | null,
     canEdit: boolean
   ): ResultMyWishlist {
+    console.log("[ResultsService.formatMyWishlist] Formatting wishlist", {
+      hasContent: !!wishlist,
+      canEdit,
+    });
+
     return {
       content: wishlist || undefined,
       can_edit: canEdit,

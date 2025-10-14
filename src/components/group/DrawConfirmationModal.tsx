@@ -19,7 +19,7 @@ interface DrawConfirmationModalProps {
   participantsCount: number;
   exclusionsCount: number;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
   executeDraw: () => Promise<{ success: boolean; error?: string; data?: DrawResultDTO }>;
 }
 
@@ -31,20 +31,33 @@ export function DrawConfirmationModal({
   onConfirm,
   executeDraw,
 }: DrawConfirmationModalProps) {
+  const [isExecuting, setIsExecuting] = React.useState(false);
+
   const handleConfirm = async () => {
+    setIsExecuting(true);
     try {
       const result = await executeDraw();
 
       if (result.success && result.data) {
         toast.success("Losowanie zostało pomyślnie wykonane!");
-        onConfirm();
+        // Poczekaj na odświeżenie danych przed zamknięciem modala
+        await onConfirm();
       } else {
         toast.error(result.error || "Nie udało się wykonać losowania");
+        setIsExecuting(false);
       }
     } catch (error) {
       toast.error("Wystąpił błąd podczas wykonania losowania");
+      setIsExecuting(false);
     }
   };
+
+  // Reset stan gdy modal się zamyka
+  React.useEffect(() => {
+    if (!isOpen) {
+      setIsExecuting(false);
+    }
+  }, [isOpen]);
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
@@ -104,9 +117,13 @@ export function DrawConfirmationModal({
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel>Anuluj</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirm} className="bg-red-600 text-white hover:bg-red-700">
-            Potwierdź i rozpocznij losowanie
+          <AlertDialogCancel disabled={isExecuting}>Anuluj</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleConfirm}
+            disabled={isExecuting}
+            className="bg-red-600 text-white hover:bg-red-700"
+          >
+            {isExecuting ? "Trwa losowanie..." : "Potwierdź i rozpocznij losowanie"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

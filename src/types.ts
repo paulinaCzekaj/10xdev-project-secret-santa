@@ -535,3 +535,119 @@ export interface CopyToClipboardResult {
   success: boolean;
   message: string;
 }
+
+// ============================================================================
+// RESULT VIEW MODELS (rozszerzone typy dla widoku wyniku)
+// ============================================================================
+
+/**
+ * ViewModel dla widoku wyniku losowania
+ * Rozszerza DTO o formatowane i obliczone pola dla frontendu
+ */
+export interface ResultViewModel {
+  // Dane z API
+  group: ResultGroupInfo;
+  participant: ResultParticipantInfo;
+  assigned_to: ResultAssignedParticipant;
+  my_wishlist: ResultMyWishlist;
+
+  // Formatowane wartości dla wyświetlania
+  formattedBudget: string;           // "150 PLN"
+  formattedEndDate: string;           // "25 grudnia 2025"
+  formattedShortEndDate: string;      // "25.12.2025"
+
+  // Obliczone wartości
+  isExpired: boolean;                 // czy data zakończenia minęła
+  daysUntilEnd: number;               // ile dni do końca (-1 jeśli przeszła)
+
+  // Dane wylosowanej osoby (rozszerzone)
+  assignedPersonInitials: string;     // "JK" - inicjały dla avatara
+  assignedPersonWishlistHtml?: string; // HTML z auto-linkowanymi URL-ami
+
+  // Flagi dostępu i kontekstu
+  isAuthenticated: boolean;           // czy użytkownik zalogowany
+  accessToken?: string;               // token dla niezalogowanych
+}
+
+/**
+ * Stan edytora listy życzeń
+ * Używany w useWishlistEditor hook
+ */
+export interface WishlistEditorState {
+  content: string;                    // aktualna treść
+  originalContent: string;            // oryginalna treść (z API)
+  isSaving: boolean;                  // czy trwa zapisywanie
+  hasChanges: boolean;                // czy są niezapisane zmiany
+  lastSaved: Date | null;             // kiedy ostatnio zapisano
+  saveError: string | null;           // komunikat błędu zapisu
+  characterCount: number;             // liczba znaków
+  canEdit: boolean;                   // czy można edytować
+}
+
+/**
+ * Stan odkrycia wyniku (localStorage)
+ * Przechowywany w localStorage z kluczem:
+ * result_revealed_${groupId}_${participantId}
+ */
+export interface ResultRevealState {
+  groupId: number;
+  participantId: number;
+  revealed: boolean;                  // czy wynik odkryty
+  revealedAt: number;                 // timestamp odkrycia (Date.now())
+}
+
+/**
+ * Stan konfetti (dla animacji)
+ */
+export interface ConfettiState {
+  isActive: boolean;                  // czy animacja aktywna
+  numberOfPieces: number;             // liczba elementów konfetti (200-400)
+  recycle: boolean;                   // czy recyklować (false = jedno odtworzenie)
+}
+
+// ============================================================================
+// RESULT HOOK TYPES (typy dla custom hooks)
+// ============================================================================
+
+/**
+ * Zwracany typ z useResultData hook
+ */
+export interface UseResultDataReturn {
+  result: ResultViewModel | null;
+  isLoading: boolean;
+  error: ApiError | null;
+  refetch: () => Promise<void>;
+}
+
+/**
+ * Zwracany typ z useRevealState hook
+ */
+export interface UseRevealStateReturn {
+  isRevealed: boolean;
+  reveal: () => void;
+  reset: () => void;
+}
+
+/**
+ * Zwracany typ z useWishlistEditor hook
+ */
+export interface UseWishlistEditorReturn {
+  state: WishlistEditorState;
+  content: string;
+  setContent: (content: string) => void;
+  isSaving: boolean;
+  saveError: string | null;
+  lastSaved: Date | null;
+  canEdit: boolean;
+  characterCount: number;
+  hasChanges: boolean;
+  save: () => Promise<void>;
+}
+
+/**
+ * Zwracany typ z useWishlistLinking hook
+ */
+export interface UseWishlistLinkingReturn {
+  convertToHtml: (text: string) => string;
+  extractUrls: (text: string) => string[];
+}

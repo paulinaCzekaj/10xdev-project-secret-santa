@@ -17,7 +17,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Cookie options for SSR
 export const cookieOptions: CookieOptionsWithName = {
   path: "/",
-  secure: true,
+  secure: false, // false for local development (HTTP), true for production (HTTPS)
   httpOnly: true,
   sameSite: "lax",
 };

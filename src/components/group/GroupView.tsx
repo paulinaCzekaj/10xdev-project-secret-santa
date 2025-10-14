@@ -188,11 +188,9 @@ export default function GroupView({ groupId }: GroupViewProps) {
     refetchExclusions();
   };
 
-  const handleDrawComplete = () => {
+  const handleDrawComplete = async () => {
     // Odśwież wszystkie dane po losowaniu
-    refetchGroup();
-    refetchParticipants();
-    refetchExclusions();
+    await Promise.all([refetchGroup(), refetchParticipants(), refetchExclusions()]);
     setIsDrawConfirmationModalOpen(false);
   };
 
