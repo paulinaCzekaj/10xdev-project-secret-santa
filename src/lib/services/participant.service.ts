@@ -691,7 +691,9 @@ export class ParticipantService {
    * // Returns: { participant_id: 1, access_count: 3, first_accessed_at: "2025-10-14T10:00:00Z", last_accessed_at: "2025-10-14T10:30:00Z" }
    */
   async trackResultAccess(accessToken: string): Promise<ResultAccessTrackingDTO> {
-    console.log("[ParticipantService.trackResultAccess] Starting", { accessToken: accessToken.substring(0, 8) + "..." });
+    console.log("[ParticipantService.trackResultAccess] Starting", {
+      accessToken: accessToken.substring(0, 8) + "...",
+    });
 
     try {
       // Find participant by access token
@@ -707,7 +709,9 @@ export class ParticipantService {
       }
 
       if (!participant) {
-        console.log("[ParticipantService.trackResultAccess] Participant not found", { accessToken: accessToken.substring(0, 8) + "..." });
+        console.log("[ParticipantService.trackResultAccess] Participant not found", {
+          accessToken: accessToken.substring(0, 8) + "...",
+        });
         throw new Error("PARTICIPANT_NOT_FOUND");
       }
 

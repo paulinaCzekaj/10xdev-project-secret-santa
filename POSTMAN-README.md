@@ -15,6 +15,7 @@ Po zaimportowaniu kolekcji, skonfiguruj następujące zmienne środowiskowe:
 - `base_url` - domyślnie: `http://localhost:4321`
 - `group_id` - ID grupy (ustaw po utworzeniu grupy)
 - `participant_id` - ID uczestnika (ustaw po dodaniu uczestnika)
+- `access_token` - token dostępu uczestnika (ustaw po dodaniu uczestnika)
 
 ## 🚀 Workflow testowania
 
@@ -48,6 +49,15 @@ npm run dev
 
 ### 6. Losowanie
 1. **Execute Secret Santa Draw** - wykonaj losowanie (wymaga min. 3 uczestników)
+
+### 7. Wyniki losowania
+1. **Get Draw Result (Authenticated)** - pobierz wynik losowania dla zalogowanego użytkownika
+   - Wymaga autoryzacji i przynależności do grupy
+   - Losowanie musi być zakończone
+2. **Get Draw Result (Token-based)** - pobierz wynik losowania używając tokenu dostępu
+   - Nie wymaga autoryzacji - używa tokenu uczestnika
+   - Losowanie musi być zakończone
+   - Ustaw `access_token` po dodaniu uczestnika
 
 ## ⚠️ Ważne uwagi
 
@@ -93,6 +103,10 @@ POST /api/groups/{group_id}/draw
 
 # 6. Sprawdzanie wyników
 GET /api/groups/{group_id}
+
+# 7. Pobieranie wyników losowania
+GET /api/groups/{group_id}/result          # Dla zalogowanych użytkowników
+GET /api/results/{access_token}            # Dla niezarejestrowanych uczestników
 ```
 
 ## 🔄 Testowanie błędów
@@ -125,6 +139,7 @@ Utwórz środowisko w Postman z zmiennymi:
 - `base_url` = `http://localhost:4321`
 - `group_id` = (ustaw dynamicznie)
 - `participant_id` = (ustaw dynamicznie)
+- `access_token` = (ustaw dynamicznie po dodaniu uczestnika)
 
 ### Runner i monitorowanie
 - Użyj **Collection Runner** do wykonania całej kolekcji
