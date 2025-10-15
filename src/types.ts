@@ -131,6 +131,18 @@ export interface ParticipantWithTokenDTO extends ParticipantDTO {
 }
 
 /**
+ * Participant DTO with associated group information
+ * Used internally by services for validation and business logic
+ */
+export interface ParticipantWithGroupDTO extends ParticipantDTO {
+  group: {
+    id: number;
+    end_date: string;
+    creator_id: string;
+  };
+}
+
+/**
  * Participant DTO for list views with wishlist status
  * GET /api/groups/:groupId/participants
  * Note: access_token is included only when requested by group creator
@@ -556,22 +568,22 @@ export interface ResultViewModel {
   my_wishlist: ResultMyWishlist;
 
   // Formatowane wartości dla wyświetlania
-  formattedBudget: string;           // "150 PLN"
-  formattedEndDate: string;           // "25 grudnia 2025"
-  formattedShortEndDate: string;      // "25.12.2025"
+  formattedBudget: string; // "150 PLN"
+  formattedEndDate: string; // "25 grudnia 2025"
+  formattedShortEndDate: string; // "25.12.2025"
 
   // Obliczone wartości
-  isExpired: boolean;                 // czy data zakończenia minęła
-  daysUntilEnd: number;               // ile dni do końca (-1 jeśli przeszła)
+  isExpired: boolean; // czy data zakończenia minęła
+  daysUntilEnd: number; // ile dni do końca (-1 jeśli przeszła)
 
   // Dane wylosowanej osoby (rozszerzone)
-  assignedPersonInitials: string;     // "JK" - inicjały dla avatara
+  assignedPersonInitials: string; // "JK" - inicjały dla avatara
   assignedPersonWishlistHtml?: string; // HTML z auto-linkowanymi URL-ami
 
   // Flagi dostępu i kontekstu
-  isAuthenticated: boolean;           // czy użytkownik zalogowany
-  accessToken?: string;               // token dla niezalogowanych
-  resultViewedAt?: string;            // kiedy wynik został odkryty
+  isAuthenticated: boolean; // czy użytkownik zalogowany
+  accessToken?: string; // token dla niezalogowanych
+  resultViewedAt?: string; // kiedy wynik został odkryty
 }
 
 /**
@@ -579,14 +591,14 @@ export interface ResultViewModel {
  * Używany w useWishlistEditor hook
  */
 export interface WishlistEditorState {
-  content: string;                    // aktualna treść
-  originalContent: string;            // oryginalna treść (z API)
-  isSaving: boolean;                  // czy trwa zapisywanie
-  hasChanges: boolean;                // czy są niezapisane zmiany
-  lastSaved: Date | null;             // kiedy ostatnio zapisano
-  saveError: string | null;           // komunikat błędu zapisu
-  characterCount: number;             // liczba znaków
-  canEdit: boolean;                   // czy można edytować
+  content: string; // aktualna treść
+  originalContent: string; // oryginalna treść (z API)
+  isSaving: boolean; // czy trwa zapisywanie
+  hasChanges: boolean; // czy są niezapisane zmiany
+  lastSaved: Date | null; // kiedy ostatnio zapisano
+  saveError: string | null; // komunikat błędu zapisu
+  characterCount: number; // liczba znaków
+  canEdit: boolean; // czy można edytować
 }
 
 /**
@@ -597,17 +609,17 @@ export interface WishlistEditorState {
 export interface ResultRevealState {
   groupId: number;
   participantId: number;
-  revealed: boolean;                  // czy wynik odkryty
-  revealedAt: number;                 // timestamp odkrycia (Date.now())
+  revealed: boolean; // czy wynik odkryty
+  revealedAt: number; // timestamp odkrycia (Date.now())
 }
 
 /**
  * Stan konfetti (dla animacji)
  */
 export interface ConfettiState {
-  isActive: boolean;                  // czy animacja aktywna
-  numberOfPieces: number;             // liczba elementów konfetti (200-400)
-  recycle: boolean;                   // czy recyklować (false = jedno odtworzenie)
+  isActive: boolean; // czy animacja aktywna
+  numberOfPieces: number; // liczba elementów konfetti (200-400)
+  recycle: boolean; // czy recyklować (false = jedno odtworzenie)
 }
 
 // ============================================================================
