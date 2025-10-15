@@ -597,9 +597,8 @@ export class ParticipantService {
 
       console.log("[ParticipantService.getGroupParticipants] User authorized to view participants");
 
-      // Step 3: Get all participants for the group with wishlist status
-      // Include access_token in select - we'll conditionally include it in response
-      const { data: participantsWithWishlist, error: queryError } = await this.supabase
+      // Step 3: Get all participants for the group
+      const { data: participants, error: participantsError } = await this.supabase
         .from("participants")
         .select(
           `
@@ -610,34 +609,59 @@ export class ParticipantService {
           email,
           created_at,
           access_token,
-          result_viewed_at,
-          wishes!left(participant_id)
+          result_viewed_at
         `
         )
         .eq("group_id", groupId)
         .order("created_at", { ascending: true });
 
-      if (queryError) {
+      if (participantsError) {
         console.error(
-          "[ParticipantService.getGroupParticipants] Failed to get participants with wishlist:",
-          queryError
+          "[ParticipantService.getGroupParticipants] Failed to get participants:",
+          participantsError
         );
         throw new Error("Failed to get group participants");
       }
 
-      if (!participantsWithWishlist || participantsWithWishlist.length === 0) {
+      if (!participants || participants.length === 0) {
         console.log("[ParticipantService.getGroupParticipants] No participants found", { groupId });
         return [];
       }
 
       console.log("[ParticipantService.getGroupParticipants] Found participants", {
         groupId,
-        participantCount: participantsWithWishlist.length,
+        participantCount: participants.length,
       });
 
-      // Step 4: Transform the data to match ParticipantListItemDTO format
+      // Step 4: Get wishlist status for all participants in one query
+      const participantIds = participants.map(p => p.id);
+      const { data: wishlists, error: wishlistsError } = await this.supabase
+        .from("wishes")
+        .select("participant_id")
+        .in("participant_id", participantIds);
+
+      if (wishlistsError) {
+        console.error(
+          "[ParticipantService.getGroupParticipants] Failed to get wishlists:",
+          wishlistsError
+        );
+        // Don't throw here - just log and continue with empty wishlists
+      }
+
+      // Create a set of participant IDs that have wishlists
+      const participantsWithWishlists = new Set(wishlists?.map(w => w.participant_id) || []);
+
+      console.log("[ParticipantService.getGroupParticipants] Wishlist status retrieved", {
+        totalParticipants: participants.length,
+        withWishlistsCount: participantsWithWishlists.size,
+        participantsWithWishlists: Array.from(participantsWithWishlists),
+      });
+
+      // Step 5: Transform the data to match ParticipantListItemDTO format
       // Include access_token only if user is the group creator
-      const participants: ParticipantListItemDTO[] = participantsWithWishlist.map((participant) => {
+      const participantsWithWishlistStatus: ParticipantListItemDTO[] = participants.map((participant) => {
+        const hasWishlist = participantsWithWishlists.has(participant.id);
+
         const baseData = {
           id: participant.id,
           group_id: participant.group_id,
@@ -646,7 +670,7 @@ export class ParticipantService {
           email: participant.email,
           created_at: participant.created_at,
           result_viewed_at: participant.result_viewed_at,
-          has_wishlist: Array.isArray(participant.wishes) && participant.wishes.length > 0,
+          has_wishlist: hasWishlist,
           result_viewed: participant.result_viewed_at !== null,
         };
 
@@ -663,12 +687,12 @@ export class ParticipantService {
 
       console.log("[ParticipantService.getGroupParticipants] Successfully retrieved participants", {
         groupId,
-        participantCount: participants.length,
-        withWishlistCount: participants.filter((p) => p.has_wishlist).length,
+        participantCount: participantsWithWishlistStatus.length,
+        withWishlistCount: participantsWithWishlistStatus.filter((p) => p.has_wishlist).length,
         includesAccessToken: isCreator,
       });
 
-      return participants;
+      return participantsWithWishlistStatus;
     } catch (error) {
       console.error("[ParticipantService.getGroupParticipants] Error:", error);
       throw error;

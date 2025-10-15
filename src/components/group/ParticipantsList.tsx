@@ -15,7 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Edit, Trash2, Copy, MoreHorizontal, CheckCircle, XCircle } from "lucide-react";
+import { Edit, Trash2, Copy, MoreHorizontal, CheckCircle, XCircle, Heart, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import type { ParticipantViewModel } from "@/types";
 
@@ -137,15 +137,45 @@ export function ParticipantsList({
               // Kolumny statusu po losowaniu
               <>
                 <TableCell>
-                  <Badge variant={participant.wishlistStatus?.variant || "secondary"}>
-                    {participant.wishlistStatus?.text || "Brak"}
-                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="cursor-pointer">
+                        {participant.wishlistStatus?.icon && (
+                          <participant.wishlistStatus.icon
+                            className={`h-4 w-4 ${
+                              participant.wishlistStatus.variant === "default"
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          />
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{participant.wishlistStatus?.text || "Brak listy życzeń"}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </TableCell>
 
                 <TableCell>
-                  <Badge variant={participant.resultStatus?.variant || "secondary"}>
-                    {participant.resultStatus?.text || "Nie zobaczył"}
-                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="cursor-pointer">
+                        {participant.resultStatus?.icon && (
+                          <participant.resultStatus.icon
+                            className={`h-4 w-4 ${
+                              participant.resultStatus.variant === "default"
+                                ? "text-green-600"
+                                : "text-gray-500"
+                            }`}
+                          />
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{participant.resultStatus?.text || "Wynik nie został jeszcze zobaczony"}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </TableCell>
 
                 <TableCell>

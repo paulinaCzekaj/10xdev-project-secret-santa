@@ -300,7 +300,7 @@ export default function RegisterForm() {
           <div className="text-center pt-4 border-t border-gray-200">
             <p className="text-sm text-gray-600">
               Masz już konto?{" "}
-              <a href="/login" className="text-red-600 hover:text-red-700 font-semibold">
+              <a href="/login" className="text-red-600 hover:text-red-700 font-semibold cursor-pointer">
                 Zaloguj się
               </a>
             </p>

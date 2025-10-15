@@ -1,4 +1,5 @@
 import type { Tables, TablesInsert, TablesUpdate } from "./db/database.types";
+import type React from "react";
 
 // ============================================================================
 // COMMON TYPES
@@ -425,14 +426,16 @@ export interface ParticipantViewModel extends Omit<ParticipantListItemDTO, "acce
   wishlistStatus?: {
     hasWishlist: boolean;
     text: string; // "Dodana" | "Brak"
-    variant: "secondary";
+    variant: "default" | "destructive";
+    icon: React.ComponentType<{ className?: string }>;
   };
 
   resultStatus?: {
     // tylko po losowaniu
     viewed: boolean;
     text: string; // "Zobaczył" | "Nie zobaczył"
-    variant: "secondary";
+    variant: "default" | "outline";
+    icon: React.ComponentType<{ className?: string }>;
   };
 
   // Token (dla niezarejestrowanych)

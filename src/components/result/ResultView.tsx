@@ -22,9 +22,7 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
 
   // Update isRevealed when result loads
   useEffect(() => {
-    if (result?.resultViewedAt) {
-      setIsRevealed(true);
-    }
+    setIsRevealed(!!result?.resultViewedAt);
   }, [result?.resultViewedAt]);
 
   // Helper function to wrap content in background
@@ -245,7 +243,10 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
         {isRevealed && (
           <WishlistSection
             myWishlist={result.my_wishlist}
-            theirWishlist={result.assigned_to}
+            theirWishlist={{
+              content: result.assigned_to.wishlist,
+              contentHtml: result.assignedPersonWishlistHtml,
+            }}
             assignedPersonName={result.assigned_to.name}
             participantId={result.participant.id}
             groupEndDate={result.group.end_date}

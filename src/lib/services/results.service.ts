@@ -199,9 +199,9 @@ export class ResultsService {
     if (accessType === "authenticated") {
       const { data: participantData, error: participantError } = await this.supabase
         .from("participants")
-        .select("id, group_id, user_id, name, email")
-        .eq("group_id", groupId)
-        .eq("user_id", userId)
+        .select("id, group_id, user_id, name, email, result_viewed_at")
+        .eq("group_id", groupId!)
+        .eq("user_id", userId!)
         .single();
 
       if (participantError || !participantData) {
@@ -216,8 +216,8 @@ export class ResultsService {
     } else {
       const { data: participantData, error: participantError } = await this.supabase
         .from("participants")
-        .select("id, group_id, user_id, name, email")
-        .eq("access_token", token)
+        .select("id, group_id, user_id, name, email, result_viewed_at")
+        .eq("access_token", token!)
         .single();
 
       if (participantError || !participantData) {

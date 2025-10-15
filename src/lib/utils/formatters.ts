@@ -2,6 +2,8 @@
  * Utility functions for formatting data for display in the UI
  */
 
+import { Heart, XCircle, Eye, EyeOff } from "lucide-react";
+
 /**
  * Format currency amount with PLN symbol
  * @param amount - The amount in PLN
@@ -157,26 +159,28 @@ export function formatExclusionShortText(blockerName: string, blockedName: strin
 /**
  * Format wishlist status for display
  * @param hasWishlist - Whether the participant has a wishlist
- * @returns Status object with text and variant
+ * @returns Status object with text, variant and icon
  */
 export function formatWishlistStatus(hasWishlist: boolean) {
   return {
     hasWishlist,
-    text: hasWishlist ? "Dodana" : "Brak",
-    variant: (hasWishlist ? "secondary" : "secondary") as "secondary",
+    text: hasWishlist ? "Lista życzeń dodana" : "Brak listy życzeń",
+    variant: (hasWishlist ? "default" : "destructive") as "default" | "destructive",
+    icon: hasWishlist ? Heart : XCircle,
   };
 }
 
 /**
  * Format result viewing status for display
  * @param viewed - Whether the participant viewed their result
- * @returns Status object with text and variant
+ * @returns Status object with text, variant and icon
  */
 export function formatResultStatus(viewed: boolean) {
   return {
     viewed,
-    text: viewed ? "Zobaczył" : "Nie zobaczył",
-    variant: (viewed ? "secondary" : "secondary") as "secondary",
+    text: viewed ? "Wynik został zobaczony" : "Wynik nie został jeszcze zobaczony",
+    variant: (viewed ? "default" : "outline") as "default" | "outline",
+    icon: viewed ? Eye : EyeOff,
   };
 }
 

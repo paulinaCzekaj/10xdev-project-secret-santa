@@ -26,19 +26,22 @@ function ResultHeader({ group, isAuthenticated }: ResultHeaderProps) {
 
     return (
       <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 mb-4">
-        <a href="/" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
+        <a href="/" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors cursor-pointer">
           Home
         </a>
         <span className="text-gray-400">/</span>
-        <a href="/dashboard" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
+        <a href="/dashboard" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors cursor-pointer">
           Pulpit
         </a>
         <span className="text-gray-400">/</span>
-        <a href="/dashboard" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
+        <a href="/dashboard" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors cursor-pointer">
           Grupy
         </a>
         <span className="text-gray-400">/</span>
-        <a href={`/groups/${group.id}`} className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
+        <a
+          href={`/groups/${group.id}`}
+          className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors cursor-pointer"
+        >
           {group.name}
         </a>
         <span className="text-gray-400">/</span>
@@ -59,8 +62,11 @@ function ResultHeader({ group, isAuthenticated }: ResultHeaderProps) {
 
     if (group.daysUntilEnd <= 7) {
       return (
-        <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
-          Pozostało {group.daysUntilEnd} {group.daysUntilEnd === 1 ? 'dzień' : 'dni'}
+        <Badge
+          variant="secondary"
+          className="text-xs bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+        >
+          Pozostało {group.daysUntilEnd} {group.daysUntilEnd === 1 ? "dzień" : "dni"}
         </Badge>
       );
     }
@@ -80,9 +86,7 @@ function ResultHeader({ group, isAuthenticated }: ResultHeaderProps) {
       {/* Event Card - czytelny design */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-red-600 dark:text-red-400 mb-2">
-            🎅 {group.name}
-          </h1>
+          <h1 className="text-3xl font-bold text-red-600 dark:text-red-400 mb-2">🎅 {group.name}</h1>
           <StatusBadge />
         </div>
 
@@ -94,12 +98,8 @@ function ResultHeader({ group, isAuthenticated }: ResultHeaderProps) {
                 <DollarSign className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  Budżet prezentu
-                </p>
-                <p className="text-2xl font-bold text-green-700 dark:text-green-300">
-                  {group.formattedBudget}
-                </p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Budżet prezentu</p>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-300">{group.formattedBudget}</p>
               </div>
             </div>
           </div>
@@ -111,12 +111,8 @@ function ResultHeader({ group, isAuthenticated }: ResultHeaderProps) {
                 <Calendar className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  Termin wymiany
-                </p>
-                <p className="text-2xl font-bold text-red-700 dark:text-red-300">
-                  {group.formattedEndDate}
-                </p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Termin wymiany</p>
+                <p className="text-2xl font-bold text-red-700 dark:text-red-300">{group.formattedEndDate}</p>
               </div>
             </div>
           </div>

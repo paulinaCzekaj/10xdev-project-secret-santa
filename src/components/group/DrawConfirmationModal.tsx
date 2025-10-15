@@ -64,8 +64,8 @@ export function DrawConfirmationModal({
       <AlertDialogContent className="sm:max-w-[500px]">
         <AlertDialogHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-              <Shuffle className="h-5 w-5 text-red-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+              <Shuffle className="h-5 w-5 text-destructive" />
             </div>
             <div>
               <AlertDialogTitle>Czy na pewno chcesz rozpocząć losowanie?</AlertDialogTitle>

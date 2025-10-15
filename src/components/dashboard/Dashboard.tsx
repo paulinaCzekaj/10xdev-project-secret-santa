@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Link } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -127,7 +126,10 @@ function GroupCard({ group, isCreator }: GroupCardProps) {
   };
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+    <a
+      href={`/groups/${group.id}`}
+      className="block border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer"
+    >
       <div className="flex justify-between items-start mb-3">
         <div>
           <h3 className="font-semibold text-gray-900">{group.name}</h3>
@@ -153,12 +155,9 @@ function GroupCard({ group, isCreator }: GroupCardProps) {
               W trakcie
             </span>
           )}
-          <Button asChild variant="outline" size="sm">
-            <a href={`/groups/${group.id}`}>{isCreator ? "Zarządzaj" : "Zobacz"}</a>
-          </Button>
         </div>
       </div>
-    </div>
+    </a>
   );
 }
 
