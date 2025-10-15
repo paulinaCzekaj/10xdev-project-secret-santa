@@ -1,0 +1,58 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import DashboardComponent from "@/components/dashboard/Dashboard";
+import type { GroupListItemDTO } from "@/types";
+
+// Enable SSR for this page
+export const prerender = false;
+
+// Check authentication - redirect to login if not authenticated
+const { user } = Astro.locals;
+if (!user) {
+  return Astro.redirect("/login?redirectTo=/dashboard");
+}
+
+// Get user data
+const userData = {
+  id: user.id,
+  email: user.email || "",
+};
+
+// Fetch created groups
+const createdGroupsResponse = await fetch(`${Astro.url.origin}/api/groups?filter=created`, {
+  headers: {
+    Cookie: Astro.request.headers.get("Cookie") || "",
+  },
+});
+
+let createdGroups: GroupListItemDTO[] = [];
+if (createdGroupsResponse.ok) {
+  const createdGroupsData = await createdGroupsResponse.json();
+  createdGroups = createdGroupsData.data || [];
+} else {
+  console.error("Failed to fetch created groups:", createdGroupsResponse.status);
+}
+
+// Fetch joined groups
+const joinedGroupsResponse = await fetch(`${Astro.url.origin}/api/groups?filter=joined`, {
+  headers: {
+    Cookie: Astro.request.headers.get("Cookie") || "",
+  },
+});
+
+let joinedGroups: GroupListItemDTO[] = [];
+if (joinedGroupsResponse.ok) {
+  const joinedGroupsData = await joinedGroupsResponse.json();
+  joinedGroups = joinedGroupsData.data || [];
+} else {
+  console.error("Failed to fetch joined groups:", joinedGroupsResponse.status);
+}
+---
+
+<Layout title="Mój pulpit | Secret Santa">
+  <div class="min-h-screen bg-gradient-to-br from-red-50 via-white to-green-50">
+    <div class="container mx-auto px-4 py-8">
+      <DashboardComponent client:load user={userData} createdGroups={createdGroups} joinedGroups={joinedGroups} />
+    </div>
+  </div>
+</Layout>

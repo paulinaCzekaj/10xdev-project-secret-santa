@@ -1,0 +1,23 @@
+---
+// Strona wyniku losowania dla niezarejestrowanych uczestników (token-based)
+import Layout from "@/layouts/Layout.astro";
+import ResultView from "@/components/result/ResultView";
+
+// Pobieramy token z URL
+const { token } = Astro.params;
+
+// Walidacja tokenu
+if (!token || typeof token !== 'string' || token.length === 0) {
+  return Astro.redirect('/');
+}
+
+const pageTitle = "Twój wynik Secret Santa";
+---
+
+<Layout title={pageTitle}>
+  <ResultView
+    client:load
+    token={token}
+    isAuthenticated={false}
+  />
+</Layout>

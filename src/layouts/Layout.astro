@@ -1,11 +1,18 @@
 ---
 import "../styles/global.css";
+import { Toaster } from "@/components/ui/sonner";
+import LogoutButton from "@/components/auth/LogoutButton";
 
 interface Props {
   title?: string;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const { title = "Secret Santa" } = Astro.props;
+
+// Get user session for navigation
+const { user } = Astro.locals;
+const isLoggedIn = !!user;
+const userEmail = user?.email;
 ---
 
 <!doctype html>
@@ -18,7 +25,45 @@ const { title = "10x Astro Starter" } = Astro.props;
     <title>{title}</title>
   </head>
   <body>
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200">
+      <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+          <!-- Logo -->
+          <a href={isLoggedIn ? "/dashboard" : "/"} class="text-xl font-bold text-red-600 cursor-pointer"> 🎅 Secret Santa </a>
+
+          <!-- Auth buttons -->
+          <div class="flex items-center gap-4">
+            {
+              isLoggedIn ? (
+                <>
+                  <span class="text-sm text-gray-600">{userEmail}</span>
+                  <a href="/dashboard" class="text-sm text-gray-700 hover:text-red-600 cursor-pointer">
+                    Pulpit
+                  </a>
+                  <LogoutButton client:load />
+                </>
+              ) : (
+                <>
+                  <a href="/login" class="text-sm text-gray-700 hover:text-red-600 cursor-pointer">
+                    Logowanie
+                  </a>
+                  <a
+                    href="/register"
+                    class="inline-flex items-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md hover:shadow-lg transition-all rounded-md cursor-pointer"
+                  >
+                    Rejestracja
+                  </a>
+                </>
+              )
+            }
+          </div>
+        </div>
+      </div>
+    </nav>
+
     <slot />
+    <Toaster client:load />
   </body>
 </html>
 

@@ -1,0 +1,30 @@
+---
+// Strona wyniku losowania dla zalogowanych użytkowników
+import Layout from "@/layouts/Layout.astro";
+import ResultView from "@/components/result/ResultView";
+
+// Pobieramy parametry z URL
+const { groupId } = Astro.params;
+const { user } = Astro.locals;
+
+// Guard: wymaga zalogowania
+if (!user) {
+  return Astro.redirect(`/login?returnUrl=/groups/${groupId}/result`);
+}
+
+// Walidacja groupId
+const groupIdNumber = parseInt(groupId || '0', 10);
+if (isNaN(groupIdNumber) || groupIdNumber <= 0) {
+  return Astro.redirect('/dashboard');
+}
+
+const pageTitle = "Wynik losowania Secret Santa";
+---
+
+<Layout title={pageTitle}>
+  <ResultView
+    client:load
+    groupId={groupIdNumber}
+    isAuthenticated={true}
+  />
+</Layout>

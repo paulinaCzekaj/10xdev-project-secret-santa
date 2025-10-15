@@ -1,94 +1,141 @@
-# 10x Astro Starter
+# Secret Santa
 
-A modern, opinionated starter template for building fast, accessible, and AI-friendly web applications.
+## Table of Contents
+- [Project Description](#project-description)
+- [Tech Stack](#tech-stack)
+- [Getting Started Locally](#getting-started-locally)
+- [Available Scripts](#available-scripts)
+- [Project Scope](#project-scope)
+- [Project Status](#project-status)
+- [License](#license)
+
+## Project Description
+The "Secret Santa" application is a web-based tool designed to simplify and automate the gift exchange process. Its primary goal, as an MVP (Minimum Viable Product), is to enable users to create gift groups, invite participants, define drawing rules, and conduct the drawing fully automatically and anonymously. The application eliminates the need for manual organization, ensuring confidentiality and fairness, which is especially important for groups organizing remote exchanges. This product is aimed at anyone who wants to organize such an event among family, friends, or co-workers.
+
+It addresses common problems such as:
+*   **Lack of anonymity**: Traditional methods often reveal pairs to the organizer.
+*   **Logistical challenges**: Coordinating participants, rules (e.g., exclusions), and result delivery is difficult, especially remotely.
+*   **Risk of error**: Possibility of self-drawing or rule violations.
+*   **Scattered information**: Wish lists are often dispersed across communication channels.
+
+The "Secret Santa" application offers a centralized, automated, and confidential platform to resolve these issues.
 
 ## Tech Stack
+The project leverages a modern tech stack to deliver a fast, efficient, and interactive user experience with a robust backend.
 
-- [Astro](https://astro.build/) v5.5.5 - Modern web framework for building fast, content-focused websites
-- [React](https://react.dev/) v19.0.0 - UI library for building interactive components
-- [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
-- [Tailwind CSS](https://tailwindcss.com/) v4.0.17 - Utility-first CSS framework
+### Frontend
+*   **Astro 5**: For building fast, high-performance web pages and applications with minimal JavaScript.
+*   **React 19**: Provides interactivity where dynamic components are required.
+*   **TypeScript 5**: Ensures static typing for improved code quality and enhanced IDE support.
+*   **Tailwind 4**: For utility-first CSS styling.
+*   **Shadcn/ui**: A library of accessible React components used for building the user interface.
 
-## Prerequisites
+### Backend
+*   **Supabase**: A comprehensive backend solution providing:
+    *   **PostgreSQL Database**: A powerful relational database.
+    *   **Backend-as-a-Service (BaaS)**: SDKs available in multiple languages for easy integration.
+    *   **Open Source**: Can be hosted locally or on a custom server.
+    *   **Built-in User Authentication**: Handles user registration, login, and session management.
 
-- Node.js v22.14.0 (as specified in `.nvmrc`)
-- npm (comes with Node.js)
+### CI/CD and Hosting
+*   **GitHub Actions**: For automated Continuous Integration and Continuous Deployment pipelines.
+*   **DigitalOcean**: For application hosting via Docker images.
 
-## Getting Started
+## Getting Started Locally
 
-1. Clone the repository:
+To get a local copy up and running, follow these simple steps.
 
-```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
-```
+### Prerequisites
+Make sure you have Node.js installed. The project is configured to use:
+*   Node.js `v22.14.0` (as specified in `.nvmrc`)
 
-2. Install dependencies:
+### Installation
 
-```bash
-npm install
-```
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/paulinaCzekaj/10xdev-project-secret-santa.git
+    cd 10xdev-project-secret-santa
+    ```
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+3.  **Environment Variables:**
+    The project requires environment variables for Supabase configuration (e.g., `SUPABASE_URL`, `SUPABASE_ANON_KEY`). Create a `.env` file in the project root and add the necessary variables. An example `.env.example` might be provided later, but for now, consult Supabase documentation for required keys.
 
-3. Run the development server:
-
-```bash
-npm run dev
-```
-
-4. Build for production:
-
-```bash
-npm run build
-```
+4.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+    The application will be accessible at `http://localhost:4321`.
 
 ## Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues
+In the project directory, you can run:
 
-## Project Structure
+*   `npm run dev`: Starts the development server.
+*   `npm run build`: Builds the application for production.
+*   `npm run preview`: Previews the production build locally.
+*   `npm run astro`: Accesses the Astro CLI for various commands.
+*   `npm run lint`: Runs ESLint to check for code quality issues.
+*   `npm run lint:fix`: Runs ESLint and attempts to fix any identifiable issues.
+*   `npm run format`: Formats the code using Prettier.
 
-```md
-.
-├── src/
-│   ├── layouts/    # Astro layouts
-│   ├── pages/      # Astro pages
-│   │   └── api/    # API endpoints
-│   ├── components/ # UI components (Astro & React)
-│   └── assets/     # Static assets
-├── public/         # Public assets
-```
+## Project Scope
 
-## AI Development Support
+This section outlines the functionalities included and excluded from the Minimum Viable Product (MVP) of the Secret Santa application.
 
-This project is configured with AI development tools to enhance the development experience, providing guidelines for:
+### In Scope (MVP)
+*   **Authentication and Account Management**: User registration, login, logout, and password reset functionality.
+*   **Group Management (CRUD)**: Create, add/edit participants, edit group parameters (name, budget, end date), and delete groups. The creator is automatically added as a participant.
+*   **Drawing Logic**: Ability to define one-way exclusion rules (e.g., "User A cannot draw User B"). Validation prevents drawings if rules make it impossible. Requires a minimum of 3 participants. The drawing process is irreversible.
+*   **Results and Wish Lists**:
+    *   Confidential access to drawing results for both registered (via login) and unregistered participants (via unique, hard-to-guess links).
+    *   Tracking mechanism for unique link openings.
+    *   Participants can create and edit a simple text-based wish list, with automatic conversion of URLs to clickable hyperlinks.
+    *   Wish list editing is possible until the defined "event end date."
+    *   The result screen displays the drawn person's name, their wish list, group name, budget, and the participant's own editable wish list.
 
-- Project structure
-- Coding practices
-- Frontend development
-- Styling with Tailwind
-- Accessibility best practices
-- Astro and React guidelines
+### Out of Scope (MVP)
+*   **Notification System**: No email or push notifications for group additions, upcoming drawings, or results.
+*   **Formal Invitations**: No system for joining groups via links or codes.
+*   **Group Chat**: No built-in chat functionality.
+*   **Post-Drawing Edits**: No ability to edit a group or redraw after the drawing has concluded.
+*   **External Integrations**: No integrations with external services (e.g., Amazon wish lists).
+*   **Advanced User Roles**: No co-organizer or other advanced roles.
+*   **Multi-currency Support**: Only PLN is supported.
+*   **Name-only Result Access**: Access to results solely by name has been excluded in favor of secure unique links.
 
-### Cursor IDE
+## Project Status
 
-The project includes AI rules in `.cursor/rules/` directory that help Cursor IDE understand the project structure and provide better code suggestions.
+The Secret Santa project is currently in active development, focusing on delivering a robust and user-friendly Minimum Viable Product (MVP).
 
-### GitHub Copilot
+### Core Features Implemented ✅
 
-AI instructions for GitHub Copilot are available in `.github/copilot-instructions.md`
+#### Result View System
+The application now includes a comprehensive result viewing system that supports both authenticated and anonymous users:
 
-### Windsurf
+- **Dual Access Modes**: Support for logged-in users (`/groups/:id/result`) and token-based access for unregistered participants (`/results/:token`)
+- **Interactive Reveal**: Animated gift box with confetti animation upon first result reveal
+- **Wishlist Management**: Real-time collaborative wishlists with autosave functionality and URL auto-linking
+- **Security & Privacy**: Encrypted result access with localStorage persistence for reveal states
+- **Responsive Design**: Mobile-first approach with full accessibility compliance (WCAG AA)
+- **Error Handling**: Comprehensive error states with user-friendly recovery actions
 
-The `.windsurfrules` file contains AI configuration for Windsurf.
+#### User Experience Enhancements
+- **Result Discovery**: Engaging animation sequence with gift unwrapping and celebration effects
+- **Live Editing**: Debounced autosave (2s) with visual feedback and conflict resolution
+- **Smart Linking**: Automatic URL detection and conversion to clickable links in wishlists
+- **State Persistence**: localStorage-backed reveal states that persist across sessions
 
-## Contributing
-
-Please follow the AI guidelines and coding practices defined in the AI configuration files when contributing to this project.
+### Success Metrics
+*   **Business/Product KPI**: Achieve 100% result views by participants in every completed drawing, tracked via unique link openings and logged-in user access.
+*   **User Activation Rate**: Aim for 50% activation, defined as a registered user who has participated in at least one drawing (as a creator or participant).
+*   **Academic/Technical**:
+    *   Successful completion and positive evaluation of the academic project.
+    *   100% functional core user scenarios: from registration, group creation, participant management, rule definition, drawing execution, to correct result display for all participants.
+    *   Drawing logic fully covered by unit tests, ensuring correctness (exclusions, no self-drawing).
+    *   Configured and operational CI/CD pipeline (e.g., GitHub Actions) to automatically run tests on every push to the repository.
 
 ## License
-
-MIT
+Unspecified. Please refer to the `LICENSE` file in the repository for detailed information once it is available.

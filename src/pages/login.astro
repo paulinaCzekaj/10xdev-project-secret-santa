@@ -1,0 +1,58 @@
+---
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import LoginForm from "@/components/auth/LoginForm";
+
+// Enable SSR for this page
+export const prerender = false;
+
+// Get query parameters
+const redirectTo = Astro.url.searchParams.get("redirectTo") || undefined;
+const messageCode = Astro.url.searchParams.get("message");
+
+// Map message codes to display messages
+function getMessageText(code: string | null): { type: "success" | "error" | "info"; text: string } | undefined {
+  if (!code) return undefined;
+
+  const messages: Record<string, { type: "success" | "error" | "info"; text: string }> = {
+    password_reset_success: {
+      type: "success",
+      text: "Hasło zostało zmienione. Zaloguj się przy użyciu nowego hasła.",
+    },
+    email_confirmed: {
+      type: "success",
+      text: "Email został potwierdzony. Możesz się teraz zalogować.",
+    },
+    session_expired: {
+      type: "info",
+      text: "Twoja sesja wygasła. Zaloguj się ponownie.",
+    },
+    unauthorized: {
+      type: "error",
+      text: "Nie masz uprawnień do tej operacji.",
+    },
+  };
+
+  return messages[code];
+}
+
+const message = getMessageText(messageCode);
+
+// Check if user is already logged in
+const { user } = Astro.locals;
+if (user) {
+  // User is already logged in - redirect to dashboard or redirectTo
+  const redirectUrl = redirectTo || "/dashboard";
+  return Astro.redirect(redirectUrl);
+}
+---
+
+<AuthLayout title="Logowanie | Secret Santa">
+  <LoginForm client:load redirectTo={redirectTo} message={message} />
+
+  <div slot="footer-links">
+    <p class="text-gray-600">
+      Nie masz konta?
+      <a href="/register" class="text-red-600 hover:text-red-700 font-medium ml-1">Zarejestruj się</a>
+    </p>
+  </div>
+</AuthLayout>

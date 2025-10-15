@@ -1,0 +1,25 @@
+---
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import RegisterForm from "@/components/auth/RegisterForm";
+
+// Enable SSR for this page
+export const prerender = false;
+
+// Check if user is already logged in
+const { user } = Astro.locals;
+if (user) {
+  // User is already logged in - redirect to dashboard
+  return Astro.redirect("/dashboard");
+}
+---
+
+<AuthLayout title="Rejestracja | Secret Santa">
+  <RegisterForm client:load />
+
+  <div slot="footer-links">
+    <p class="text-gray-600">
+      Masz już konto?
+      <a href="/login" class="text-red-600 hover:text-red-700 font-medium ml-1">Zaloguj się</a>
+    </p>
+  </div>
+</AuthLayout>
