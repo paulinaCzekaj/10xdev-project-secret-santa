@@ -47,7 +47,7 @@ export default function Dashboard({ user, createdGroups, joinedGroups }: Dashboa
                 title="Brak utworzonych grup"
                 description="Utwórz swoją pierwszą grupę Secret Santa"
                 action={
-                  <Button asChild className="bg-red-500 hover:bg-red-600">
+                  <Button asChild className="bg-red-500 hover:bg-red-600" data-testid="create-group-empty-state-button">
                     <a href="/groups/new">Utwórz nową grupę</a>
                   </Button>
                 }
@@ -92,7 +92,7 @@ export default function Dashboard({ user, createdGroups, joinedGroups }: Dashboa
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
             Utwórz nową grupę Secret Santa i zaproś swoich znajomych lub rodzinę.
           </p>
-          <Button asChild size="lg" className="bg-red-500 hover:bg-red-600 text-white">
+          <Button asChild size="lg" className="bg-red-500 hover:bg-red-600 text-white" data-testid="create-group-cta-button">
             <a href="/groups/new">
               <span className="mr-2">🎅</span>
               Utwórz nową grupę Secret Santa
@@ -129,6 +129,7 @@ function GroupCard({ group, isCreator }: GroupCardProps) {
     <a
       href={`/groups/${group.id}`}
       className="block border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer"
+      data-testid={`group-card-${group.id}`}
     >
       <div className="flex justify-between items-start mb-3">
         <div>

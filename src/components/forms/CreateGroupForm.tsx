@@ -118,9 +118,9 @@ export default function CreateGroupForm() {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 shadow-lg">
+    <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 shadow-lg" data-testid="create-group-form-container">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" data-testid="create-group-form">
           {/* Group Name Field */}
           <FormField
             control={form.control}
@@ -136,6 +136,7 @@ export default function CreateGroupForm() {
                     autoComplete="off"
                     maxLength={50}
                     className="h-11 bg-gray-50 border-gray-300 focus:border-red-500 focus:ring-red-500"
+                    data-testid="create-group-name-input"
                   />
                 </FormControl>
                 <FormMessage />
@@ -167,6 +168,7 @@ export default function CreateGroupForm() {
                         className="h-11 pr-16 bg-gray-50 border-gray-300 focus:border-red-500 focus:ring-red-500"
                         min="1"
                         step="1"
+                        data-testid="create-group-budget-input"
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
                         PLN
@@ -198,6 +200,7 @@ export default function CreateGroupForm() {
                       })()}
                       placeholder="Wybierz datę"
                       className="bg-gray-50 border-gray-300 focus:border-red-500 focus:ring-red-500"
+                      data-testid="create-group-date-picker"
                     />
                   </FormControl>
                   <FormMessage />
@@ -245,6 +248,7 @@ export default function CreateGroupForm() {
             type="submit"
             className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
             disabled={!isFormValid}
+            data-testid="create-group-submit-button"
           >
             {isSubmitting && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
             {isSubmitting ? "Tworzenie..." : "Utwórz loterię"}

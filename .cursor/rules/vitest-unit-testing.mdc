@@ -1,6 +1,9 @@
 ---
-alwaysApply: true
+description: Vitest  unit testing
+globs:
+alwaysApply: false
 ---
+
 ## TESTING
 
 ### Guidelines for UNIT

@@ -14,6 +14,7 @@ interface DatePickerProps {
   minDate?: Date;
   placeholder?: string;
   className?: string;
+  "data-testid"?: string;
 }
 
 export function DatePicker({
@@ -23,6 +24,7 @@ export function DatePicker({
   minDate,
   placeholder = "Wybierz datę",
   className,
+  "data-testid": dataTestId,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -49,6 +51,7 @@ export function DatePicker({
           onClick={() => {
             setOpen(true);
           }}
+          data-testid={dataTestId}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
           {value ? format(value, "dd.MM.yyyy", { locale: pl }) : <span>{placeholder}</span>}

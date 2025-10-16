@@ -360,7 +360,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
     <>
       <Toaster position="top-right" />
 
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6" data-testid="group-view-container">
         {/* Nagłówek grupy */}
         <GroupHeader
           group={groupViewModel as GroupViewModel}
