@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useOptimistic } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { GroupHeader } from "./GroupHeader";
 import { ParticipantsSection } from "./ParticipantsSection";
@@ -19,8 +19,9 @@ import { useExclusions } from "@/hooks/useExclusions";
 import { useDraw } from "@/hooks/useDraw";
 import { useModalState } from "@/hooks/useModalState";
 import { useGroupViewModel } from "@/hooks/useGroupViewModel";
+import { useGroupViewHandlers } from "@/hooks/useGroupViewHandlers";
 import { supabaseClient } from "@/db/supabase.client";
-import type { ParticipantViewModel, GroupViewModel } from "@/types";
+import type { GroupViewModel } from "@/types";
 
 interface GroupViewProps {
   groupId: number;
@@ -47,6 +48,15 @@ export default function GroupView({ groupId }: GroupViewProps) {
   } = useExclusions(groupId);
   const { executeDraw } = useDraw(groupId);
 
+  // React 19 useOptimistic for instant UI updates
+  const [optimisticParticipants, setOptimisticParticipants] = useOptimistic(participants, (state, deletedId: number) =>
+    state.filter((p) => p.id !== deletedId)
+  );
+
+  const [optimisticExclusions, setOptimisticExclusions] = useOptimistic(exclusions, (state, deletedId: number) =>
+    state.filter((e) => e.id !== deletedId)
+  );
+
   // Zarządzanie modalami (konsolidacja 7 useState w 1 hook)
   const modals = useModalState();
 
@@ -58,109 +68,25 @@ export default function GroupView({ groupId }: GroupViewProps) {
   }, []);
 
   // Transformuj dane do ViewModels (ekstrakcja 73 linii logiki)
+  // Używamy optimistic state dla natychmiastowej reakcji UI
   const { groupViewModel, participantViewModels, exclusionViewModels } = useGroupViewModel({
     group,
-    participants,
-    exclusions,
+    participants: optimisticParticipants,
+    exclusions: optimisticExclusions,
     currentUserId,
   });
 
-  // Obsługa zdarzeń
-  const handleGroupUpdated = () => {
-    refetchGroup();
-    modals.closeModal();
-  };
-
-  const handleGroupDeleted = () => {
-    // Przekierowanie do dashboard
-    window.location.href = "/dashboard";
-  };
-
-  const handleParticipantAdded = () => {
-    refetchParticipants();
-  };
-
-  const handleParticipantUpdated = () => {
-    refetchParticipants();
-    modals.closeModal();
-  };
-
-  const handleParticipantDeleted = () => {
-    refetchParticipants();
-  };
-
-  const handleExclusionAdded = () => {
-    refetchExclusions();
-  };
-
-  const handleExclusionDeleted = () => {
-    refetchExclusions();
-  };
-
-  const handleDrawComplete = async () => {
-    // Odśwież wszystkie dane po losowaniu
-    await Promise.all([refetchGroup(), refetchParticipants(), refetchExclusions()]);
-    modals.closeModal();
-  };
-
-  // Obsługa zdarzeń GroupHeader
-  const handleEditGroupClick = () => {
-    modals.openEditGroupModal();
-  };
-
-  const handleDeleteGroupClick = () => {
-    modals.openDeleteGroupModal();
-  };
-
-  // Obsługa zdarzeń DrawSection
-  const handleDrawClick = () => {
-    modals.openDrawConfirmationModal();
-  };
-
-  // Obsługa zdarzeń ParticipantsSection
-  const handleEditParticipant = (participant: ParticipantViewModel) => {
-    modals.openEditParticipantModal(participant);
-  };
-
-  const handleDeleteParticipant = (participant: ParticipantViewModel) => {
-    modals.openDeleteParticipantModal(participant);
-  };
-
-  const handleConfirmDeleteParticipant = async () => {
-    if (!modals.participantToDelete) return;
-
-    // Optimistic update
-    const result = await deleteParticipant(modals.participantToDelete.id);
-    if (!result.success) {
-      // Przywróć stan w przypadku błędu
-      refetchParticipants();
-    }
-
-    // Zamknij modal
-    modals.closeModal();
-  };
-
-  const handleCopyParticipantToken = async (participant: ParticipantViewModel) => {
-    if (participant.resultLink) {
-      try {
-        await navigator.clipboard.writeText(participant.resultLink);
-        // TODO: Show success toast
-      } catch {
-        // Fallback: show link in input field
-        // TODO: Show fallback UI for clipboard error
-      }
-    }
-  };
-
-  // Obsługa zdarzeń ExclusionsSection
-  const handleDeleteExclusion = async (exclusionId: number) => {
-    // Optimistic update
-    const result = await deleteExclusion(exclusionId);
-    if (!result.success) {
-      // Przywróć stan w przypadku błędu
-      refetchExclusions();
-    }
-  };
+  // Obsługa zdarzeń (ekstrakcja do custom hook)
+  const handlers = useGroupViewHandlers({
+    modals,
+    refetchGroup,
+    refetchParticipants,
+    refetchExclusions,
+    deleteParticipant,
+    deleteExclusion,
+    setOptimisticParticipants,
+    setOptimisticExclusions,
+  });
 
   // Warunki wyświetlania
   const isLoading = groupLoading || participantsLoading || exclusionsLoading;
@@ -194,8 +120,8 @@ export default function GroupView({ groupId }: GroupViewProps) {
           isCreator={isCreator}
           canEdit={canEdit}
           isDrawn={isDrawn}
-          onEditClick={handleEditGroupClick}
-          onDeleteClick={handleDeleteGroupClick}
+          onEditClick={handlers.handleEditGroupClick}
+          onDeleteClick={handlers.handleDeleteGroupClick}
         />
 
         {/* Sekcja uczestników */}
@@ -205,12 +131,12 @@ export default function GroupView({ groupId }: GroupViewProps) {
           canEdit={canEdit}
           isDrawn={isDrawn}
           isCreator={isCreator}
-          onParticipantAdded={handleParticipantAdded}
-          onParticipantUpdated={handleParticipantUpdated}
-          onParticipantDeleted={handleParticipantDeleted}
-          onEditParticipant={handleEditParticipant}
-          onDeleteParticipant={handleDeleteParticipant}
-          onCopyParticipantToken={handleCopyParticipantToken}
+          onParticipantAdded={handlers.handleParticipantAdded}
+          onParticipantUpdated={handlers.handleParticipantUpdated}
+          onParticipantDeleted={handlers.handleParticipantDeleted}
+          onEditParticipant={handlers.handleEditParticipant}
+          onDeleteParticipant={handlers.handleDeleteParticipant}
+          onCopyParticipantToken={handlers.handleCopyParticipantToken}
         />
 
         {/* Sekcja wykluczeń */}
@@ -220,9 +146,9 @@ export default function GroupView({ groupId }: GroupViewProps) {
           participants={participantViewModels}
           canEdit={canEdit}
           isDrawn={isDrawn}
-          onExclusionAdded={handleExclusionAdded}
-          onExclusionDeleted={handleExclusionDeleted}
-          onDeleteExclusion={handleDeleteExclusion}
+          onExclusionAdded={handlers.handleExclusionAdded}
+          onExclusionDeleted={handlers.handleExclusionDeleted}
+          onDeleteExclusion={handlers.handleDeleteExclusion}
         />
 
         {/* Sekcja losowania lub wyników */}
@@ -240,7 +166,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
             participantsCount={participants.length}
             exclusionsCount={exclusions.length}
             isCreator={isCreator}
-            onDrawClick={handleDrawClick}
+            onDrawClick={handlers.handleDrawClick}
           />
         )}
       </div>
@@ -250,14 +176,14 @@ export default function GroupView({ groupId }: GroupViewProps) {
         group={groupViewModel as GroupViewModel}
         isOpen={modals.isEditGroupModalOpen}
         onClose={modals.closeModal}
-        onSave={handleGroupUpdated}
+        onSave={handlers.handleGroupUpdated}
       />
 
       <DeleteGroupModal
         isOpen={modals.isDeleteGroupModalOpen}
         groupName={group.name}
         onClose={modals.closeModal}
-        onConfirm={handleGroupDeleted}
+        onConfirm={handlers.handleGroupDeleted}
         deleteGroup={deleteGroup}
       />
 
@@ -265,14 +191,14 @@ export default function GroupView({ groupId }: GroupViewProps) {
         participant={modals.participantToDelete}
         isOpen={modals.isDeleteParticipantModalOpen}
         onClose={modals.closeModal}
-        onConfirm={handleConfirmDeleteParticipant}
+        onConfirm={handlers.handleConfirmDeleteParticipant}
       />
 
       <EditParticipantModal
         participant={modals.selectedParticipant}
         isOpen={modals.isEditParticipantModalOpen}
         onClose={modals.closeModal}
-        onSave={handleParticipantUpdated}
+        onSave={handlers.handleParticipantUpdated}
         updateParticipant={updateParticipant}
       />
 
@@ -281,7 +207,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
         participantsCount={participants.length}
         exclusionsCount={exclusions.length}
         onClose={modals.closeModal}
-        onConfirm={handleDrawComplete}
+        onConfirm={handlers.handleDrawComplete}
         executeDraw={executeDraw}
       />
     </>
