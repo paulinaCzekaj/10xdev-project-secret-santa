@@ -78,8 +78,8 @@ export class CreateGroupPage extends BasePage {
   async selectDate(date: string | Date): Promise<void> {
     await this.datePicker.click();
 
-    // Wait for calendar to open
-    await this.page.locator("[role='dialog']").waitFor({ state: "visible" });
+    // Wait for calendar popover to open
+    await this.page.locator("[data-slot='popover-content']").waitFor({ state: "visible" });
 
     // Parse date
     let targetDate: Date;
@@ -91,7 +91,7 @@ export class CreateGroupPage extends BasePage {
 
     // Click on the specific date button in the calendar
     const day = targetDate.getDate();
-    const dateButton = this.page.locator(`[role='button'][name='${day}']`).first();
+    const dateButton = this.page.locator(`[data-slot='button'][data-day]`).filter({ hasText: day.toString() }).first();
     await dateButton.click();
   }
 

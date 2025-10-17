@@ -70,9 +70,9 @@ export function AddParticipantForm({ groupId, onSuccess }: AddParticipantFormPro
   };
 
   return (
-    <Card>
+    <Card data-testid="add-participant-form-card">
       <CardContent className="pt-6">
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="add-participant-form">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name" className="flex items-center gap-2">
