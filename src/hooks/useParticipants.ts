@@ -1,14 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabaseClient } from "@/db/supabase.client";
-import type {
-  ParticipantListItemDTO,
-  CreateParticipantCommand,
-  UpdateParticipantCommand,
-  ParticipantWithTokenDTO,
-  ParticipantDTO,
-  ApiError,
-  PaginatedParticipantsDTO
-} from "@/types";
+import { participantsService } from "@/services/participantsService";
+import type { ParticipantListItemDTO, CreateParticipantCommand, UpdateParticipantCommand, ApiError } from "@/types";
 
 /**
  * Hook do zarządzania uczestnikami grupy
@@ -25,19 +17,7 @@ export function useParticipants(groupId: number) {
     setError(null);
 
     try {
-      const session = await supabaseClient.auth.getSession();
-      const response = await fetch(`/api/groups/${groupId}/participants`, {
-        headers: {
-          Authorization: `Bearer ${session.data.session?.access_token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || "Błąd pobierania uczestników");
-      }
-
-      const data: PaginatedParticipantsDTO = await response.json();
+      const data = await participantsService.getByGroupId(groupId);
       setParticipants(data.data);
     } catch (err) {
       setError({
@@ -53,22 +33,7 @@ export function useParticipants(groupId: number) {
   const addParticipant = useCallback(
     async (command: CreateParticipantCommand) => {
       try {
-        const session = await supabaseClient.auth.getSession();
-        const response = await fetch(`/api/groups/${groupId}/participants`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.data.session?.access_token}`,
-          },
-          body: JSON.stringify(command),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error?.message || "Błąd dodawania uczestnika");
-        }
-
-        const newParticipant: ParticipantWithTokenDTO = await response.json();
+        const newParticipant = await participantsService.create(groupId, command);
         await fetchParticipants(); // Odśwież listę
 
         return { success: true, data: newParticipant };
@@ -86,22 +51,7 @@ export function useParticipants(groupId: number) {
   const updateParticipant = useCallback(
     async (participantId: number, command: UpdateParticipantCommand) => {
       try {
-        const session = await supabaseClient.auth.getSession();
-        const response = await fetch(`/api/participants/${participantId}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.data.session?.access_token}`,
-          },
-          body: JSON.stringify(command),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error?.message || "Błąd aktualizacji uczestnika");
-        }
-
-        const updated: ParticipantDTO = await response.json();
+        const updated = await participantsService.update(participantId, command);
         await fetchParticipants(); // Odśwież listę
 
         return { success: true, data: updated };
@@ -119,19 +69,7 @@ export function useParticipants(groupId: number) {
   const deleteParticipant = useCallback(
     async (participantId: number) => {
       try {
-        const session = await supabaseClient.auth.getSession();
-        const response = await fetch(`/api/participants/${participantId}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${session.data.session?.access_token}`,
-          },
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error?.message || "Błąd usuwania uczestnika");
-        }
-
+        await participantsService.delete(participantId);
         await fetchParticipants(); // Odśwież listę
 
         return { success: true };

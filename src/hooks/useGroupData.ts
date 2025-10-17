@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { supabaseClient } from "@/db/supabase.client";
-import type { GroupDetailDTO, UpdateGroupCommand, GroupDTO, ApiError } from "@/types";
+import { groupsService } from "@/services/groupsService";
+import type { GroupDetailDTO, UpdateGroupCommand, ApiError } from "@/types";
 
 /**
  * Hook do zarządzania danymi grupy
@@ -19,19 +19,7 @@ export function useGroupData(groupId: number) {
     setError(null);
 
     try {
-      const session = await supabaseClient.auth.getSession();
-      const response = await fetch(`/api/groups/${groupId}`, {
-        headers: {
-          Authorization: `Bearer ${session.data.session?.access_token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || "Błąd pobierania grupy");
-      }
-
-      const data: GroupDetailDTO = await response.json();
+      const data = await groupsService.getById(groupId);
       setGroup(data);
     } catch (err) {
       setError({
@@ -44,53 +32,29 @@ export function useGroupData(groupId: number) {
   }, [groupId]);
 
   // Aktualizacja grupy
-  const updateGroup = useCallback(async (command: UpdateGroupCommand) => {
-    try {
-      const session = await supabaseClient.auth.getSession();
-      const response = await fetch(`/api/groups/${groupId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.data.session?.access_token}`,
-        },
-        body: JSON.stringify(command),
-      });
+  const updateGroup = useCallback(
+    async (command: UpdateGroupCommand) => {
+      try {
+        const updatedGroup = await groupsService.update(groupId, command);
+        // Odśwież pełne dane grupy
+        await fetchGroup();
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || "Błąd aktualizacji grupy");
+        toast.success("Grupa została zaktualizowana");
+        return { success: true, data: updatedGroup };
+      } catch (err) {
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : "Nieznany błąd",
+        };
       }
-
-      const updatedGroup: GroupDTO = await response.json();
-      // Odśwież pełne dane grupy
-      await fetchGroup();
-
-      toast.success("Grupa została zaktualizowana");
-      return { success: true, data: updatedGroup };
-    } catch (err) {
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : "Nieznany błąd",
-      };
-    }
-  }, [groupId, fetchGroup]);
+    },
+    [groupId, fetchGroup]
+  );
 
   // Usunięcie grupy
   const deleteGroup = useCallback(async () => {
     try {
-      const session = await supabaseClient.auth.getSession();
-      const response = await fetch(`/api/groups/${groupId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${session.data.session?.access_token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || "Błąd usuwania grupy");
-      }
-
+      await groupsService.delete(groupId);
       return { success: true };
     } catch (err) {
       return {
