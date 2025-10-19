@@ -5,6 +5,7 @@
 Ten endpoint wykonuje algorytm losowania Secret Santa dla wskazanej grupy. Algorytm przydziela każdemu uczestnikowi inną osobę, dla której będzie kupował prezent, uwzględniając zdefiniowane reguły wykluczeń. Losowanie jest operacją nieodwracalną i może być wykonane tylko raz dla każdej grupy.
 
 **Kluczowe cechy:**
+
 - Tylko twórca grupy może wykonać losowanie
 - Wymaga minimum 3 uczestników
 - Uwzględnia jednokierunkowe reguły wykluczeń
@@ -25,9 +26,10 @@ Ten endpoint wykonuje algorytm losowania Secret Santa dla wskazanej grupy. Algor
 - **Request Body**: brak
 
 **Walidacja parametrów (Zod schema):**
+
 ```typescript
 const paramsSchema = z.object({
-  groupId: z.coerce.number().int().positive()
+  groupId: z.coerce.number().int().positive(),
 });
 ```
 
@@ -36,6 +38,7 @@ const paramsSchema = z.object({
 **Z src/types.ts:**
 
 **Response DTOs:**
+
 - `DrawResultDTO` (lines 184-190) - główny response type
   ```typescript
   {
@@ -48,6 +51,7 @@ const paramsSchema = z.object({
   ```
 
 **Database types:**
+
 - `GroupDTO` (lines 61-70) - do sprawdzenia grupy i twórcy
 - `ParticipantDTO` (line 120) - lista uczestników
 - `ExclusionRuleDTO` (line 160) - reguły wykluczeń
@@ -56,6 +60,7 @@ const paramsSchema = z.object({
 - `ApiErrorResponse` (lines 20-26) - dla błędów
 
 **Wewnętrzne typy dla algorytmu:**
+
 ```typescript
 interface DrawParticipant {
   id: number;
@@ -72,6 +77,7 @@ interface DrawAssignment {
 ## 4. Szczegóły odpowiedzi
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -85,6 +91,7 @@ interface DrawAssignment {
 **Error Responses:**
 
 **400 Bad Request - Invalid groupId:**
+
 ```json
 {
   "error": {
@@ -96,6 +103,7 @@ interface DrawAssignment {
 ```
 
 **400 Bad Request - Not enough participants:**
+
 ```json
 {
   "error": {
@@ -107,6 +115,7 @@ interface DrawAssignment {
 ```
 
 **400 Bad Request - Draw already completed:**
+
 ```json
 {
   "error": {
@@ -118,6 +127,7 @@ interface DrawAssignment {
 ```
 
 **400 Bad Request - Impossible draw:**
+
 ```json
 {
   "error": {
@@ -132,6 +142,7 @@ interface DrawAssignment {
 ```
 
 **401 Unauthorized:**
+
 ```json
 {
   "error": {
@@ -142,6 +153,7 @@ interface DrawAssignment {
 ```
 
 **403 Forbidden:**
+
 ```json
 {
   "error": {
@@ -153,6 +165,7 @@ interface DrawAssignment {
 ```
 
 **404 Not Found:**
+
 ```json
 {
   "error": {
@@ -164,6 +177,7 @@ interface DrawAssignment {
 ```
 
 **500 Internal Server Error:**
+
 ```json
 {
   "error": {
@@ -208,6 +222,7 @@ Client Request
 ### 5.2. Szczegółowy przepływ danych
 
 **Krok 1: Walidacja wejścia**
+
 ```typescript
 // Astro endpoint: src/pages/api/groups/[groupId]/draw.ts
 export const POST = async (context: APIContext) => {
@@ -217,10 +232,11 @@ export const POST = async (context: APIContext) => {
   // Check authentication
   const user = context.locals.user;
   if (!user) return unauthorized();
-}
+};
 ```
 
 **Krok 2: Pobranie i weryfikacja grupy**
+
 ```typescript
 // Service call
 const group = await groupsService.getGroupById(supabase, groupId);
@@ -231,17 +247,18 @@ if (group.creator_id !== user.id) return forbidden();
 ```
 
 **Krok 3: Pre-draw validation**
+
 ```typescript
 // Check if draw already done
 const existingAssignments = await assignmentsService.getByGroupId(supabase, groupId);
 if (existingAssignments.length > 0) {
-  return badRequest('DRAW_ALREADY_COMPLETED', 'Draw has already been completed');
+  return badRequest("DRAW_ALREADY_COMPLETED", "Draw has already been completed");
 }
 
 // Get participants and validate count
 const participants = await participantsService.getByGroupId(supabase, groupId);
 if (participants.length < 3) {
-  return badRequest('INSUFFICIENT_PARTICIPANTS', 'At least 3 participants required');
+  return badRequest("INSUFFICIENT_PARTICIPANTS", "At least 3 participants required");
 }
 
 // Get exclusion rules
@@ -249,40 +266,46 @@ const exclusions = await exclusionsService.getByGroupId(supabase, groupId);
 ```
 
 **Krok 4: Wykonanie algorytmu losowania**
+
 ```typescript
 // Draw service
 const assignments = await drawService.executeDrawAlgorithm(participants, exclusions);
 if (!assignments) {
-  return badRequest('IMPOSSIBLE_DRAW', 'Draw impossible with current rules');
+  return badRequest("IMPOSSIBLE_DRAW", "Draw impossible with current rules");
 }
 ```
 
 **Krok 5: Zapisanie wyników (Transaction)**
+
 ```typescript
-const result = await supabase.rpc('execute_draw_transaction', {
+const result = await supabase.rpc("execute_draw_transaction", {
   p_group_id: groupId,
-  p_assignments: assignments
+  p_assignments: assignments,
 });
 ```
 
 ### 5.3. Database Queries
 
 **Query 1: Fetch group with creator check**
+
 ```sql
 SELECT * FROM groups WHERE id = $1
 ```
 
 **Query 2: Check existing assignments**
+
 ```sql
 SELECT COUNT(*) as count FROM assignments WHERE group_id = $1
 ```
 
 **Query 3: Fetch participants**
+
 ```sql
 SELECT id, name, email FROM participants WHERE group_id = $1
 ```
 
 **Query 4: Fetch exclusion rules**
+
 ```sql
 SELECT blocker_participant_id, blocked_participant_id
 FROM exclusion_rules
@@ -290,6 +313,7 @@ WHERE group_id = $1
 ```
 
 **Query 5: Insert assignments (batch in transaction)**
+
 ```sql
 -- Wrapped in transaction
 BEGIN;
@@ -315,6 +339,7 @@ COMMIT;
    - Sprawdzenie czy graf jest spójny (możliwe znalezienie cyklu)
 
 3. **Algorytm backtracking**:
+
    ```
    function findAssignment(currentIndex, availableReceivers, assignments):
      if currentIndex == participantsCount:
@@ -341,6 +366,7 @@ COMMIT;
 ## 6. Względy bezpieczeństwa
 
 ### 6.1. Uwierzytelnianie
+
 - **Wymagany Bearer token** z Supabase Auth
 - Wykorzystanie `context.locals.user` (ustawiane przez middleware)
 - Zwrócenie 401 jeśli użytkownik nie jest zalogowany
@@ -351,9 +377,9 @@ if (!user) {
   return new Response(
     JSON.stringify({
       error: {
-        code: 'UNAUTHORIZED',
-        message: 'Authentication required'
-      }
+        code: "UNAUTHORIZED",
+        message: "Authentication required",
+      },
     }),
     { status: 401 }
   );
@@ -361,6 +387,7 @@ if (!user) {
 ```
 
 ### 6.2. Autoryzacja
+
 - **Tylko twórca grupy** może wykonać losowanie
 - Sprawdzenie `group.creator_id === user.id`
 - Zwrócenie 403 Forbidden w przypadku braku uprawnień
@@ -370,9 +397,9 @@ if (group.creator_id !== user.id) {
   return new Response(
     JSON.stringify({
       error: {
-        code: 'FORBIDDEN',
-        message: 'Only the group creator can execute the draw'
-      }
+        code: "FORBIDDEN",
+        message: "Only the group creator can execute the draw",
+      },
     }),
     { status: 403 }
   );
@@ -380,11 +407,13 @@ if (group.creator_id !== user.id) {
 ```
 
 ### 6.3. Walidacja danych wejściowych
+
 - **Zod schema** dla parametrów URL
 - Walidacja czy `groupId` jest dodatnią liczbą całkowitą
 - Obsługa błędów walidacji z odpowiednimi komunikatami
 
 ### 6.4. Race Condition Prevention
+
 - **Database transaction** dla wstawienia assignmentów
 - **Sprawdzenie istniejących assignmentów** na początku operacji
 - Możliwość użycia **database constraint** lub **advisory lock**:
@@ -399,11 +428,13 @@ SELECT pg_advisory_xact_lock(groupId);
 ```
 
 ### 6.5. Data Exposure Prevention
+
 - **Nie ujawnianie wewnętrznych błędów** w production
 - Logowanie szczegółowych błędów server-side
 - Zwracanie ogólnych komunikatów błędów użytkownikowi
 
 ### 6.6. SQL Injection Prevention
+
 - Wykorzystanie **Supabase query builder** lub **prepared statements**
 - Nigdy nie konkatenowanie SQL queries z inputem użytkownika
 - Parametryzowane zapytania dla wszystkich operacji DB
@@ -413,6 +444,7 @@ SELECT pg_advisory_xact_lock(groupId);
 ### 7.1. Warstwy obsługi błędów
 
 **Layer 1: Input Validation (Zod)**
+
 ```typescript
 try {
   const { groupId } = paramsSchema.parse(context.params);
@@ -421,10 +453,10 @@ try {
     return new Response(
       JSON.stringify({
         error: {
-          code: 'INVALID_INPUT',
-          message: 'Invalid group ID format',
-          details: error.errors
-        }
+          code: "INVALID_INPUT",
+          message: "Invalid group ID format",
+          details: error.errors,
+        },
       }),
       { status: 400 }
     );
@@ -433,19 +465,20 @@ try {
 ```
 
 **Layer 2: Business Logic Validation**
+
 ```typescript
 // Not enough participants
 if (participants.length < 3) {
   return new Response(
     JSON.stringify({
       error: {
-        code: 'INSUFFICIENT_PARTICIPANTS',
-        message: 'At least 3 participants are required',
+        code: "INSUFFICIENT_PARTICIPANTS",
+        message: "At least 3 participants are required",
         details: {
           current_count: participants.length,
-          required_minimum: 3
-        }
-      }
+          required_minimum: 3,
+        },
+      },
     }),
     { status: 400 }
   );
@@ -456,9 +489,9 @@ if (existingAssignments.length > 0) {
   return new Response(
     JSON.stringify({
       error: {
-        code: 'DRAW_ALREADY_COMPLETED',
-        message: 'Draw has already been completed for this group'
-      }
+        code: "DRAW_ALREADY_COMPLETED",
+        message: "Draw has already been completed for this group",
+      },
     }),
     { status: 400 }
   );
@@ -469,12 +502,12 @@ if (!isDrawPossible(participants, exclusions)) {
   return new Response(
     JSON.stringify({
       error: {
-        code: 'IMPOSSIBLE_DRAW',
-        message: 'Draw is impossible with current exclusion rules',
+        code: "IMPOSSIBLE_DRAW",
+        message: "Draw is impossible with current exclusion rules",
         details: {
-          suggestion: 'Review and remove some exclusion rules'
-        }
-      }
+          suggestion: "Review and remove some exclusion rules",
+        },
+      },
     }),
     { status: 400 }
   );
@@ -482,21 +515,22 @@ if (!isDrawPossible(participants, exclusions)) {
 ```
 
 **Layer 3: Algorithm Failures**
+
 ```typescript
 const assignments = await drawService.executeDrawAlgorithm(participants, exclusions);
 if (!assignments) {
-  console.error('Draw algorithm failed to find valid assignment', {
+  console.error("Draw algorithm failed to find valid assignment", {
     groupId,
     participantsCount: participants.length,
-    exclusionsCount: exclusions.length
+    exclusionsCount: exclusions.length,
   });
 
   return new Response(
     JSON.stringify({
       error: {
-        code: 'DRAW_EXECUTION_ERROR',
-        message: 'Failed to execute draw algorithm'
-      }
+        code: "DRAW_EXECUTION_ERROR",
+        message: "Failed to execute draw algorithm",
+      },
     }),
     { status: 500 }
   );
@@ -504,18 +538,19 @@ if (!assignments) {
 ```
 
 **Layer 4: Database Errors**
+
 ```typescript
 try {
   await assignmentsService.createBatch(supabase, assignments);
 } catch (error) {
-  console.error('Database error while saving assignments:', error);
+  console.error("Database error while saving assignments:", error);
 
   return new Response(
     JSON.stringify({
       error: {
-        code: 'DATABASE_ERROR',
-        message: 'An error occurred while saving the draw results'
-      }
+        code: "DATABASE_ERROR",
+        message: "An error occurred while saving the draw results",
+      },
     }),
     { status: 500 }
   );
@@ -524,36 +559,38 @@ try {
 
 ### 7.2. Tabela kodów błędów
 
-| HTTP Status | Error Code | Message | Szczegóły |
-|-------------|-----------|---------|-----------|
-| 400 | INVALID_INPUT | Invalid group ID format | Parametr groupId nie jest prawidłową liczbą |
-| 400 | INSUFFICIENT_PARTICIPANTS | At least 3 participants are required | Grupa ma mniej niż 3 uczestników |
-| 400 | DRAW_ALREADY_COMPLETED | Draw has already been completed | Losowanie już zostało wykonane dla tej grupy |
-| 400 | IMPOSSIBLE_DRAW | Draw is impossible with current exclusion rules | Reguły wykluczeń uniemożliwiają losowanie |
-| 401 | UNAUTHORIZED | Authentication required | Brak tokenu autoryzacji |
-| 403 | FORBIDDEN | Only the group creator can execute the draw | Użytkownik nie jest twórcą grupy |
-| 404 | GROUP_NOT_FOUND | Group not found | Grupa o podanym ID nie istnieje |
-| 500 | DRAW_EXECUTION_ERROR | Failed to execute draw algorithm | Błąd algorytmu losowania |
-| 500 | DATABASE_ERROR | An error occurred while saving results | Błąd zapisu do bazy danych |
+| HTTP Status | Error Code                | Message                                         | Szczegóły                                    |
+| ----------- | ------------------------- | ----------------------------------------------- | -------------------------------------------- |
+| 400         | INVALID_INPUT             | Invalid group ID format                         | Parametr groupId nie jest prawidłową liczbą  |
+| 400         | INSUFFICIENT_PARTICIPANTS | At least 3 participants are required            | Grupa ma mniej niż 3 uczestników             |
+| 400         | DRAW_ALREADY_COMPLETED    | Draw has already been completed                 | Losowanie już zostało wykonane dla tej grupy |
+| 400         | IMPOSSIBLE_DRAW           | Draw is impossible with current exclusion rules | Reguły wykluczeń uniemożliwiają losowanie    |
+| 401         | UNAUTHORIZED              | Authentication required                         | Brak tokenu autoryzacji                      |
+| 403         | FORBIDDEN                 | Only the group creator can execute the draw     | Użytkownik nie jest twórcą grupy             |
+| 404         | GROUP_NOT_FOUND           | Group not found                                 | Grupa o podanym ID nie istnieje              |
+| 500         | DRAW_EXECUTION_ERROR      | Failed to execute draw algorithm                | Błąd algorytmu losowania                     |
+| 500         | DATABASE_ERROR            | An error occurred while saving results          | Błąd zapisu do bazy danych                   |
 
 ### 7.3. Logging Strategy
 
 **Development:**
+
 - Pełne logi ze szczegółami błędów
 - Stack traces
 - Parametry wejściowe
 
 **Production:**
+
 - Structured logging (JSON)
 - Error tracking service (np. Sentry)
 - Nie logowanie danych wrażliwych (tokens, emails w całości)
 
 ```typescript
-console.error('Draw execution failed', {
+console.error("Draw execution failed", {
   groupId,
   userId: user.id,
   error: error.message,
-  timestamp: new Date().toISOString()
+  timestamp: new Date().toISOString(),
 });
 ```
 
@@ -562,6 +599,7 @@ console.error('Draw execution failed', {
 ### 8.1. Potencjalne wąskie gardła
 
 **1. Algorytm losowania**
+
 - **Problem**: Backtracking może mieć złożoność wykładniczą O(n!) w najgorszym przypadku
 - **Mitigation**:
   - Implementacja timeout (np. 5 sekund)
@@ -569,6 +607,7 @@ console.error('Draw execution failed', {
   - Implementacja heurystyk do przyśpieszenia algorytmu
 
 **2. Database queries**
+
 - **Problem**: Wiele oddzielnych zapytań (grupa, uczestnicy, wykluczenia, assignments)
 - **Mitigation**:
   - Możliwość użycia JOIN queries gdzie możliwe
@@ -576,6 +615,7 @@ console.error('Draw execution failed', {
   - Rozważenie stored procedure dla całej operacji
 
 **3. Transaction locks**
+
 - **Problem**: Long-running transaction może blokować inne operacje
 - **Mitigation**:
   - Wykonanie algorytmu PRZED transakcją
@@ -585,17 +625,19 @@ console.error('Draw execution failed', {
 ### 8.2. Optymalizacje
 
 **Optymalizacja 1: Batch Insert**
+
 ```typescript
 // Zamiast:
 for (const assignment of assignments) {
-  await supabase.from('assignments').insert(assignment);
+  await supabase.from("assignments").insert(assignment);
 }
 
 // Użyć:
-await supabase.from('assignments').insert(assignments);
+await supabase.from("assignments").insert(assignments);
 ```
 
 **Optymalizacja 2: Single Query dla walidacji**
+
 ```sql
 -- Zamiast 3 osobnych queries, jeden query:
 SELECT
@@ -608,14 +650,14 @@ SELECT
 ```
 
 **Optymalizacja 3: Early termination**
+
 ```typescript
 // Sprawdzenie impossible draw przed wykonaniem algorytmu
 function isDrawPossible(participants, exclusions): boolean {
   // Quick check: każdy uczestnik musi mieć co najmniej jednego możliwego odbiorcę
   for (const participant of participants) {
-    const possibleReceivers = participants.filter(p =>
-      p.id !== participant.id &&
-      !isExcluded(participant.id, p.id, exclusions)
+    const possibleReceivers = participants.filter(
+      (p) => p.id !== participant.id && !isExcluded(participant.id, p.id, exclusions)
     );
     if (possibleReceivers.length === 0) {
       return false;
@@ -626,15 +668,14 @@ function isDrawPossible(participants, exclusions): boolean {
 ```
 
 **Optymalizacja 4: Algorithm timeout**
+
 ```typescript
 const MAX_ALGORITHM_TIME = 5000; // 5 seconds
 
 async function executeDrawWithTimeout(participants, exclusions) {
   return Promise.race([
     executeDrawAlgorithm(participants, exclusions),
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Algorithm timeout')), MAX_ALGORITHM_TIME)
-    )
+    new Promise((_, reject) => setTimeout(() => reject(new Error("Algorithm timeout")), MAX_ALGORITHM_TIME)),
   ]);
 }
 ```
@@ -642,11 +683,13 @@ async function executeDrawWithTimeout(participants, exclusions) {
 ### 8.3. Skalowanie
 
 **Current scale expectations:**
+
 - Grupy do ~50 uczestników
 - Reguły wykluczeń do ~100 per grupa
 - Czas wykonania < 5 sekund
 
 **Future considerations:**
+
 - Dla większych grup (>50): rozważyć lepszy algorytm (np. Hopcroft-Karp)
 - Background job processing dla bardzo dużych grup
 - Caching mechanizm dla walidacji
@@ -654,6 +697,7 @@ async function executeDrawWithTimeout(participants, exclusions) {
 ### 8.4. Database Indexes
 
 **Wymagane indeksy:**
+
 ```sql
 -- Już powinny istnieć z foreign keys, ale należy sprawdzić:
 CREATE INDEX IF NOT EXISTS idx_participants_group_id ON participants(group_id);
@@ -668,28 +712,33 @@ ON assignments(group_id, giver_participant_id);
 ## 9. Kroki implementacji
 
 ### Krok 1: Przygotowanie struktury plików
+
 **Pliki do utworzenia:**
+
 - `src/pages/api/groups/[groupId]/draw.ts` - główny endpoint
 - `src/lib/services/draw.service.ts` - logika algorytmu losowania
 - `src/lib/services/assignments.service.ts` - operacje na assignments (jeśli nie istnieje)
 - `src/lib/services/groups.service.ts` - operacje na grupach (jeśli nie istnieje)
 
 **Pliki do zmodyfikowania:**
+
 - `src/types.ts` - upewnić się że wszystkie potrzebne typy istnieją
 
 ### Krok 2: Implementacja validation schemas
+
 ```typescript
 // src/pages/api/groups/[groupId]/draw.ts
-import { z } from 'zod';
+import { z } from "zod";
 
 const paramsSchema = z.object({
   groupId: z.coerce.number().int().positive({
-    message: 'Group ID must be a positive integer'
-  })
+    message: "Group ID must be a positive integer",
+  }),
 });
 ```
 
 ### Krok 3: Implementacja algorytmu losowania
+
 ```typescript
 // src/lib/services/draw.service.ts
 
@@ -712,10 +761,7 @@ export class DrawService {
   /**
    * Sprawdza czy losowanie jest możliwe z danymi regułami
    */
-  isDrawPossible(
-    participants: DrawParticipant[],
-    exclusions: ExclusionRule[]
-  ): boolean {
+  isDrawPossible(participants: DrawParticipant[], exclusions: ExclusionRule[]): boolean {
     // Implementacja: każdy uczestnik musi mieć co najmniej jednego możliwego odbiorcę
   }
 
@@ -723,10 +769,7 @@ export class DrawService {
    * Wykonuje algorytm losowania
    * @returns assignments lub null jeśli niemożliwe
    */
-  executeDrawAlgorithm(
-    participants: DrawParticipant[],
-    exclusions: ExclusionRule[]
-  ): Assignment[] | null {
+  executeDrawAlgorithm(participants: DrawParticipant[], exclusions: ExclusionRule[]): Assignment[] | null {
     // Implementacja backtracking algorithm
   }
 
@@ -748,6 +791,7 @@ export class DrawService {
 ```
 
 ### Krok 4: Implementacja assignments service
+
 ```typescript
 // src/lib/services/assignments.service.ts
 
@@ -755,37 +799,28 @@ export class AssignmentsService {
   /**
    * Pobiera assignments dla grupy
    */
-  async getByGroupId(
-    supabase: SupabaseClient,
-    groupId: number
-  ): Promise<AssignmentDTO[]> {
+  async getByGroupId(supabase: SupabaseClient, groupId: number): Promise<AssignmentDTO[]> {
     // Implementacja query
   }
 
   /**
    * Tworzy wiele assignments w transakcji
    */
-  async createBatch(
-    supabase: SupabaseClient,
-    groupId: number,
-    assignments: Assignment[]
-  ): Promise<AssignmentDTO[]> {
+  async createBatch(supabase: SupabaseClient, groupId: number, assignments: Assignment[]): Promise<AssignmentDTO[]> {
     // Implementacja batch insert w transakcji
   }
 
   /**
    * Sprawdza czy grupa ma już wykonane losowanie
    */
-  async hasDrawBeenExecuted(
-    supabase: SupabaseClient,
-    groupId: number
-  ): Promise<boolean> {
+  async hasDrawBeenExecuted(supabase: SupabaseClient, groupId: number): Promise<boolean> {
     // Implementacja sprawdzenia
   }
 }
 ```
 
 ### Krok 5: Implementacja groups service (jeśli nie istnieje)
+
 ```typescript
 // src/lib/services/groups.service.ts
 
@@ -793,50 +828,42 @@ export class GroupsService {
   /**
    * Pobiera grupę po ID
    */
-  async getGroupById(
-    supabase: SupabaseClient,
-    groupId: number
-  ): Promise<GroupDTO | null> {
+  async getGroupById(supabase: SupabaseClient, groupId: number): Promise<GroupDTO | null> {
     // Implementacja
   }
 
   /**
    * Pobiera uczestników grupy
    */
-  async getParticipants(
-    supabase: SupabaseClient,
-    groupId: number
-  ): Promise<ParticipantDTO[]> {
+  async getParticipants(supabase: SupabaseClient, groupId: number): Promise<ParticipantDTO[]> {
     // Implementacja
   }
 
   /**
    * Pobiera reguły wykluczeń dla grupy
    */
-  async getExclusions(
-    supabase: SupabaseClient,
-    groupId: number
-  ): Promise<ExclusionRuleDTO[]> {
+  async getExclusions(supabase: SupabaseClient, groupId: number): Promise<ExclusionRuleDTO[]> {
     // Implementacja
   }
 }
 ```
 
 ### Krok 6: Implementacja głównego endpoint handler
+
 ```typescript
 // src/pages/api/groups/[groupId]/draw.ts
 
 export const prerender = false;
 
-import type { APIContext } from 'astro';
-import { z } from 'zod';
-import { DrawService } from '@/lib/services/draw.service';
-import { AssignmentsService } from '@/lib/services/assignments.service';
-import { GroupsService } from '@/lib/services/groups.service';
-import type { DrawResultDTO, ApiErrorResponse } from '@/types';
+import type { APIContext } from "astro";
+import { z } from "zod";
+import { DrawService } from "@/lib/services/draw.service";
+import { AssignmentsService } from "@/lib/services/assignments.service";
+import { GroupsService } from "@/lib/services/groups.service";
+import type { DrawResultDTO, ApiErrorResponse } from "@/types";
 
 const paramsSchema = z.object({
-  groupId: z.coerce.number().int().positive()
+  groupId: z.coerce.number().int().positive(),
 });
 
 export async function POST(context: APIContext): Promise<Response> {
@@ -852,6 +879,7 @@ export async function POST(context: APIContext): Promise<Response> {
 ### Krok 7: Implementacja szczegółowa endpoint handler
 
 **Sekcja 1: Walidacja parametrów i autoryzacja**
+
 ```typescript
 export async function POST(context: APIContext): Promise<Response> {
   try {
@@ -879,129 +907,131 @@ export async function POST(context: APIContext): Promise<Response> {
 ```
 
 **Sekcja 2: Sprawdzenie grupy i autoryzacja**
-```typescript
-    // Fetch group
-    const group = await groupsService.getGroupById(supabase, groupId);
-    if (!group) {
-      return new Response(
-        JSON.stringify({
-          error: {
-            code: 'GROUP_NOT_FOUND',
-            message: 'Group not found',
-            details: { group_id: groupId }
-          }
-        } satisfies ApiErrorResponse),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
 
-    // Verify ownership
-    if (group.creator_id !== user.id) {
-      return new Response(
-        JSON.stringify({
-          error: {
-            code: 'FORBIDDEN',
-            message: 'Only the group creator can execute the draw'
-          }
-        } satisfies ApiErrorResponse),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+```typescript
+// Fetch group
+const group = await groupsService.getGroupById(supabase, groupId);
+if (!group) {
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "GROUP_NOT_FOUND",
+        message: "Group not found",
+        details: { group_id: groupId },
+      },
+    } satisfies ApiErrorResponse),
+    { status: 404, headers: { "Content-Type": "application/json" } }
+  );
+}
+
+// Verify ownership
+if (group.creator_id !== user.id) {
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "FORBIDDEN",
+        message: "Only the group creator can execute the draw",
+      },
+    } satisfies ApiErrorResponse),
+    { status: 403, headers: { "Content-Type": "application/json" } }
+  );
+}
 ```
 
 **Sekcja 3: Pre-draw validation**
+
 ```typescript
-    // Check if draw already executed
-    const hasDrawn = await assignmentsService.hasDrawBeenExecuted(supabase, groupId);
-    if (hasDrawn) {
-      return new Response(
-        JSON.stringify({
-          error: {
-            code: 'DRAW_ALREADY_COMPLETED',
-            message: 'Draw has already been completed for this group'
-          }
-        } satisfies ApiErrorResponse),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+// Check if draw already executed
+const hasDrawn = await assignmentsService.hasDrawBeenExecuted(supabase, groupId);
+if (hasDrawn) {
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "DRAW_ALREADY_COMPLETED",
+        message: "Draw has already been completed for this group",
+      },
+    } satisfies ApiErrorResponse),
+    { status: 400, headers: { "Content-Type": "application/json" } }
+  );
+}
 
-    // Fetch participants
-    const participants = await groupsService.getParticipants(supabase, groupId);
-    if (participants.length < 3) {
-      return new Response(
-        JSON.stringify({
-          error: {
-            code: 'INSUFFICIENT_PARTICIPANTS',
-            message: 'At least 3 participants are required to execute a draw',
-            details: {
-              current_count: participants.length,
-              required_minimum: 3
-            }
-          }
-        } satisfies ApiErrorResponse),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+// Fetch participants
+const participants = await groupsService.getParticipants(supabase, groupId);
+if (participants.length < 3) {
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "INSUFFICIENT_PARTICIPANTS",
+        message: "At least 3 participants are required to execute a draw",
+        details: {
+          current_count: participants.length,
+          required_minimum: 3,
+        },
+      },
+    } satisfies ApiErrorResponse),
+    { status: 400, headers: { "Content-Type": "application/json" } }
+  );
+}
 
-    // Fetch exclusion rules
-    const exclusions = await groupsService.getExclusions(supabase, groupId);
+// Fetch exclusion rules
+const exclusions = await groupsService.getExclusions(supabase, groupId);
 ```
 
 **Sekcja 4: Wykonanie algorytmu**
-```typescript
-    // Validate if draw is possible
-    if (!drawService.isDrawPossible(participants, exclusions)) {
-      return new Response(
-        JSON.stringify({
-          error: {
-            code: 'IMPOSSIBLE_DRAW',
-            message: 'Draw is impossible with current exclusion rules',
-            details: {
-              suggestion: 'Review and remove some exclusion rules'
-            }
-          }
-        } satisfies ApiErrorResponse),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
 
-    // Execute draw algorithm
-    const assignments = drawService.executeDrawAlgorithm(participants, exclusions);
-    if (!assignments) {
-      console.error('Draw algorithm failed', { groupId, participantsCount: participants.length });
-      return new Response(
-        JSON.stringify({
-          error: {
-            code: 'DRAW_EXECUTION_ERROR',
-            message: 'Failed to execute draw algorithm'
-          }
-        } satisfies ApiErrorResponse),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+```typescript
+// Validate if draw is possible
+if (!drawService.isDrawPossible(participants, exclusions)) {
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "IMPOSSIBLE_DRAW",
+        message: "Draw is impossible with current exclusion rules",
+        details: {
+          suggestion: "Review and remove some exclusion rules",
+        },
+      },
+    } satisfies ApiErrorResponse),
+    { status: 400, headers: { "Content-Type": "application/json" } }
+  );
+}
+
+// Execute draw algorithm
+const assignments = drawService.executeDrawAlgorithm(participants, exclusions);
+if (!assignments) {
+  console.error("Draw algorithm failed", { groupId, participantsCount: participants.length });
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "DRAW_EXECUTION_ERROR",
+        message: "Failed to execute draw algorithm",
+      },
+    } satisfies ApiErrorResponse),
+    { status: 500, headers: { "Content-Type": "application/json" } }
+  );
+}
 ```
 
 **Sekcja 5: Zapisanie wyników**
+
 ```typescript
-    // Save assignments in transaction
-    await assignmentsService.createBatch(supabase, groupId, assignments);
+// Save assignments in transaction
+await assignmentsService.createBatch(supabase, groupId, assignments);
 
-    // Prepare response
-    const response: DrawResultDTO = {
-      success: true,
-      message: 'Draw completed successfully',
-      group_id: groupId,
-      drawn_at: new Date().toISOString(),
-      participants_notified: participants.length
-    };
+// Prepare response
+const response: DrawResultDTO = {
+  success: true,
+  message: "Draw completed successfully",
+  group_id: groupId,
+  drawn_at: new Date().toISOString(),
+  participants_notified: participants.length,
+};
 
-    return new Response(
-      JSON.stringify(response),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+return new Response(JSON.stringify(response), { status: 200, headers: { "Content-Type": "application/json" } });
 ```
 
 **Sekcja 6: Error handling**
+
 ```typescript
   } catch (error) {
     // Zod validation error
@@ -1034,6 +1064,7 @@ export async function POST(context: APIContext): Promise<Response> {
 ```
 
 ### Krok 8: Implementacja database migration (opcjonalnie)
+
 ```sql
 -- migrations/add_assignments_constraints.sql
 
@@ -1085,7 +1116,7 @@ describe('DrawService', () => {
   });
 });
 ``` -->
-<!-- 
+<!--
 ### Krok 10: Testy integracyjne endpoint
 ```typescript
 // tests/api/groups/draw.test.ts
@@ -1118,6 +1149,7 @@ describe('POST /api/groups/:groupId/draw', () => {
     // Test with impossible exclusion rules
   });
 }); -->
+
 ```
 
 ### Krok 11: Dokumentacja API
@@ -1157,3 +1189,4 @@ Kluczowe punkty implementacji:
 - ✅ Comprehensive error handling
 - ✅ Testy jednostkowe i integracyjne
 - ✅ Bezpieczeństwo i autoryzacja
+```

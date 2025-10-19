@@ -34,19 +34,16 @@ test.describe("Create Secret Santa Group Flow", () => {
     // ==========================================
     // STEP 1: Click login link on homepage
     // ==========================================
-    console.log("Step 1: Clicking login link...");
 
     const loginLink = page.locator('a[href*="login"]').first();
     await expect(loginLink).toBeVisible();
     await loginLink.click();
 
     await page.waitForURL("**/login");
-    console.log("✓ Navigated to login page");
 
     // ==========================================
     // STEP 2: Login with test user
     // ==========================================
-    console.log("Step 2: Logging in...");
 
     // Fill in email field with typing simulation to trigger onChange validation
     const emailInput = page.locator('input[type="email"]');
@@ -72,7 +69,6 @@ test.describe("Create Secret Santa Group Flow", () => {
 
     // Wait for redirect to dashboard
     await page.waitForURL("**/dashboard", { timeout: 10000 });
-    console.log("✓ Successfully logged in and redirected to dashboard");
 
     // Verify dashboard loaded
     await expect(page.locator("h1")).toContainText("Witaj");
@@ -80,7 +76,6 @@ test.describe("Create Secret Santa Group Flow", () => {
     // ==========================================
     // STEP 3: Click "Create new group" button
     // ==========================================
-    console.log("Step 3: Clicking create group button...");
 
     // Look for the create group button
     // It could be in the empty state or in the CTA section
@@ -93,7 +88,6 @@ test.describe("Create Secret Santa Group Flow", () => {
     await createGroupButton.click();
 
     await page.waitForURL("**/groups/new");
-    console.log("✓ Navigated to create group page");
 
     // Verify page heading (use first() to avoid strict mode violation)
     await expect(page.locator("h1").first()).toContainText(/utwórz.*loter/i);
@@ -101,7 +95,6 @@ test.describe("Create Secret Santa Group Flow", () => {
     // ==========================================
     // STEP 4: Fill in form fields
     // ==========================================
-    console.log("Step 4: Filling in group creation form...");
 
     // Generate unique group name with timestamp
     const timestamp = new Date().getTime();
@@ -113,14 +106,12 @@ test.describe("Create Secret Santa Group Flow", () => {
     await expect(nameInput).toBeVisible();
     await nameInput.click();
     await nameInput.pressSequentially(groupName, { delay: 30 });
-    console.log(`  - Group name: ${groupName}`);
 
     // Fill in budget with typing simulation
     const budgetInput = page.locator('input[type="number"]');
     await expect(budgetInput).toBeVisible();
     await budgetInput.click();
     await budgetInput.pressSequentially(groupBudget, { delay: 30 });
-    console.log(`  - Budget: ${groupBudget} PLN`);
 
     // Select future date (tomorrow + 5 days)
     const futureDateButton = page.getByRole("button", { name: /wybierz|datę/i });
@@ -131,13 +122,9 @@ test.describe("Create Secret Santa Group Flow", () => {
     await page.waitForTimeout(500);
 
     // Select a date in the future (find first available date button that's not disabled)
-    const availableDateButton = page
-      .locator('[role="gridcell"]:not([disabled])')
-      .filter({ hasText: /^\d+$/ })
-      .nth(10); // Select ~10 days from now
+    const availableDateButton = page.locator('[role="gridcell"]:not([disabled])').filter({ hasText: /^\d+$/ }).nth(10); // Select ~10 days from now
 
     await availableDateButton.click();
-    console.log("  - Selected future date");
 
     // Wait for form validation to complete
     await page.waitForTimeout(1500);
@@ -145,7 +132,6 @@ test.describe("Create Secret Santa Group Flow", () => {
     // ==========================================
     // STEP 4.5: Submit the form
     // ==========================================
-    console.log("Step 4.5: Submitting form...");
 
     const createButton = page.locator('button[type="submit"]', {
       hasText: /utwórz/i,
@@ -158,96 +144,75 @@ test.describe("Create Secret Santa Group Flow", () => {
     // ==========================================
     // STEP 5: Verify redirect to group management
     // ==========================================
-    console.log("Step 5: Verifying group management view...");
 
     // Wait for redirect to /groups/[id]
     await page.waitForURL(/\/groups\/\d+$/, { timeout: 10000 });
-    console.log("✓ Redirected to group management page");
 
     // Extract group ID from URL
     const currentUrl = page.url();
     const groupIdMatch = currentUrl.match(/\/groups\/(\d+)/);
     expect(groupIdMatch).not.toBeNull();
     const groupId = groupIdMatch![1];
-    console.log(`  - Group ID: ${groupId}`);
 
     // ==========================================
     // STEP 5.1: Verify Group Header Section
     // ==========================================
-    console.log("Step 5.1: Verifying group header...");
 
     // Check that group name is displayed
     await expect(page.locator("h2, h3").filter({ hasText: groupName })).toBeVisible();
-    console.log("  ✓ Group name displayed");
 
     // Check that budget is displayed
     await expect(page.getByText(/150.*PLN/)).toBeVisible();
-    console.log("  ✓ Budget displayed");
 
     // Check for edit and delete buttons
-    const editButton = page.locator('button', { hasText: /edytuj/i });
+    const editButton = page.locator("button", { hasText: /edytuj/i });
     await expect(editButton).toBeVisible();
-    console.log("  ✓ Edit button visible");
 
-    const deleteButton = page.locator('button', { hasText: /usuń/i });
+    const deleteButton = page.locator("button", { hasText: /usuń/i });
     await expect(deleteButton).toBeVisible();
-    console.log("  ✓ Delete button visible");
 
     // ==========================================
     // STEP 5.2: Verify Participants Section
     // ==========================================
-    console.log("Step 5.2: Verifying participants section...");
 
     // Check section heading
     await expect(page.locator("h2, h3").filter({ hasText: /uczestnic/i })).toBeVisible();
-    console.log("  ✓ Participants section heading visible");
 
     // Check that creator is listed as participant
     // Look for the test user's email in the participants list
     const participantEmail = page.getByText(TEST_EMAIL);
     await expect(participantEmail).toBeVisible();
-    console.log(`  ✓ Creator (${TEST_EMAIL}) listed as participant`);
 
     // Check for "Add participant" form/button
-    const addParticipantButton = page.locator('button', {
+    const addParticipantButton = page.locator("button", {
       hasText: /dodaj.*uczestnic/i,
     });
     await expect(addParticipantButton).toBeVisible();
-    console.log("  ✓ Add participant button visible");
 
     // ==========================================
     // STEP 5.3: Verify Exclusions Section
     // ==========================================
-    console.log("Step 5.3: Verifying exclusions section...");
 
     // Check section heading
     await expect(page.locator("h2, h3").filter({ hasText: /wykluczeni/i })).toBeVisible();
-    console.log("  ✓ Exclusions section heading visible");
 
     // ==========================================
     // STEP 5.4: Verify Draw Section
     // ==========================================
-    console.log("Step 5.4: Verifying draw section...");
 
     // Check for draw section
     await expect(page.locator("h2, h3").filter({ hasText: /losowani/i })).toBeVisible();
-    console.log("  ✓ Draw section heading visible");
 
     // Check that draw button exists
-    const drawButton = page.locator('button', { hasText: /rozpocznij.*losowani/i });
+    const drawButton = page.locator("button", { hasText: /rozpocznij.*losowani/i });
     await expect(drawButton).toBeVisible();
 
     // Verify draw button is DISABLED (< 3 participants)
     await expect(drawButton).toBeDisabled();
-    console.log("  ✓ Draw button is disabled (minimum 3 participants required)");
 
     // ==========================================
     // FINAL SUCCESS MESSAGE
     // ==========================================
-    console.log("\n✅ ALL TESTS PASSED!");
-    console.log(`   - Group "${groupName}" created successfully`);
-    console.log(`   - Group ID: ${groupId}`);
-    console.log(`   - All sections visible and functional`);
   });
 
   test("should validate form fields before submission", async ({ page }) => {
@@ -274,31 +239,23 @@ test.describe("Create Secret Santa Group Flow", () => {
     // Try to submit empty form
     const submitButton = page.locator('button[type="submit"]');
     await expect(submitButton).toBeDisabled();
-    console.log("✓ Submit button disabled when form is empty");
 
     // Fill only name
     await page.locator('input[placeholder*="Secret Santa"]').fill("Test Group");
     await expect(submitButton).toBeDisabled();
-    console.log("✓ Submit button still disabled with only name filled");
 
     // Fill budget as well
     await page.locator('input[type="number"]').fill("100");
     await expect(submitButton).toBeDisabled();
-    console.log("✓ Submit button still disabled without date");
 
     // Now fill date
     const datePickerButton = page.getByRole("button", { name: /wybierz|datę/i });
     await expect(datePickerButton).toBeVisible();
     await datePickerButton.click();
     await page.waitForTimeout(500);
-    await page
-      .locator('[role="gridcell"]:not([disabled])')
-      .filter({ hasText: /^\d+$/ })
-      .nth(5)
-      .click();
+    await page.locator('[role="gridcell"]:not([disabled])').filter({ hasText: /^\d+$/ }).nth(5).click();
 
     // Now button should be enabled
     await expect(submitButton).toBeEnabled({ timeout: 2000 });
-    console.log("✓ Submit button enabled when all fields are filled");
   });
 });

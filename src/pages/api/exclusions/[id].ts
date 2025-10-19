@@ -2,9 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { ExclusionRuleService } from "../../../lib/services/exclusion-rule.service";
 import { requireApiAuth } from "../../../lib/utils/api-auth.utils";
-import type {
-  ApiErrorResponse,
-} from "../../../types";
+import type { ApiErrorResponse } from "../../../types";
 
 export const prerender = false;
 export const trailingSlash = "never";

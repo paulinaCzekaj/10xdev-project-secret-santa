@@ -10,12 +10,7 @@ export const PasswordInputWithToggle = React.forwardRef<HTMLInputElement, Passwo
 
     return (
       <div className="relative">
-        <Input
-          type={showPassword ? "text" : "password"}
-          className={`pr-10 ${className || ""}`}
-          ref={ref}
-          {...props}
-        />
+        <Input type={showPassword ? "text" : "password"} className={`pr-10 ${className || ""}`} ref={ref} {...props} />
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}

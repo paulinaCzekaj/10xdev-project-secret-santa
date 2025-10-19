@@ -12,6 +12,7 @@
 Po zaimportowaniu kolekcji, skonfiguruj następujące zmienne środowiskowe:
 
 ### Zmienne kolekcji (Collection Variables):
+
 - `base_url` - domyślnie: `http://localhost:4321`
 - `group_id` - ID grupy (ustaw po utworzeniu grupy)
 - `participant_id` - ID uczestnika (ustaw po dodaniu uczestnika)
@@ -20,23 +21,27 @@ Po zaimportowaniu kolekcji, skonfiguruj następujące zmienne środowiskowe:
 ## 🚀 Workflow testowania
 
 ### 1. Przygotowanie środowiska
+
 ```bash
 # Uruchom serwer deweloperski
 npm run dev
 ```
 
 ### 2. Testowanie autentyfikacji
+
 1. **Register User** - utwórz konto testowe
 2. **Login User** - zaloguj się (zachowaj cookies!)
 3. **Reset Password** - testuj reset hasła (opcjonalnie)
 
 ### 3. Zarządzanie grupami
+
 1. **Create Group** - utwórz nową grupę Secret Santa
    - Skopiuj zwrócony `id` i ustaw jako `group_id`
 2. **List Groups** - sprawdź swoje grupy
 3. **Get Group Details** - szczegóły wybranej grupy
 
 ### 4. Zarządzanie uczestnikami
+
 1. **Add Participant** - dodaj uczestników do grupy
    - Skopiuj zwrócony `id` uczestnika jako `participant_id`
 2. **List Group Participants** - sprawdź listę uczestników
@@ -47,13 +52,16 @@ npm run dev
 7. **Delete Participant** - usuń uczestnika (opcjonalnie)
 
 ### 5. Reguły wykluczeń
+
 1. **Add Exclusion Rule** - dodaj reguły kto nie może komu dać prezentu
 2. **List Group Exclusions** - sprawdź reguły wykluczeń
 
 ### 6. Losowanie
+
 1. **Execute Secret Santa Draw** - wykonaj losowanie (wymaga min. 3 uczestników)
 
 ### 7. Wyniki losowania
+
 1. **Get Draw Result (Authenticated)** - pobierz wynik losowania dla zalogowanego użytkownika
    - Wymaga autoryzacji i przynależności do grupy
    - Losowanie musi być zakończone
@@ -65,16 +73,19 @@ npm run dev
 ## ⚠️ Ważne uwagi
 
 ### Cookies i sesja
+
 - Większość endpointów wymaga autentyfikacji
 - Postman automatycznie zarządza cookies po zalogowaniu
 - Jeśli stracisz sesję, zaloguj się ponownie
 
 ### Zmienne środowiskowe
+
 - Ustaw `group_id` po utworzeniu grupy
 - Ustaw `participant_id` po dodaniu uczestnika
 - Możesz też używać zmiennych środowiskowych zamiast kolekcji
 
 ### Błędy i statusy
+
 - `200` - Sukces
 - `201` - Utworzono
 - `204` - Brak zawartości (DELETE)
@@ -126,10 +137,12 @@ DELETE /api/participants/{participant_id}/wishlist  # Usuń wishlist (jeśli pot
 Pobiera wishlist uczestnika z automatycznym renderowaniem HTML i informacją o możliwości edycji.
 
 **Autoryzacja:**
+
 - Dla zarejestrowanych użytkowników: `Authorization: Bearer {access_token}`
 - Dla niezarejestrowanych użytkowników: `?token={participant_token}`
 
 **Odpowiedź sukcesu (200):**
+
 ```json
 {
   "id": 1,
@@ -142,6 +155,7 @@ Pobiera wishlist uczestnika z automatycznym renderowaniem HTML i informacją o m
 ```
 
 **Kody błędów:**
+
 - `401` - Brak autoryzacji
 - `403` - Brak dostępu do wishlist
 - `404` - Uczestnik lub wishlist nie istnieje
@@ -153,12 +167,14 @@ Pobiera wishlist uczestnika z automatycznym renderowaniem HTML i informacją o m
 Usuwa wishlist uczestnika. Dostępne tylko przed datą zakończenia grupy.
 
 **Autoryzacja:**
+
 - Dla zarejestrowanych użytkowników: `Authorization: Bearer {access_token}`
 - Dla niezarejestrowanych użytkowników: `?token={participant_token}`
 
 **Odpowiedź sukcesu (204):** Brak zawartości
 
 **Kody błędów:**
+
 - `400` - Próba usunięcia po dacie zakończenia grupy
 - `401` - Brak autoryzacji
 - `403` - Brak dostępu do wishlist
@@ -171,10 +187,12 @@ Usuwa wishlist uczestnika. Dostępne tylko przed datą zakończenia grupy.
 Aktualizuje lub tworzy wishlist uczestnika.
 
 **Autoryzacja:**
+
 - Dla zarejestrowanych użytkowników: `Authorization: Bearer {access_token}`
 - Dla niezarejestrowanych użytkowników: `?token={participant_token}`
 
 **Request body:**
+
 ```json
 {
   "wishlist": "Treść wishlist z opcjonalnymi URL-ami"
@@ -182,6 +200,7 @@ Aktualizuje lub tworzy wishlist uczestnika.
 ```
 
 **Odpowiedź sukcesu (200):**
+
 ```json
 {
   "id": 1,
@@ -192,6 +211,7 @@ Aktualizuje lub tworzy wishlist uczestnika.
 ```
 
 **Kody błędów:**
+
 - `400` - Próba edycji po dacie zakończenia grupy
 - `401` - Brak autoryzacji
 - `403` - Brak dostępu do wishlist
@@ -201,6 +221,7 @@ Aktualizuje lub tworzy wishlist uczestnika.
 ## 🔄 Testowanie błędów
 
 Dla każdego endpointu dostępne są również przypadki błędne:
+
 - Puste dane
 - Nieprawidłowe formaty
 - Nieistniejące zasoby
@@ -209,34 +230,39 @@ Dla każdego endpointu dostępne są również przypadki błędne:
 ## 🛠️ Rozszerzone testowanie
 
 ### Testy automatyczne
+
 Możesz dodać testy w Postman Scripts dla automatycznego sprawdzania odpowiedzi:
 
 ```javascript
 // Example test script
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("Response has success field", function () {
-    var jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('success');
+  var jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("success");
 });
 ```
 
 ### Zmienne środowiskowe
+
 Utwórz środowisko w Postman z zmiennymi:
+
 - `base_url` = `http://localhost:4321`
 - `group_id` = (ustaw dynamicznie)
 - `participant_id` = (ustaw dynamicznie)
 - `access_token` = (ustaw dynamicznie po dodaniu uczestnika)
 
 ### Runner i monitorowanie
+
 - Użyj **Collection Runner** do wykonania całej kolekcji
 - Skonfiguruj **Monitory** dla automatycznych testów
 
 ## 📞 Wsparcie
 
 Jeśli masz problemy z API:
+
 1. Sprawdź czy serwer działa (`npm run dev`)
 2. Zweryfikuj zmienne środowiskowe
 3. Sprawdź cookies/sesję

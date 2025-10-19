@@ -118,7 +118,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const group = await groupService.createGroup(userId, validatedData, {
-      name: user.user_metadata?.full_name || user.email?.split('@')[0] || "Unknown User",
+      name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Unknown User",
       email: user.email || "user@example.com",
     });
 

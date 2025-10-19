@@ -16,6 +16,7 @@ Endpoint `GET /api/groups/:id` służy do pobierania szczegółowych informacji 
 - **Request Body**: N/A (metoda GET)
 
 ### Przykład żądania:
+
 ```http
 GET /api/groups/42 HTTP/1.1
 Host: example.com
@@ -63,8 +64,8 @@ ApiErrorResponse {
 // W pliku endpointu lub osobnym pliku schemas
 const GroupIdParamSchema = z.object({
   id: z.coerce.number().int().positive({
-    message: "Group ID must be a positive integer"
-  })
+    message: "Group ID must be a positive integer",
+  }),
 });
 ```
 
@@ -96,6 +97,7 @@ CREATE INDEX idx_assignments_receiver ON assignments(receiver_participant_id);
 ```
 
 ### Relacje:
+
 - `assignments.group_id` → `groups.id` (wiele-do-jednego)
 - `assignments.giver_participant_id` → `participants.id` (wiele-do-jednego)
 - `assignments.receiver_participant_id` → `participants.id` (wiele-do-jednego)
@@ -109,6 +111,7 @@ export type AssignmentInsert = TablesInsert<"assignments">;
 ```
 
 ### Przeznaczenie:
+
 - Przechowuje wyniki losowania Secret Santa
 - Każdy rekord reprezentuje: "Uczestnik X ma kupić prezent dla Uczestnika Y"
 - Używana do obliczania pola `is_drawn` w GroupDetailDTO
@@ -117,6 +120,7 @@ export type AssignmentInsert = TablesInsert<"assignments">;
 ## 5. Szczegóły odpowiedzi
 
 ### Sukces (200 OK):
+
 ```json
 {
   "id": 1,
@@ -154,6 +158,7 @@ export type AssignmentInsert = TablesInsert<"assignments">;
 ### Błędy:
 
 **400 Bad Request:**
+
 ```json
 {
   "error": {
@@ -164,6 +169,7 @@ export type AssignmentInsert = TablesInsert<"assignments">;
 ```
 
 **401 Unauthorized:**
+
 ```json
 {
   "error": {
@@ -174,6 +180,7 @@ export type AssignmentInsert = TablesInsert<"assignments">;
 ```
 
 **403 Forbidden:**
+
 ```json
 {
   "error": {
@@ -184,6 +191,7 @@ export type AssignmentInsert = TablesInsert<"assignments">;
 ```
 
 **404 Not Found:**
+
 ```json
 {
   "error": {
@@ -194,6 +202,7 @@ export type AssignmentInsert = TablesInsert<"assignments">;
 ```
 
 **500 Internal Server Error:**
+
 ```json
 {
   "error": {
@@ -221,12 +230,9 @@ export type AssignmentInsert = TablesInsert<"assignments">;
 4. **Logika w service**:
 
    a. **Pobieranie grupy z bazy danych**
+
    ```typescript
-   const { data: group, error } = await supabase
-     .from('groups')
-     .select('*')
-     .eq('id', groupId)
-     .single();
+   const { data: group, error } = await supabase.from("groups").select("*").eq("id", groupId).single();
 
    if (error || !group) {
      return null; // 404
@@ -234,16 +240,17 @@ export type AssignmentInsert = TablesInsert<"assignments">;
    ```
 
    b. **Sprawdzenie uprawnień dostępu**
+
    ```typescript
    // Czy użytkownik jest twórcą?
    const isCreator = group.creator_id === userId;
 
    // Czy użytkownik jest uczestnikiem?
    const { data: participation } = await supabase
-     .from('participants')
-     .select('id')
-     .eq('group_id', groupId)
-     .eq('user_id', userId)
+     .from("participants")
+     .select("id")
+     .eq("group_id", groupId)
+     .eq("user_id", userId)
      .maybeSingle();
 
    const isParticipant = participation !== null;
@@ -255,30 +262,33 @@ export type AssignmentInsert = TablesInsert<"assignments">;
    ```
 
    c. **Pobieranie uczestników**
+
    ```typescript
    const { data: participants } = await supabase
-     .from('participants')
-     .select('*')
-     .eq('group_id', groupId)
-     .order('created_at', { ascending: true });
+     .from("participants")
+     .select("*")
+     .eq("group_id", groupId)
+     .order("created_at", { ascending: true });
    ```
 
    d. **Pobieranie reguł wykluczeń**
+
    ```typescript
    const { data: exclusions } = await supabase
-     .from('exclusion_rules')
-     .select('*')
-     .eq('group_id', groupId)
-     .order('created_at', { ascending: true });
+     .from("exclusion_rules")
+     .select("*")
+     .eq("group_id", groupId)
+     .order("created_at", { ascending: true });
    ```
 
    e. **Obliczanie pola is_drawn** ⭐
+
    ```typescript
    // Sprawdzenie czy istnieją jakiekolwiek przypisania dla tej grupy
    const { data: hasAssignments } = await supabase
-     .from('assignments')
-     .select('id')
-     .eq('group_id', groupId)
+     .from("assignments")
+     .select("id")
+     .eq("group_id", groupId)
      .limit(1)
      .maybeSingle();
 
@@ -286,11 +296,13 @@ export type AssignmentInsert = TablesInsert<"assignments">;
    ```
 
    f. **Obliczanie can_edit**
+
    ```typescript
    const canEdit = isCreator && !isDrawn;
    ```
 
    g. **Konstrukcja GroupDetailDTO**
+
    ```typescript
    return {
      ...group,
@@ -298,7 +310,7 @@ export type AssignmentInsert = TablesInsert<"assignments">;
      exclusions: exclusions || [],
      is_creator: isCreator,
      is_drawn: isDrawn,
-     can_edit: canEdit
+     can_edit: canEdit,
    };
    ```
 
@@ -314,18 +326,20 @@ export type AssignmentInsert = TablesInsert<"assignments">;
 
 ```typescript
 const { data: groupData, error } = await supabase
-  .from('groups')
-  .select(`
+  .from("groups")
+  .select(
+    `
     *,
     participants (*),
     exclusion_rules (*)
-  `)
-  .eq('id', groupId)
+  `
+  )
+  .eq("id", groupId)
   .single();
 
 // Sprawdzenie dostępu
 const isCreator = groupData.creator_id === userId;
-const isParticipant = groupData.participants.some(p => p.user_id === userId);
+const isParticipant = groupData.participants.some((p) => p.user_id === userId);
 
 if (!isCreator && !isParticipant) {
   return null;
@@ -333,9 +347,9 @@ if (!isCreator && !isParticipant) {
 
 // Sprawdzenie is_drawn (nadal osobne zapytanie - nie da się uniknąć)
 const { data: hasAssignments } = await supabase
-  .from('assignments')
-  .select('id')
-  .eq('group_id', groupId)
+  .from("assignments")
+  .select("id")
+  .eq("group_id", groupId)
   .limit(1)
   .maybeSingle();
 
@@ -347,11 +361,13 @@ const isDrawn = hasAssignments !== null;
 ## 7. Względy bezpieczeństwa
 
 ### Uwierzytelnianie:
+
 - **Token JWT validation**: Middleware Astro sprawdza token z headera Authorization
 - **User context**: Token dekodowany do user ID w `context.locals.user`
 - Brak tokena → 401 Unauthorized
 
 ### Autoryzacja (RBAC):
+
 - **Resource-level authorization**: Sprawdzenie, czy użytkownik ma dostęp do konkretnej grupy
 - Użytkownik ma dostęp jeśli:
   - Jest twórcą grupy (`groups.creator_id === userId`), LUB
@@ -359,6 +375,7 @@ const isDrawn = hasAssignments !== null;
 - Brak dostępu → 403 Forbidden
 
 ### Ochrona przed atakami:
+
 - **IDOR Prevention**: Implementacja sprawdzenia uprawnień przed zwróceniem danych
 - **SQL Injection**: Używanie Supabase Query Builder (parametryzowane zapytania)
 - **Information Disclosure**:
@@ -367,36 +384,37 @@ const isDrawn = hasAssignments !== null;
 - **Token Security**: Używanie `httpOnly` cookies lub secure headers dla tokenów
 
 ### Rate Limiting (opcjonalnie):
+
 - Rozważenie implementacji rate limiting dla endpointów API (np. 100 req/min/user)
 
 ## 8. Obsługa błędów
 
 ### Tabela scenariuszy błędów:
 
-| Kod | Scenariusz | Code | Message | Logika obsługi |
-|-----|-----------|------|---------|----------------|
-| 400 | Nieprawidłowe ID grupy | `INVALID_INPUT` | "Group ID must be a positive integer" | Walidacja Zod rzuca wyjątek, catch w endpoint |
-| 401 | Brak tokena | `UNAUTHORIZED` | "Authentication required" | Middleware sprawdza token, blokuje żądanie |
-| 401 | Nieprawidłowy token | `UNAUTHORIZED` | "Invalid or expired token" | Middleware weryfikuje JWT |
-| 403 | Brak dostępu do grupy | `FORBIDDEN` | "You do not have access to this group" | Service sprawdza uprawnienia, zwraca null |
-| 404 | Grupa nie istnieje | `GROUP_NOT_FOUND` | "Group not found" | Query zwraca null, endpoint zwraca 404 |
-| 500 | Błąd bazy danych | `INTERNAL_ERROR` | "An unexpected error occurred" | Catch w service/endpoint, log błędu |
-| 500 | Nieoczekiwany wyjątek | `INTERNAL_ERROR` | "An unexpected error occurred" | Global error handler, log stack trace |
+| Kod | Scenariusz             | Code              | Message                                | Logika obsługi                                |
+| --- | ---------------------- | ----------------- | -------------------------------------- | --------------------------------------------- |
+| 400 | Nieprawidłowe ID grupy | `INVALID_INPUT`   | "Group ID must be a positive integer"  | Walidacja Zod rzuca wyjątek, catch w endpoint |
+| 401 | Brak tokena            | `UNAUTHORIZED`    | "Authentication required"              | Middleware sprawdza token, blokuje żądanie    |
+| 401 | Nieprawidłowy token    | `UNAUTHORIZED`    | "Invalid or expired token"             | Middleware weryfikuje JWT                     |
+| 403 | Brak dostępu do grupy  | `FORBIDDEN`       | "You do not have access to this group" | Service sprawdza uprawnienia, zwraca null     |
+| 404 | Grupa nie istnieje     | `GROUP_NOT_FOUND` | "Group not found"                      | Query zwraca null, endpoint zwraca 404        |
+| 500 | Błąd bazy danych       | `INTERNAL_ERROR`  | "An unexpected error occurred"         | Catch w service/endpoint, log błędu           |
+| 500 | Nieoczekiwany wyjątek  | `INTERNAL_ERROR`  | "An unexpected error occurred"         | Global error handler, log stack trace         |
 
 ### Implementacja w endpoint handler:
 
 ```typescript
-import type { APIContext } from 'astro';
-import { z } from 'zod';
-import { getGroupById } from '@/lib/services/groups.service';
-import type { ApiErrorResponse } from '@/types';
+import type { APIContext } from "astro";
+import { z } from "zod";
+import { getGroupById } from "@/lib/services/groups.service";
+import type { ApiErrorResponse } from "@/types";
 
 export const prerender = false;
 
 const GroupIdParamSchema = z.object({
   id: z.coerce.number().int().positive({
-    message: "Group ID must be a positive integer"
-  })
+    message: "Group ID must be a positive integer",
+  }),
 });
 
 export const GET = async ({ params, locals }: APIContext) => {
@@ -410,12 +428,12 @@ export const GET = async ({ params, locals }: APIContext) => {
       const errorResponse: ApiErrorResponse = {
         error: {
           code: "UNAUTHORIZED",
-          message: "Authentication required"
-        }
+          message: "Authentication required",
+        },
       };
       return new Response(JSON.stringify(errorResponse), {
         status: 401,
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -429,12 +447,12 @@ export const GET = async ({ params, locals }: APIContext) => {
       const errorResponse: ApiErrorResponse = {
         error: {
           code: "GROUP_NOT_FOUND",
-          message: "Group not found"
-        }
+          message: "Group not found",
+        },
       };
       return new Response(JSON.stringify(errorResponse), {
         status: 404,
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -443,10 +461,9 @@ export const GET = async ({ params, locals }: APIContext) => {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        "Cache-Control": "private, max-age=60"
-      }
+        "Cache-Control": "private, max-age=60",
+      },
     });
-
   } catch (error) {
     // Obsługa błędów walidacji
     if (error instanceof z.ZodError) {
@@ -454,12 +471,12 @@ export const GET = async ({ params, locals }: APIContext) => {
         error: {
           code: "INVALID_INPUT",
           message: error.errors[0].message,
-          details: error.errors
-        }
+          details: error.errors,
+        },
       };
       return new Response(JSON.stringify(errorResponse), {
         status: 400,
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -467,18 +484,18 @@ export const GET = async ({ params, locals }: APIContext) => {
     console.error("Error fetching group details:", {
       groupId: params.id,
       userId: locals.user?.id,
-      error
+      error,
     });
 
     const errorResponse: ApiErrorResponse = {
       error: {
         code: "INTERNAL_ERROR",
-        message: "An unexpected error occurred"
-      }
+        message: "An unexpected error occurred",
+      },
     };
     return new Response(JSON.stringify(errorResponse), {
       status: 500,
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
     });
   }
 };
@@ -505,41 +522,49 @@ export const GET = async ({ params, locals }: APIContext) => {
 ### Strategie optymalizacji:
 
 #### Optymalizacja 1: Pojedyncze zapytanie z JOIN
+
 ```typescript
 const { data: group, error } = await supabase
-  .from('groups')
-  .select(`
+  .from("groups")
+  .select(
+    `
     *,
     participants (*),
     exclusion_rules (*)
-  `)
-  .eq('id', groupId)
+  `
+  )
+  .eq("id", groupId)
   .single();
 ```
+
 **Korzyść**: Redukcja round-trips do bazy z 3 do 1 (+ 1 dla assignments)
 
 #### Optymalizacja 2: Indeksy bazodanowe
+
 - Index na `participants.group_id` (już istnieje przez FK)
 - Index na `exclusion_rules.group_id` (już istnieje przez FK)
 - Index na `assignments.group_id` (✅ dodany w schemacie)
 - Index na `participants(group_id, user_id)` dla sprawdzania członkostwa (opcjonalny)
 
 #### Optymalizacja 3: Cache-Control headers
+
 ```typescript
 return new Response(JSON.stringify(groupDetails), {
   status: 200,
   headers: {
     "Content-Type": "application/json",
-    "Cache-Control": "private, max-age=60" // Cache na 60 sekund
-  }
+    "Cache-Control": "private, max-age=60", // Cache na 60 sekund
+  },
 });
 ```
 
 #### Optymalizacja 4: Selective field fetching
+
 - Jeśli frontend nie potrzebuje wszystkich pól, użyć `select()` z konkretnymi polami
 - Redukcja rozmiaru response
 
 ### Metryki wydajności (cele):
+
 - **Response time**: < 200ms dla małych grup (< 10 uczestników)
 - **Response time**: < 500ms dla średnich grup (10-50 uczestników)
 - **Database queries**: 2 queries (po optymalizacji JOIN)
@@ -555,6 +580,7 @@ return new Response(JSON.stringify(groupDetails), {
    - Wykonanie migracji w Supabase (lub przez `supabase db push` jeśli używasz Supabase CLI)
 
 2. **Aktualizacja typów TypeScript dla bazy**
+
    ```bash
    # Regeneracja typów z Supabase
    npx supabase gen types typescript --project-id <project-id> > src/db/database.types.ts
@@ -569,6 +595,7 @@ return new Response(JSON.stringify(groupDetails), {
 ### Faza 2: Przygotowanie struktury katalogów (5 min)
 
 4. **Utworzenie struktury katalogów**
+
    ```bash
    mkdir -p src/pages/api/groups
    mkdir -p src/lib/services
@@ -585,13 +612,14 @@ return new Response(JSON.stringify(groupDetails), {
 ### Faza 3: Implementacja walidacji (10 min)
 
 7. **Dodanie schema Zod w endpoint**
+
    ```typescript
-   import { z } from 'zod';
+   import { z } from "zod";
 
    const GroupIdParamSchema = z.object({
      id: z.coerce.number().int().positive({
-       message: "Group ID must be a positive integer"
-     })
+       message: "Group ID must be a positive integer",
+     }),
    });
    ```
 
@@ -608,9 +636,10 @@ return new Response(JSON.stringify(groupDetails), {
 ### Faza 4: Implementacja service layer (30 min)
 
 9. **Utworzenie funkcji getGroupById**
+
    ```typescript
-   import type { SupabaseClient } from '@/db/supabase.client';
-   import type { GroupDetailDTO } from '@/types';
+   import type { SupabaseClient } from "@/db/supabase.client";
+   import type { GroupDetailDTO } from "@/types";
 
    export async function getGroupById(
      supabase: SupabaseClient,
@@ -636,11 +665,12 @@ return new Response(JSON.stringify(groupDetails), {
     - LUB pojedyncze zapytanie z JOIN
 
 13. **Implementacja sprawdzania is_drawn**
+
     ```typescript
     const { data: hasAssignments } = await supabase
-      .from('assignments')
-      .select('id')
-      .eq('group_id', groupId)
+      .from("assignments")
+      .select("id")
+      .eq("group_id", groupId)
       .limit(1)
       .maybeSingle();
 
@@ -659,15 +689,16 @@ return new Response(JSON.stringify(groupDetails), {
       exclusions: exclusions || [],
       is_creator: isCreator,
       is_drawn: isDrawn,
-      can_edit: canEdit
+      can_edit: canEdit,
     };
     ```
 
 ### Faza 5: Integracja endpoint z service (20 min)
 
 16. **Import service w endpoint**
+
     ```typescript
-    import { getGroupById } from '@/lib/services/groups.service';
+    import { getGroupById } from "@/lib/services/groups.service";
     ```
 
 17. **Implementacja logiki GET handler**
@@ -710,19 +741,23 @@ return new Response(JSON.stringify(groupDetails), {
 ### Faza 7: Optymalizacja (15 min)
 
 23. **Implementacja optymalizacji JOIN** (opcjonalne)
+
     ```typescript
     const { data: group } = await supabase
-      .from('groups')
-      .select(`
+      .from("groups")
+      .select(
+        `
         *,
         participants (*),
         exclusion_rules (*)
-      `)
-      .eq('id', groupId)
+      `
+      )
+      .eq("id", groupId)
       .single();
     ```
 
 24. **Dodanie Cache-Control headers**
+
     ```typescript
     headers: {
       "Content-Type": "application/json",
@@ -737,6 +772,7 @@ return new Response(JSON.stringify(groupDetails), {
 ### Faza 8: Dokumentacja (10 min)
 
 26. **Dodanie komentarzy JSDoc**
+
     ```typescript
     /**
      * GET /api/groups/:id
@@ -784,6 +820,7 @@ return new Response(JSON.stringify(groupDetails), {
 ## 11. Checklisty pomocnicze
 
 ### Checklist bezpieczeństwa:
+
 - [ ] Token JWT jest weryfikowany przed dostępem do danych
 - [ ] Sprawdzenie uprawnień na poziomie zasobów (RBAC)
 - [ ] Błędy nie ujawniają szczegółów implementacji
@@ -792,6 +829,7 @@ return new Response(JSON.stringify(groupDetails), {
 - [ ] Logowanie nie zawiera wrażliwych danych (hasła, tokeny)
 
 ### Checklist wydajności:
+
 - [ ] Minimalna liczba zapytań do bazy (cel: 2)
 - [ ] Indeksy utworzone dla często używanych pól
 - [ ] Cache headers ustawione dla odpowiedzi
@@ -800,6 +838,7 @@ return new Response(JSON.stringify(groupDetails), {
 - [ ] Total response time < 200ms (cel)
 
 ### Checklist jakości kodu:
+
 - [ ] TypeScript bez błędów kompilacji
 - [ ] ESLint bez warningów
 - [ ] Prettier sformatował kod
@@ -814,11 +853,13 @@ return new Response(JSON.stringify(groupDetails), {
 ## 12. Uwagi końcowe
 
 ### Zależności:
+
 - Tabela `assignments` musi być utworzona przed wdrożeniem tego endpointu
 - Middleware Astro musi poprawnie dekodować JWT i ustawiać `locals.user`
 - Supabase client musi być dostępny w `locals.supabase`
 
 ### Potencjalne ulepszenia w przyszłości:
+
 - Dodanie paginacji dla uczestników i wykluczeń
 - Implementacja ETag dla bardziej zaawansowanego cachingu
 - WebSocket notifications przy zmianach w grupie
@@ -827,6 +868,7 @@ return new Response(JSON.stringify(groupDetails), {
 - Audit log dla dostępów do grup
 
 ### Związane endpointy do implementacji później:
+
 - `POST /api/groups` - Tworzenie nowej grupy
 - `PATCH /api/groups/:id` - Aktualizacja grupy
 - `DELETE /api/groups/:id` - Usuwanie grupy

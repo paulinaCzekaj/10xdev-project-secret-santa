@@ -86,7 +86,7 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
         error: {
           code: "INVALID_INPUT",
           message: "Invalid group ID format",
-          details: error.errors,
+          details: { errors: error.errors },
         },
       };
       return new Response(JSON.stringify(errorResponse), {

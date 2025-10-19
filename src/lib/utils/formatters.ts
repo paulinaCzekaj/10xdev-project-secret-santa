@@ -10,7 +10,7 @@ import { Heart, XCircle, Eye, EyeOff } from "lucide-react";
  * @returns Formatted string like "150 PLN"
  */
 export function formatCurrency(amount: number): string {
-  return `${amount.toLocaleString('pl-PL')} PLN`;
+  return `${amount.toLocaleString("pl-PL")} PLN`;
 }
 
 /**
@@ -21,10 +21,10 @@ export function formatCurrency(amount: number): string {
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
 
-  return date.toLocaleDateString('pl-PL', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+  return date.toLocaleDateString("pl-PL", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 }
 
@@ -36,10 +36,10 @@ export function formatDate(dateString: string): string {
 export function formatRelativeDate(dateString: string): string {
   const date = new Date(dateString);
 
-  return date.toLocaleDateString('pl-PL', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+  return date.toLocaleDateString("pl-PL", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 }
 
@@ -50,9 +50,9 @@ export function formatRelativeDate(dateString: string): string {
  */
 export function getInitials(name: string): string {
   return name
-    .split(' ')
-    .map(word => word.charAt(0))
-    .join('')
+    .split(" ")
+    .map((word) => word.charAt(0))
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
@@ -69,12 +69,12 @@ export function formatParticipantEmail(email?: string, isCurrentUser: boolean = 
   if (isCurrentUser) return email;
 
   // For other users, hide part of the email for privacy
-  const [localPart, domain] = email.split('@');
+  const [localPart, domain] = email.split("@");
   if (localPart.length <= 2) return email;
 
   const visibleChars = Math.min(2, Math.floor(localPart.length / 2));
   const hiddenChars = localPart.length - visibleChars;
-  const maskedLocal = localPart.slice(0, visibleChars) + '*'.repeat(hiddenChars);
+  const maskedLocal = localPart.slice(0, visibleChars) + "*".repeat(hiddenChars);
 
   return `${maskedLocal}@${domain}`;
 }

@@ -25,6 +25,7 @@ The GroupView component is the most complex component in the codebase, serving a
 ### 1.1 Component Structure
 
 **GroupView.tsx (468 lines):**
+
 - Lines 46-81: Local state management (7 useState hooks)
 - Lines 51-65: Four custom data hooks (useGroupData, useParticipants, useExclusions, useDraw)
 - Lines 84-156: Three transformation functions (73 lines)
@@ -62,6 +63,7 @@ The GroupView component is the most complex component in the codebase, serving a
 ### 1.3 Complexity Metrics
 
 **State Management:**
+
 ```typescript
 // Lines 68-74: 7 modal state variables
 const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
@@ -76,26 +78,39 @@ const [participantToDelete, setParticipantToDelete] = useState<ParticipantViewMo
 **Issue:** Too many state variables for related concerns
 
 **Data Transformations:**
+
 ```typescript
 // Lines 84-156: Complex transformation logic
-const transformGroupToViewModel = useMemo(() => (group: GroupDetailDTO): GroupViewModel => {
-  return {
-    ...group,
-    formattedBudget: formatCurrency(group.budget),
-    formattedEndDate: formatDate(group.end_date),
-    // ... 20+ more lines
-  };
-}, []);
+const transformGroupToViewModel = useMemo(
+  () =>
+    (group: GroupDetailDTO): GroupViewModel => {
+      return {
+        ...group,
+        formattedBudget: formatCurrency(group.budget),
+        formattedEndDate: formatDate(group.end_date),
+        // ... 20+ more lines
+      };
+    },
+  []
+);
 
-const transformParticipantsToViewModels = useMemo(() => (participants: ParticipantListItemDTO[]): ParticipantViewModel[] => {
-  return participants.map((participant): ParticipantViewModel => {
-    // ... 25+ lines of transformation logic
-  });
-}, [currentUserId, group?.creator_id, group?.is_drawn]);
+const transformParticipantsToViewModels = useMemo(
+  () =>
+    (participants: ParticipantListItemDTO[]): ParticipantViewModel[] => {
+      return participants.map((participant): ParticipantViewModel => {
+        // ... 25+ lines of transformation logic
+      });
+    },
+  [currentUserId, group?.creator_id, group?.is_drawn]
+);
 
-const transformExclusionsToViewModels = useMemo(() => (exclusions: ExclusionRuleListItemDTO[]): ExclusionViewModel[] => {
-  // ... 15+ lines of transformation logic
-}, [group?.is_drawn]);
+const transformExclusionsToViewModels = useMemo(
+  () =>
+    (exclusions: ExclusionRuleListItemDTO[]): ExclusionViewModel[] => {
+      // ... 15+ lines of transformation logic
+    },
+  [group?.is_drawn]
+);
 ```
 
 **Issue:** 73 lines of transformation logic mixed with component
@@ -109,6 +124,7 @@ const transformExclusionsToViewModels = useMemo(() => (exclusions: ExclusionRule
 Each custom hook (useGroupData, useParticipants, useExclusions) repeats the same pattern:
 
 **useGroupData.ts (lines 17-44):**
+
 ```typescript
 const fetchGroup = useCallback(async () => {
   setLoading(true);
@@ -122,14 +138,16 @@ const fetchGroup = useCallback(async () => {
       },
     });
 
-    if (!response.ok) { // ← Repeated error handling
+    if (!response.ok) {
+      // ← Repeated error handling
       const errorData = await response.json();
       throw new Error(errorData.error?.message || "Błąd pobierania grupy");
     }
 
     const data: GroupDetailDTO = await response.json();
     setGroup(data);
-  } catch (err) { // ← Repeated error pattern
+  } catch (err) {
+    // ← Repeated error pattern
     setError({
       code: "FETCH_ERROR",
       message: err instanceof Error ? err.message : "Nieznany błąd",
@@ -141,6 +159,7 @@ const fetchGroup = useCallback(async () => {
 ```
 
 **This pattern is repeated in:**
+
 - useParticipants.ts (4 functions: fetch, add, update, delete)
 - useExclusions.ts (3 functions: fetch, add, delete)
 - useDraw.ts (2 functions: validate, execute)
@@ -164,6 +183,7 @@ const fetchGroup = useCallback(async () => {
 **Create:** `src/hooks/useGroupViewModel.ts`
 
 **Implementation:**
+
 ```typescript
 // src/hooks/useGroupViewModel.ts
 import { useMemo } from "react";
@@ -198,12 +218,7 @@ interface UseGroupViewModelParams {
   currentUserId: string | null;
 }
 
-export function useGroupViewModel({
-  group,
-  participants,
-  exclusions,
-  currentUserId,
-}: UseGroupViewModelParams) {
+export function useGroupViewModel({ group, participants, exclusions, currentUserId }: UseGroupViewModelParams) {
   const groupViewModel = useMemo<GroupViewModel | null>(() => {
     if (!group) return null;
 
@@ -277,6 +292,7 @@ export function useGroupViewModel({
 ```
 
 **Usage in GroupView.tsx:**
+
 ```typescript
 export default function GroupView({ groupId }: GroupViewProps) {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -298,6 +314,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
 ```
 
 **Benefits:**
+
 - Reduces GroupView from 468 to ~395 lines (-73 lines)
 - Separates presentation logic from component logic
 - Makes transformations testable in isolation
@@ -314,17 +331,13 @@ export default function GroupView({ groupId }: GroupViewProps) {
 **Create:** `src/hooks/useModalState.ts`
 
 **Implementation:**
+
 ```typescript
 // src/hooks/useModalState.ts
 import { useState, useCallback } from "react";
 import type { ParticipantViewModel } from "@/types";
 
-type ModalType =
-  | "editGroup"
-  | "deleteGroup"
-  | "editParticipant"
-  | "deleteParticipant"
-  | "drawConfirmation";
+type ModalType = "editGroup" | "deleteGroup" | "editParticipant" | "deleteParticipant" | "drawConfirmation";
 
 interface ModalState {
   activeModal: ModalType | null;
@@ -385,6 +398,7 @@ export function useModalState() {
 ```
 
 **Usage in GroupView.tsx:**
+
 ```typescript
 export default function GroupView({ groupId }: GroupViewProps) {
   const modals = useModalState();
@@ -424,6 +438,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
 ```
 
 **Benefits:**
+
 - Reduces 7 useState hooks to 1 custom hook
 - Type-safe modal management
 - Easier to add new modals
@@ -440,6 +455,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
 **Create:** `src/services/apiClient.ts`
 
 **Implementation:**
+
 ```typescript
 // src/services/apiClient.ts
 import { supabaseClient } from "@/db/supabase.client";
@@ -456,7 +472,9 @@ class ApiClient {
   }
 
   private async getAuthHeaders(): Promise<HeadersInit> {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const {
+      data: { session },
+    } = await supabaseClient.auth.getSession();
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
@@ -473,9 +491,7 @@ class ApiClient {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
-        errorData.error?.message ||
-        errorData.message ||
-        `HTTP ${response.status}: ${response.statusText}`
+        errorData.error?.message || errorData.message || `HTTP ${response.status}: ${response.statusText}`
       );
     }
 
@@ -534,25 +550,17 @@ export const apiClient = new ApiClient();
 ```typescript
 // src/services/groupsService.ts
 import { apiClient } from "./apiClient";
-import type {
-  GroupDetailDTO,
-  GroupDTO,
-  UpdateGroupCommand,
-  CreateGroupCommand,
-} from "@/types";
+import type { GroupDetailDTO, GroupDTO, UpdateGroupCommand, CreateGroupCommand } from "@/types";
 
 export const groupsService = {
-  getById: (groupId: number) =>
-    apiClient.get<GroupDetailDTO>(`/api/groups/${groupId}`),
+  getById: (groupId: number) => apiClient.get<GroupDetailDTO>(`/api/groups/${groupId}`),
 
-  create: (command: CreateGroupCommand) =>
-    apiClient.post<GroupDTO>("/api/groups", command),
+  create: (command: CreateGroupCommand) => apiClient.post<GroupDTO>("/api/groups", command),
 
   update: (groupId: number, command: UpdateGroupCommand) =>
     apiClient.patch<GroupDTO>(`/api/groups/${groupId}`, command),
 
-  delete: (groupId: number) =>
-    apiClient.delete(`/api/groups/${groupId}`),
+  delete: (groupId: number) => apiClient.delete(`/api/groups/${groupId}`),
 };
 ```
 
@@ -571,8 +579,7 @@ import type {
 } from "@/types";
 
 export const participantsService = {
-  getByGroupId: (groupId: number) =>
-    apiClient.get<PaginatedParticipantsDTO>(`/api/groups/${groupId}/participants`),
+  getByGroupId: (groupId: number) => apiClient.get<PaginatedParticipantsDTO>(`/api/groups/${groupId}/participants`),
 
   create: (groupId: number, command: CreateParticipantCommand) =>
     apiClient.post<ParticipantWithTokenDTO>(`/api/groups/${groupId}/participants`, command),
@@ -580,12 +587,12 @@ export const participantsService = {
   update: (participantId: number, command: UpdateParticipantCommand) =>
     apiClient.patch<ParticipantDTO>(`/api/participants/${participantId}`, command),
 
-  delete: (participantId: number) =>
-    apiClient.delete(`/api/participants/${participantId}`),
+  delete: (participantId: number) => apiClient.delete(`/api/participants/${participantId}`),
 };
 ```
 
 **Refactor useGroupData.ts:**
+
 ```typescript
 // src/hooks/useGroupData.ts
 import { useState, useEffect, useCallback } from "react";
@@ -615,20 +622,23 @@ export function useGroupData(groupId: number) {
     }
   }, [groupId]);
 
-  const updateGroup = useCallback(async (command: UpdateGroupCommand) => {
-    try {
-      const updatedGroup = await groupsService.update(groupId, command);
-      await fetchGroup(); // Refresh full data
+  const updateGroup = useCallback(
+    async (command: UpdateGroupCommand) => {
+      try {
+        const updatedGroup = await groupsService.update(groupId, command);
+        await fetchGroup(); // Refresh full data
 
-      toast.success("Grupa została zaktualizowana");
-      return { success: true, data: updatedGroup };
-    } catch (err) {
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : "Nieznany błąd",
-      };
-    }
-  }, [groupId, fetchGroup]);
+        toast.success("Grupa została zaktualizowana");
+        return { success: true, data: updatedGroup };
+      } catch (err) {
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : "Nieznany błąd",
+        };
+      }
+    },
+    [groupId, fetchGroup]
+  );
 
   const deleteGroup = useCallback(async () => {
     try {
@@ -658,6 +668,7 @@ export function useGroupData(groupId: number) {
 ```
 
 **Benefits:**
+
 - Eliminates ~200 lines of duplicated auth/fetch/error handling
 - Centralized error handling and logging
 - Single place to add request/response interceptors
@@ -767,6 +778,7 @@ export function GroupViewEmpty() {
 ```
 
 **Usage in GroupView.tsx:**
+
 ```typescript
 import { GroupViewSkeleton } from "./states/GroupViewSkeleton";
 import { GroupViewError } from "./states/GroupViewError";
@@ -802,6 +814,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
 ```
 
 **Benefits:**
+
 - Removes 60+ lines from GroupView
 - Reusable loading/error components
 - Cleaner main component logic
@@ -818,6 +831,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
 ### 4.1 Unit Tests (Vitest)
 
 **Test useGroupViewModel:**
+
 ```typescript
 // src/hooks/__tests__/useGroupViewModel.test.ts
 import { renderHook } from "@testing-library/react";
@@ -872,6 +886,7 @@ describe("useGroupViewModel", () => {
 ```
 
 **Test useModalState:**
+
 ```typescript
 // src/hooks/__tests__/useModalState.test.ts
 import { renderHook, act } from "@testing-library/react";
@@ -914,6 +929,7 @@ describe("useModalState", () => {
 ```
 
 **Test apiClient:**
+
 ```typescript
 // src/services/__tests__/apiClient.test.ts
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -969,6 +985,7 @@ describe("apiClient", () => {
 ### 4.2 Integration Tests (React Testing Library)
 
 **Test GroupView with mocked data:**
+
 ```typescript
 // src/components/group/__tests__/GroupView.test.tsx
 import { render, screen, waitFor } from "@testing-library/react";
@@ -1018,6 +1035,7 @@ describe("GroupView", () => {
 ### 4.3 E2E Tests (Playwright)
 
 **Test complete group management flow:**
+
 ```typescript
 // e2e/group-management.spec.ts
 import { test, expect } from "@playwright/test";
@@ -1072,6 +1090,7 @@ test.describe("Group Management", () => {
 ## 5. Implementation Roadmap
 
 ### Phase 1: Foundation (Week 1)
+
 **Focus:** API Layer and Data Management
 
 - [ ] Create `apiClient.ts` with base HTTP methods
@@ -1082,6 +1101,7 @@ test.describe("Group Management", () => {
 - [ ] Write unit tests for apiClient and services
 
 **Deliverables:**
+
 - Centralized API client
 - ~200 lines of duplication eliminated
 - Consistent error handling
@@ -1091,6 +1111,7 @@ test.describe("Group Management", () => {
 ---
 
 ### Phase 2: State Management (Week 2)
+
 **Focus:** Simplify Component State
 
 - [ ] Create `useModalState.ts` hook
@@ -1099,6 +1120,7 @@ test.describe("Group Management", () => {
 - [ ] Write unit tests for custom hooks
 
 **Deliverables:**
+
 - Reduced GroupView from 468 to ~345 lines (-123 lines)
 - Cleaner state management
 - Testable transformation logic
@@ -1108,6 +1130,7 @@ test.describe("Group Management", () => {
 ---
 
 ### Phase 3: UI Components (Week 3)
+
 **Focus:** Extract Reusable Components
 
 - [ ] Create `GroupViewSkeleton.tsx`
@@ -1117,6 +1140,7 @@ test.describe("Group Management", () => {
 - [ ] Write Storybook stories for state components
 
 **Deliverables:**
+
 - Reusable UI state components
 - Further reduce GroupView to ~285 lines (-60 lines)
 - Better component composition
@@ -1126,6 +1150,7 @@ test.describe("Group Management", () => {
 ---
 
 ### Phase 4: Testing & Documentation (Week 4)
+
 **Focus:** Comprehensive Testing
 
 - [ ] Write unit tests for all custom hooks
@@ -1135,7 +1160,8 @@ test.describe("Group Management", () => {
 - [ ] Code review and cleanup
 
 **Deliverables:**
-- >80% test coverage for new code
+
+- > 80% test coverage for new code
 - E2E tests for critical flows
 - Updated documentation
 
@@ -1146,6 +1172,7 @@ test.describe("Group Management", () => {
 ## 6. Success Metrics
 
 ### Before Refactoring:
+
 - **GroupView LOC:** 468 lines
 - **Code Duplication:** ~200 lines across hooks
 - **State Variables:** 7 separate useState hooks
@@ -1153,6 +1180,7 @@ test.describe("Group Management", () => {
 - **Test Coverage:** 0%
 
 ### After Refactoring (Target):
+
 - **GroupView LOC:** ~285 lines (-39% reduction)
 - **Code Duplication:** <20 lines
 - **State Variables:** 2 custom hooks (useModalState, useGroupViewModel)
@@ -1160,6 +1188,7 @@ test.describe("Group Management", () => {
 - **Test Coverage:** >80% for new hooks and services
 
 ### Additional Benefits:
+
 - **Maintainability:** +40% (easier to understand and modify)
 - **Testability:** +60% (isolated, testable units)
 - **Reusability:** +50% (services and hooks reusable across app)
@@ -1171,6 +1200,7 @@ test.describe("Group Management", () => {
 ## 7. Risk Assessment
 
 ### Low Risk:
+
 - ✅ Creating new custom hooks (useModalState, useGroupViewModel)
 - ✅ Extracting UI state components
 - ✅ Writing unit tests
@@ -1178,19 +1208,23 @@ test.describe("Group Management", () => {
 **Mitigation:** These are additive changes that don't affect existing code until integrated.
 
 ### Medium Risk:
+
 - ⚠️ Creating API client service layer
 - ⚠️ Refactoring existing hooks to use services
 
 **Mitigation:**
+
 - Implement service layer alongside existing code
 - Test thoroughly before replacing
 - Use feature flags if needed
 - Gradual rollout: one hook at a time
 
 ### High Risk:
+
 - 🔴 Breaking changes to existing functionality
 
 **Mitigation:**
+
 - Comprehensive E2E tests before refactoring
 - Manual QA testing after each phase
 - Keep rollback plan ready
@@ -1201,12 +1235,15 @@ test.describe("Group Management", () => {
 ## 8. Alternative Approaches Considered
 
 ### Option A: React Query/TanStack Query
+
 **Pros:**
+
 - Industry standard for data fetching
 - Built-in caching, refetching, optimistic updates
 - Reduces boilerplate significantly
 
 **Cons:**
+
 - New dependency and learning curve
 - Would require refactoring all existing hooks
 - Might be overkill for MVP
@@ -1215,12 +1252,15 @@ test.describe("Group Management", () => {
 **Decision:** Not recommended for MVP, can be considered for v2
 
 ### Option B: State Machine (XState)
+
 **Pros:**
+
 - Prevents impossible states
 - Visual state machine diagrams
 - Predictable state transitions
 
 **Cons:**
+
 - Significant learning curve
 - Overkill for current complexity
 - Additional dependency
@@ -1228,11 +1268,14 @@ test.describe("Group Management", () => {
 **Decision:** Not recommended, current useReducer approach is sufficient
 
 ### Option C: Container/Presenter Pattern
+
 **Pros:**
+
 - Clear separation of logic and presentation
 - Easier to test in isolation
 
 **Cons:**
+
 - Creates two components instead of one
 - May be premature abstraction
 - Current custom hooks achieve similar goal
@@ -1255,6 +1298,7 @@ The GroupView component requires refactoring primarily around:
 **Key Principle:** The forms are already optimal. Focus on orchestration and infrastructure.
 
 **Recommended Approach:**
+
 - Start with API client (highest impact, foundation for other changes)
 - Then state management hooks (medium impact, reduces complexity)
 - Then UI components (low impact, polish)

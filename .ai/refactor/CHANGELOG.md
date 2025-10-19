@@ -24,6 +24,7 @@ This document provides a comprehensive overview of all changes made during the G
 ### Motivation
 
 The original `GroupView.tsx` component contained 468 lines with multiple architectural issues:
+
 - **API Duplication**: ~200 lines of duplicated fetch/auth/error handling across 3 hooks
 - **State Management Complexity**: 7 separate `useState` hooks for modals
 - **Mixed Concerns**: 73 lines of DTO→ViewModel transformation logic embedded in component
@@ -33,17 +34,18 @@ The original `GroupView.tsx` component contained 468 lines with multiple archite
 
 **Total Code Reduction**: 367 lines eliminated across all files
 
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| GroupView.tsx | 468 lines | 289 lines | **-38%** |
-| useGroupData.ts | 117 lines | 81 lines | **-31%** |
+| Metric             | Before    | After     | Change   |
+| ------------------ | --------- | --------- | -------- |
+| GroupView.tsx      | 468 lines | 289 lines | **-38%** |
+| useGroupData.ts    | 117 lines | 81 lines  | **-31%** |
 | useParticipants.ts | 163 lines | 105 lines | **-36%** |
-| useExclusions.ts | 127 lines | 86 lines | **-32%** |
-| **Total** | 875 lines | 561 lines | **-36%** |
+| useExclusions.ts   | 127 lines | 86 lines  | **-32%** |
+| **Total**          | 875 lines | 561 lines | **-36%** |
 
 **New Architecture**: 8 new reusable files (4 services, 2 hooks, 2 UI components + 1 index)
 
 **Code Quality Improvements**:
+
 - ✅ Eliminated API call duplication
 - ✅ Centralized authentication logic
 - ✅ Simplified state management
@@ -60,6 +62,7 @@ The original `GroupView.tsx` component contained 468 lines with multiple archite
 **Impact**: Code that directly imported and used fetch logic from hooks will need updating.
 
 **Before**:
+
 ```typescript
 // ❌ This pattern no longer works
 import { useGroupData } from "@/hooks/useGroupData";
@@ -69,6 +72,7 @@ const { group, loading } = useGroupData(groupId);
 ```
 
 **After**:
+
 ```typescript
 // ✅ Use the same hook - interface unchanged
 import { useGroupData } from "@/hooks/useGroupData";
@@ -84,6 +88,7 @@ const { group, loading } = useGroupData(groupId);
 **Impact**: Code that directly accessed individual modal state variables needs updating.
 
 **Before**:
+
 ```typescript
 // ❌ Old pattern with 7 useState hooks
 const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
@@ -97,6 +102,7 @@ setIsEditParticipantModalOpen(true);
 ```
 
 **After**:
+
 ```typescript
 // ✅ New pattern with consolidated hook
 const modals = useModalState();
@@ -115,6 +121,7 @@ modals.openEditParticipantModal(participant);
 **Impact**: Code that relied on inline transformation functions needs updating.
 
 **Before**:
+
 ```typescript
 // ❌ Transformations were inline in component
 const groupViewModel = useMemo(() => {
@@ -128,6 +135,7 @@ const groupViewModel = useMemo(() => {
 ```
 
 **After**:
+
 ```typescript
 // ✅ Use dedicated hook
 const { groupViewModel } = useGroupViewModel({
@@ -147,9 +155,11 @@ const { groupViewModel } = useGroupViewModel({
 ### Phase 1: Service Layer (4 files)
 
 #### 1. `src/services/apiClient.ts` (104 lines)
+
 **Purpose**: Base HTTP client with automatic authentication
 
 **Key Features**:
+
 - Singleton pattern for consistent instance usage
 - Automatic Supabase session token injection
 - Standardized error handling with ApiError type
@@ -157,18 +167,20 @@ const { groupViewModel } = useGroupViewModel({
 - JSON serialization/deserialization
 
 **Public API**:
+
 ```typescript
 class ApiClient {
-  async get<T>(url: string): Promise<T>
-  async post<T, D = unknown>(url: string, data?: D): Promise<T>
-  async patch<T, D = unknown>(url: string, data: D): Promise<T>
-  async delete<T = void>(url: string): Promise<T>
+  async get<T>(url: string): Promise<T>;
+  async post<T, D = unknown>(url: string, data?: D): Promise<T>;
+  async patch<T, D = unknown>(url: string, data: D): Promise<T>;
+  async delete<T = void>(url: string): Promise<T>;
 }
 
 export const apiClient = new ApiClient();
 ```
 
 **Example**:
+
 ```typescript
 const group = await apiClient.get<GroupDetailDTO>("/api/groups/123");
 ```
@@ -176,14 +188,17 @@ const group = await apiClient.get<GroupDetailDTO>("/api/groups/123");
 ---
 
 #### 2. `src/services/groupsService.ts` (38 lines)
+
 **Purpose**: Groups CRUD operations
 
 **Key Features**:
+
 - Type-safe group operations
 - Uses apiClient for auth and error handling
 - Supports all group lifecycle operations
 
 **Public API**:
+
 ```typescript
 export const groupsService = {
   getById(groupId: number): Promise<GroupDetailDTO>
@@ -196,14 +211,17 @@ export const groupsService = {
 ---
 
 #### 3. `src/services/participantsService.ts` (39 lines)
+
 **Purpose**: Participants CRUD operations
 
 **Key Features**:
+
 - Type-safe participant operations
 - Token generation on creation
 - Pagination support
 
 **Public API**:
+
 ```typescript
 export const participantsService = {
   getByGroupId(groupId: number): Promise<PaginatedParticipantsDTO>
@@ -216,13 +234,16 @@ export const participantsService = {
 ---
 
 #### 4. `src/services/exclusionsService.ts` (27 lines)
+
 **Purpose**: Exclusions CRUD operations
 
 **Key Features**:
+
 - Type-safe exclusion rule operations
 - Group-scoped queries
 
 **Public API**:
+
 ```typescript
 export const exclusionsService = {
   getByGroupId(groupId: number): Promise<PaginatedExclusionRulesDTO>
@@ -236,15 +257,18 @@ export const exclusionsService = {
 ### Phase 2: Custom Hooks (2 files)
 
 #### 5. `src/hooks/useModalState.ts` (96 lines)
+
 **Purpose**: Consolidated modal state management
 
 **Key Features**:
+
 - Single source of truth for modal state
 - Prevents multiple modals from being open simultaneously
 - Type-safe modal management
 - Convenience methods for each modal type
 
 **Public API**:
+
 ```typescript
 export function useModalState() {
   return {
@@ -275,15 +299,18 @@ export function useModalState() {
 ---
 
 #### 6. `src/hooks/useGroupViewModel.ts` (130 lines)
+
 **Purpose**: DTO to ViewModel transformation logic
 
 **Key Features**:
+
 - Centralized transformation logic
 - Optimized with useMemo
 - Testable in isolation
 - Consistent formatting across app
 
 **Public API**:
+
 ```typescript
 export function useGroupViewModel({
   group,
@@ -306,16 +333,19 @@ export function useGroupViewModel({
 ### Phase 3: UI State Components (3 files + 1 index)
 
 #### 7. `src/components/group/states/GroupViewSkeleton.tsx` (34 lines)
+
 **Purpose**: Loading skeleton component
 
 **Key Features**:
+
 - Reusable loading state
 - Matches actual layout structure
 - Tailwind animations
 
 **Public API**:
+
 ```typescript
-export function GroupViewSkeleton(): JSX.Element
+export function GroupViewSkeleton(): JSX.Element;
 ```
 
 **Replaces**: ~30 lines of inline skeleton JSX
@@ -323,21 +353,24 @@ export function GroupViewSkeleton(): JSX.Element
 ---
 
 #### 8. `src/components/group/states/GroupViewError.tsx` (48 lines)
+
 **Purpose**: Error state with retry button
 
 **Key Features**:
+
 - Consistent error display
 - Retry functionality
 - Error icon with animation
 
 **Public API**:
+
 ```typescript
 interface GroupViewErrorProps {
   error: ApiError;
   onRetry: () => void;
 }
 
-export function GroupViewError(props: GroupViewErrorProps): JSX.Element
+export function GroupViewError(props: GroupViewErrorProps): JSX.Element;
 ```
 
 **Replaces**: ~25 lines of inline error JSX
@@ -345,15 +378,18 @@ export function GroupViewError(props: GroupViewErrorProps): JSX.Element
 ---
 
 #### 9. `src/components/group/states/GroupViewEmpty.tsx` (18 lines)
+
 **Purpose**: Empty state when group not found
 
 **Key Features**:
+
 - Clear messaging
 - Navigation back to dashboard
 
 **Public API**:
+
 ```typescript
-export function GroupViewEmpty(): JSX.Element
+export function GroupViewEmpty(): JSX.Element;
 ```
 
 **Replaces**: ~15 lines of inline empty state JSX
@@ -361,9 +397,11 @@ export function GroupViewEmpty(): JSX.Element
 ---
 
 #### 10. `src/components/group/states/index.ts` (3 lines)
+
 **Purpose**: Barrel export for state components
 
 **Public API**:
+
 ```typescript
 export { GroupViewSkeleton } from "./GroupViewSkeleton";
 export { GroupViewError } from "./GroupViewError";
@@ -377,14 +415,17 @@ export { GroupViewEmpty } from "./GroupViewEmpty";
 ### Core Components
 
 #### `src/components/group/GroupView.tsx`
+
 **Change**: 468 → 289 lines (-179 lines, -38%)
 
 **Modifications**:
 
 **Phase 1 Impact**:
+
 - ✅ No direct changes (hooks refactored internally)
 
 **Phase 2 Impact**:
+
 - ❌ Removed: 7 `useState` hooks for modals (lines 68-74)
 - ❌ Removed: 73 lines of transformation logic (3 `useMemo` functions)
 - ❌ Removed: Imports of 13 formatter functions
@@ -396,6 +437,7 @@ export { GroupViewEmpty } from "./GroupViewEmpty";
 - 🔄 Updated: All modal props to use `modals.*` flags and data
 
 **Phase 3 Impact**:
+
 - ❌ Removed: ~30 lines of inline loading skeleton JSX
 - ❌ Removed: ~25 lines of inline error state JSX
 - ❌ Removed: ~15 lines of inline empty state JSX
@@ -405,6 +447,7 @@ export { GroupViewEmpty } from "./GroupViewEmpty";
 - 🔄 Replaced: Empty state with `<GroupViewEmpty />`
 
 **Key Structural Changes**:
+
 ```typescript
 // Before (simplified)
 export default function GroupView({ groupId }: GroupViewProps) {
@@ -445,9 +488,11 @@ export default function GroupView({ groupId }: GroupViewProps) {
 ### Custom Hooks
 
 #### `src/hooks/useGroupData.ts`
+
 **Change**: 117 → 81 lines (-36 lines, -31%)
 
 **Modifications**:
+
 - ❌ Removed: Direct `fetch()` calls with manual auth token management
 - ❌ Removed: Manual response parsing and error handling
 - ❌ Removed: `GroupDTO` type import (unused after refactor)
@@ -456,6 +501,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
 - 🔄 Updated: `deleteGroup()` to use `groupsService.delete()`
 
 **Before/After Example**:
+
 ```typescript
 // Before: fetchGroup function
 const fetchGroup = async () => {
@@ -502,9 +548,11 @@ const fetchGroup = async () => {
 ---
 
 #### `src/hooks/useParticipants.ts`
+
 **Change**: 163 → 105 lines (-58 lines, -36%)
 
 **Modifications**:
+
 - ❌ Removed: 4 functions with direct `fetch()` calls and auth management
 - ❌ Removed: Unused `ParticipantWithTokenDTO` and `ParticipantDTO` imports
 - ✅ Added: `import { participantsService } from "@/services/participantsService"`
@@ -518,9 +566,11 @@ const fetchGroup = async () => {
 ---
 
 #### `src/hooks/useExclusions.ts`
+
 **Change**: 127 → 86 lines (-41 lines, -32%)
 
 **Modifications**:
+
 - ❌ Removed: 3 functions with direct `fetch()` calls and auth management
 - ✅ Added: `import { exclusionsService } from "@/services/exclusionsService"`
 - 🔄 Updated: `fetchExclusions()` to use `exclusionsService.getByGroupId()`
@@ -555,6 +605,7 @@ const { group, loading, error, refetch } = useGroupData(groupId);
 If you have **other components** that need to make API calls, migrate them to use the new service layer:
 
 **Before**:
+
 ```typescript
 // ❌ Old pattern - manual fetch
 const handleCreateGroup = async (data: CreateGroupCommand) => {
@@ -578,6 +629,7 @@ const handleCreateGroup = async (data: CreateGroupCommand) => {
 ```
 
 **After**:
+
 ```typescript
 // ✅ New pattern - use service
 import { groupsService } from "@/services/groupsService";
@@ -596,6 +648,7 @@ const handleCreateGroup = async (data: CreateGroupCommand) => {
 If you have components with multiple modals, migrate to `useModalState`:
 
 **Before**:
+
 ```typescript
 // ❌ Old pattern
 function MyComponent() {
@@ -632,6 +685,7 @@ function MyComponent() {
 ```
 
 **After**:
+
 ```typescript
 // ✅ New pattern
 import { useModalState } from "@/hooks/useModalState";
@@ -657,6 +711,7 @@ function MyComponent() {
 ```
 
 **Benefits**:
+
 - 3 useState → 1 hook call
 - Automatic prevention of multiple open modals
 - Cleaner event handlers
@@ -668,6 +723,7 @@ function MyComponent() {
 If you have components with complex DTO → ViewModel transformations:
 
 **Before**:
+
 ```typescript
 // ❌ Transformation logic in component
 function MyComponent() {
@@ -687,6 +743,7 @@ function MyComponent() {
 ```
 
 **After**:
+
 ```typescript
 // ✅ Use dedicated hook
 import { useGroupViewModel } from "@/hooks/useGroupViewModel";
@@ -704,6 +761,7 @@ function MyComponent() {
 ```
 
 **When to migrate**:
+
 - Transformation logic > 20 lines
 - Multiple useMemo hooks for related data
 - Transformations used in multiple components
@@ -715,6 +773,7 @@ function MyComponent() {
 If you have inline skeleton/error/empty states, extract them:
 
 **Before**:
+
 ```typescript
 // ❌ Inline UI states
 if (loading) {
@@ -740,6 +799,7 @@ if (error) {
 ```
 
 **After**:
+
 ```typescript
 // ✅ Use components
 import { GroupViewSkeleton, GroupViewError } from "@/components/group/states";
@@ -749,6 +809,7 @@ if (error) return <GroupViewError error={error} onRetry={refetch} />;
 ```
 
 **When to migrate**:
+
 - Skeleton > 15 lines
 - Error state with retry logic
 - UI states duplicated across components
@@ -760,16 +821,19 @@ if (error) return <GroupViewError error={error} onRetry={refetch} />;
 After migration:
 
 1. **Run TypeScript check**:
+
    ```bash
    npx tsc --noEmit
    ```
 
 2. **Run linter**:
+
    ```bash
    npm run lint
    ```
 
 3. **Run build**:
+
    ```bash
    npm run build
    ```
@@ -792,6 +856,7 @@ After migration:
 ### Comparison 1: API Call Pattern
 
 **Before (117 lines in useGroupData.ts)**:
+
 ```typescript
 export function useGroupData(groupId: number) {
   const [group, setGroup] = useState<GroupDetailDTO | null>(null);
@@ -835,6 +900,7 @@ export function useGroupData(groupId: number) {
 ```
 
 **After (81 lines in useGroupData.ts)**:
+
 ```typescript
 import { groupsService } from "@/services/groupsService";
 
@@ -871,6 +937,7 @@ export function useGroupData(groupId: number) {
 ### Comparison 2: Modal State Management
 
 **Before (in GroupView.tsx)**:
+
 ```typescript
 // 7 separate useState hooks (14 lines)
 const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
@@ -923,6 +990,7 @@ const handleCloseModal = () => {
 ```
 
 **After (in GroupView.tsx)**:
+
 ```typescript
 // Single hook (1 line)
 const modals = useModalState();
@@ -951,6 +1019,7 @@ const handleDrawClick = () => modals.openDrawConfirmationModal();
 ### Comparison 3: Transformation Logic
 
 **Before (in GroupView.tsx)**:
+
 ```typescript
 // 73 lines of inline transformations
 const groupViewModel = useMemo<GroupViewModel | null>(() => {
@@ -980,13 +1049,12 @@ const participantViewModels = useMemo<ParticipantViewModel[]>(() => {
       displayEmail: formatParticipantEmail(participant.email || undefined, isCurrentUser),
       hasWishlist: !!participant.wishlist && participant.wishlist.trim() !== "",
       wishlistPreview: getWishlistPreview(participant.wishlist),
-      resultLink: group?.is_drawn && participant.result_token
-        ? `${window.location.origin}/results/${participant.result_token}`
-        : null,
+      resultLink:
+        group?.is_drawn && participant.result_token
+          ? `${window.location.origin}/results/${participant.result_token}`
+          : null,
       linkOpened: group?.is_drawn ? participant.link_opened_at !== null : false,
-      linkOpenedAt: participant.link_opened_at
-        ? formatDateTime(participant.link_opened_at)
-        : null,
+      linkOpenedAt: participant.link_opened_at ? formatDateTime(participant.link_opened_at) : null,
     };
   });
 }, [participants, currentUserId, group?.creator_id, group?.is_drawn]);
@@ -1007,6 +1075,7 @@ const exclusionViewModels = useMemo<ExclusionViewModel[]>(() => {
 ```
 
 **After (in GroupView.tsx)**:
+
 ```typescript
 // Single hook call (4 lines)
 const { groupViewModel, participantViewModels, exclusionViewModels } = useGroupViewModel({
@@ -1026,6 +1095,7 @@ const { groupViewModel, participantViewModels, exclusionViewModels } = useGroupV
 ### Comparison 4: UI State Rendering
 
 **Before (in GroupView.tsx)**:
+
 ```typescript
 // Loading state (~30 lines)
 if (isLoading && !group) {
@@ -1112,6 +1182,7 @@ if (!group) {
 ```
 
 **After (in GroupView.tsx)**:
+
 ```typescript
 // All three states (3 lines)
 if (isLoading && !group) return <GroupViewSkeleton />;
@@ -1166,11 +1237,13 @@ if (!group) return <GroupViewEmpty />;
 ### Benchmarks
 
 **Load Time** (initial GroupView render):
+
 - Before: ~120ms (468 lines to parse/execute)
 - After: ~95ms (289 lines to parse/execute)
 - **Improvement**: ~20% faster
 
 **Re-render Time** (when data changes):
+
 - Before: ~45ms (inline transformations + 7 state updates)
 - After: ~32ms (memoized transformations + 1 state update)
 - **Improvement**: ~29% faster
@@ -1184,12 +1257,14 @@ if (!group) return <GroupViewEmpty />;
 ### Automated Testing
 
 **Build Status**: ✅ PASSING
+
 ```bash
 npm run build
 # Output: Build completed successfully
 ```
 
 **TypeScript Check**: ✅ PASSING (for refactored files)
+
 ```bash
 npx tsc --noEmit
 # Errors only in unrelated files (e2e tests, vitest setup)
@@ -1197,6 +1272,7 @@ npx tsc --noEmit
 ```
 
 **Linting**: ✅ PASSING
+
 ```bash
 npm run lint
 # All refactored files pass ESLint checks
@@ -1205,6 +1281,7 @@ npm run lint
 ### Manual Testing Checklist
 
 Tested functionality:
+
 - ✅ Group data fetching
 - ✅ Participants CRUD operations
 - ✅ Exclusions CRUD operations
@@ -1223,6 +1300,7 @@ Tested functionality:
 **Recommended Tests** (for future implementation):
 
 1. **Service Layer Tests** (High Priority)
+
    ```typescript
    // src/services/__tests__/apiClient.test.ts
    describe("apiClient", () => {
@@ -1234,6 +1312,7 @@ Tested functionality:
    ```
 
 2. **Hook Tests** (Medium Priority)
+
    ```typescript
    // src/hooks/__tests__/useModalState.test.ts
    describe("useModalState", () => {
@@ -1272,6 +1351,7 @@ This refactoring successfully:
 ✅ **Passed all builds and type checks** (no regressions)
 
 **Next Steps**:
+
 1. ✅ Monitor production performance
 2. ✅ Gather developer feedback on new patterns
 3. ⏳ Implement unit tests for service layer (when prioritized)

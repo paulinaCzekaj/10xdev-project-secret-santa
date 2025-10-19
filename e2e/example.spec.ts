@@ -20,7 +20,7 @@ test.describe("Secret Santa Application", () => {
     const loginLink = page.locator('a[href*="login"], a:has-text("Login"), a:has-text("Zaloguj")').first();
 
     // Check if login link exists
-    if (await loginLink.count() > 0) {
+    if ((await loginLink.count()) > 0) {
       await loginLink.click();
 
       // Wait for navigation
@@ -40,7 +40,7 @@ test.describe("Secret Santa Application", () => {
     // Look for a register/signup link
     const registerLink = page.locator('a[href*="register"], a:has-text("Register"), a:has-text("Zarejestruj")').first();
 
-    if (await registerLink.count() > 0) {
+    if ((await registerLink.count()) > 0) {
       await registerLink.click();
 
       // Wait for navigation

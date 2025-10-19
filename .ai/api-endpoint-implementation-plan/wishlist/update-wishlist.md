@@ -16,6 +16,7 @@ Ten endpoint pozwala uczestnikom Secret Santa na tworzenie lub aktualizację swo
   - `Authorization: Bearer {access_token}` (dla zarejestrowanych użytkowników)
   - `Content-Type: application/json`
 - **Treść żądania**:
+
 ```json
 {
   "wishlist": "string - zawartość listy życzeń, może zawierać URL i formatowanie tekstowe"
@@ -25,17 +26,21 @@ Ten endpoint pozwala uczestnikom Secret Santa na tworzenie lub aktualizację swo
 ## 3. Wykorzystywane typy
 
 **Command Models:**
+
 - `CreateOrUpdateWishlistCommand`: `{ wishlist: string }`
 
 **DTO Types:**
+
 - `WishlistDTO`: `{ id: number, participant_id: number, wishlist: string, updated_at: string }`
 
 **Query Parameter Types:**
+
 - `ParticipantTokenQuery`: `{ token?: string }`
 
 ## 4. Szczegóły odpowiedzi
 
 **Sukces (200 OK):**
+
 ```json
 {
   "id": 1,
@@ -46,6 +51,7 @@ Ten endpoint pozwala uczestnikom Secret Santa na tworzenie lub aktualizację swo
 ```
 
 **Błędy:**
+
 - `400 Bad Request`: Data zakończenia grupy minęła lub nieprawidłowe dane wejściowe
 - `401 Unauthorized`: Brak prawidłowej autoryzacji
 - `403 Forbidden`: Próba edycji cudzej listy życzeń
@@ -55,7 +61,7 @@ Ten endpoint pozwala uczestnikom Secret Santa na tworzenie lub aktualizację swo
 ## 5. Przepływ danych
 
 1. **Walidacja parametrów**: Sprawdź poprawność `participantId`
-2. **Autoryzacja**: 
+2. **Autoryzacja**:
    - Dla zarejestrowanych: sprawdź Bearer token
    - Dla niezarejestrowanych: sprawdź participant token z query
 3. **Pobierz dane uczestnika**: Pobierz uczestnika wraz z informacjami o grupie
@@ -77,23 +83,28 @@ Ten endpoint pozwala uczestnikom Secret Santa na tworzenie lub aktualizację swo
 ## 7. Obsługa błędów
 
 **Walidacja parametrów:**
+
 - `participantId` nie jest liczbą dodatnią → `400 INVALID_INPUT`
 
 **Autoryzacja:**
+
 - Brak tokenu (Bearer lub participant) → `401 UNAUTHORIZED`
 - Nieprawidłowy Bearer token → `401 UNAUTHORIZED`
 - Nieprawidłowy participant token → `401 UNAUTHORIZED`
 
 **Walidacja dostępu:**
+
 - Uczestnik nie istnieje → `404 NOT_FOUND`
 - Użytkownik próbuje edytować cudzą wishlist → `403 FORBIDDEN`
 - Token nie odpowiada uczestnikowi → `403 FORBIDDEN`
 
 **Walidacja biznesowa:**
+
 - End date grupy minęła → `400 END_DATE_PASSED`
 - Brak pola wishlist → `422 MISSING_REQUIRED_FIELD`
 
 **Błędy systemu:**
+
 - Błąd bazy danych → `500 INTERNAL_ERROR`
 - Nieoczekiwany błąd → `500 INTERNAL_ERROR`
 
@@ -107,12 +118,14 @@ Ten endpoint pozwala uczestnikom Secret Santa na tworzenie lub aktualizację swo
 ## 9. Etapy wdrożenia
 
 ### Etap 1: Utworzenie WishlistService
+
 1. Stwórz `src/lib/services/wishlist.service.ts`
 2. Zaimplementuj metodę `createOrUpdateWishlist()`
 3. Zaimplementuj metodę `validateWishlistAccess()`
 4. Dodaj metody pomocnicze dla walidacji
 
 ### Etap 2: Utworzenie endpointu API
+
 1. Stwórz `src/pages/api/participants/[participantId]/wishlist.ts`
 2. Zaimplementuj schematy Zod dla walidacji
 3. Dodaj obsługę obu metod autoryzacji
@@ -126,6 +139,7 @@ Ten endpoint pozwala uczestnikom Secret Santa na tworzenie lub aktualizację swo
 4. Testy przypadków błędnych (end date passed, etc.) -->
 
 ### Etap 4: Dokumentacja i deployment
+
 1. Zaktualizuj dokumentację API
 2. Dodaj przykłady użycia w Postman collection
 3. Deploy i monitoring w produkcji

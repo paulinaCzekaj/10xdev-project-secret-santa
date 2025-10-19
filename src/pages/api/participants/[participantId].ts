@@ -127,7 +127,11 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
 
     // Guard 8: If email is being updated, check uniqueness
     if (validatedData.email) {
-      const emailExists = await participantService.checkEmailUniqueness(validatedData.email, participant.group_id, participantId);
+      const emailExists = await participantService.checkEmailUniqueness(
+        validatedData.email,
+        participant.group_id,
+        participantId
+      );
       if (emailExists) {
         const errorResponse: ApiErrorResponse = {
           error: {

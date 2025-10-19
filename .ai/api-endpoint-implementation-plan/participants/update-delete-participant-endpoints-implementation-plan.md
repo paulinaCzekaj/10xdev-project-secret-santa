@@ -3,9 +3,11 @@
 ## 1. Przegląd punktów końcowych
 
 ### PATCH `/api/participants/:id`
+
 Umożliwia aktualizację danych uczestnika (imię i/lub email) w grupie Secret Santa. Endpoint jest dostępny wyłącznie przed wykonaniem losowania i tylko dla twórcy grupy. Zapewnia to kontrolę nad składem grupy przy jednoczesnym zachowaniu integralności danych po rozpoczęciu wymiany prezentów.
 
 ### DELETE `/api/participants/:id`
+
 Umożliwia usunięcie uczestnika z grupy Secret Santa. Podobnie jak endpoint aktualizacji, dostępny jest tylko przed losowaniem i tylko dla twórcy grupy. Dodatkowo zapobiega usunięciu twórcy grupy, co mogłoby prowadzić do osierocenia grupy.
 
 ## 2. Szczegóły żądania
@@ -15,9 +17,11 @@ Umożliwia usunięcie uczestnika z grupy Secret Santa. Podobnie jak endpoint akt
 **Metoda HTTP:** PATCH
 
 **Struktura URL:** `/api/participants/:id`
+
 - `:id` - identyfikator uczestnika (BIGINT)
 
 **Parametry:**
+
 - **Wymagane:**
   - Path parameter: `id` - identyfikator uczestnika do aktualizacji
   - Header: `Authorization: Bearer {access_token}` - token JWT użytkownika
@@ -27,6 +31,7 @@ Umożliwia usunięcie uczestnika z grupy Secret Santa. Podobnie jak endpoint akt
   - `email` (string) - nowy adres email uczestnika
 
 **Request Body:**
+
 ```json
 {
   "name": "Updated Name",
@@ -41,9 +46,11 @@ Umożliwia usunięcie uczestnika z grupy Secret Santa. Podobnie jak endpoint akt
 **Metoda HTTP:** DELETE
 
 **Struktura URL:** `/api/participants/:id`
+
 - `:id` - identyfikator uczestnika (BIGINT)
 
 **Parametry:**
+
 - **Wymagane:**
   - Path parameter: `id` - identyfikator uczestnika do usunięcia
   - Header: `Authorization: Bearer {access_token}` - token JWT użytkownika
@@ -53,6 +60,7 @@ Umożliwia usunięcie uczestnika z grupy Secret Santa. Podobnie jak endpoint akt
 ## 3. Wykorzystywane typy
 
 ### Command Models
+
 ```typescript
 // Z src/types.ts
 export interface UpdateParticipantCommand {
@@ -62,6 +70,7 @@ export interface UpdateParticipantCommand {
 ```
 
 ### DTOs
+
 ```typescript
 // Z src/types.ts
 export type ParticipantDTO = Tables<"participants">;
@@ -76,22 +85,26 @@ export interface ApiErrorResponse {
 ```
 
 ### Database Types
+
 ```typescript
 // Z src/types.ts
 export type ParticipantUpdate = TablesUpdate<"participants">;
 ```
 
 ### Zod Schemas (do utworzenia)
+
 ```typescript
 // src/pages/api/participants/[id].ts
-import { z } from 'zod';
+import { z } from "zod";
 
-const UpdateParticipantSchema = z.object({
-  name: z.string().min(1, "Name cannot be empty").optional(),
-  email: z.string().email("Invalid email format").optional()
-}).refine(data => data.name !== undefined || data.email !== undefined, {
-  message: "At least one field (name or email) must be provided"
-});
+const UpdateParticipantSchema = z
+  .object({
+    name: z.string().min(1, "Name cannot be empty").optional(),
+    email: z.string().email("Invalid email format").optional(),
+  })
+  .refine((data) => data.name !== undefined || data.email !== undefined, {
+    message: "At least one field (name or email) must be provided",
+  });
 ```
 
 ## 4. Szczegóły odpowiedzi
@@ -99,6 +112,7 @@ const UpdateParticipantSchema = z.object({
 ### PATCH `/api/participants/:id`
 
 **Success Response (200 OK):**
+
 ```json
 {
   "id": 123,
@@ -113,6 +127,7 @@ const UpdateParticipantSchema = z.object({
 **Error Responses:**
 
 **400 Bad Request - Invalid Data:**
+
 ```json
 {
   "error": {
@@ -131,6 +146,7 @@ const UpdateParticipantSchema = z.object({
 ```
 
 **400 Bad Request - Email Already Exists:**
+
 ```json
 {
   "error": {
@@ -144,6 +160,7 @@ const UpdateParticipantSchema = z.object({
 ```
 
 **400 Bad Request - Draw Completed:**
+
 ```json
 {
   "error": {
@@ -154,6 +171,7 @@ const UpdateParticipantSchema = z.object({
 ```
 
 **401 Unauthorized:**
+
 ```json
 {
   "error": {
@@ -164,6 +182,7 @@ const UpdateParticipantSchema = z.object({
 ```
 
 **403 Forbidden:**
+
 ```json
 {
   "error": {
@@ -174,6 +193,7 @@ const UpdateParticipantSchema = z.object({
 ```
 
 **404 Not Found:**
+
 ```json
 {
   "error": {
@@ -191,6 +211,7 @@ Brak zawartości - sukces operacji sygnalizowany jest kodem statusu 204.
 **Error Responses:**
 
 **400 Bad Request - Cannot Delete Creator:**
+
 ```json
 {
   "error": {
@@ -201,6 +222,7 @@ Brak zawartości - sukces operacji sygnalizowany jest kodem statusu 204.
 ```
 
 **400 Bad Request - Draw Completed:**
+
 ```json
 {
   "error": {
@@ -211,6 +233,7 @@ Brak zawartości - sukces operacji sygnalizowany jest kodem statusu 204.
 ```
 
 **401 Unauthorized:**
+
 ```json
 {
   "error": {
@@ -221,6 +244,7 @@ Brak zawartości - sukces operacji sygnalizowany jest kodem statusu 204.
 ```
 
 **403 Forbidden:**
+
 ```json
 {
   "error": {
@@ -231,6 +255,7 @@ Brak zawartości - sukces operacji sygnalizowany jest kodem statusu 204.
 ```
 
 **404 Not Found:**
+
 ```json
 {
   "error": {
@@ -308,6 +333,7 @@ Brak zawartości - sukces operacji sygnalizowany jest kodem statusu 204.
 ### Database Queries
 
 **Get participant with group info:**
+
 ```sql
 SELECT p.*, g.creator_id, g.name as group_name
 FROM participants p
@@ -316,6 +342,7 @@ WHERE p.id = ?
 ```
 
 **Check draw completed:**
+
 ```sql
 SELECT COUNT(*) as count
 FROM assignments
@@ -323,6 +350,7 @@ WHERE group_id = ?
 ```
 
 **Check email uniqueness:**
+
 ```sql
 SELECT COUNT(*) as count
 FROM participants
@@ -332,6 +360,7 @@ WHERE group_id = ?
 ```
 
 **Update participant:**
+
 ```sql
 UPDATE participants
 SET
@@ -342,6 +371,7 @@ RETURNING *
 ```
 
 **Check if participant is creator:**
+
 ```sql
 SELECT COUNT(*) as count
 FROM participants p
@@ -350,6 +380,7 @@ WHERE p.id = ? AND p.user_id = g.creator_id
 ```
 
 **Delete participant:**
+
 ```sql
 DELETE FROM participants
 WHERE id = ?
@@ -358,6 +389,7 @@ WHERE id = ?
 ## 6. Względy bezpieczeństwa
 
 ### Uwierzytelnianie (Authentication)
+
 - **Mechanizm:** JWT (JSON Web Token) poprzez Supabase Auth
 - **Implementacja:**
   - Token przekazywany w nagłówku `Authorization: Bearer {token}`
@@ -365,6 +397,7 @@ WHERE id = ?
   - Brak użytkownika → 401 Unauthorized
 
 ### Autoryzacja (Authorization)
+
 - **Reguła biznesowa:** Tylko twórca grupy może modyfikować uczestników
 - **Implementacja:**
   - Po pobraniu uczestnika, sprawdź czy `user.id === group.creator_id`
@@ -372,6 +405,7 @@ WHERE id = ?
 - **Poziom zabezpieczenia:** Row Level Security (RLS) w Supabase jako dodatkowa warstwa
 
 ### Walidacja danych wejściowych
+
 - **PATCH endpoint:**
   - Zod schema waliduje strukturę i typy danych
   - Email: walidacja formatu RFC 5322
@@ -381,6 +415,7 @@ WHERE id = ?
   - Walidacja formatu ID (liczba całkowita)
 
 ### Integralność danych biznesowych
+
 - **Ochrona przed modyfikacją po losowaniu:**
   - Sprawdzenie istnienia rekordów w tabeli `assignments` dla danej grupy
   - Zapobiega niespójności w już przeprowadzonym losowaniu
@@ -389,10 +424,12 @@ WHERE id = ?
   - Zapobiega osieroceniu grupy
 
 ### Ochrona przed SQL Injection
+
 - **Mechanizm:** Supabase SDK używa parametryzowanych zapytań
 - **Praktyka:** Wszystkie dane wejściowe są bindowane jako parametry, nie konkatenowane
 
 ### Rate Limiting (do rozważenia w przyszłości)
+
 - Ochrona przed nadużyciami API
 - Implementacja na poziomie middleware lub API Gateway
 
@@ -405,85 +442,102 @@ Zgodnie z zasadami clean code, błędy obsługujemy na początku funkcji (guard 
 ```typescript
 // 1. Authentication check
 if (!user) {
-  return new Response(JSON.stringify({
-    error: {
-      code: "UNAUTHORIZED",
-      message: "Authentication required"
-    }
-  }), { status: 401 });
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Authentication required",
+      },
+    }),
+    { status: 401 }
+  );
 }
 
 // 2. Input validation
 const validationResult = UpdateParticipantSchema.safeParse(body);
 if (!validationResult.success) {
-  return new Response(JSON.stringify({
-    error: {
-      code: "INVALID_INPUT",
-      message: "Invalid participant data",
-      details: { issues: validationResult.error.issues }
-    }
-  }), { status: 400 });
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "INVALID_INPUT",
+        message: "Invalid participant data",
+        details: { issues: validationResult.error.issues },
+      },
+    }),
+    { status: 400 }
+  );
 }
 
 // 3. Resource existence
 const participant = await participantService.getParticipantWithGroupInfo(id);
 if (!participant) {
-  return new Response(JSON.stringify({
-    error: {
-      code: "NOT_FOUND",
-      message: "Participant not found"
-    }
-  }), { status: 404 });
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "NOT_FOUND",
+        message: "Participant not found",
+      },
+    }),
+    { status: 404 }
+  );
 }
 
 // 4. Authorization check
 if (participant.group.creator_id !== user.id) {
-  return new Response(JSON.stringify({
-    error: {
-      code: "FORBIDDEN",
-      message: "Only group creator can update participants"
-    }
-  }), { status: 403 });
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "FORBIDDEN",
+        message: "Only group creator can update participants",
+      },
+    }),
+    { status: 403 }
+  );
 }
 
 // 5. Business rules
 const drawCompleted = await participantService.checkDrawCompleted(participant.group_id);
 if (drawCompleted) {
-  return new Response(JSON.stringify({
-    error: {
-      code: "DRAW_COMPLETED",
-      message: "Cannot update participant after draw has been completed"
-    }
-  }), { status: 400 });
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "DRAW_COMPLETED",
+        message: "Cannot update participant after draw has been completed",
+      },
+    }),
+    { status: 400 }
+  );
 }
 
 // 6. Domain-specific validation (PATCH only)
 if (data.email) {
-  const emailExists = await participantService.checkEmailUniqueness(
-    data.email,
-    participant.group_id,
-    id
-  );
+  const emailExists = await participantService.checkEmailUniqueness(data.email, participant.group_id, id);
   if (emailExists) {
-    return new Response(JSON.stringify({
-      error: {
-        code: "EMAIL_EXISTS",
-        message: "Email already exists in this group",
-        details: { email: data.email }
-      }
-    }), { status: 400 });
+    return new Response(
+      JSON.stringify({
+        error: {
+          code: "EMAIL_EXISTS",
+          message: "Email already exists in this group",
+          details: { email: data.email },
+        },
+      }),
+      { status: 400 }
+    );
   }
 }
 
 // 7. Domain-specific validation (DELETE only)
 const isCreator = await participantService.isParticipantCreator(id, participant.group_id);
 if (isCreator) {
-  return new Response(JSON.stringify({
-    error: {
-      code: "CANNOT_DELETE_CREATOR",
-      message: "Cannot delete group creator"
-    }
-  }), { status: 400 });
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "CANNOT_DELETE_CREATOR",
+        message: "Cannot delete group creator",
+      },
+    }),
+    { status: 400 }
+  );
 }
 
 // Happy path last
@@ -493,16 +547,16 @@ return new Response(JSON.stringify(result), { status: 200 });
 
 ### Tabela błędów
 
-| Kod HTTP | Kod błędu | Scenariusz | Endpoint |
-|----------|-----------|------------|----------|
-| 400 | `INVALID_INPUT` | Nieprawidłowy format danych (Zod validation) | PATCH |
-| 400 | `EMAIL_EXISTS` | Email już istnieje w grupie | PATCH |
-| 400 | `DRAW_COMPLETED` | Losowanie zostało już przeprowadzone | PATCH, DELETE |
-| 400 | `CANNOT_DELETE_CREATOR` | Próba usunięcia twórcy grupy | DELETE |
-| 401 | `UNAUTHORIZED` | Brak tokenu JWT lub token nieprawidłowy | PATCH, DELETE |
-| 403 | `FORBIDDEN` | Użytkownik nie jest twórcą grupy | PATCH, DELETE |
-| 404 | `NOT_FOUND` | Uczestnik o podanym ID nie istnieje | PATCH, DELETE |
-| 500 | `INTERNAL_ERROR` | Nieoczekiwany błąd serwera (DB connection, etc.) | PATCH, DELETE |
+| Kod HTTP | Kod błędu               | Scenariusz                                       | Endpoint      |
+| -------- | ----------------------- | ------------------------------------------------ | ------------- |
+| 400      | `INVALID_INPUT`         | Nieprawidłowy format danych (Zod validation)     | PATCH         |
+| 400      | `EMAIL_EXISTS`          | Email już istnieje w grupie                      | PATCH         |
+| 400      | `DRAW_COMPLETED`        | Losowanie zostało już przeprowadzone             | PATCH, DELETE |
+| 400      | `CANNOT_DELETE_CREATOR` | Próba usunięcia twórcy grupy                     | DELETE        |
+| 401      | `UNAUTHORIZED`          | Brak tokenu JWT lub token nieprawidłowy          | PATCH, DELETE |
+| 403      | `FORBIDDEN`             | Użytkownik nie jest twórcą grupy                 | PATCH, DELETE |
+| 404      | `NOT_FOUND`             | Uczestnik o podanym ID nie istnieje              | PATCH, DELETE |
+| 500      | `INTERNAL_ERROR`        | Nieoczekiwany błąd serwera (DB connection, etc.) | PATCH, DELETE |
 
 ### Logowanie błędów
 
@@ -511,12 +565,12 @@ return new Response(JSON.stringify(result), { status: 200 });
 try {
   // Database operation
 } catch (error) {
-  console.error('[ParticipantService] Error updating participant:', {
+  console.error("[ParticipantService] Error updating participant:", {
     participantId: id,
     error: error.message,
-    stack: error.stack
+    stack: error.stack,
   });
-  throw new Error('Failed to update participant');
+  throw new Error("Failed to update participant");
 }
 ```
 
@@ -541,6 +595,7 @@ try {
 #### 1. Optymalizacja zapytań - JOIN zamiast wielu queries
 
 **Przed optymalizacją:**
+
 ```typescript
 const participant = await getParticipant(id);
 const group = await getGroup(participant.group_id);
@@ -548,11 +603,13 @@ const drawCompleted = await checkDraw(group.id);
 ```
 
 **Po optymalizacji:**
+
 ```typescript
 // Single query with JOINs
 const result = await supabase
-  .from('participants')
-  .select(`
+  .from("participants")
+  .select(
+    `
     *,
     group:groups (
       id,
@@ -560,8 +617,9 @@ const result = await supabase
       name,
       assignments:assignments (count)
     )
-  `)
-  .eq('id', id)
+  `
+  )
+  .eq("id", id)
   .single();
 
 const drawCompleted = result.group.assignments[0].count > 0;
@@ -593,7 +651,7 @@ const emailExists = await checkEmailUniqueness(email, groupId, id);
 // Wykonaj równolegle:
 const [drawCompleted, emailExists] = await Promise.all([
   checkDrawCompleted(groupId),
-  checkEmailUniqueness(email, groupId, id)
+  checkEmailUniqueness(email, groupId, id),
 ]);
 ```
 
@@ -617,6 +675,7 @@ if (drawCompleted === null) {
 #### 5. Connection pooling
 
 Supabase SDK domyślnie używa connection pooling, ale upewnij się że:
+
 - Pool size jest odpowiednio skonfigurowany dla oczekiwanego ruchu
 - Connection timeout jest ustawiony (np. 10s)
 
@@ -641,11 +700,11 @@ if (duration > 1000) {
 
 ### Szacowane metryki wydajności
 
-| Operacja | Bez optymalizacji | Z optymalizacją | Poprawa |
-|----------|-------------------|-----------------|---------|
-| PATCH (happy path) | ~250-400ms | ~100-150ms | ~60% |
-| DELETE (happy path) | ~200-350ms | ~80-120ms | ~60% |
-| PATCH (email exists) | ~300-450ms | ~120-180ms | ~60% |
+| Operacja             | Bez optymalizacji | Z optymalizacją | Poprawa |
+| -------------------- | ----------------- | --------------- | ------- |
+| PATCH (happy path)   | ~250-400ms        | ~100-150ms      | ~60%    |
+| DELETE (happy path)  | ~200-350ms        | ~80-120ms       | ~60%    |
+| PATCH (email exists) | ~300-450ms        | ~120-180ms      | ~60%    |
 
 **Założenia:** Średnie opóźnienie DB ~20-30ms, sieć lokalna
 
@@ -654,10 +713,11 @@ if (duration > 1000) {
 ### Faza 1: Przygotowanie service layer
 
 1. **Utworzenie/rozszerzenie `src/lib/services/participant.service.ts`**
+
    ```typescript
    // Podstawowa struktura serwisu
-   import type { SupabaseClient } from '@/db/supabase.client';
-   import type { ParticipantDTO, ParticipantUpdate } from '@/types';
+   import type { SupabaseClient } from "@/db/supabase.client";
+   import type { ParticipantDTO, ParticipantUpdate } from "@/types";
 
    export class ParticipantService {
      constructor(private supabase: SupabaseClient) {}
@@ -697,26 +757,30 @@ if (duration > 1000) {
 ### Faza 2: Utworzenie Zod schemas
 
 1. **Dodanie schema w pliku endpointu `src/pages/api/participants/[id].ts`**
-   ```typescript
-   import { z } from 'zod';
 
-   const UpdateParticipantSchema = z.object({
-     name: z.string().min(1, "Name cannot be empty").optional(),
-     email: z.string().email("Invalid email format").optional()
-   }).refine(data => data.name !== undefined || data.email !== undefined, {
-     message: "At least one field (name or email) must be provided"
-   });
+   ```typescript
+   import { z } from "zod";
+
+   const UpdateParticipantSchema = z
+     .object({
+       name: z.string().min(1, "Name cannot be empty").optional(),
+       email: z.string().email("Invalid email format").optional(),
+     })
+     .refine((data) => data.name !== undefined || data.email !== undefined, {
+       message: "At least one field (name or email) must be provided",
+     });
    ```
 
 ### Faza 3: Implementacja endpoint PATCH
 
 1. **Utworzenie pliku `src/pages/api/participants/[id].ts`**
+
    ```typescript
    export const prerender = false;
 
-   import type { APIContext } from 'astro';
-   import { ParticipantService } from '@/lib/services/participant.service';
-   import { UpdateParticipantSchema } from './schemas'; // or inline
+   import type { APIContext } from "astro";
+   import { ParticipantService } from "@/lib/services/participant.service";
+   import { UpdateParticipantSchema } from "./schemas"; // or inline
 
    export async function PATCH(context: APIContext) {
      // Implementation following the data flow
@@ -734,6 +798,7 @@ if (duration > 1000) {
 ### Faza 4: Implementacja endpoint DELETE
 
 1. **Dodanie handler DELETE w tym samym pliku `src/pages/api/participants/[id].ts`**
+
    ```typescript
    export async function DELETE(context: APIContext) {
      // Implementation following the data flow
@@ -785,30 +850,31 @@ if (duration > 1000) {
 - [ ] Refaktoryzacja do pojedynczego JOIN query
 - [ ] Dodanie indeksów bazodanowych
 - [ ] Implementacja równoległych walidacji
-<!-- - [ ] Testy integracyjne dla obu endpointów -->
-<!-- - [ ] Testy E2E (opcjonalne) -->
+  <!-- - [ ] Testy integracyjne dla obu endpointów -->
+  <!-- - [ ] Testy E2E (opcjonalne) -->
 - [ ] Code review
 - [ ] Dokumentacja API
 <!-- - [ ] Deploy i smoke tests na staging -->
 
 ### Szacowany czas implementacji
 
-| Faza | Czas |
-|------|------|
-| Faza 1: Service layer | 2-3h |
-| Faza 2: Zod schemas | 0.5h |
-| Faza 3: PATCH endpoint | 2h |
-| Faza 4: DELETE endpoint | 1.5h |
-| Faza 5: Optymalizacja | 1-2h |
-<!-- | Faza 6: Testowanie | 3-4h | -->
-| Faza 7: Dokumentacja | 1h |
-| **Total** | **11-16h** |
+| Faza                    | Czas               |
+| ----------------------- | ------------------ | ---- | --- |
+| Faza 1: Service layer   | 2-3h               |
+| Faza 2: Zod schemas     | 0.5h               |
+| Faza 3: PATCH endpoint  | 2h                 |
+| Faza 4: DELETE endpoint | 1.5h               |
+| Faza 5: Optymalizacja   | 1-2h               |
+| <!--                    | Faza 6: Testowanie | 3-4h | --> |
+| Faza 7: Dokumentacja    | 1h                 |
+| **Total**               | **11-16h**         |
 
 ## 10. Dodatkowe uwagi
 
 ### Zgodność z zasadami clean code projektu
 
 Implementacja zgodna z `.cursor/rules/shared.mdc`:
+
 - ✅ Early returns dla error conditions
 - ✅ Guard clauses na początku funkcji
 - ✅ Happy path na końcu
@@ -818,6 +884,7 @@ Implementacja zgodna z `.cursor/rules/shared.mdc`:
 ### Zgodność z tech stack
 
 Zgodność z `.ai/tech-stack.md` i `.cursor/rules/`:
+
 - ✅ Astro 5 Server Endpoints
 - ✅ TypeScript 5 z pełnym typowaniem
 - ✅ Supabase jako BaaS

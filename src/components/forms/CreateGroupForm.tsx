@@ -48,7 +48,10 @@ export default function CreateGroupForm() {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 shadow-lg" data-testid="create-group-form-container">
+    <div
+      className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 shadow-lg"
+      data-testid="create-group-form-container"
+    >
       <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" data-testid="create-group-form">
           {/* Group Name Field */}
@@ -94,13 +97,7 @@ export default function CreateGroupForm() {
           />
 
           {/* API Error Message */}
-          {apiError && (
-            <InfoBox
-              variant="error"
-              title="Błąd"
-              description={apiError}
-            />
-          )}
+          {apiError && <InfoBox variant="error" title="Błąd" description={apiError} />}
 
           {/* Submit Button */}
           <Button

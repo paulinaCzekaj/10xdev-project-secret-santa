@@ -24,24 +24,28 @@ Komponenty są zorganizowane w warstwowej architekturze z separacją odpowiedzia
 ## Szczegółowy opis komponentów
 
 ### ResultView
+
 **Główny komponent kontenera widoku wyniku**
 
 **Odpowiedzialności:**
+
 - Koordynacja wszystkich podkomponentów
 - Zarządzanie stanem ładowania i błędami
 - Obsługa wszystkich scenariuszy błędów API
 - Error boundaries dla niezawodności
 
 **Props:**
+
 ```typescript
 interface ResultViewProps {
-  groupId?: number;        // Dla zalogowanych użytkowników
-  token?: string;          // Dla niezarejestrowanych uczestników
+  groupId?: number; // Dla zalogowanych użytkowników
+  token?: string; // Dla niezarejestrowanych uczestników
   isAuthenticated?: boolean;
 }
 ```
 
 **Stany błędów obsługiwane:**
+
 - `DRAW_NOT_COMPLETED` - Losowanie nie zostało przeprowadzone
 - `UNAUTHORIZED` - Brak autoryzacji
 - `FORBIDDEN` - Brak dostępu (nie uczestnik)
@@ -50,18 +54,22 @@ interface ResultViewProps {
 - `NETWORK_ERROR` - Problem z połączeniem
 
 ### ResultHeader
+
 **Nagłówek z breadcrumb i informacjami o grupie**
 
 **Funkcjonalności:**
+
 - Breadcrumb nawigacyjny (tylko dla zalogowanych)
 - Nazwa grupy i status
 - Informacje o budżecie i terminie wymiany
 - Responsywny design
 
 ### ResultReveal
+
 **Interaktywny komponent odkrywania wyniku losowania**
 
 **Funkcjonalności:**
+
 - Animowany prezent z efektem hover
 - Przycisk "Kliknij, aby odkryć!"
 - Animacja odkrycia z konfetti
@@ -69,25 +77,31 @@ interface ResultViewProps {
 - Obsługa prefers-reduced-motion
 
 ### AssignedPersonCard
+
 **Karta wyświetlająca informacje o wylosowanej osobie**
 
 **Funkcjonalności:**
+
 - Avatar z inicjałami
 - Nazwa wylosowanej osoby
 - Gradientowe tło
 - Responsywny layout
 
 ### WishlistSection
+
 **Kontener dla sekcji list życzeń**
 
 **Funkcjonalności:**
+
 - Responsywny grid (2 kolumny na desktop, 1 na mobile)
 - Organizacja layout dla własnej listy i listy wylosowanej osoby
 
 ### WishlistEditor
+
 **Edytor listy życzeń z funkcją autosave**
 
 **Funkcjonalności:**
+
 - Pole tekstowe z walidacją długości (10000 znaków)
 - Debounced autosave (2 sekundy)
 - Status zapisywania z wizualną informacją zwrotną
@@ -96,9 +110,11 @@ interface ResultViewProps {
 - Obsługa błędów z przyciskami retry
 
 ### WishlistDisplay
+
 **Wyświetlanie listy życzeń tylko do odczytu**
 
 **Funkcjonalności:**
+
 - Automatyczne linkowanie URL-i w tekście
 - Obsługa pustego stanu
 - Bezpieczne renderowanie HTML
@@ -107,34 +123,42 @@ interface ResultViewProps {
 ## Custom Hooks
 
 ### useResultData
+
 **Hook do pobierania danych wyniku z API**
 
 **Funkcjonalności:**
+
 - Obsługa dwóch trybów dostępu (authenticated + token)
 - Transformacja DTO → ViewModel
 - Formatowanie dat, budżetu, inicjałów
 - Kompleksowa obsługa błędów
 
 ### useRevealState
+
 **Hook do zarządzania stanem odkrycia wyniku**
 
 **Funkcjonalności:**
+
 - localStorage persistence
 - Walidacja danych
 - Cleanup starych stanów (30 dni)
 
 ### useWishlistEditor
+
 **Hook do edycji listy życzeń z autosave**
 
 **Funkcjonalności:**
+
 - Debounced save (2s)
 - Stan edytora z walidacją
 - Obsługa błędów API
 
 ### useWishlistLinking
+
 **Hook do konwersji URL-i na klikalne linki**
 
 **Funkcjonalności:**
+
 - Regex do wykrywania URL-i
 - Bezpieczna konwersja na HTML linki
 

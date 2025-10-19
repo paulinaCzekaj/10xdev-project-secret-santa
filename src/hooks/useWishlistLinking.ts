@@ -12,7 +12,7 @@ export function useWishlistLinking(): UseWishlistLinkingReturn {
    * @returns HTML string z linkami
    */
   const convertToHtml = useCallback((text: string): string => {
-    if (!text) return '';
+    if (!text) return "";
 
     // Regex do wykrywania URL-i (http:// lub https://)
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -26,7 +26,7 @@ export function useWishlistLinking(): UseWishlistLinkingReturn {
     });
 
     // Zamiana nowych linii na <br> dla poprawnego wyświetlania
-    return html.replace(/\n/g, '<br>');
+    return html.replace(/\n/g, "<br>");
   }, []);
 
   /**

@@ -10,31 +10,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { User, Mail } from "lucide-react";
 import { toast } from "sonner";
-import type { ParticipantViewModel, EditParticipantFormViewModel, ParticipantDTO, UpdateParticipantCommand } from "@/types";
+import type {
+  ParticipantViewModel,
+  EditParticipantFormViewModel,
+  ParticipantDTO,
+  UpdateParticipantCommand,
+} from "@/types";
 
 // Schema walidacji dla formularza edycji uczestnika
 const editParticipantFormSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Imię musi mieć co najmniej 2 znaki")
-    .max(50, "Imię nie może przekraczać 50 znaków"),
-  email: z
-    .string()
-    .email("Niepoprawny format adresu email")
-    .optional()
-    .or(z.literal("")),
+  name: z.string().min(2, "Imię musi mieć co najmniej 2 znaki").max(50, "Imię nie może przekraczać 50 znaków"),
+  email: z.string().email("Niepoprawny format adresu email").optional().or(z.literal("")),
 });
 
 interface EditParticipantModalProps {
@@ -42,7 +33,10 @@ interface EditParticipantModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void; // Zmiana - tylko callback bez parametrów
-  updateParticipant: (participantId: number, command: UpdateParticipantCommand) => Promise<{ success: boolean; error?: string }>;
+  updateParticipant: (
+    participantId: number,
+    command: UpdateParticipantCommand
+  ) => Promise<{ success: boolean; error?: string }>;
 }
 
 export function EditParticipantModal({
@@ -101,9 +95,7 @@ export function EditParticipantModal({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edytuj uczestnika</DialogTitle>
-          <DialogDescription>
-            Zmień dane uczestnika grupy Secret Santa.
-          </DialogDescription>
+          <DialogDescription>Zmień dane uczestnika grupy Secret Santa.</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -135,11 +127,7 @@ export function EditParticipantModal({
                     Email (opcjonalny)
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="jan.kowalski@example.com"
-                      {...field}
-                    />
+                    <Input type="email" placeholder="jan.kowalski@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

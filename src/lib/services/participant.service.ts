@@ -616,10 +616,7 @@ export class ParticipantService {
         .order("created_at", { ascending: true });
 
       if (participantsError) {
-        console.error(
-          "[ParticipantService.getGroupParticipants] Failed to get participants:",
-          participantsError
-        );
+        console.error("[ParticipantService.getGroupParticipants] Failed to get participants:", participantsError);
         throw new Error("Failed to get group participants");
       }
 
@@ -634,22 +631,19 @@ export class ParticipantService {
       });
 
       // Step 4: Get wishlist status for all participants in one query
-      const participantIds = participants.map(p => p.id);
+      const participantIds = participants.map((p) => p.id);
       const { data: wishlists, error: wishlistsError } = await this.supabase
         .from("wishes")
         .select("participant_id")
         .in("participant_id", participantIds);
 
       if (wishlistsError) {
-        console.error(
-          "[ParticipantService.getGroupParticipants] Failed to get wishlists:",
-          wishlistsError
-        );
+        console.error("[ParticipantService.getGroupParticipants] Failed to get wishlists:", wishlistsError);
         // Don't throw here - just log and continue with empty wishlists
       }
 
       // Create a set of participant IDs that have wishlists
-      const participantsWithWishlists = new Set(wishlists?.map(w => w.participant_id) || []);
+      const participantsWithWishlists = new Set(wishlists?.map((w) => w.participant_id) || []);
 
       console.log("[ParticipantService.getGroupParticipants] Wishlist status retrieved", {
         totalParticipants: participants.length,

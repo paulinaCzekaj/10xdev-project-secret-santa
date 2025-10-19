@@ -1,10 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useDebouncedCallback } from "use-debounce";
-import type {
-  WishlistEditorState,
-  UseWishlistEditorReturn,
-  CreateOrUpdateWishlistCommand
-} from "../types";
+import type { WishlistEditorState, UseWishlistEditorReturn, CreateOrUpdateWishlistCommand } from "../types";
 
 /**
  * Custom hook do zarządzania edycją listy życzeń z funkcją autosave
@@ -18,7 +14,7 @@ export function useWishlistEditor(
 ): UseWishlistEditorReturn {
   console.log("[useWishlistEditor] Initialized", {
     participantId,
-    initialContent: initialContent.substring(0, 50) + (initialContent.length > 50 ? '...' : ''),
+    initialContent: initialContent.substring(0, 50) + (initialContent.length > 50 ? "..." : ""),
     canEdit,
     hasAccessToken: !!accessToken,
   });
@@ -59,104 +55,105 @@ export function useWishlistEditor(
   /**
    * Wysyła żądanie zapisu do API
    */
-  const performSave = useCallback(async (contentToSave: string): Promise<void> => {
-    console.log("[useWishlistEditor.performSave] Called", {
-      participantId,
-      contentToSave: contentToSave.substring(0, 50) + (contentToSave.length > 50 ? '...' : ''),
-      canEdit,
-      hasAccessToken: !!accessToken,
-    });
-
-    if (!canEdit) {
-      console.log("[useWishlistEditor.performSave] Cannot edit - returning early");
-      return; // Nie zapisuje jeśli edycja jest zablokowana
-    }
-
-    setIsSaving(true);
-    setSaveError(null);
-
-    try {
-      // Przygotowanie URL i headers
-      let url = `/api/participants/${participantId}/wishlist`;
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      // Dodanie tokenu dla niezalogowanych użytkowników
-      if (accessToken) {
-        const separator = url.includes('?') ? '&' : '?';
-        url += `${separator}token=${accessToken}`;
-      } else {
-        // Dla zalogowanych użytkowników headers będą dodane przez middleware
-      }
-
-      const command: CreateOrUpdateWishlistCommand = {
-        wishlist: contentToSave,
-      };
-
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(command),
+  const performSave = useCallback(
+    async (contentToSave: string): Promise<void> => {
+      console.log("[useWishlistEditor.performSave] Called", {
+        participantId,
+        contentToSave: contentToSave.substring(0, 50) + (contentToSave.length > 50 ? "..." : ""),
+        canEdit,
+        hasAccessToken: !!accessToken,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        const errorMessage = errorData.error?.message || 'Wystąpił błąd podczas zapisywania';
+      if (!canEdit) {
+        console.log("[useWishlistEditor.performSave] Cannot edit - returning early");
+        return; // Nie zapisuje jeśli edycja jest zablokowana
+      }
 
-        // Specjalne obsługa błędów
-        if (errorMessage.includes('end date has passed')) {
-          throw new Error('END_DATE_PASSED');
-        } else if (errorMessage.includes('too long')) {
-          throw new Error('CONTENT_TOO_LONG');
-        } else if (response.status === 401) {
-          throw new Error('UNAUTHORIZED');
-        } else if (response.status === 403) {
-          throw new Error('FORBIDDEN');
+      setIsSaving(true);
+      setSaveError(null);
+
+      try {
+        // Przygotowanie URL i headers
+        let url = `/api/participants/${participantId}/wishlist`;
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+
+        // Dodanie tokenu dla niezalogowanych użytkowników
+        if (accessToken) {
+          const separator = url.includes("?") ? "&" : "?";
+          url += `${separator}token=${accessToken}`;
         } else {
-          throw new Error(errorMessage);
+          // Dla zalogowanych użytkowników headers będą dodane przez middleware
         }
-      }
 
-      // Aktualizacja stanu po sukcesie
-      setOriginalContent(contentToSave);
-      setLastSaved(new Date());
+        const command: CreateOrUpdateWishlistCommand = {
+          wishlist: contentToSave,
+        };
 
-    } catch (error) {
-      console.error('Error saving wishlist:', error);
+        const response = await fetch(url, {
+          method: "PUT",
+          headers,
+          body: JSON.stringify(command),
+        });
 
-      let errorMessage: string;
-      if (error instanceof Error) {
-        switch (error.message) {
-          case 'END_DATE_PASSED':
-            errorMessage = 'Czas na edycję listy życzeń minął';
-            break;
-          case 'CONTENT_TOO_LONG':
-            errorMessage = 'Lista życzeń jest za długa (maksymalnie 10000 znaków)';
-            break;
-          case 'UNAUTHORIZED':
-            errorMessage = 'Brak autoryzacji do zapisu listy życzeń';
-            break;
-          case 'FORBIDDEN':
-            errorMessage = 'Nie masz uprawnień do edycji tej listy życzeń';
-            break;
-          case 'Failed to fetch':
-            errorMessage = 'Problem z połączeniem. Sprawdź swoje połączenie internetowe.';
-            break;
-          default:
-            errorMessage = error.message;
+        if (!response.ok) {
+          const errorData = await response.json();
+          const errorMessage = errorData.error?.message || "Wystąpił błąd podczas zapisywania";
+
+          // Specjalne obsługa błędów
+          if (errorMessage.includes("end date has passed")) {
+            throw new Error("END_DATE_PASSED");
+          } else if (errorMessage.includes("too long")) {
+            throw new Error("CONTENT_TOO_LONG");
+          } else if (response.status === 401) {
+            throw new Error("UNAUTHORIZED");
+          } else if (response.status === 403) {
+            throw new Error("FORBIDDEN");
+          } else {
+            throw new Error(errorMessage);
+          }
         }
-      } else {
-        errorMessage = 'Wystąpił nieoczekiwany błąd podczas zapisywania';
+
+        // Aktualizacja stanu po sukcesie
+        setOriginalContent(contentToSave);
+        setLastSaved(new Date());
+      } catch (error) {
+        console.error("Error saving wishlist:", error);
+
+        let errorMessage: string;
+        if (error instanceof Error) {
+          switch (error.message) {
+            case "END_DATE_PASSED":
+              errorMessage = "Czas na edycję listy życzeń minął";
+              break;
+            case "CONTENT_TOO_LONG":
+              errorMessage = "Lista życzeń jest za długa (maksymalnie 10000 znaków)";
+              break;
+            case "UNAUTHORIZED":
+              errorMessage = "Brak autoryzacji do zapisu listy życzeń";
+              break;
+            case "FORBIDDEN":
+              errorMessage = "Nie masz uprawnień do edycji tej listy życzeń";
+              break;
+            case "Failed to fetch":
+              errorMessage = "Problem z połączeniem. Sprawdź swoje połączenie internetowe.";
+              break;
+            default:
+              errorMessage = error.message;
+          }
+        } else {
+          errorMessage = "Wystąpił nieoczekiwany błąd podczas zapisywania";
+        }
+
+        setSaveError(errorMessage);
+        throw error; // Re-throw dla obsługi w komponencie
+      } finally {
+        setIsSaving(false);
       }
-
-      setSaveError(errorMessage);
-      throw error; // Re-throw dla obsługi w komponencie
-
-    } finally {
-      setIsSaving(false);
-    }
-  }, [participantId, canEdit, accessToken]);
+    },
+    [participantId, canEdit, accessToken]
+  );
 
   /**
    * Natychmiastowy zapis (np. przy blur)

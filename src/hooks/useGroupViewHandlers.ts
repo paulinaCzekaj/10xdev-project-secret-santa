@@ -95,20 +95,17 @@ export const useGroupViewHandlers = ({
     modals.closeModal();
   }, [modals, deleteParticipant, refetchParticipants, setOptimisticParticipants]);
 
-  const handleCopyParticipantToken = useCallback(
-    async (participant: ParticipantViewModel) => {
-      if (participant.resultLink) {
-        try {
-          await navigator.clipboard.writeText(participant.resultLink);
-          toast.success("Link skopiowany do schowka");
-        } catch {
-          // Fallback: show link in input field
-          toast.error("Nie udało się skopiować linku. Spróbuj ponownie.");
-        }
+  const handleCopyParticipantToken = useCallback(async (participant: ParticipantViewModel) => {
+    if (participant.resultLink) {
+      try {
+        await navigator.clipboard.writeText(participant.resultLink);
+        toast.success("Link skopiowany do schowka");
+      } catch {
+        // Fallback: show link in input field
+        toast.error("Nie udało się skopiować linku. Spróbuj ponownie.");
       }
-    },
-    []
-  );
+    }
+  }, []);
 
   // Obsługa zdarzeń związanych z wykluczeniami
   const handleExclusionAdded = useCallback(() => {

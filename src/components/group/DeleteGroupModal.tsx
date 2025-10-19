@@ -20,13 +20,7 @@ interface DeleteGroupModalProps {
   deleteGroup: () => Promise<{ success: boolean; error?: string }>;
 }
 
-export function DeleteGroupModal({
-  isOpen,
-  groupName,
-  onClose,
-  onConfirm,
-  deleteGroup,
-}: DeleteGroupModalProps) {
+export function DeleteGroupModal({ isOpen, groupName, onClose, onConfirm, deleteGroup }: DeleteGroupModalProps) {
   const handleConfirm = async () => {
     try {
       const result = await deleteGroup();
@@ -53,9 +47,8 @@ export function DeleteGroupModal({
             <div>
               <AlertDialogTitle>Czy na pewno chcesz usunąć tę grupę?</AlertDialogTitle>
               <AlertDialogDescription className="mt-2">
-                Ta akcja jest nieodwracalna. Spowoduje trwałe usunięcie grupy{" "}
-                <strong>"{groupName}"</strong> wraz ze wszystkimi uczestnikami,
-                wykluczeniami i wynikami losowania.
+                Ta akcja jest nieodwracalna. Spowoduje trwałe usunięcie grupy <strong>"{groupName}"</strong> wraz ze
+                wszystkimi uczestnikami, wykluczeniami i wynikami losowania.
               </AlertDialogDescription>
             </div>
           </div>

@@ -3,14 +3,17 @@
 ## 1. Przegląd punktu końcowego
 
 ### Cel
+
 Wykonanie algorytmu losowania Secret Santa dla grupy. Endpoint ten jest kluczowym elementem aplikacji, który tworzy przypisania między uczestnikami zgodnie z regułami wykluczeń.
 
 ### Metoda i ścieżka
+
 - **Metoda HTTP**: POST
 - **Ścieżka**: `/api/groups/:groupId/draw`
 - **Plik implementacji**: `src/pages/api/groups/[groupId]/draw.ts`
 
 ### Wymagania funkcjonalne
+
 - Tylko twórca grupy może wykonać losowanie
 - Wymagane minimum 3 uczestników
 - Losowanie można wykonać tylko raz (nieodwracalne)
@@ -20,6 +23,7 @@ Wykonanie algorytmu losowania Secret Santa dla grupy. Endpoint ten jest kluczowy
 - Walidacja możliwości wykonania losowania przed jego rozpoczęciem
 
 ### Kluczowe decyzje architektoniczne
+
 1. **Podejście algorytmiczne**: Wykorzystanie teorii grafów - znalezienie cyklu Hamiltonowskiego z ograniczeniami
 2. **Bezpieczeństwo transakcji**: Wszystkie przypisania tworzone atomowo (wszystkie lub żadne)
 3. **Logika biznesowa**: Ekstrakcja do dedykowanego `DrawService`
@@ -28,6 +32,7 @@ Wykonanie algorytmu losowania Secret Santa dla grupy. Endpoint ten jest kluczowy
 ## 2. Szczegóły żądania
 
 ### Parametry ścieżki
+
 ```typescript
 interface PathParams {
   groupId: string; // Będzie przekonwertowany na number przez Zod
@@ -35,6 +40,7 @@ interface PathParams {
 ```
 
 ### Nagłówki
+
 ```typescript
 {
   "Authorization": "Bearer {access_token}",
@@ -43,11 +49,13 @@ interface PathParams {
 ```
 
 ### Ciało żądania
+
 Brak - endpoint nie przyjmuje żadnych danych w body. Wszystkie niezbędne informacje pobierane są z bazy danych na podstawie `groupId`.
 
 ### Walidacja wejścia
 
 #### Schemat Zod dla parametrów
+
 ```typescript
 const GroupIdParamSchema = z.object({
   groupId: z.coerce.number().int().positive({
@@ -57,6 +65,7 @@ const GroupIdParamSchema = z.object({
 ```
 
 #### Walidacja reguł biznesowych
+
 1. **Grupa istnieje**: Weryfikacja w bazie danych
 2. **Użytkownik jest twórcą**: `group.creator_id === userId`
 3. **Minimum uczestników**: `participants.length >= 3`
@@ -66,12 +75,14 @@ const GroupIdParamSchema = z.object({
 ### Przykłady żądań
 
 #### Prawidłowe żądanie
+
 ```bash
 POST /api/groups/1/draw
 Authorization: Bearer eyJhbGc...
 ```
 
 #### Nieprawidłowe żądania
+
 ```bash
 # Błędny ID grupy
 POST /api/groups/abc/draw
@@ -122,6 +133,7 @@ export type UserId = string;
 ### Nowe typy do zdefiniowania
 
 #### Typy wewnętrzne dla algorytmu losowania
+
 ```typescript
 // src/lib/services/draw.service.ts
 
@@ -185,18 +197,21 @@ interface DrawValidation {
 ```
 
 **Nagłówki odpowiedzi:**
+
 ```
 Content-Type: application/json
 Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 **Uwagi:**
+
 - `drawn_at`: Znacznik czasu w formacie ISO 8601 (UTC)
 - `participants_notified`: W MVP zawsze równy liczbie uczestników (notyfikacje nie są wysyłane, ale liczba jest zwracana dla przyszłej kompatybilności)
 
 ### Odpowiedzi błędów
 
 #### 400 Bad Request - Nieprawidłowy format ID
+
 ```json
 {
   "error": {
@@ -210,6 +225,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 #### 400 Bad Request - Za mało uczestników
+
 ```json
 {
   "error": {
@@ -224,6 +240,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 #### 400 Bad Request - Losowanie już wykonane
+
 ```json
 {
   "error": {
@@ -237,6 +254,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 #### 400 Bad Request - Niemożliwe losowanie
+
 ```json
 {
   "error": {
@@ -252,6 +270,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 #### 401 Unauthorized
+
 ```json
 {
   "error": {
@@ -262,6 +281,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 #### 403 Forbidden
+
 ```json
 {
   "error": {
@@ -272,6 +292,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 #### 404 Not Found
+
 ```json
 {
   "error": {
@@ -282,6 +303,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 #### 500 Internal Server Error
+
 ```json
 {
   "error": {
@@ -407,6 +429,7 @@ Request → API Endpoint → DrawService → Database
 ### Interakcje z bazą danych
 
 #### Odczyty
+
 ```sql
 -- 1. Pobranie grupy
 SELECT * FROM groups WHERE id = ?;
@@ -424,6 +447,7 @@ WHERE group_id = ?;
 ```
 
 #### Zapisy (w transakcji)
+
 ```sql
 -- Bulk insert przypisań
 INSERT INTO assignments (group_id, giver_participant_id, receiver_participant_id)
@@ -438,9 +462,11 @@ VALUES
 ### Zagrożenia i mitigacje
 
 #### 1. Nieautoryzowane wykonanie losowania
+
 **Zagrożenie**: Użytkownik inny niż twórca próbuje wykonać losowanie.
 
 **Mitigacja**:
+
 - Weryfikacja `group.creator_id === userId` przed jakimikolwiek operacjami
 - Zwrócenie 403 z jasnym komunikatem
 - Logowanie nieautoryzowanych prób
@@ -450,16 +476,18 @@ if (group.creator_id !== userId) {
   console.warn("[POST /api/groups/:groupId/draw] Unauthorized draw attempt", {
     groupId,
     userId,
-    creatorId: group.creator_id
+    creatorId: group.creator_id,
   });
   throw new Error("FORBIDDEN");
 }
 ```
 
 #### 2. Ataki typu replay (ponowne losowanie)
+
 **Zagrożenie**: Wielokrotne wykonanie losowania w celu uzyskania korzystniejszych przypisań.
 
 **Mitigacja**:
+
 - Sprawdzenie istnienia przypisań PRZED rozpoczęciem algorytmu
 - Używanie transakcji bazy danych z blokowaniem
 - Zwrócenie 400 jeśli już wylosowano
@@ -479,9 +507,11 @@ if (existingAssignments !== null) {
 ```
 
 #### 3. Wyciek informacji w logach
+
 **Zagrożenie**: Rzeczywiste przypisania widoczne w logach aplikacji.
 
 **Mitigacja**:
+
 - NIGDY nie logować rzeczywistych przypisań (kto komu daje)
 - Logować tylko metadane: liczba uczestników, czas wykonania, sukces/porażka
 - Używać poziomów logowania: console.log dla sukcesu, console.error dla błędów
@@ -491,19 +521,21 @@ if (existingAssignments !== null) {
 console.log("[DrawService] Draw completed", {
   groupId,
   participantsCount: assignments.length,
-  executionTime: endTime - startTime
+  executionTime: endTime - startTime,
 });
 
 // ❌ ZŁE - wyciek informacji
 console.log("[DrawService] Assignments", {
-  assignments: { 1: 2, 2: 3, 3: 1 } // NIE ROBIĆ!
+  assignments: { 1: 2, 2: 3, 3: 1 }, // NIE ROBIĆ!
 });
 ```
 
 #### 4. Race conditions (równoległe wykonanie)
+
 **Zagrożenie**: Dwóch użytkowników (lub dwa requesty) próbuje jednocześnie wykonać losowanie.
 
 **Mitigacja**:
+
 - Użycie transakcji bazy danych
 - Unique constraint lub sprawdzenie istnienia w tej samej transakcji
 - Rozważenie optimistic locking lub distributed lock
@@ -514,17 +546,21 @@ console.log("[DrawService] Assignments", {
 ```
 
 #### 5. Analiza wyników przez reguły wykluczeń
+
 **Zagrożenie**: Użytkownik może dedukować przypisania na podstawie reguł wykluczeń.
 
 **Mitigacja**:
+
 - Losowość algorytmu - każde wykonanie (gdyby było możliwe) daje inne wyniki
 - Nie ujawnianie wszystkich reguł publicznie (tylko twórca je widzi)
 - W przyszłości: limit reguł wykluczeń
 
 #### 6. Denial of Service poprzez skomplikowane grafy
+
 **Zagrożenie**: Użytkownik tworzy grupę z setkami uczestników i tysiącami wykluczeń, przeciążając algorytm.
 
 **Mitigacja**:
+
 - Limit czasu wykonania algorytmu (timeout)
 - Limit maksymalnej liczby uczestników (np. 100)
 - Limit liczby reguł wykluczeń (np. N^2/2)
@@ -548,11 +584,13 @@ if (Date.now() - startTime > MAX_ALGORITHM_TIME) {
 ### Dane wrażliwe
 
 #### Nie logować:
+
 - Rzeczywiste przypisania (giver → receiver)
 - Pełne listy uczestników z przypisaniami
 - Tokeny dostępu użytkowników
 
 #### Można logować:
+
 - Liczby (ile uczestników, ile wykluczeń)
 - ID grup i użytkowników (dla debugowania)
 - Czasy wykonania
@@ -598,7 +636,7 @@ Success (200)
 ```typescript
 export const POST: APIRoute = async ({ params, request, locals }) => {
   console.log("[POST /api/groups/:groupId/draw] Endpoint hit", {
-    groupId: params.groupId
+    groupId: params.groupId,
   });
 
   try {
@@ -635,7 +673,6 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
         "Cache-Control": "no-cache, no-store, must-revalidate",
       },
     });
-
   } catch (error) {
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
@@ -772,13 +809,14 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 ### Logowanie błędów
 
 #### Format logów
+
 ```typescript
 // Błędy oczekiwane (walidacja)
 console.log("[POST /api/groups/:groupId/draw] Validation failed", {
   groupId,
   userId,
   reason: "INSUFFICIENT_PARTICIPANTS",
-  participantsCount: 2
+  participantsCount: 2,
 });
 
 // Błędy krytyczne
@@ -786,7 +824,7 @@ console.error("[POST /api/groups/:groupId/draw] Critical error", {
   groupId,
   userId,
   error: error.message,
-  stack: error.stack
+  stack: error.stack,
 });
 ```
 
@@ -795,14 +833,17 @@ console.error("[POST /api/groups/:groupId/draw] Critical error", {
 ### Złożoność czasowa algorytmu
 
 #### Scenariusz najlepszy (niewiele wykluczeń)
+
 - **Złożoność**: O(n) gdzie n = liczba uczestników
 - **Czas wykonania**: < 10ms dla grup do 50 osób
 
 #### Scenariusz średni
-- **Złożoność**: O(n * m) gdzie m = średnia liczba możliwych odbiorców
+
+- **Złożoność**: O(n \* m) gdzie m = średnia liczba możliwych odbiorców
 - **Czas wykonania**: 10-100ms dla typowych grup
 
 #### Scenariusz najgorszy (wiele wykluczeń)
+
 - **Złożoność**: O(n!) w najgorszym przypadku (backtracking)
 - **Czas wykonania**: Może być długi dla dużych grup z wieloma wykluczeniami
 - **Mitigacja**: Timeout + limity na liczbę uczestników
@@ -810,6 +851,7 @@ console.error("[POST /api/groups/:groupId/draw] Critical error", {
 ### Optymalizacje
 
 #### 1. Wczesna walidacja grafu
+
 ```typescript
 // Szybkie sprawdzenie czy losowanie jest w ogóle możliwe
 // PRZED uruchomieniem kosztownego algorytmu
@@ -823,8 +865,7 @@ function validateGraphFeasibility(graph: AssignmentGraph): boolean {
 
   // Sprawdzenie podstawowej spójności
   const participantCount = Object.keys(graph).length;
-  const totalPossibleConnections = Object.values(graph)
-    .reduce((sum, receivers) => sum + receivers.length, 0);
+  const totalPossibleConnections = Object.values(graph).reduce((sum, receivers) => sum + receivers.length, 0);
 
   // Jeśli średnio każdy ma < 1 możliwego odbiorcę, niemożliwe
   if (totalPossibleConnections < participantCount) {
@@ -836,6 +877,7 @@ function validateGraphFeasibility(graph: AssignmentGraph): boolean {
 ```
 
 #### 2. Losowa kolejność prób
+
 ```typescript
 // Losowanie kolejności uczestników zapobiega utknięciu
 // w tych samych ścieżkach przy kolejnych próbach
@@ -850,6 +892,7 @@ function shuffleArray<T>(array: T[]): T[] {
 ```
 
 #### 3. Bulk insert przypisań
+
 ```typescript
 // Zamiast wiele pojedynczych INSERT, jeden bulk insert
 const assignmentsToInsert: AssignmentInsert[] = assignments.map(([giverId, receiverId]) => ({
@@ -859,14 +902,13 @@ const assignmentsToInsert: AssignmentInsert[] = assignments.map(([giverId, recei
 }));
 
 // Pojedyncze zapytanie
-const { data, error } = await supabase
-  .from("assignments")
-  .insert(assignmentsToInsert)
-  .select();
+const { data, error } = await supabase.from("assignments").insert(assignmentsToInsert).select();
 ```
 
 #### 4. Indeksy bazy danych
+
 Upewnić się, że są indeksy na:
+
 - `assignments.group_id` (dla sprawdzenia czy już losowano)
 - `exclusion_rules.group_id` (dla pobierania wykluczeń)
 - `participants.group_id` (dla pobierania uczestników)
@@ -914,9 +956,11 @@ if (executionTime > 5000) {
 ### Faza 1: Przygotowanie struktury (Priorytet: WYSOKI)
 
 #### 1.1. Utworzenie pliku serwisu
+
 **Plik**: `src/lib/services/draw.service.ts`
 
 **Zadania**:
+
 - [ ] Utworzyć klasę `DrawService`
 - [ ] Zdefiniować interfejsy wewnętrzne (DrawParticipant, AssignmentGraph, itp.)
 - [ ] Zaimplementować konstruktor przyjmujący SupabaseClient
@@ -925,9 +969,11 @@ if (executionTime > 5000) {
 **Szacowany czas**: 30 minut
 
 #### 1.2. Utworzenie pliku endpoint
+
 **Plik**: `src/pages/api/groups/[groupId]/draw.ts`
 
 **Zadania**:
+
 - [ ] Utworzyć plik z podstawową strukturą
 - [ ] Dodać konfigurację (`prerender = false`, `trailingSlash = "never"`)
 - [ ] Zaimportować wymagane typy z `types.ts`
@@ -938,15 +984,18 @@ if (executionTime > 5000) {
 ### Faza 2: Implementacja algorytmu losowania (Priorytet: WYSOKI)
 
 #### 2.1. Budowa grafu przypisań
+
 **Metoda**: `private buildAssignmentGraph()`
 
 **Zadania**:
+
 - [ ] Utworzyć graf: dla każdego uczestnika lista możliwych odbiorców
 - [ ] Usunąć self-assignment (uczestnik nie może wylosować siebie)
 - [ ] Zastosować reguły wykluczeń
 - [ ] Zwrócić `AssignmentGraph`
 
 **Kod przykładowy**:
+
 ```typescript
 private buildAssignmentGraph(
   participants: DrawParticipant[],
@@ -978,14 +1027,17 @@ private buildAssignmentGraph(
 **Szacowany czas**: 45 minut
 
 #### 2.2. Walidacja możliwości losowania
+
 **Metoda**: `private validateDrawFeasibility()`
 
 **Zadania**:
+
 - [ ] Sprawdzić czy każdy uczestnik ma przynajmniej jednego możliwego odbiorcę
 - [ ] Sprawdzić podstawową spójność grafu
 - [ ] Zwrócić `DrawValidation` z wynikiem
 
 **Kod przykładowy**:
+
 ```typescript
 private validateDrawFeasibility(
   graph: AssignmentGraph,
@@ -1029,15 +1081,18 @@ private validateDrawFeasibility(
 **Szacowany czas**: 30 minut
 
 #### 2.3. Algorytm backtracking
+
 **Metoda**: `private findValidAssignment()`
 
 **Zadania**:
+
 - [ ] Zaimplementować algorytm backtracking z losowością
 - [ ] Dodać timeout i limit prób
 - [ ] Walidować wynik (każdy daje i otrzymuje dokładnie raz)
 - [ ] Zwrócić `DrawAssignments` lub rzucić błąd
 
 **Kod przykładowy**:
+
 ```typescript
 private findValidAssignment(
   graph: AssignmentGraph,
@@ -1111,9 +1166,11 @@ private shuffleArray<T>(array: T[]): T[] {
 ### Faza 3: Implementacja serwisu (Priorytet: WYSOKI)
 
 #### 3.1. Metoda główna executeDrawForGroup
+
 **Metoda**: `public executeDrawForGroup()`
 
 **Zadania**:
+
 - [ ] Walidacja istnienia grupy
 - [ ] Sprawdzenie autoryzacji (user jest twórcą)
 - [ ] Pobranie uczestników
@@ -1127,6 +1184,7 @@ private shuffleArray<T>(array: T[]): T[] {
 - [ ] Zwrócenie DrawResultDTO
 
 **Kod przykładowy**:
+
 ```typescript
 async executeDrawForGroup(
   groupId: number,
@@ -1282,9 +1340,11 @@ async executeDrawForGroup(
 ### Faza 4: Implementacja endpoint API (Priorytet: WYSOKI)
 
 #### 4.1. Handler POST
+
 **Plik**: `src/pages/api/groups/[groupId]/draw.ts`
 
 **Zadania**:
+
 - [ ] Zaimplementować funkcję `POST`
 - [ ] Dodać walidację parametrów (Zod)
 - [ ] Dodać sprawdzenie autentykacji
@@ -1299,9 +1359,11 @@ async executeDrawForGroup(
 ### Faza 5: Testy jednostkowe (Priorytet: ŚREDNI)
 
 #### 5.1. Testy algorytmu losowania
+
 **Plik**: `src/lib/services/__tests__/draw.service.test.ts`
 
 **Zadania**:
+
 - [ ] Test: Prosty graf bez wykluczeń (3 uczestników)
 - [ ] Test: Graf z wykluczeniami
 - [ ] Test: Niemożliwy graf (uczestnik bez możliwych odbiorców)
@@ -1313,9 +1375,11 @@ async executeDrawForGroup(
 **Szacowany czas**: 120 minut
 
 #### 5.2. Testy serwisu
+
 **Plik**: Ten sam co powyżej
 
 **Zadania**:
+
 - [ ] Test: Sukces - poprawne wykonanie losowania
 - [ ] Test: Błąd - grupa nie istnieje
 - [ ] Test: Błąd - użytkownik nie jest twórcą
@@ -1326,9 +1390,11 @@ async executeDrawForGroup(
 **Szacowany czas**: 90 minut
 
 #### 5.3. Testy endpoint
+
 **Plik**: `src/pages/api/groups/[groupId]/__tests__/draw.test.ts`
 
 **Zadania**:
+
 - [ ] Test: 200 - sukces
 - [ ] Test: 400 - nieprawidłowy groupId
 - [ ] Test: 401 - brak autentykacji
@@ -1343,7 +1409,9 @@ async executeDrawForGroup(
 ### Faza 6: Dokumentacja i finalizacja (Priorytet: NISKI)
 
 #### 6.1. Dokumentacja kodu
+
 **Zadania**:
+
 - [ ] JSDoc dla wszystkich publicznych metod DrawService
 - [ ] Komentarze w algorytmie wyjaśniające kroki
 - [ ] Przykłady użycia w komentarzach
@@ -1351,7 +1419,9 @@ async executeDrawForGroup(
 **Szacowany czas**: 30 minut
 
 #### 6.2. Testy integracyjne
+
 **Zadania**:
+
 - [ ] Test end-to-end: Utworzenie grupy → dodanie uczestników → wykonanie losowania
 - [ ] Test: Próba ponownego losowania (powinno zwrócić 400)
 - [ ] Test: Losowanie z maksymalną liczbą uczestników
@@ -1359,7 +1429,9 @@ async executeDrawForGroup(
 **Szacowany czas**: 60 minut
 
 #### 6.3. Przegląd i refactoring
+
 **Zadania**:
+
 - [ ] Code review
 - [ ] Optymalizacja wydajności (jeśli potrzebna)
 - [ ] Sprawdzenie zgodności z CLAUDE.md guidelines
@@ -1374,6 +1446,7 @@ async executeDrawForGroup(
 ### Łączny szacowany czas implementacji: 12-14 godzin
 
 ### Krytyczne punkty do uwagi:
+
 1. **Algorytm losowania** - Najważniejsza i najbardziej złożona część
 2. **Atomowość operacji** - Transakcje bazy danych muszą działać poprawnie
 3. **Walidacja możliwości** - Sprawdzenie PRZED uruchomieniem algorytmu
@@ -1381,6 +1454,7 @@ async executeDrawForGroup(
 5. **Testy** - Algorytm musi być pokryty testami ze względu na krytyczność
 
 ### Zalecana kolejność implementacji:
+
 1. Faza 1: Struktura (45 min)
 2. Faza 2: Algorytm (165 min / 2.75h)
 3. Faza 3: Serwis (60 min)
@@ -1389,11 +1463,13 @@ async executeDrawForGroup(
 6. Faza 6: Dokumentacja (135 min / 2.25h)
 
 ### Zależności:
+
 - DrawService zależy od istniejących typów w `types.ts` ✓
 - Endpoint zależy od DrawService
 - Testy zależą od pełnej implementacji
 
 ### Możliwe rozszerzenia (poza MVP):
+
 - Podgląd możliwych przypisań bez wykonania
 - Endpoint do walidacji: `POST /api/groups/:groupId/draw/validate`
 - Statystyki: ile było prób backtrackingu

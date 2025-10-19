@@ -30,7 +30,9 @@ const userEmail = user?.email;
       <div class="container mx-auto px-4">
         <div class="flex justify-between items-center h-16">
           <!-- Logo -->
-          <a href={isLoggedIn ? "/dashboard" : "/"} class="text-xl font-bold text-red-500 cursor-pointer"> 🎅 Secret Santa </a>
+          <a href={isLoggedIn ? "/dashboard" : "/"} class="text-xl font-bold text-red-500 cursor-pointer">
+            🎅 Secret Santa
+          </a>
 
           <!-- Auth buttons -->
           <div class="flex items-center gap-4">
@@ -45,7 +47,11 @@ const userEmail = user?.email;
                 </>
               ) : (
                 <>
-                  <a href="/login" class="text-sm text-gray-700 hover:text-red-500 cursor-pointer" data-testid="nav-login-link">
+                  <a
+                    href="/login"
+                    class="text-sm text-gray-700 hover:text-red-500 cursor-pointer"
+                    data-testid="nav-login-link"
+                  >
                     Logowanie
                   </a>
                   <a

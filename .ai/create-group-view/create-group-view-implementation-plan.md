@@ -1,15 +1,19 @@
 # Plan implementacji widoku: Tworzenie nowej grupy
 
 ## 1. Przegląd
+
 Widok "Tworzenie nowej grupy" umożliwia zalogowanym użytkownikom inicjowanie nowego wydarzenia Secret Santa. Użytkownik podaje podstawowe informacje o grupie, takie jak nazwa, budżet i data zakończenia. Po pomyślnym przesłaniu formularza, grupa jest tworzona w systemie, a użytkownik jest automatycznie przekierowywany do widoku zarządzania nowo utworzoną grupą.
 
 ## 2. Routing widoku
+
 Widok będzie dostępny pod następującą ścieżką:
+
 - `/groups/new`
 
 Dostęp do tej ścieżki powinien być chroniony i wymagać aktywnej sesji użytkownika. Niezalogowani użytkownicy powinni być przekierowywani do strony logowania.
 
 ## 3. Struktura komponentów
+
 Hierarchia komponentów dla tego widoku będzie następująca:
 
 ```
@@ -27,10 +31,13 @@ Hierarchia komponentów dla tego widoku będzie następująca:
           - Calendar (Shadcn/ui)
       - Button[type=submit] (Shadcn/ui)
 ```
+
 Komponent `CreateGroupForm` będzie renderowany jako interaktywna "wyspa" po stronie klienta za pomocą dyrektywy `client:load`.
 
 ## 4. Szczegóły komponentów
+
 ### `CreateGroupPage`
+
 - **Opis komponentu:** Strona Astro, która renderuje główny layout aplikacji oraz osadza w nim komponent formularza React. Odpowiada za ustawienie tytułu strony i ochronę trasy.
 - **Główne elementy:** Komponent `Layout`, komponent `CreateGroupForm`.
 - **Obsługiwane interakcje:** Brak.
@@ -39,6 +46,7 @@ Komponent `CreateGroupForm` będzie renderowany jako interaktywna "wyspa" po str
 - **Propsy:** Brak.
 
 ### `CreateGroupForm`
+
 - **Opis komponentu:** Komponent React wielokrotnego użytku, działający po stronie klienta, odpowiedzialny za renderowanie i zarządzanie formularzem tworzenia grupy. Obsługuje stan, walidację i wysyłanie danych do API.
 - **Główne elementy:**
   - Formularz oparty na `react-hook-form` i komponentach `Form` z biblioteki Shadcn/ui.
@@ -66,6 +74,7 @@ Komponent `CreateGroupForm` będzie renderowany jako interaktywna "wyspa" po str
 - **Propsy:** Brak.
 
 ## 5. Typy
+
 Do implementacji widoku wymagane będą następujące typy:
 
 1.  **`CreateGroupFormViewModel` (ViewModel dla formularza)**
@@ -95,11 +104,13 @@ Do implementacji widoku wymagane będą następujące typy:
       - `updated_at`: `string`
 
 ## 6. Zarządzanie stanem
+
 - **Stan formularza:** Cały stan formularza (wartości pól, błędy walidacji, status przesyłania) będzie zarządzany przez hook `useForm` z biblioteki `react-hook-form`.
 - **Stan ładowania/błędu API:** W komponencie `CreateGroupForm` zostaną użyte proste stany `useState` do zarządzania stanem ładowania (`isSubmitting`) oraz ewentualnymi błędami zwróconymi z API (`apiError`).
 - **Niestandardowy hook:** Nie jest wymagane tworzenie niestandardowego hooka. Logika związana z wywołaniem API zostanie zawarta w funkcji obsługującej `onSubmit` formularza.
 
 ## 7. Integracja API
+
 - **Endpoint:** `POST /api/groups`
 - **Proces integracji:**
   1. W momencie przesłania formularza, dane z `CreateGroupFormViewModel` zostaną zmapowane na obiekt `CreateGroupCommand`.
@@ -113,6 +124,7 @@ Do implementacji widoku wymagane będą następujące typy:
   - W przypadku błędu, odpowiedni komunikat zostanie wyświetlony użytkownikowi.
 
 ## 8. Interakcje użytkownika
+
 - **Wypełnianie formularza:** Użytkownik wpisuje dane w pola. Błędy walidacji pojawiają się pod polami po ich zwalidowaniu (np. po utracie fokusu).
 - **Próba wysłania niepoprawnego formularza:** Kliknięcie przycisku "Utwórz grupę" nie powoduje wysłania żądania. Wszystkie błędy walidacyjne są wyraźnie pokazywane.
 - **Wysyłanie poprawnego formularza:**
@@ -121,6 +133,7 @@ Do implementacji widoku wymagane będą następujące typy:
   - W razie błędu API, przycisk staje się ponownie aktywny, a pod formularzem pojawia się komunikat o błędzie.
 
 ## 9. Warunki i walidacja
+
 - **Warunek:** Użytkownik musi być zalogowany.
   - **Weryfikacja:** Na poziomie strony (`CreateGroupPage`) przez sprawdzenie sesji.
 - **Warunek:** Nazwa grupy jest wymagana (min. 3, max. 50 znaków).
@@ -131,12 +144,14 @@ Do implementacji widoku wymagane będą następujące typy:
   - **Weryfikacja:** W `CreateGroupForm` za pomocą schemy Zod. Wpływa na stan interfejsu.
 
 ## 10. Obsługa błędów
+
 - **Brak autoryzacji:** Strona `/groups/new` przekierowuje na `/login`, jeśli użytkownik nie jest zalogowany.
 - **Błędy walidacji klienta:** Obsługiwane i wyświetlane przez `react-hook-form` i Zod pod odpowiednimi polami.
 - **Błędy sieciowe:** Ogólny komunikat o błędzie (np. "Błąd połączenia. Spróbuj ponownie.") jest wyświetlany w obszarze formularza.
 - **Błędy serwera (4xx, 5xx):** Ogólny komunikat o błędzie (np. "Wystąpił nieoczekiwany błąd. Spróbuj ponownie później.") jest wyświetlany. Szczegóły błędu są logowane do konsoli deweloperskiej.
 
 ## 11. Kroki implementacji
+
 1.  Utworzenie pliku strony Astro: `src/pages/groups/new.astro`.
     - Dodanie podstawowego layoutu i implementacja logiki sprawdzającej sesję użytkownika.
     - Osadzenie w nim komponentu React `CreateGroupForm` z dyrektywą `client:load`.

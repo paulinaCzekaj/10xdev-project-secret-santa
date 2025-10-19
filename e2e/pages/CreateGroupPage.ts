@@ -1,4 +1,5 @@
-import { Page, Locator, expect } from "@playwright/test";
+import type { Page, Locator } from "@playwright/test";
+import { expect } from "@playwright/test";
 import { BasePage } from "./BasePage";
 
 /**
@@ -124,12 +125,7 @@ export class CreateGroupPage extends BasePage {
    * @param date - Event date (YYYY-MM-DD)
    * @param waitForNavigation - Whether to wait for navigation to group page
    */
-  async createGroup(
-    name: string,
-    budget: number,
-    date: string | Date,
-    waitForNavigation = true
-  ): Promise<void> {
+  async createGroup(name: string, budget: number, date: string | Date, waitForNavigation = true): Promise<void> {
     await this.fillName(name);
     await this.fillBudget(budget);
     await this.selectDate(date);

@@ -65,7 +65,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
         error: {
           code: "INVALID_INPUT",
           message: "Invalid access token format",
-          details: error.errors,
+          details: { errors: error.errors },
         },
       };
       return new Response(JSON.stringify(errorResponse), {

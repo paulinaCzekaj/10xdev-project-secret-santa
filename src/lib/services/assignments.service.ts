@@ -66,10 +66,7 @@ export class AssignmentsService {
 
     // Execute batch insert
     // Note: Supabase handles this as a single transaction automatically
-    const { data, error } = await this.supabase
-      .from("assignments")
-      .insert(assignmentsToInsert)
-      .select();
+    const { data, error } = await this.supabase.from("assignments").insert(assignmentsToInsert).select();
 
     if (error) {
       throw new Error("Failed to create assignments");

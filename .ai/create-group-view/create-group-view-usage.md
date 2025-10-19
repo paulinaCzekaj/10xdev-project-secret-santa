@@ -1,6 +1,7 @@
 # Widok tworzenia grupy - Przewodnik użytkownika
 
 ## Lokalizacja
+
 - **URL:** `/groups/new`
 - **Strona Astro:** `src/pages/groups/new.astro`
 - **Komponent React:** `src/components/forms/CreateGroupForm.tsx`
@@ -27,6 +28,7 @@ Przejdź do: `http://localhost:4321/groups/new`
 ### 3. Wypełnianie formularza
 
 #### Pole: Nazwa grupy
+
 - **Typ:** Tekstowe
 - **Wymagane:** Tak
 - **Min:** 3 znaki
@@ -34,6 +36,7 @@ Przejdź do: `http://localhost:4321/groups/new`
 - **Przykład:** "Secret Santa 2025"
 
 #### Pole: Budżet
+
 - **Typ:** Numeryczne
 - **Wymagane:** Tak
 - **Min:** 1
@@ -41,6 +44,7 @@ Przejdź do: `http://localhost:4321/groups/new`
 - **Przykład:** 100
 
 #### Pole: Data zakończenia
+
 - **Typ:** Data (kalendarz)
 - **Wymagane:** Tak
 - **Ograniczenie:** Tylko daty w przyszłości (od jutra)
@@ -64,6 +68,7 @@ Przejdź do: `http://localhost:4321/groups/new`
 ## Wykorzystane komponenty
 
 ### Z Shadcn/ui:
+
 - `Button` - przyciski akcji
 - `Input` - pola tekstowe i numeryczne
 - `Form`, `FormField`, `FormItem`, `FormLabel`, `FormControl`, `FormMessage` - zarządzanie formularzem
@@ -72,6 +77,7 @@ Przejdź do: `http://localhost:4321/groups/new`
 - `Toaster` (sonner) - powiadomienia toast
 
 ### Biblioteki:
+
 - `react-hook-form` - zarządzanie stanem formularza
 - `zod` - walidacja danych
 - `date-fns` - formatowanie dat
@@ -106,6 +112,7 @@ GroupDTO (odpowiedź)
 ### Format danych
 
 **CreateGroupFormViewModel (formularz):**
+
 ```typescript
 {
   name: string;
@@ -115,6 +122,7 @@ GroupDTO (odpowiedź)
 ```
 
 **CreateGroupCommand (API):**
+
 ```typescript
 {
   name: string;
@@ -124,6 +132,7 @@ GroupDTO (odpowiedź)
 ```
 
 **GroupDTO (odpowiedź):**
+
 ```typescript
 {
   id: number;
@@ -149,11 +158,13 @@ GroupDTO (odpowiedź)
 ## Bezpieczeństwo
 
 ### Ochrona trasy
+
 - Sprawdzanie sesji Supabase
 - Przekierowanie do `/login` dla niezalogowanych (w produkcji)
 - Użycie DEFAULT_USER_ID w development
 
 ### Autoryzacja API
+
 - Token Bearer z sesji Supabase
 - Dodawany automatycznie do nagłówków żądania
 - Format: `Authorization: Bearer {access_token}`
@@ -187,19 +198,23 @@ GroupDTO (odpowiedź)
 ## Rozwiązywanie problemów
 
 ### Problem: Formularz nie wysyła danych
+
 - Sprawdź czy wszystkie pola są poprawnie wypełnione
 - Otwórz DevTools Console i szukaj błędów JavaScript
 - Sprawdź zakładkę Network - czy żądanie zostało wysłane
 
 ### Problem: Błąd "Data zakończenia musi być w przyszłości"
+
 - Upewnij się, że wybierasz datę jutrzejszą lub późniejszą
 - Dzisiejsza data i daty w przeszłości są zablokowane
 
 ### Problem: Nie widać powiadomień toast
+
 - Sprawdź czy komponent Toaster jest dodany do Layout.astro
 - Upewnij się, że pakiet "sonner" jest zainstalowany
 
 ### Problem: Przekierowanie nie działa po utworzeniu grupy
+
 - Sprawdź czy endpoint `/groups/{id}` istnieje
 - Sprawdź konsole przeglądarki pod kątem błędów
 
@@ -219,7 +234,9 @@ GroupDTO (odpowiedź)
 ## Maintanance
 
 ### Aktualizacja walidacji:
+
 Edytuj schemat Zod w `CreateGroupForm.tsx`:
+
 ```typescript
 const createGroupFormSchema = z.object({
   // Dodaj lub zmodyfikuj reguły walidacji
@@ -227,11 +244,13 @@ const createGroupFormSchema = z.object({
 ```
 
 ### Aktualizacja stylowania:
+
 Zmodyfikuj klasy Tailwind w komponentach lub w `src/pages/groups/new.astro`
 
 ### Aktualizacja komunikatów:
+
 Wszystkie komunikaty są w języku polskim i zdefiniowane w:
+
 - Schemacie Zod (błędy walidacji)
 - Funkcji onSubmit (toast notifications)
 - Komponentach formularza (etykiety, placeholdery)
-

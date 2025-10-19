@@ -5,6 +5,7 @@
 Widok wyniku losowania Secret Santa to kluczowy element aplikacji, który umożliwia uczestnikom sprawdzenie, kogo wylosowali oraz zarządzanie swoimi listami życzeń. Widok musi wspierać zarówno zalogowanych użytkowników, jak i niezarejestrowanych uczestników (dostęp przez token).
 
 **Główne cele widoku:**
+
 - Prezentacja wyniku losowania w atrakcyjny, interaktywny sposób (animowany prezent)
 - Umożliwienie edycji własnej listy życzeń z funkcją autosave
 - Wyświetlenie listy życzeń wylosowanej osoby
@@ -12,6 +13,7 @@ Widok wyniku losowania Secret Santa to kluczowy element aplikacji, który umożl
 - Zablokowanie edycji list życzeń po dacie zakończenia wydarzenia
 
 **Kluczowe funkcjonalności:**
+
 - Interaktywne odkrywanie wyniku (animacja, konfetti) przy pierwszym wyświetleniu
 - Automatyczne linkowanie URL-i w listach życzeń
 - Autosave podczas edycji listy życzeń (debounce 2s)
@@ -24,6 +26,7 @@ Widok wyniku losowania Secret Santa to kluczowy element aplikacji, który umożl
 Widok jest dostępny na dwóch ścieżkach:
 
 ### 2.1. Ścieżka dla zalogowanych użytkowników
+
 - **URL:** `/groups/:groupId/result`
 - **Plik:** `src/pages/groups/[groupId]/result.astro`
 - **Autoryzacja:** Wymaga zalogowania (Bearer token w cookie)
@@ -31,6 +34,7 @@ Widok jest dostępny na dwóch ścieżkach:
 - **Przekierowanie:** Jeśli użytkownik nie jest zalogowany → `/login?returnUrl=/groups/:groupId/result`
 
 ### 2.2. Ścieżka dla niezarejestrowanych uczestników
+
 - **URL:** `/results/:token`
 - **Plik:** `src/pages/results/[token].astro`
 - **Autoryzacja:** Token w URL (weryfikacja po stronie API)
@@ -38,7 +42,9 @@ Widok jest dostępny na dwóch ścieżkach:
 - **Brak przekierowania:** Dostęp bezpośredni przez unikalny link
 
 ### 2.3. Wspólna logika
+
 Obie strony Astro będą renderować ten sam komponent React `ResultView`, przekazując odpowiednie propsy:
+
 - `groupId` lub `token` jako identyfikator
 - `isAuthenticated` - flaga określająca tryb dostępu
 - `accessToken` - dla niezalogowanych (z URL)
@@ -85,41 +91,49 @@ ResultView (główny kontener)
 ## 4. Szczegóły komponentów
 
 ### 4.1. ResultView
+
 **Opis:** Główny komponent kontenera widoku wyniku. Odpowiada za pobieranie danych z API, zarządzanie stanem odkrycia wyniku oraz koordynację wszystkich podkomponentów.
 
 **Główne elementy:**
+
 - Container div z responsywnym layoutem
 - Warunkowe renderowanie komponentów (loading, error, success states)
 - Integracja z custom hooks (useResultData, useRevealState)
 
 **Obsługiwane zdarzenia:**
+
 - Montowanie komponentu → pobieranie danych z API
 - Zmiana danych → aktualizacja ViewModelu
 - Błąd API → wyświetlenie komunikatu o błędzie
 
 **Warunki walidacji:**
+
 - Sprawdzenie czy losowanie zostało przeprowadzone (is_drawn)
 - Sprawdzenie dostępu użytkownika (autoryzacja przez API)
 - Walidacja tokenu (dla niezalogowanych)
 
 **Typy:**
+
 - `ResultViewModel` - model widoku z przetworzonymi danymi
 - `DrawResultResponseDTO` - DTO z API
 - Props: `{ groupId?: number; token?: string; isAuthenticated: boolean }`
 
 **Propsy:**
+
 ```typescript
 interface ResultViewProps {
-  groupId?: number;        // dla zalogowanych
-  token?: string;          // dla niezalogowanych
+  groupId?: number; // dla zalogowanych
+  token?: string; // dla niezalogowanych
   isAuthenticated: boolean; // flaga trybu dostępu
 }
 ```
 
 ### 4.2. ResultHeader
+
 **Opis:** Nagłówek widoku zawierający breadcrumb (dla zalogowanych), nazwę grupy oraz podstawowe informacje (budżet, data zakończenia).
 
 **Główne elementy:**
+
 - `Breadcrumb` - ścieżka nawigacji (warunkowa, tylko dla zalogowanych)
 - `h1` - nazwa grupy (główny tytuł)
 - Sekcja z informacjami:
@@ -127,37 +141,44 @@ interface ResultViewProps {
   - Ikona + formatowana data zakończenia (np. "do 25 grudnia 2025")
 
 **Obsługiwane zdarzenia:**
+
 - Kliknięcie w breadcrumb → nawigacja do odpowiedniej strony
 
 **Warunki walidacji:**
+
 - Breadcrumb wyświetlany tylko gdy `isAuthenticated === true`
 
 **Typy:**
+
 - `ResultGroupInfo` z formatowanymi polami
 
 **Propsy:**
+
 ```typescript
 interface ResultHeaderProps {
   group: {
     id: number;
     name: string;
-    formattedBudget: string;     // "150 PLN"
-    formattedEndDate: string;     // "25 grudnia 2025"
+    formattedBudget: string; // "150 PLN"
+    formattedEndDate: string; // "25 grudnia 2025"
   };
   isAuthenticated: boolean;
 }
 ```
 
 ### 4.3. ResultReveal
+
 **Opis:** Interaktywny komponent odkrywania wyniku. Wyświetla animowany prezent, który po kliknięciu ujawnia wylosowaną osobę z efektem konfetti. Stan odkrycia przechowywany w localStorage.
 
 **Główne elementy:**
+
 - `GiftBox` - animowany kontener z ikoną prezentu
 - `RevealButton` - przycisk "Kliknij, aby odkryć!" (widoczny tylko przed odkryciem)
 - `Confetti` - komponent z animacją konfetti (biblioteka react-confetti lub canvas-confetti)
 - `AssignedPersonCard` - karta z wylosowaną osobą (widoczna po odkryciu)
 
 **Obsługiwane zdarzenia:**
+
 - Kliknięcie w prezent/przycisk → odkrycie wyniku
   - Odtworzenie animacji (fade, scale, rotate)
   - Uruchomienie konfetti
@@ -166,21 +187,24 @@ interface ResultHeaderProps {
 - Montowanie komponentu → sprawdzenie localStorage czy już odkryto
 
 **Warunki walidacji:**
+
 - Sprawdzenie localStorage przed renderowaniem animacji
 - Klucz localStorage: `result_revealed_${groupId}_${participantId}`
 - Wartość: `{ revealed: true, timestamp: Date.now() }`
 
 **Typy:**
+
 - `ResultRevealState` - stan odkrycia
 - `ResultAssignedParticipant` - dane wylosowanej osoby
 
 **Propsy:**
+
 ```typescript
 interface ResultRevealProps {
   assignedPerson: {
     id: number;
     name: string;
-    initials: string;  // wyliczone inicjały dla avatara
+    initials: string; // wyliczone inicjały dla avatara
   };
   participantId: number;
   groupId: number;
@@ -188,24 +212,30 @@ interface ResultRevealProps {
 ```
 
 ### 4.4. AssignedPersonCard
+
 **Opis:** Karta wyświetlająca informacje o wylosowanej osobie. Zawiera avatar z inicjałami, imię oraz etykietę wyjaśniającą.
 
 **Główne elementy:**
+
 - `Avatar` (Shadcn) - z inicjałami wylosowanej osoby
 - `Label` - "Kupujesz prezent dla:"
 - `PersonName` - imię wylosowanej osoby (większa czcionka, pogrubienie)
 - Container z responsywnym layoutem (flex column na mobile, row na desktop)
 
 **Obsługiwane zdarzenia:**
+
 - Brak interakcji (komponent statyczny)
 
 **Warunki walidacji:**
+
 - Brak (dane już zwalidowane na wyższym poziomie)
 
 **Typy:**
+
 - `ResultAssignedParticipant`
 
 **Propsy:**
+
 ```typescript
 interface AssignedPersonCardProps {
   person: {
@@ -217,25 +247,31 @@ interface AssignedPersonCardProps {
 ```
 
 ### 4.5. WishlistSection
+
 **Opis:** Główna sekcja zawierająca dwie listy życzeń - własną (edytowalną) i wylosowanej osoby (tylko do odczytu). Odpowiada za layout i organizację podkomponentów.
 
 **Główne elementy:**
+
 - Container grid/flex z responsywnym układem
 - `MyWishlist` - sekcja własnej listy (z edytorem)
 - `TheirWishlist` - sekcja listy wylosowanej osoby (readonly)
 
 **Obsługiwane zdarzenia:**
+
 - Przekazywanie callbacków do komponentów dzieci
 
 **Warunki walidacji:**
+
 - Sprawdzenie `can_edit` dla własnej listy (czy można edytować)
 - Sprawdzenie czy wylosowana osoba ma listę życzeń
 
 **Typy:**
+
 - `ResultMyWishlist`
 - `ResultAssignedParticipant` (z wishlist)
 
 **Propsy:**
+
 ```typescript
 interface WishlistSectionProps {
   myWishlist: {
@@ -254,9 +290,11 @@ interface WishlistSectionProps {
 ```
 
 ### 4.6. WishlistEditor
+
 **Opis:** Edytor listy życzeń z funkcją autosave. Wyświetla pole tekstowe, status zapisywania oraz licznik znaków. Blokuje edycję po dacie zakończenia wydarzenia.
 
 **Główne elementy:**
+
 - `Textarea` (Shadcn) - pole tekstowe (10000 znaków max)
 - `SaveIndicator` - status zapisywania:
   - "Zapisywanie..." (spinner)
@@ -266,21 +304,25 @@ interface WishlistSectionProps {
 - `EditLockMessage` - komunikat gdy edycja zablokowana (po dacie zakończenia)
 
 **Obsługiwane zdarzenia:**
+
 - Zmiana tekstu (`onChange`) → aktualizacja stanu lokalnego
 - Debounce (2s) → wywołanie API PUT /api/participants/:id/wishlist
 - Blur → natychmiastowy zapis (jeśli są niezapisane zmiany)
 
 **Warunki walidacji:**
+
 - Maksymalna długość: 10000 znaków (walidacja po stronie klienta + API)
 - Minimalna długość: 1 znak (jeśli pole nie puste)
 - Blokada edycji jeśli `canEdit === false` (po dacie zakończenia)
 - Blokada edycji podczas zapisywania (`isSaving === true`)
 
 **Typy:**
+
 - `CreateOrUpdateWishlistCommand` - command do API
 - `WishlistEditorState` - stan edytora
 
 **Propsy:**
+
 ```typescript
 interface WishlistEditorProps {
   initialContent: string;
@@ -292,24 +334,30 @@ interface WishlistEditorProps {
 ```
 
 ### 4.7. WishlistDisplay
+
 **Opis:** Komponent wyświetlający listę życzeń tylko do odczytu z automatycznie linkowanymi URL-ami. Pokazuje pusty stan gdy lista nie istnieje.
 
 **Główne elementy:**
+
 - Container div z formatowaną treścią
 - `LinkedContent` - HTML z klikalnymi linkami (dangerouslySetInnerHTML lub komponent parse)
 - `EmptyState` - komunikat gdy brak listy ("Ta osoba nie dodała jeszcze swojej listy życzeń")
 
 **Obsługiwane zdarzenia:**
+
 - Brak (komponent readonly)
-- Kliknięcie w link → otwarcie w nowej karcie (target="_blank", rel="noopener noreferrer")
+- Kliknięcie w link → otwarcie w nowej karcie (target="\_blank", rel="noopener noreferrer")
 
 **Warunki walidacji:**
+
 - Sprawdzenie czy `content` nie jest null/undefined/pusty string
 
 **Typy:**
+
 - String z treścią listy
 
 **Propsy:**
+
 ```typescript
 interface WishlistDisplayProps {
   content?: string;
@@ -323,6 +371,7 @@ interface WishlistDisplayProps {
 ### 5.1. Istniejące typy (z types.ts)
 
 Już zdefiniowane w projekcie:
+
 ```typescript
 // Result DTOs (odpowiedzi z API)
 interface ResultGroupInfo {
@@ -381,21 +430,21 @@ export interface ResultViewModel {
   my_wishlist: ResultMyWishlist;
 
   // Formatowane wartości dla wyświetlania
-  formattedBudget: string;           // "150 PLN"
-  formattedEndDate: string;           // "25 grudnia 2025"
-  formattedShortEndDate: string;      // "25.12.2025"
+  formattedBudget: string; // "150 PLN"
+  formattedEndDate: string; // "25 grudnia 2025"
+  formattedShortEndDate: string; // "25.12.2025"
 
   // Obliczone wartości
-  isExpired: boolean;                 // czy data zakończenia minęła
-  daysUntilEnd: number;               // ile dni do końca (-1 jeśli przeszła)
+  isExpired: boolean; // czy data zakończenia minęła
+  daysUntilEnd: number; // ile dni do końca (-1 jeśli przeszła)
 
   // Dane wylosowanej osoby (rozszerzone)
-  assignedPersonInitials: string;     // "JK" - inicjały dla avatara
+  assignedPersonInitials: string; // "JK" - inicjały dla avatara
   assignedPersonWishlistHtml?: string; // HTML z auto-linkowanymi URL-ami
 
   // Flagi dostępu i kontekstu
-  isAuthenticated: boolean;           // czy użytkownik zalogowany
-  accessToken?: string;               // token dla niezalogowanych
+  isAuthenticated: boolean; // czy użytkownik zalogowany
+  accessToken?: string; // token dla niezalogowanych
 }
 
 /**
@@ -403,14 +452,14 @@ export interface ResultViewModel {
  * Używany w useWishlistEditor hook
  */
 export interface WishlistEditorState {
-  content: string;                    // aktualna treść
-  originalContent: string;            // oryginalna treść (z API)
-  isSaving: boolean;                  // czy trwa zapisywanie
-  hasChanges: boolean;                // czy są niezapisane zmiany
-  lastSaved: Date | null;             // kiedy ostatnio zapisano
-  saveError: string | null;           // komunikat błędu zapisu
-  characterCount: number;             // liczba znaków
-  canEdit: boolean;                   // czy można edytować
+  content: string; // aktualna treść
+  originalContent: string; // oryginalna treść (z API)
+  isSaving: boolean; // czy trwa zapisywanie
+  hasChanges: boolean; // czy są niezapisane zmiany
+  lastSaved: Date | null; // kiedy ostatnio zapisano
+  saveError: string | null; // komunikat błędu zapisu
+  characterCount: number; // liczba znaków
+  canEdit: boolean; // czy można edytować
 }
 
 /**
@@ -421,17 +470,17 @@ export interface WishlistEditorState {
 export interface ResultRevealState {
   groupId: number;
   participantId: number;
-  revealed: boolean;                  // czy wynik odkryty
-  revealedAt: number;                 // timestamp odkrycia (Date.now())
+  revealed: boolean; // czy wynik odkryty
+  revealedAt: number; // timestamp odkrycia (Date.now())
 }
 
 /**
  * Stan konfetti (dla animacji)
  */
 export interface ConfettiState {
-  isActive: boolean;                  // czy animacja aktywna
-  numberOfPieces: number;             // liczba elementów konfetti (200-400)
-  recycle: boolean;                   // czy recyklować (false = jedno odtworzenie)
+  isActive: boolean; // czy animacja aktywna
+  numberOfPieces: number; // liczba elementów konfetti (200-400)
+  recycle: boolean; // czy recyklować (false = jedno odtworzenie)
 }
 ```
 
@@ -501,15 +550,13 @@ const [isRevealed, setIsRevealed] = useState(false);
 **Lokalizacja:** `src/hooks/useResultData.ts`
 
 **Sygnatura:**
+
 ```typescript
-function useResultData(
-  groupId?: number,
-  token?: string,
-  isAuthenticated?: boolean
-): UseResultDataReturn
+function useResultData(groupId?: number, token?: string, isAuthenticated?: boolean): UseResultDataReturn;
 ```
 
 **Logika:**
+
 1. Określenie endpointu na podstawie parametrów:
    - Jeśli `groupId` i `isAuthenticated` → `/api/groups/${groupId}/result`
    - Jeśli `token` → `/api/results/${token}`
@@ -519,12 +566,9 @@ function useResultData(
 5. Funkcja refetch dla ręcznego odświeżenia
 
 **Przykład użycia:**
+
 ```typescript
-const { result, isLoading, error, refetch } = useResultData(
-  groupId,
-  token,
-  isAuthenticated
-);
+const { result, isLoading, error, refetch } = useResultData(groupId, token, isAuthenticated);
 ```
 
 ### 6.3. Custom Hook: useRevealState
@@ -534,25 +578,22 @@ const { result, isLoading, error, refetch } = useResultData(
 **Lokalizacja:** `src/hooks/useRevealState.ts`
 
 **Sygnatura:**
+
 ```typescript
-function useRevealState(
-  groupId: number,
-  participantId: number
-): UseRevealStateReturn
+function useRevealState(groupId: number, participantId: number): UseRevealStateReturn;
 ```
 
 **Logika:**
+
 1. Generowanie klucza localStorage: `result_revealed_${groupId}_${participantId}`
 2. Odczyt stanu z localStorage przy montowaniu
 3. Funkcja `reveal()` - zapisuje stan odkrycia do localStorage i aktualizuje stan
 4. Funkcja `reset()` - usuwa stan z localStorage (do testowania)
 
 **Przykład użycia:**
+
 ```typescript
-const { isRevealed, reveal, reset } = useRevealState(
-  result.group.id,
-  result.participant.id
-);
+const { isRevealed, reveal, reset } = useRevealState(result.group.id, result.participant.id);
 
 // W handleRevealClick
 const handleRevealClick = () => {
@@ -567,16 +608,18 @@ const handleRevealClick = () => {
 **Lokalizacja:** `src/hooks/useWishlistEditor.ts`
 
 **Sygnatura:**
+
 ```typescript
 function useWishlistEditor(
   participantId: number,
   initialContent: string,
   canEdit: boolean,
   accessToken?: string
-): UseWishlistEditorReturn
+): UseWishlistEditorReturn;
 ```
 
 **Logika:**
+
 1. Stan lokalny: `content`, `isSaving`, `saveError`, `lastSaved`, `hasChanges`
 2. Debounced save - użycie `useDebouncedCallback` (2 sekundy)
 3. Wywołanie API PUT `/api/participants/:participantId/wishlist`
@@ -588,6 +631,7 @@ function useWishlistEditor(
 7. Sprawdzenie zmian: `content !== originalContent`
 
 **Przykład użycia:**
+
 ```typescript
 const {
   content,
@@ -621,11 +665,13 @@ const {
 **Lokalizacja:** `src/hooks/useWishlistLinking.ts`
 
 **Sygnatura:**
+
 ```typescript
-function useWishlistLinking(): UseWishlistLinkingReturn
+function useWishlistLinking(): UseWishlistLinkingReturn;
 ```
 
 **Logika:**
+
 1. Funkcja `convertToHtml(text: string)` - konwertuje tekst na HTML z linkami
 2. Regex do wykrywania URL-i: `/(https?:\/\/[^\s]+)/g`
 3. Zastąpienie URL-i tagami `<a>` z atrybutami:
@@ -636,6 +682,7 @@ function useWishlistLinking(): UseWishlistLinkingReturn
 4. Funkcja `extractUrls(text: string)` - opcjonalna, zwraca tablicę URL-i
 
 **Przykład użycia:**
+
 ```typescript
 const { convertToHtml } = useWishlistLinking();
 
@@ -654,6 +701,7 @@ const theirWishlistHtml = convertToHtml(assignedTo.wishlist || "");
 - **Memory:** Stan ładowania, błędów, UI
 
 **Diagram przepływu danych:**
+
 ```
 API → useResultData → ResultViewModel → ResultView
                                            ├─→ ResultReveal (+ useRevealState ← → localStorage)
@@ -667,10 +715,12 @@ API → useResultData → ResultViewModel → ResultView
 ### 7.1. GET /api/groups/:groupId/result (dla zalogowanych)
 
 **Kiedy wywołać:**
+
 - Przy montowaniu komponentu `ResultView` (useEffect)
 - Po refetch (np. po zapisie listy życzeń)
 
 **Request:**
+
 ```typescript
 // Headers
 Authorization: Bearer {access_token} // z cookie Supabase
@@ -680,6 +730,7 @@ groupId: number
 ```
 
 **Response (200 OK):**
+
 ```typescript
 // Typ: DrawResultResponseDTO
 {
@@ -706,18 +757,20 @@ groupId: number
 ```
 
 **Błędy:**
+
 - **400** - Draw not completed: `{ error: { code: "DRAW_NOT_COMPLETED", message: "..." } }`
 - **401** - Unauthorized: `{ error: { code: "UNAUTHORIZED", message: "..." } }`
 - **403** - Forbidden: `{ error: { code: "FORBIDDEN", message: "..." } }`
 - **404** - Group not found: `{ error: { code: "GROUP_NOT_FOUND", message: "..." } }`
 
 **Obsługa w kodzie:**
+
 ```typescript
 const fetchResult = async () => {
   try {
     const response = await fetch(`/api/groups/${groupId}/result`, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`, // z Supabase session
+        Authorization: `Bearer ${accessToken}`, // z Supabase session
       },
     });
 
@@ -737,16 +790,19 @@ const fetchResult = async () => {
 ### 7.2. GET /api/results/:token (dla niezalogowanych)
 
 **Kiedy wywołać:**
+
 - Przy montowaniu komponentu `ResultView` (useEffect)
 - Po refetch
 
 **Request:**
+
 ```typescript
 // Parametry URL
-token: string // z URL params
+token: string; // z URL params
 ```
 
 **Response (200 OK):**
+
 ```typescript
 // Typ: DrawResultResponseDTO (identyczny jak powyżej)
 {
@@ -758,10 +814,12 @@ token: string // z URL params
 ```
 
 **Błędy:**
+
 - **400** - Draw not completed: `{ error: { code: "DRAW_NOT_COMPLETED", message: "..." } }`
 - **404** - Invalid token: `{ error: { code: "INVALID_TOKEN", message: "..." } }`
 
 **Obsługa w kodzie:**
+
 ```typescript
 const fetchResult = async () => {
   try {
@@ -783,10 +841,12 @@ const fetchResult = async () => {
 ### 7.3. PUT /api/participants/:participantId/wishlist
 
 **Kiedy wywołać:**
+
 - Po zmianie treści w edytorze (debounce 2s) - useWishlistEditor
 - Przy blur z pola textarea (natychmiastowy zapis jeśli są zmiany)
 
 **Request:**
+
 ```typescript
 // Dla zalogowanych - Headers
 Authorization: Bearer {access_token}
@@ -804,6 +864,7 @@ participantId: number
 ```
 
 **Response (200 OK):**
+
 ```typescript
 // Typ: WishlistDTO
 {
@@ -815,6 +876,7 @@ participantId: number
 ```
 
 **Błędy:**
+
 - **400** - End date passed: `{ error: { code: "END_DATE_PASSED", message: "..." } }`
 - **401** - Unauthorized
 - **403** - Forbidden (nie można edytować cudzej listy)
@@ -822,21 +884,20 @@ participantId: number
 - **422** - Missing wishlist field
 
 **Obsługa w kodzie (w useWishlistEditor):**
+
 ```typescript
 const save = async () => {
   setIsSaving(true);
   setSaveError(null);
 
   try {
-    const url = `/api/participants/${participantId}/wishlist${
-      accessToken ? `?token=${accessToken}` : ''
-    }`;
+    const url = `/api/participants/${participantId}/wishlist${accessToken ? `?token=${accessToken}` : ""}`;
 
     const response = await fetch(url, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Content-Type': 'application/json',
-        ...(isAuthenticated && { 'Authorization': `Bearer ${authToken}` }),
+        "Content-Type": "application/json",
+        ...(isAuthenticated && { Authorization: `Bearer ${authToken}` }),
       },
       body: JSON.stringify({ wishlist: content }),
     });
@@ -859,10 +920,12 @@ const save = async () => {
 ### 7.4. GET /api/participants/:participantId/wishlist (opcjonalne)
 
 **Kiedy wywołać:**
+
 - Opcjonalnie, jeśli potrzebujemy odświeżyć listę życzeń
 - Główne dane pobierane są już przez `/api/groups/:id/result` lub `/api/results/:token`
 
 **Request:**
+
 ```typescript
 // Dla zalogowanych - Headers
 Authorization: Bearer {access_token}
@@ -875,6 +938,7 @@ participantId: number
 ```
 
 **Response (200 OK):**
+
 ```typescript
 // Typ: WishlistWithHtmlDTO
 {
@@ -888,6 +952,7 @@ participantId: number
 ```
 
 **Błędy:**
+
 - **401** - Unauthorized
 - **403** - Forbidden
 - **404** - Participant or wishlist not found
@@ -899,6 +964,7 @@ participantId: number
 **Trigger:** Kliknięcie w prezent/przycisk "Kliknij, aby odkryć!"
 
 **Krok po kroku:**
+
 1. Użytkownik klika na animowany prezent
 2. Sprawdzenie stanu w localStorage (`isRevealed`)
    - Jeśli `true` → pomiń animację, pokaż wynik od razu
@@ -921,10 +987,12 @@ participantId: number
 5. Aktualizacja stanu komponentu: `setIsRevealed(true)`
 
 **Warunki:**
+
 - Losowanie musi być przeprowadzone (`is_drawn === true`)
 - Dane muszą być załadowane (`isLoading === false`)
 
 **Obsługa błędów:**
+
 - Brak (animacja czysto frontendowa, brak wywołań API)
 
 ### 8.2. Edycja listy życzeń
@@ -932,6 +1000,7 @@ participantId: number
 **Trigger:** Wpisywanie tekstu w polu textarea własnej listy życzeń
 
 **Krok po kroku:**
+
 1. Użytkownik wpisuje tekst w textarea
 2. Event `onChange` → aktualizacja stanu lokalnego `content`
 3. Aktualizacja licznika znaków: `characterCount = content.length`
@@ -951,11 +1020,13 @@ participantId: number
     - Przycisk "Spróbuj ponownie" → retry
 
 **Warunki:**
+
 - `canEdit === true` (nie minęła data zakończenia)
 - `isSaving === false` (nie trwa obecnie zapis)
 - Długość tekstu: 0-10000 znaków
 
 **Obsługa błędów:**
+
 - **400** - End date passed → blokada pola, komunikat "Czas na edycję minął"
 - **401/403** - Unauthorized/Forbidden → przekierowanie do logowania
 - **Network error** → komunikat "Problem z połączeniem. Sprawdź internet."
@@ -965,6 +1036,7 @@ participantId: number
 **Trigger:** Użytkownik opuszcza pole textarea (blur event)
 
 **Krok po kroku:**
+
 1. Event `onBlur` → sprawdzenie czy są niezapisane zmiany (`hasChanges`)
 2. Jeśli `hasChanges === true`:
    - Anulowanie debouncedSave (jeśli czeka w kolejce)
@@ -972,9 +1044,11 @@ participantId: number
 3. Zapisywanie tak samo jak przy autosave (krok 8.2)
 
 **Warunki:**
+
 - Musi być przynajmniej 1 znak w polu (jeśli nie, opcjonalnie można usunąć listę)
 
 **Obsługa błędów:**
+
 - Jak w punkcie 8.2
 
 ### 8.4. Wklejenie linku do listy życzeń
@@ -982,6 +1056,7 @@ participantId: number
 **Trigger:** Użytkownik wkleja URL (Ctrl+V lub paste)
 
 **Krok po kroku:**
+
 1. Wklejenie tekstu z URL-em (np. "https://example.com")
 2. Tekst pojawia się w textarea jako zwykły tekst
 3. Zapisanie (autosave lub blur)
@@ -994,9 +1069,11 @@ participantId: number
    - CSS: kolor niebieski, underline, hover
 
 **Warunki:**
+
 - Brak (każdy tekst zaczynający się od http/https traktowany jako link)
 
 **Obsługa błędów:**
+
 - Brak (regex nie może "się zepsuć", w najgorszym przypadku nie wykryje linku)
 
 ### 8.5. Próba edycji po dacie zakończenia
@@ -1004,6 +1081,7 @@ participantId: number
 **Trigger:** Użytkownik próbuje edytować pole textarea gdy `canEdit === false`
 
 **Krok po kroku:**
+
 1. Sprawdzenie `canEdit` przy renderowaniu komponentu
 2. Jeśli `canEdit === false`:
    - Textarea readonly/disabled
@@ -1015,10 +1093,12 @@ participantId: number
 3. Użytkownik nie może kliknąć ani wpisać tekstu
 
 **Warunki:**
+
 - `new Date() > new Date(group.end_date)`
 - `my_wishlist.can_edit === false` (z API)
 
 **Obsługa błędów:**
+
 - Jeśli użytkownik próbuje wysłać request mimo blokady (np. DevTools):
   - API zwraca **400** - END_DATE_PASSED
   - Wyświetlenie toastu: "Nie można zapisać. Czas na edycję minął."
@@ -1028,15 +1108,18 @@ participantId: number
 **Trigger:** Kliknięcie przycisku "Kopiuj link do wyniku" (opcjonalnie, jeśli dodamy)
 
 **Krok po kroku:**
+
 1. Użytkownik klika przycisk "Kopiuj link"
 2. Wywołanie `navigator.clipboard.writeText(resultUrl)`
 3. Wyświetlenie toastu: "Link skopiowany do schowka!"
 4. URL: `${window.location.origin}/results/${token}`
 
 **Warunki:**
+
 - Dostępne tylko dla tokenu (nie dla zalogowanych na ścieżce `/groups/:id/result`)
 
 **Obsługa błędów:**
+
 - Jeśli clipboard API niedostępne:
   - Wyświetlenie modal z polem input readonly zawierającym link
   - Instrukcja: "Zaznacz i skopiuj link:"
@@ -1047,6 +1130,7 @@ participantId: number
 **Trigger:** Kliknięcie w element breadcrumb
 
 **Krok po kroku:**
+
 1. Breadcrumb: Home > Pulpit > Grupy > [Nazwa grupy] > Wynik
 2. Kliknięcie:
    - "Home" → `/` (strona główna)
@@ -1055,9 +1139,11 @@ participantId: number
    - "[Nazwa grupy]" → `/groups/:id` (widok zarządzania grupą)
 
 **Warunki:**
+
 - Dostępne tylko dla zalogowanych użytkowników (`isAuthenticated === true`)
 
 **Obsługa błędów:**
+
 - Brak (standardowa nawigacja)
 
 ## 9. Warunki i walidacja
@@ -1065,14 +1151,18 @@ participantId: number
 ### 9.1. Warunki wyświetlania komponentów
 
 #### ResultView
+
 **Warunki:**
+
 - Losowanie przeprowadzone: `is_drawn === true` (z API)
 - Dostęp użytkownika:
   - Zalogowany: `groupId` i Bearer token w cookie
   - Niezalogowany: `token` w URL i ważny token (weryfikacja przez API)
 
 **Walidacja:**
+
 - Jeśli losowanie nie przeprowadzone (400 z API):
+
   ```typescript
   <ErrorState
     title="Losowanie nie zostało przeprowadzone"
@@ -1082,6 +1172,7 @@ participantId: number
   ```
 
 - Jeśli brak dostępu (401/403):
+
   ```typescript
   // Dla zalogowanych
   <ErrorState
@@ -1099,10 +1190,13 @@ participantId: number
   ```
 
 #### ResultHeader - Breadcrumb
+
 **Warunki:**
+
 - Wyświetlany tylko gdy `isAuthenticated === true`
 
 **Walidacja:**
+
 ```typescript
 {isAuthenticated && (
   <Breadcrumb>
@@ -1116,11 +1210,14 @@ participantId: number
 ```
 
 #### ResultReveal - Animacja
+
 **Warunki:**
+
 - Animacja pokazywana tylko przy pierwszym wyświetleniu
 - Sprawdzenie localStorage: `result_revealed_${groupId}_${participantId}`
 
 **Walidacja:**
+
 ```typescript
 const [isRevealed, setIsRevealed] = useState(() => {
   const stored = localStorage.getItem(`result_revealed_${groupId}_${participantId}`);
@@ -1142,11 +1239,14 @@ const [isRevealed, setIsRevealed] = useState(() => {
 ```
 
 #### WishlistEditor - Edytowalność
+
 **Warunki:**
+
 - Pole edytowalne tylko gdy `canEdit === true`
 - `canEdit` zależy od daty zakończenia: `new Date() <= new Date(group.end_date)`
 
 **Walidacja:**
+
 ```typescript
 // Z API
 my_wishlist: {
@@ -1177,12 +1277,15 @@ my_wishlist: {
 ### 9.2. Walidacja pól formularza
 
 #### WishlistEditor - Pole textarea
+
 **Warunki walidacji:**
+
 1. **Długość:** min 0, max 10000 znaków
 2. **Pusty string:** dozwolony (oznacza brak listy)
 3. **Whitespace:** dozwolony (np. nowe linie)
 
 **Walidacja:**
+
 ```typescript
 // Frontend (w komponencie)
 const MAX_LENGTH = 10000;
@@ -1212,12 +1315,11 @@ const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
 ```
 
 **API Validation (Zod schema w endpoint):**
+
 ```typescript
 // W API endpoint
 const CreateOrUpdateWishlistSchema = z.object({
-  wishlist: z.string()
-    .min(1, "Wishlist content cannot be empty")
-    .max(10000, "Wishlist content is too long"),
+  wishlist: z.string().min(1, "Wishlist content cannot be empty").max(10000, "Wishlist content is too long"),
 });
 
 // Obsługa błędu 422 na froncie
@@ -1230,11 +1332,14 @@ if (response.status === 422) {
 ### 9.3. Walidacja dostępu (Security)
 
 #### Zalogowani użytkownicy
+
 **Warunki:**
+
 - Musi być zalogowany (Bearer token w cookie)
 - Musi być uczestnikiem grupy (sprawdzane przez API)
 
 **Walidacja:**
+
 ```typescript
 // W Astro page
 ---
@@ -1246,30 +1351,31 @@ if (!user) {
 ```
 
 **API validation (w endpoint):**
+
 - Guard 1: requireApiAuth - sprawdza Bearer token
 - Guard 2: requireGroupAccess - sprawdza czy user jest uczestnikiem
 
 #### Niezalogowani użytkownicy
+
 **Warunki:**
+
 - Token w URL musi być ważny
 - Token musi należeć do istniejącego uczestnika
 - Grupa musi mieć przeprowadzone losowanie
 
 **Walidacja:**
+
 ```typescript
 // API endpoint sprawdza token
-const participant = await supabase
-  .from('participants')
-  .select('*')
-  .eq('access_token', token)
-  .single();
+const participant = await supabase.from("participants").select("*").eq("access_token", token).single();
 
 if (!participant) {
-  throw new Error('INVALID_TOKEN'); // → 404
+  throw new Error("INVALID_TOKEN"); // → 404
 }
 ```
 
 **Frontend handling:**
+
 ```typescript
 // Obsługa błędu invalid token
 if (error?.code === 'INVALID_TOKEN') {
@@ -1285,11 +1391,14 @@ if (error?.code === 'INVALID_TOKEN') {
 ### 9.4. Walidacja dat
 
 #### Data zakończenia wydarzenia
+
 **Warunki:**
+
 - `can_edit` zależy od porównania: `now <= end_date`
 - Formatowanie daty dla użytkownika (locale PL)
 
 **Walidacja:**
+
 ```typescript
 // Funkcja helper (w formatters.ts lub utils)
 export function isDateExpired(endDate: string): boolean {
@@ -1298,10 +1407,10 @@ export function isDateExpired(endDate: string): boolean {
 
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('pl-PL', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  return date.toLocaleDateString("pl-PL", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
   // Output: "25 grudnia 2025"
 }
@@ -1316,6 +1425,7 @@ export function calculateDaysUntilEnd(endDate: string): number {
 ```
 
 **Użycie:**
+
 ```typescript
 const isExpired = isDateExpired(group.end_date);
 const canEdit = !isExpired && my_wishlist.can_edit;
@@ -1340,9 +1450,11 @@ const daysLeft = calculateDaysUntilEnd(group.end_date);
 ### 10.1. Scenariusze błędów z API
 
 #### Błąd 400 - Draw Not Completed
+
 **Scenariusz:** Losowanie nie zostało jeszcze przeprowadzone dla grupy
 
 **Response:**
+
 ```json
 {
   "error": {
@@ -1353,6 +1465,7 @@ const daysLeft = calculateDaysUntilEnd(group.end_date);
 ```
 
 **Obsługa:**
+
 ```typescript
 // W useResultData hook
 if (error.code === 'DRAW_NOT_COMPLETED') {
@@ -1378,9 +1491,11 @@ if (error.code === 'DRAW_NOT_COMPLETED') {
 ```
 
 #### Błąd 401 - Unauthorized
+
 **Scenariusz:** Brak autoryzacji (brak tokenu lub token wygasł)
 
 **Response:**
+
 ```json
 {
   "error": {
@@ -1391,6 +1506,7 @@ if (error.code === 'DRAW_NOT_COMPLETED') {
 ```
 
 **Obsługa:**
+
 ```typescript
 // W useResultData hook
 if (error.code === 'UNAUTHORIZED') {
@@ -1424,9 +1540,11 @@ if (error.code === 'UNAUTHORIZED') {
 ```
 
 #### Błąd 403 - Forbidden
+
 **Scenariusz:** Użytkownik nie jest uczestnikiem grupy
 
 **Response:**
+
 ```json
 {
   "error": {
@@ -1437,6 +1555,7 @@ if (error.code === 'UNAUTHORIZED') {
 ```
 
 **Obsługa:**
+
 ```typescript
 if (error.code === 'FORBIDDEN') {
   return (
@@ -1460,9 +1579,11 @@ if (error.code === 'FORBIDDEN') {
 ```
 
 #### Błąd 404 - Not Found (Invalid Token)
+
 **Scenariusz:** Token nieprawidłowy lub wygasły (dla niezalogowanych)
 
 **Response:**
+
 ```json
 {
   "error": {
@@ -1473,6 +1594,7 @@ if (error.code === 'FORBIDDEN') {
 ```
 
 **Obsługa:**
+
 ```typescript
 if (error.code === 'INVALID_TOKEN') {
   return (
@@ -1497,9 +1619,11 @@ if (error.code === 'INVALID_TOKEN') {
 ```
 
 #### Błąd 404 - Group Not Found
+
 **Scenariusz:** Grupa nie istnieje
 
 **Response:**
+
 ```json
 {
   "error": {
@@ -1510,6 +1634,7 @@ if (error.code === 'INVALID_TOKEN') {
 ```
 
 **Obsługa:**
+
 ```typescript
 if (error.code === 'GROUP_NOT_FOUND') {
   return (
@@ -1535,9 +1660,11 @@ if (error.code === 'GROUP_NOT_FOUND') {
 ### 10.2. Błędy zapisywania listy życzeń
 
 #### Błąd 400 - End Date Passed
+
 **Scenariusz:** Próba edycji listy życzeń po dacie zakończenia
 
 **Response:**
+
 ```json
 {
   "error": {
@@ -1548,6 +1675,7 @@ if (error.code === 'GROUP_NOT_FOUND') {
 ```
 
 **Obsługa:**
+
 ```typescript
 // W useWishlistEditor hook
 catch (error) {
@@ -1572,9 +1700,11 @@ catch (error) {
 ```
 
 #### Błąd 422 - Validation Error (Too Long)
+
 **Scenariusz:** Tekst za długi (>10000 znaków)
 
 **Response:**
+
 ```json
 {
   "error": {
@@ -1586,6 +1716,7 @@ catch (error) {
 ```
 
 **Obsługa:**
+
 ```typescript
 catch (error) {
   if (error.code === 'INVALID_INPUT') {
@@ -1601,9 +1732,11 @@ catch (error) {
 ### 10.3. Błędy sieciowe
 
 #### Network Error
+
 **Scenariusz:** Brak połączenia z internetem lub problem z serwerem
 
 **Obsługa:**
+
 ```typescript
 // W useResultData hook
 catch (error) {
@@ -1638,9 +1771,11 @@ if (error?.code === 'NETWORK_ERROR') {
 ```
 
 #### Timeout Error
+
 **Scenariusz:** Request trwa zbyt długo
 
 **Obsługa:**
+
 ```typescript
 // W fetch z timeout
 const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 10000) => {
@@ -1656,17 +1791,17 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout 
     return response;
   } catch (error) {
     clearTimeout(id);
-    if (error.name === 'AbortError') {
-      throw new Error('REQUEST_TIMEOUT');
+    if (error.name === "AbortError") {
+      throw new Error("REQUEST_TIMEOUT");
     }
     throw error;
   }
 };
 
 // Obsługa
-if (error.message === 'REQUEST_TIMEOUT') {
-  toast.error('Zbyt długie oczekiwanie', {
-    description: 'Serwer nie odpowiada. Spróbuj ponownie za chwilę.',
+if (error.message === "REQUEST_TIMEOUT") {
+  toast.error("Zbyt długie oczekiwanie", {
+    description: "Serwer nie odpowiada. Spróbuj ponownie za chwilę.",
   });
 }
 ```
@@ -1674,16 +1809,18 @@ if (error.message === 'REQUEST_TIMEOUT') {
 ### 10.4. Błędy localStorage
 
 #### QuotaExceededError
+
 **Scenariusz:** Brak miejsca w localStorage
 
 **Obsługa:**
+
 ```typescript
 // W useRevealState hook
 try {
   localStorage.setItem(key, JSON.stringify(state));
 } catch (error) {
-  if (error.name === 'QuotaExceededError') {
-    console.warn('localStorage full, clearing old reveal states');
+  if (error.name === "QuotaExceededError") {
+    console.warn("localStorage full, clearing old reveal states");
     // Wyczyść stare stany odkrycia
     clearOldRevealStates();
     // Spróbuj ponownie
@@ -1697,10 +1834,10 @@ try {
 
 function clearOldRevealStates() {
   const keys = Object.keys(localStorage);
-  const revealKeys = keys.filter(k => k.startsWith('result_revealed_'));
-  revealKeys.forEach(key => {
+  const revealKeys = keys.filter((k) => k.startsWith("result_revealed_"));
+  revealKeys.forEach((key) => {
     try {
-      const state = JSON.parse(localStorage.getItem(key) || '{}');
+      const state = JSON.parse(localStorage.getItem(key) || "{}");
       // Usuń stany starsze niż 30 dni
       if (state.revealedAt && Date.now() - state.revealedAt > 30 * 24 * 60 * 60 * 1000) {
         localStorage.removeItem(key);
@@ -1713,9 +1850,11 @@ function clearOldRevealStates() {
 ### 10.5. Błędy konfetti
 
 #### Browser Not Supported
+
 **Scenariusz:** Przeglądarka nie wspiera canvas lub animacji
 
 **Obsługa:**
+
 ```typescript
 // W ResultReveal component
 const [confettiSupported, setConfettiSupported] = useState(true);
@@ -1801,9 +1940,11 @@ class ErrorBoundary extends React.Component<
 ## 11. Kroki implementacji
 
 ### Krok 1: Przygotowanie struktury plików
+
 **Czas:** 30 minut
 
 **Zadania:**
+
 1. Stwórz pliki stron Astro:
    - `src/pages/groups/[groupId]/result.astro`
    - `src/pages/results/[token].astro`
@@ -1827,18 +1968,22 @@ class ErrorBoundary extends React.Component<
    - `src/hooks/useWishlistLinking.ts`
 
 **Weryfikacja:**
+
 - Wszystkie pliki utworzone i dostępne w IDE
 - Brak błędów kompilacji TypeScript
 
 ---
 
 ### Krok 2: Rozszerzenie typów
+
 **Czas:** 45 minut
 
 **Zadania:**
+
 1. Otwórz `src/types.ts`
 
 2. Dodaj nowe typy ViewModel:
+
    ```typescript
    export interface ResultViewModel {
      group: ResultGroupInfo;
@@ -1882,6 +2027,7 @@ class ErrorBoundary extends React.Component<
    ```
 
 3. Dodaj typy dla custom hooks:
+
    ```typescript
    export interface UseResultDataReturn {
      result: ResultViewModel | null;
@@ -1919,25 +2065,29 @@ class ErrorBoundary extends React.Component<
    ```typescript
    export function getInitials(name: string): string {
      return name
-       .split(' ')
-       .map(word => word[0])
-       .join('')
+       .split(" ")
+       .map((word) => word[0])
+       .join("")
        .toUpperCase()
        .slice(0, 2);
    }
    ```
 
 **Weryfikacja:**
+
 - Brak błędów TypeScript
 - Wszystkie typy zaimportowane poprawnie w plikach komponentów
 
 ---
 
 ### Krok 3: Implementacja custom hooks
+
 **Czas:** 2 godziny
 
 #### 3.1. useResultData
+
 **Zadania:**
+
 1. Zaimplementuj logikę pobierania danych:
    - Określenie endpointu (authenticated vs token-based)
    - Fetch danych z API
@@ -1953,12 +2103,15 @@ class ErrorBoundary extends React.Component<
    - Dni do końca: `calculateDaysUntilEnd(end_date)`
 
 **Weryfikacja:**
+
 - Hook zwraca poprawne dane po załadowaniu
 - Obsługa błędów działa poprawnie
 - Refetch odświeża dane
 
 #### 3.2. useRevealState
+
 **Zadania:**
+
 1. Implementacja logiki localStorage:
    - Generowanie klucza: `result_revealed_${groupId}_${participantId}`
    - Odczyt stanu przy montowaniu
@@ -1970,12 +2123,15 @@ class ErrorBoundary extends React.Component<
    - Nieprawidłowy JSON w localStorage
 
 **Weryfikacja:**
+
 - Stan odkrycia zapisywany w localStorage
 - Po odświeżeniu strony stan się utrzymuje
 - Reset działa poprawnie
 
 #### 3.3. useWishlistEditor
+
 **Zadania:**
+
 1. Implementacja logiki edycji:
    - Stan lokalny treści
    - Debounced save (użycie `lodash.debounce` lub custom hook)
@@ -1994,13 +2150,16 @@ class ErrorBoundary extends React.Component<
    - `saveError` - komunikat błędu
 
 **Weryfikacja:**
+
 - Autosave działa po 2 sekundach od ostatniej zmiany
 - Natychmiastowy zapis przy blur
 - Status zapisywania wyświetlany poprawnie
 - Błędy obsługiwane i wyświetlane użytkownikowi
 
 #### 3.4. useWishlistLinking
+
 **Zadania:**
+
 1. Implementacja konwersji URL → HTML:
    - Regex: `/(https?:\/\/[^\s]+)/g`
    - Zamiana URL na tagi `<a>` z atrybutami
@@ -2013,17 +2172,21 @@ class ErrorBoundary extends React.Component<
    - URL-e na końcu/początku/środku tekstu
 
 **Weryfikacja:**
+
 - URL-e konwertowane na klikalne linki
-- Linki otwierane w nowej karcie (target="_blank")
+- Linki otwierane w nowej karcie (target="\_blank")
 - Tekst bez URL-i pozostaje niezmieniony
 
 ---
 
 ### Krok 4: Implementacja komponentów UI (warstwa prezentacji)
+
 **Czas:** 3 godziny
 
 #### 4.1. AssignedPersonCard
+
 **Zadania:**
+
 1. Implementacja UI:
    - Avatar z inicjałami (Shadcn Avatar)
    - Etykieta "Kupujesz prezent dla:"
@@ -2035,12 +2198,15 @@ class ErrorBoundary extends React.Component<
    - Animacja fade-in
 
 **Weryfikacja:**
+
 - Komponent wyświetla się poprawnie
 - Responsywność działa
 - Animacja płynna
 
 #### 4.2. WishlistDisplay
+
 **Zadania:**
+
 1. Implementacja UI:
    - Tytuł sekcji: "[Imię] życzy sobie:"
    - Wyświetlenie treści z auto-linkowanymi URL-ami
@@ -2051,12 +2217,15 @@ class ErrorBoundary extends React.Component<
    - Stylowanie linków (niebieski, underline, hover)
 
 **Weryfikacja:**
+
 - Treść wyświetla się poprawnie
 - Linki działają (otwierają w nowej karcie)
 - Pusty stan wyświetlany gdy brak listy
 
 #### 4.3. WishlistEditor
+
 **Zadania:**
+
 1. Implementacja UI:
    - Textarea (Shadcn)
    - SaveIndicator (status: zapisywanie, zapisano, błąd)
@@ -2074,13 +2243,16 @@ class ErrorBoundary extends React.Component<
    - Disabled podczas zapisywania
 
 **Weryfikacja:**
+
 - Edycja działa płynnie
 - Autosave po 2s
 - Status zapisywania wyświetlany
 - Blokada po dacie zakończenia
 
 #### 4.4. WishlistSection
+
 **Zadania:**
+
 1. Implementacja layoutu:
    - Grid 2 kolumny (desktop) / 1 kolumna (mobile)
    - MyWishlist (z edytorem)
@@ -2091,11 +2263,14 @@ class ErrorBoundary extends React.Component<
    - Desktop: dwie kolumny obok siebie
 
 **Weryfikacja:**
+
 - Layout responsywny
 - Obie listy wyświetlają się poprawnie
 
 #### 4.5. ResultReveal
+
 **Zadania:**
+
 1. Implementacja GiftBox:
    - SVG ikona prezentu (animowana)
    - Przycisk "Kliknij, aby odkryć!"
@@ -2113,13 +2288,16 @@ class ErrorBoundary extends React.Component<
    - Warunkowe renderowanie (prezent vs wynik)
 
 **Weryfikacja:**
+
 - Animacja prezentu działa
 - Konfetti wyświetla się po kliknięciu
 - Stan zapisywany w localStorage
 - Po odświeżeniu strony wynik wyświetlany od razu (bez animacji)
 
 #### 4.6. ResultHeader
+
 **Zadania:**
+
 1. Implementacja Breadcrumb (tylko dla zalogowanych):
    - Shadcn Breadcrumb
    - Ścieżka: Home > Pulpit > Grupy > [Nazwa] > Wynik
@@ -2131,6 +2309,7 @@ class ErrorBoundary extends React.Component<
    - Data zakończenia (z ikoną)
 
 **Weryfikacja:**
+
 - Breadcrumb wyświetlany tylko dla zalogowanych
 - Nawigacja działa poprawnie
 - Informacje formatowane czytelnie
@@ -2138,10 +2317,13 @@ class ErrorBoundary extends React.Component<
 ---
 
 ### Krok 5: Implementacja głównego kontenera ResultView
+
 **Czas:** 2 godziny
 
 **Zadania:**
+
 1. Stwórz główną strukturę:
+
    ```typescript
    export default function ResultView({ groupId, token, isAuthenticated }: ResultViewProps) {
      // Hooks
@@ -2191,6 +2373,7 @@ class ErrorBoundary extends React.Component<
    - NETWORK_ERROR
 
 **Weryfikacja:**
+
 - Wszystkie stany wyświetlają się poprawnie
 - Błędy obsługiwane zgodnie z planem (sekcja 10)
 - Layout responsywny
@@ -2198,11 +2381,15 @@ class ErrorBoundary extends React.Component<
 ---
 
 ### Krok 6: Implementacja stron Astro
+
 **Czas:** 1 godzina
 
 #### 6.1. `/groups/[groupId]/result.astro`
+
 **Zadania:**
+
 1. Implementacja strony:
+
    ```astro
    ---
    import Layout from "@/layouts/Layout.astro";
@@ -2216,26 +2403,26 @@ class ErrorBoundary extends React.Component<
      return Astro.redirect(`/login?returnUrl=/groups/${groupId}/result`);
    }
 
-   const groupIdNumber = parseInt(groupId || '0', 10);
+   const groupIdNumber = parseInt(groupId || "0", 10);
    ---
 
    <Layout title="Wynik losowania">
-     <ResultView
-       client:load
-       groupId={groupIdNumber}
-       isAuthenticated={true}
-     />
+     <ResultView client:load groupId={groupIdNumber} isAuthenticated={true} />
    </Layout>
    ```
 
 **Weryfikacja:**
+
 - Strona dostępna pod `/groups/:groupId/result`
 - Przekierowanie do logowania jeśli niezalogowany
 - Komponent React renderowany poprawnie
 
 #### 6.2. `/results/[token].astro`
+
 **Zadania:**
+
 1. Implementacja strony:
+
    ```astro
    ---
    import Layout from "@/layouts/Layout.astro";
@@ -2245,15 +2432,12 @@ class ErrorBoundary extends React.Component<
    ---
 
    <Layout title="Twój wynik Secret Santa">
-     <ResultView
-       client:load
-       token={token}
-       isAuthenticated={false}
-     />
+     <ResultView client:load token={token} isAuthenticated={false} />
    </Layout>
    ```
 
 **Weryfikacja:**
+
 - Strona dostępna pod `/results/:token`
 - Brak wymagania logowania
 - Komponent React renderowany poprawnie
@@ -2261,6 +2445,7 @@ class ErrorBoundary extends React.Component<
 ---
 
 ### Krok 7: Integracja i testy manualne - AKTUALNIE pomijamy testy
+
 <!-- **Czas:** 2 godziny
 
 **Zadania:**
@@ -2306,9 +2491,11 @@ class ErrorBoundary extends React.Component<
 ---
 
 ### Krok 8: Optymalizacja i refaktoryzacja
+
 **Czas:** 1 godzina
 
 **Zadania:**
+
 1. **Optymalizacja performance:**
    - Dodaj React.memo() do komponentów statycznych
    - Użyj useMemo() dla kosztownych obliczeń
@@ -2326,6 +2513,7 @@ class ErrorBoundary extends React.Component<
    - Optymalizuj importy (tree shaking)
 
 **Weryfikacja:**
+
 - Rozmiar bundle akceptowalny
 - Performance Lighthouse >90
 - Brak duplikacji kodu
@@ -2333,9 +2521,11 @@ class ErrorBoundary extends React.Component<
 ---
 
 ### Krok 9: Dokumentacja
+
 **Czas:** 30 minut
 
 **Zadania:**
+
 1. Dodaj README dla komponentów:
    - `src/components/result/README.md`
    - Opis każdego komponentu
@@ -2351,15 +2541,18 @@ class ErrorBoundary extends React.Component<
    - Dodaj screenshot widoku
 
 **Weryfikacja:**
+
 - Dokumentacja pełna i aktualna
 - Komentarze jasne i pomocne
 
 ---
 
 ### Krok 10: Code review i finalizacja
+
 **Czas:** 1 godzina
 
 **Zadania:**
+
 1. **Self code review:**
    - Przejrzyj cały kod
    - Sprawdź naming conventions
@@ -2378,6 +2571,7 @@ class ErrorBoundary extends React.Component<
    - Deploy na środowisko produkcyjne
 
 **Weryfikacja:**
+
 - ✅ Wszystkie wymagania PRD spełnione
 - ✅ Wszystkie User Stories zaimplementowane
 - ✅ Testy przechodzą
@@ -2388,19 +2582,19 @@ class ErrorBoundary extends React.Component<
 
 ## Podsumowanie kroków
 
-| Krok | Zadanie | Czas | Priorytet |
-|------|---------|------|-----------|
-| 1 | Przygotowanie struktury plików | 30 min | Wysoki |
-| 2 | Rozszerzenie typów | 45 min | Wysoki |
-| 3 | Implementacja custom hooks | 2h | Wysoki |
-| 4 | Implementacja komponentów UI | 3h | Wysoki |
-| 5 | Implementacja ResultView | 2h | Wysoki |
-| 6 | Implementacja stron Astro | 1h | Wysoki |
-<!-- | 7 | Integracja i testy | 2h | Wysoki | -->
-| 8 | Optymalizacja | 1h | Średni |
-| 9 | Dokumentacja | 30 min | Średni |
-| 10 | Code review i finalizacja | 1h | Wysoki |
-| **TOTAL** | | **~13.5h** | |
+| Krok      | Zadanie                        | Czas               | Priorytet |
+| --------- | ------------------------------ | ------------------ | --------- | ------ | --- |
+| 1         | Przygotowanie struktury plików | 30 min             | Wysoki    |
+| 2         | Rozszerzenie typów             | 45 min             | Wysoki    |
+| 3         | Implementacja custom hooks     | 2h                 | Wysoki    |
+| 4         | Implementacja komponentów UI   | 3h                 | Wysoki    |
+| 5         | Implementacja ResultView       | 2h                 | Wysoki    |
+| 6         | Implementacja stron Astro      | 1h                 | Wysoki    |
+| <!--      | 7                              | Integracja i testy | 2h        | Wysoki | --> |
+| 8         | Optymalizacja                  | 1h                 | Średni    |
+| 9         | Dokumentacja                   | 30 min             | Średni    |
+| 10        | Code review i finalizacja      | 1h                 | Wysoki    |
+| **TOTAL** |                                | **~13.5h**         |           |
 
 ---
 
@@ -2454,26 +2648,34 @@ Przed uznaniem implementacji za ukończoną, upewnij się że:
 ## Wsparcie i troubleshooting
 
 ### Problem: Konfetti nie działa
+
 **Rozwiązanie:**
+
 - Sprawdź czy przeglądarka wspiera canvas
 - Sprawdź czy prefers-reduced-motion nie jest włączony
 - Sprawdź konsolę czy nie ma błędów importu biblioteki
 
 ### Problem: Autosave nie działa
+
 **Rozwiązanie:**
+
 - Sprawdź czy debounce jest poprawnie zaimplementowany
 - Sprawdź network tab czy requesty są wysyłane
 - Sprawdź czy canEdit === true
 - Sprawdź czy nie ma błędów w konsoli
 
 ### Problem: localStorage nie zapisuje
+
 **Rozwiązanie:**
+
 - Sprawdź czy localStorage jest dostępny (incognito mode)
 - Sprawdź czy nie ma QuotaExceededError
 - Sprawdź czy klucz jest poprawnie generowany
 
 ### Problem: Token-based access nie działa
+
 **Rozwiązanie:**
+
 - Sprawdź czy token jest przekazywany w query (?token=...)
 - Sprawdź czy API endpoint akceptuje token
 - Sprawdź czy token jest ważny (nie wygasł)

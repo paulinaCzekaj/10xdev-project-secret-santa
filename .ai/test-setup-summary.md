@@ -3,6 +3,7 @@
 ## Zainstalowane narzędzia i zależności
 
 ### Vitest (Unit Testing)
+
 - `vitest` - Framework do testów jednostkowych i integracyjnych
 - `@vitest/ui` - Interfejs użytkownika do przeglądania testów
 - `@vitest/coverage-v8` - Narzędzie do generowania raportów pokrycia kodu
@@ -10,11 +11,13 @@
 - `@vitejs/plugin-react` - Plugin React dla Vite/Vitest
 
 ### React Testing Library
+
 - `@testing-library/react` - Biblioteka do testowania komponentów React
 - `@testing-library/jest-dom` - Dodatkowe matchery dla testów DOM
 - `@testing-library/user-event` - Symulacja interakcji użytkownika
 
 ### Playwright (E2E Testing)
+
 - `@playwright/test` - Framework do testów end-to-end
 - Chromium browser - Zainstalowany dla testów E2E
 
@@ -48,6 +51,7 @@
 ## Dostępne skrypty
 
 ### Testy jednostkowe (Vitest)
+
 ```bash
 npm run test                    # Uruchom wszystkie testy jednostkowe
 npm run test:watch              # Uruchom w trybie watch
@@ -56,6 +60,7 @@ npm run test:coverage           # Wygeneruj raport pokrycia kodu
 ```
 
 ### Testy E2E (Playwright)
+
 ```bash
 npm run test:e2e                # Uruchom testy E2E
 npm run test:e2e:ui             # Uruchom z interfejsem graficznym
@@ -66,6 +71,7 @@ npm run test:e2e:report         # Pokaż raport z testów
 ## Konfiguracja
 
 ### Vitest (vitest.config.ts)
+
 - Środowisko: `jsdom` (dla testów komponentów React)
 - Coverage provider: `v8`
 - Threshold: 70% dla lines, functions, branches, statements
@@ -75,6 +81,7 @@ npm run test:e2e:report         # Pokaż raport z testów
 - Exclude: `node_modules`, `dist`, `.astro`, `e2e`
 
 ### Playwright (playwright.config.ts)
+
 - Test directory: `./e2e`
 - Browser: Chromium (Desktop Chrome)
 - Base URL: `http://localhost:3000`
@@ -86,6 +93,7 @@ npm run test:e2e:report         # Pokaż raport z testów
 ## Przykładowe testy
 
 ### Test komponentu React
+
 ```typescript
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -106,6 +114,7 @@ describe("Button Component", () => {
 ```
 
 ### Test E2E
+
 ```typescript
 import { test, expect } from "@playwright/test";
 
@@ -160,19 +169,25 @@ test("homepage loads successfully", async ({ page }) => {
 ## Troubleshooting
 
 ### Problem: "Cannot find module '@/...'"
+
 **Rozwiązanie**: Sprawdź, czy path alias jest poprawnie skonfigurowany w `vitest.config.ts`
 
 ### Problem: Testy E2E timeout
+
 **Rozwiązanie**:
+
 - Sprawdź czy serwer dev działa
 - Zwiększ timeout w `playwright.config.ts`
 - Użyj `await page.waitForLoadState('networkidle')`
 
 ### Problem: "ReferenceError: vi is not defined"
+
 **Rozwiązanie**: Dodaj `globals: true` w `vitest.config.ts` lub importuj: `import { vi } from 'vitest'`
 
 ### Problem: React Testing Library warnings
+
 **Rozwiązanie**:
+
 - Używaj `userEvent` zamiast `fireEvent`
 - Używaj `await waitFor()` dla async operacji
 - Upewnij się, że cleanup jest wykonywany (jest w `vitest.setup.ts`)

@@ -3,6 +3,7 @@
 ## Overview
 
 This project uses a comprehensive testing setup:
+
 - **Vitest** for unit and integration tests
 - **React Testing Library** for component testing
 - **Playwright** for end-to-end (E2E) testing
@@ -224,6 +225,7 @@ Focus on meaningful coverage rather than hitting arbitrary numbers. Critical bus
 ## Continuous Integration
 
 Tests are automatically run in CI/CD pipeline:
+
 - Unit tests run on every push
 - E2E tests run on pull requests to main branch
 - Coverage reports are generated and checked
@@ -233,20 +235,24 @@ Tests are automatically run in CI/CD pipeline:
 ### Common Issues
 
 **Tests fail with "Cannot find module"**
+
 - Check path aliases in `vitest.config.ts`
 - Verify imports use `@/` prefix correctly
 
 **E2E tests timeout**
+
 - Increase timeout in `playwright.config.ts`
 - Check if dev server is running
 - Verify network requests complete
 
 **Coverage thresholds not met**
+
 - Run `npm run test:coverage` to see detailed report
 - Focus on critical paths first
 - Exclude generated/config files if needed
 
 **React Testing Library warnings**
+
 - Wrap async operations in `act()`
 - Use `userEvent` instead of `fireEvent`
 - Wait for state updates with `waitFor`

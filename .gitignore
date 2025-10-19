@@ -30,3 +30,30 @@ pnpm-debug.log*
 # Playwright test reports
 playwright-report/
 test-results/
+
+# Coverage reports
+coverage/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# OS generated files
+Thumbs.db
+*.lnk
+
+# IDE files
+.vscode/settings.json
+.idea/
+
+# Cache directories
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+
+# Logs
+logs/
+*.log

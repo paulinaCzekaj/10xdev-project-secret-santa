@@ -31,5 +31,4 @@ Omawiam decyzje projektowe oraz UI z różnymi modelami
 Nie poruszam się daleko poza zakresem mojej kompetencji...
 ...chyba że w celu eksploracji nowych technologii i narzędzi
 
-
 MCP ref.tools

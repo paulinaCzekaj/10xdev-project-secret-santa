@@ -5,6 +5,7 @@
 Ten endpoint umożliwia uwierzytelnionym użytkownikom pobieranie listy grup Secret Santa, w których uczestniczą lub które utworzyli. Endpoint wspiera filtrowanie (grupy utworzone, grupy do których dołączono, wszystkie grupy) oraz paginację dla efektywnej obsługi dużej liczby grup.
 
 **Kluczowe funkcjonalności**:
+
 - Pobieranie listy grup z informacjami podstawowymi i dodatkowymi polami agregowanymi
 - Filtrowanie według relacji użytkownika z grupą (twórca/uczestnik/wszystkie)
 - Paginacja z metadanymi (total, total_pages, current page)
@@ -17,15 +18,19 @@ Ten endpoint umożliwia uwierzytelnionym użytkownikom pobieranie listy grup Sec
 ## 2. Szczegóły żądania
 
 ### Metoda HTTP
+
 `GET`
 
 ### Struktura URL
+
 ```
 /api/groups
 ```
 
 ### Nagłówki (Headers)
+
 **Wymagane**:
+
 - `Authorization: Bearer {access_token}` - Token autoryzacyjny z Supabase Auth
 
 ### Parametry
@@ -33,6 +38,7 @@ Ten endpoint umożliwia uwierzytelnionym użytkownikom pobieranie listy grup Sec
 **Parametry URL**: Brak
 
 **Parametry Query** (wszystkie opcjonalne):
+
 ```typescript
 {
   filter?: "created" | "joined" | "all";  // Domyślnie: "all"
@@ -42,6 +48,7 @@ Ten endpoint umożliwia uwierzytelnionym użytkownikom pobieranie listy grup Sec
 ```
 
 **Szczegóły parametrów**:
+
 - `filter`:
   - `created` - tylko grupy utworzone przez użytkownika (creator_id = userId)
   - `joined` - tylko grupy, do których użytkownik został dodany jako uczestnik
@@ -50,6 +57,7 @@ Ten endpoint umożliwia uwierzytelnionym użytkownikom pobieranie listy grup Sec
 - `limit`: Liczba elementów na stronę (1-100)
 
 **Przykład żądania**:
+
 ```bash
 GET /api/groups?filter=created&page=1&limit=20
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -60,6 +68,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ## 3. Wykorzystywane typy
 
 ### Query Parameters
+
 ```typescript
 // Zdefiniowane w src/types.ts
 GroupsListQuery {
@@ -70,6 +79,7 @@ GroupsListQuery {
 ```
 
 ### DTOs (Response)
+
 ```typescript
 // Zdefiniowane w src/types.ts
 GroupListItemDTO extends GroupDTO {
@@ -99,6 +109,7 @@ PaginationMetadata {
 ```
 
 ### Error Response
+
 ```typescript
 // Zdefiniowane w src/types.ts
 ApiErrorResponse {
@@ -111,12 +122,13 @@ ApiErrorResponse {
 ```
 
 ### Validation Schema (Zod)
+
 ```typescript
 // Do utworzenia w src/pages/api/groups/index.ts
 const GroupsListQuerySchema = z.object({
   filter: z.enum(["created", "joined", "all"]).optional().default("all"),
   page: z.coerce.number().int().positive().optional().default(1),
-  limit: z.coerce.number().int().min(1).max(100).optional().default(20)
+  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
 });
 ```
 
@@ -127,6 +139,7 @@ const GroupsListQuerySchema = z.object({
 ### Odpowiedź sukcesu (200 OK)
 
 **Przykład 1: Lista z wieloma grupami**
+
 ```json
 {
   "data": [
@@ -165,6 +178,7 @@ const GroupsListQuerySchema = z.object({
 ```
 
 **Przykład 2: Pusta lista (użytkownik nie ma żadnych grup)**
+
 ```json
 {
   "data": [],
@@ -178,6 +192,7 @@ const GroupsListQuerySchema = z.object({
 ```
 
 **Przykład 3: Druga strona wyników**
+
 ```json
 {
   "data": [
@@ -195,6 +210,7 @@ const GroupsListQuerySchema = z.object({
 ### Odpowiedzi błędów
 
 #### 401 Unauthorized - Brak autoryzacji
+
 ```json
 {
   "error": {
@@ -205,6 +221,7 @@ const GroupsListQuerySchema = z.object({
 ```
 
 #### 401 Unauthorized - Nieprawidłowy token
+
 ```json
 {
   "error": {
@@ -215,6 +232,7 @@ const GroupsListQuerySchema = z.object({
 ```
 
 #### 400 Bad Request - Nieprawidłowy parametr filter
+
 ```json
 {
   "error": {
@@ -229,6 +247,7 @@ const GroupsListQuerySchema = z.object({
 ```
 
 #### 400 Bad Request - Nieprawidłowy parametr page
+
 ```json
 {
   "error": {
@@ -243,6 +262,7 @@ const GroupsListQuerySchema = z.object({
 ```
 
 #### 400 Bad Request - Limit poza zakresem
+
 ```json
 {
   "error": {
@@ -257,6 +277,7 @@ const GroupsListQuerySchema = z.object({
 ```
 
 #### 500 Internal Server Error - Błąd serwera
+
 ```json
 {
   "error": {
@@ -302,6 +323,7 @@ const GroupsListQuerySchema = z.object({
 #### Scenariusz 1: filter = "all" (domyślny)
 
 **Krok 1: Pobranie ID grup z COUNT uczestników**
+
 ```sql
 -- Pobierz grupy, w których użytkownik jest twórcą LUB uczestnikiem
 WITH user_groups AS (
@@ -328,6 +350,7 @@ LIMIT $2 OFFSET $3;
 ```
 
 **Krok 2: Pobranie total count**
+
 ```sql
 SELECT COUNT(DISTINCT g.id) as total
 FROM groups g
@@ -339,6 +362,7 @@ WHERE g.creator_id = $1 OR p.user_id = $1;
 ```
 
 **Krok 3: Sprawdzenie is_drawn dla każdej grupy**
+
 ```sql
 -- Wykonywane dla każdej grupy z wyniku
 SELECT EXISTS (
@@ -350,6 +374,7 @@ SELECT EXISTS (
 ```
 
 **Optymalizacja**: Zamiast N zapytań dla is_drawn, można użyć jednego zapytania:
+
 ```sql
 SELECT DISTINCT group_id
 FROM assignments
@@ -361,6 +386,7 @@ WHERE group_id IN ($1, $2, $3, ...);
 #### Scenariusz 2: filter = "created"
 
 **Zapytanie uproszczone - tylko grupy z creator_id = userId**
+
 ```sql
 SELECT
   g.*,
@@ -375,6 +401,7 @@ LIMIT $2 OFFSET $3;
 ```
 
 **Count query**:
+
 ```sql
 SELECT COUNT(*) as total
 FROM groups
@@ -384,6 +411,7 @@ WHERE creator_id = $1;
 #### Scenariusz 3: filter = "joined"
 
 **Zapytanie - tylko grupy gdzie użytkownik jest uczestnikiem, ale nie twórcą**
+
 ```sql
 SELECT
   g.*,
@@ -399,6 +427,7 @@ LIMIT $2 OFFSET $3;
 ```
 
 **Count query**:
+
 ```sql
 SELECT COUNT(DISTINCT g.id) as total
 FROM groups g
@@ -411,6 +440,7 @@ WHERE p.user_id = $1 AND g.creator_id != $1;
 ## 6. Względy bezpieczeństwa
 
 ### Uwierzytelnianie (Authentication)
+
 - **Mechanizm**: Bearer token w nagłówku Authorization
 - **Walidacja**:
   - Sprawdzenie obecności nagłówka Authorization przez middleware
@@ -418,6 +448,7 @@ WHERE p.user_id = $1 AND g.creator_id != $1;
   - Odrzucenie żądania z kodem 401, jeśli token jest nieprawidłowy lub wygasł
 
 ### Autoryzacja (Authorization)
+
 - **Zakres danych**: Użytkownik widzi TYLKO grupy, w których:
   - Jest twórcą (creator_id = userId), LUB
   - Jest uczestnikiem (istnieje rekord w participants z user_id = userId)
@@ -441,19 +472,20 @@ WHERE p.user_id = $1 AND g.creator_id != $1;
    - limit: 20
 
 ### Zabezpieczenia bazy danych
+
 - **Parametryzowane zapytania**: Supabase Client automatycznie parametryzuje zapytania
 - **Row Level Security (RLS)**: Może być włączone na poziomie bazy danych (opcjonalnie)
 - **DISTINCT w zapytaniach**: Zapobiega duplikatom przy JOIN z participants
 
 ### Potencjalne zagrożenia i mitygacje
 
-| Zagrożenie | Opis | Mitygacja |
-|------------|------|-----------|
-| SQL Injection | Wstrzyknięcie złośliwego SQL | Użycie Supabase Client (automatyczna parametryzacja) |
-| Enumeracja grup | Próba dostępu do grup innych użytkowników | Filtrowanie po userId w zapytaniach |
-| DOS - duże limity | Żądanie limit=1000000 | Walidacja max limit = 100 |
-| DOS - głębokie stronicowanie | Żądanie page=999999 | Opcjonalnie: limit max page lub cursor pagination |
-| Wyciek danych uczestników | Nadmierne informacje w odpowiedzi | Zwracanie tylko podstawowych pól GroupListItemDTO |
+| Zagrożenie                   | Opis                                      | Mitygacja                                            |
+| ---------------------------- | ----------------------------------------- | ---------------------------------------------------- |
+| SQL Injection                | Wstrzyknięcie złośliwego SQL              | Użycie Supabase Client (automatyczna parametryzacja) |
+| Enumeracja grup              | Próba dostępu do grup innych użytkowników | Filtrowanie po userId w zapytaniach                  |
+| DOS - duże limity            | Żądanie limit=1000000                     | Walidacja max limit = 100                            |
+| DOS - głębokie stronicowanie | Żądanie page=999999                       | Opcjonalnie: limit max page lub cursor pagination    |
+| Wyciek danych uczestników    | Nadmierne informacje w odpowiedzi         | Zwracanie tylko podstawowych pól GroupListItemDTO    |
 
 ---
 
@@ -465,21 +497,21 @@ WHERE p.user_id = $1 AND g.creator_id != $1;
 
 ### Szczegółowa tabela błędów
 
-| Nr | Scenariusz | Warunek | Status | Kod błędu | Wiadomość | Akcja |
-|----|-----------|---------|--------|-----------|-----------|-------|
-| 1 | Brak nagłówka Authorization | `!request.headers.get('authorization')` | 401 | UNAUTHORIZED | Authorization required | Zwróć błąd, przerwij wykonanie |
-| 2 | Token wygasł/nieprawidłowy | `getUser()` zwraca błąd | 401 | INVALID_TOKEN | Invalid or expired authentication token | Zwróć błąd, przerwij wykonanie |
-| 3 | Nieprawidłowy format query params | Parsing query fails | 400 | INVALID_REQUEST | Invalid query parameters | Zwróć błąd z details |
-| 4 | Filter nie jest enum | `!["created","joined","all"].includes(filter)` | 400 | INVALID_INPUT | Invalid filter value | Zwróć błąd z details |
-| 5 | Page < 1 | `page < 1` | 400 | INVALID_INPUT | Page must be a positive integer | Zwróć błąd z details |
-| 6 | Page nie jest liczbą | `isNaN(page)` | 400 | INVALID_INPUT | Page must be a number | Zwróć błąd z details |
-| 7 | Limit < 1 | `limit < 1` | 400 | INVALID_INPUT | Limit must be at least 1 | Zwróć błąd z details |
-| 8 | Limit > 100 | `limit > 100` | 400 | INVALID_INPUT | Limit must be between 1 and 100 | Zwróć błąd z details |
-| 9 | Limit nie jest liczbą | `isNaN(limit)` | 400 | INVALID_INPUT | Limit must be a number | Zwróć błąd z details |
-| 10 | Błąd połączenia z bazą | Supabase connection error | 500 | DATABASE_ERROR | Database connection failed | Log błąd, zwróć ogólny komunikat |
-| 11 | Błąd zapytania SELECT | SELECT fails | 500 | DATABASE_ERROR | Failed to fetch groups | Log błąd, zwróć komunikat |
-| 12 | Błąd zapytania COUNT | COUNT fails | 500 | DATABASE_ERROR | Failed to calculate total | Log błąd, zwróć komunikat |
-| 13 | Timeout zapytania | Query timeout | 500 | DATABASE_ERROR | Request timeout | Log błąd, zwróć komunikat |
+| Nr  | Scenariusz                        | Warunek                                        | Status | Kod błędu       | Wiadomość                               | Akcja                            |
+| --- | --------------------------------- | ---------------------------------------------- | ------ | --------------- | --------------------------------------- | -------------------------------- |
+| 1   | Brak nagłówka Authorization       | `!request.headers.get('authorization')`        | 401    | UNAUTHORIZED    | Authorization required                  | Zwróć błąd, przerwij wykonanie   |
+| 2   | Token wygasł/nieprawidłowy        | `getUser()` zwraca błąd                        | 401    | INVALID_TOKEN   | Invalid or expired authentication token | Zwróć błąd, przerwij wykonanie   |
+| 3   | Nieprawidłowy format query params | Parsing query fails                            | 400    | INVALID_REQUEST | Invalid query parameters                | Zwróć błąd z details             |
+| 4   | Filter nie jest enum              | `!["created","joined","all"].includes(filter)` | 400    | INVALID_INPUT   | Invalid filter value                    | Zwróć błąd z details             |
+| 5   | Page < 1                          | `page < 1`                                     | 400    | INVALID_INPUT   | Page must be a positive integer         | Zwróć błąd z details             |
+| 6   | Page nie jest liczbą              | `isNaN(page)`                                  | 400    | INVALID_INPUT   | Page must be a number                   | Zwróć błąd z details             |
+| 7   | Limit < 1                         | `limit < 1`                                    | 400    | INVALID_INPUT   | Limit must be at least 1                | Zwróć błąd z details             |
+| 8   | Limit > 100                       | `limit > 100`                                  | 400    | INVALID_INPUT   | Limit must be between 1 and 100         | Zwróć błąd z details             |
+| 9   | Limit nie jest liczbą             | `isNaN(limit)`                                 | 400    | INVALID_INPUT   | Limit must be a number                  | Zwróć błąd z details             |
+| 10  | Błąd połączenia z bazą            | Supabase connection error                      | 500    | DATABASE_ERROR  | Database connection failed              | Log błąd, zwróć ogólny komunikat |
+| 11  | Błąd zapytania SELECT             | SELECT fails                                   | 500    | DATABASE_ERROR  | Failed to fetch groups                  | Log błąd, zwróć komunikat        |
+| 12  | Błąd zapytania COUNT              | COUNT fails                                    | 500    | DATABASE_ERROR  | Failed to calculate total               | Log błąd, zwróć komunikat        |
+| 13  | Timeout zapytania                 | Query timeout                                  | 500    | DATABASE_ERROR  | Request timeout                         | Log błąd, zwróć komunikat        |
 
 ### Przykład implementacji obsługi błędów
 
@@ -487,15 +519,18 @@ WHERE p.user_id = $1 AND g.creator_id != $1;
 // Guard clauses na początku funkcji
 export const GET: APIRoute = async ({ request, locals }) => {
   // Guard 1: Sprawdź autentykację
-  const { data: { user }, error: authError } = await locals.supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await locals.supabase.auth.getUser();
 
   if (authError || !user) {
     return new Response(
       JSON.stringify({
         error: {
           code: "UNAUTHORIZED",
-          message: "Authorization required"
-        }
+          message: "Authorization required",
+        },
       }),
       { status: 401, headers: { "Content-Type": "application/json" } }
     );
@@ -506,7 +541,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   const queryParams = {
     filter: url.searchParams.get("filter"),
     page: url.searchParams.get("page"),
-    limit: url.searchParams.get("limit")
+    limit: url.searchParams.get("limit"),
   };
 
   let validated: GroupsListQuery;
@@ -521,10 +556,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
             code: "INVALID_INPUT",
             message: firstError.message,
             details: {
-              field: firstError.path.join('.'),
-              value: queryParams[firstError.path[0]]
-            }
-          }
+              field: firstError.path.join("."),
+              value: queryParams[firstError.path[0]],
+            },
+          },
         }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
@@ -538,16 +573,16 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     return new Response(JSON.stringify(result), {
       status: 200,
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error('[GET /api/groups] Error:', error);
+    console.error("[GET /api/groups] Error:", error);
     return new Response(
       JSON.stringify({
         error: {
           code: "DATABASE_ERROR",
-          message: "Failed to fetch groups. Please try again later."
-        }
+          message: "Failed to fetch groups. Please try again later.",
+        },
       }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
@@ -558,10 +593,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
 ### Logowanie błędów
 
 **Gdzie logować**:
+
 - Błędy 4xx (400, 401): Log tylko w trybie debug (opcjonalnie)
 - Błędy 5xx (500): ZAWSZE logować z pełnym stack trace
 
 **Co logować**:
+
 - Timestamp
 - User ID
 - Query parameters (dla debugowania)
@@ -569,13 +606,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
 - Stack trace (dla błędów 500)
 
 **Przykład**:
+
 ```typescript
-console.error('[GROUP_LIST_ERROR]', {
+console.error("[GROUP_LIST_ERROR]", {
   timestamp: new Date().toISOString(),
   userId: user?.id,
   queryParams: validated,
   error: error.message,
-  stack: error.stack
+  stack: error.stack,
 });
 ```
 
@@ -587,7 +625,7 @@ console.error('[GROUP_LIST_ERROR]', {
 
 1. **JOIN z participants dla COUNT**
    - **Problem**: Dla każdej grupy wykonujemy agregację COUNT(participants)
-   - **Wpływ**: O(n * m) gdzie n = liczba grup, m = avg liczba uczestników
+   - **Wpływ**: O(n \* m) gdzie n = liczba grup, m = avg liczba uczestników
    - **Mitygacja**: Użycie LEFT JOIN z GROUP BY (jedno zapytanie dla wszystkich grup)
 
 2. **Sprawdzanie is_drawn dla każdej grupy**
@@ -596,7 +634,7 @@ console.error('[GROUP_LIST_ERROR]', {
    - **Mitygacja**: Jedno zapytanie z WHERE group_id IN (...) dla wszystkich grup
 
 3. **COUNT query dla pagination**
-   - **Problem**: COUNT(*) na dużych tabelach może być wolny
+   - **Problem**: COUNT(\*) na dużych tabelach może być wolny
    - **Wpływ**: Dodatkowe ~50-100ms dla każdego żądania
    - **Mitygacja**: Cache wyniku COUNT na krótki czas (np. 30 sekund)
 
@@ -617,12 +655,14 @@ console.error('[GROUP_LIST_ERROR]', {
 
 // Użyj jednego zapytania z agregacją:
 const query = supabase
-  .from('groups')
-  .select(`
+  .from("groups")
+  .select(
+    `
     *,
     participants:participants(count),
     assignments:assignments(id)
-  `)
+  `
+  )
   .or(`creator_id.eq.${userId},participants.user_id.eq.${userId}`)
   .range((page - 1) * limit, page * limit - 1);
 ```
@@ -633,21 +673,18 @@ const query = supabase
 
 ```typescript
 // Po pobraniu listy grup:
-const groupIds = groups.map(g => g.id);
+const groupIds = groups.map((g) => g.id);
 
 // Jedno zapytanie dla wszystkich grup
-const { data: drawnGroups } = await supabase
-  .from('assignments')
-  .select('group_id')
-  .in('group_id', groupIds);
+const { data: drawnGroups } = await supabase.from("assignments").select("group_id").in("group_id", groupIds);
 
 // Utworzenie Set dla O(1) lookup
-const drawnGroupIds = new Set(drawnGroups?.map(a => a.group_id) || []);
+const drawnGroupIds = new Set(drawnGroups?.map((a) => a.group_id) || []);
 
 // Mapowanie is_drawn
-const groupsWithIsDrawn = groups.map(group => ({
+const groupsWithIsDrawn = groups.map((group) => ({
   ...group,
-  is_drawn: drawnGroupIds.has(group.id)
+  is_drawn: drawnGroupIds.has(group.id),
 }));
 ```
 
@@ -659,8 +696,8 @@ return new Response(JSON.stringify(result), {
   status: 200,
   headers: {
     "Content-Type": "application/json",
-    "Cache-Control": "private, max-age=30" // Cache na 30 sekund
-  }
+    "Cache-Control": "private, max-age=30", // Cache na 30 sekund
+  },
 });
 ```
 
@@ -680,13 +717,13 @@ return new Response(JSON.stringify(result), {
 
 ### Metryki do monitorowania
 
-| Metryka | Cel | Działanie przy przekroczeniu |
-|---------|-----|------------------------------|
-| Czas odpowiedzi (p95) | < 300ms | Optymalizacja zapytań, dodanie indeksów |
-| Czas odpowiedzi (p99) | < 500ms | Analiza slow queries, cache |
-| Liczba zapytań DB per request | <= 3 | Redukcja N+1 queries |
-| Cache hit rate | > 30% | Zwiększenie TTL cache |
-| Błędy 500 | < 0.1% | Analiza logów, naprawa błędów |
+| Metryka                       | Cel     | Działanie przy przekroczeniu            |
+| ----------------------------- | ------- | --------------------------------------- |
+| Czas odpowiedzi (p95)         | < 300ms | Optymalizacja zapytań, dodanie indeksów |
+| Czas odpowiedzi (p99)         | < 500ms | Analiza slow queries, cache             |
+| Liczba zapytań DB per request | <= 3    | Redukcja N+1 queries                    |
+| Cache hit rate                | > 30%   | Zwiększenie TTL cache                   |
+| Błędy 500                     | < 0.1%  | Analiza logów, naprawa błędów           |
 
 ### Indeksy bazodanowe wymagane dla wydajności
 
@@ -715,6 +752,7 @@ ON groups(id, created_at DESC);
 ```
 
 **Weryfikacja wydajności indeksów**:
+
 ```sql
 -- Sprawdź czy indeksy są używane
 EXPLAIN ANALYZE
@@ -935,11 +973,12 @@ async listGroups(
 ```
 
 **1.2. Dodaj import GroupsListQuery w GroupService**
+
 ```typescript
 import type {
   // ... existing imports
   GroupsListQuery,
-  PaginatedGroupsDTO
+  PaginatedGroupsDTO,
 } from "../../types";
 ```
 
@@ -950,8 +989,8 @@ import type {
 ```typescript
 // W pliku src/pages/api/groups/index.ts
 
-import { z } from 'zod';
-import type { GroupsListQuery } from '../../../types';
+import { z } from "zod";
+import type { GroupsListQuery } from "../../../types";
 
 // Definicja Zod schema dla query parameters
 const GroupsListQuerySchema = z.object({
@@ -963,7 +1002,7 @@ const GroupsListQuerySchema = z.object({
     .min(1, "Limit must be at least 1")
     .max(100, "Limit must be between 1 and 100")
     .optional()
-    .default(20)
+    .default(20),
 });
 ```
 
@@ -973,18 +1012,21 @@ const GroupsListQuerySchema = z.object({
 export const GET: APIRoute = async ({ request, locals }) => {
   // Guard 1: Check authentication
   const supabase = locals.supabase;
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
   if (authError || !user) {
     const errorResponse: ApiErrorResponse = {
       error: {
-        code: 'UNAUTHORIZED',
-        message: 'Authorization required'
-      }
+        code: "UNAUTHORIZED",
+        message: "Authorization required",
+      },
     };
     return new Response(JSON.stringify(errorResponse), {
       status: 401,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -993,7 +1035,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   const queryParams = {
     filter: url.searchParams.get("filter") || undefined,
     page: url.searchParams.get("page") || undefined,
-    limit: url.searchParams.get("limit") || undefined
+    limit: url.searchParams.get("limit") || undefined,
   };
 
   let validatedQuery: GroupsListQuery;
@@ -1004,30 +1046,30 @@ export const GET: APIRoute = async ({ request, locals }) => {
       const firstError = error.errors[0];
       const errorResponse: ApiErrorResponse = {
         error: {
-          code: 'INVALID_INPUT',
+          code: "INVALID_INPUT",
           message: firstError.message,
           details: {
-            field: firstError.path.join('.'),
-            value: queryParams[firstError.path[0] as keyof typeof queryParams]
-          }
-        }
+            field: firstError.path.join("."),
+            value: queryParams[firstError.path[0] as keyof typeof queryParams],
+          },
+        },
       };
       return new Response(JSON.stringify(errorResponse), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       });
     }
 
     // Unknown validation error
     const errorResponse: ApiErrorResponse = {
       error: {
-        code: 'VALIDATION_ERROR',
-        message: 'Query parameter validation failed'
-      }
+        code: "VALIDATION_ERROR",
+        message: "Query parameter validation failed",
+      },
     };
     return new Response(JSON.stringify(errorResponse), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -1039,23 +1081,23 @@ export const GET: APIRoute = async ({ request, locals }) => {
     return new Response(JSON.stringify(result), {
       status: 200,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         // Optional: Add cache headers for performance
-        'Cache-Control': 'private, max-age=30'
-      }
+        "Cache-Control": "private, max-age=30",
+      },
     });
   } catch (error) {
-    console.error('[GET /api/groups] Error:', error);
+    console.error("[GET /api/groups] Error:", error);
 
     const errorResponse: ApiErrorResponse = {
       error: {
-        code: 'DATABASE_ERROR',
-        message: 'Failed to fetch groups. Please try again later.'
-      }
+        code: "DATABASE_ERROR",
+        message: "Failed to fetch groups. Please try again later.",
+      },
     };
     return new Response(JSON.stringify(errorResponse), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { "Content-Type": "application/json" },
     });
   }
 };
@@ -1095,26 +1137,33 @@ ON assignments(group_id);
 ### Krok 4: Testy edge cases
 
 **4.1. Test: Użytkownik bez żadnych grup**
+
 - Oczekiwana odpowiedź: 200 z pustą tablicą data i total=0
 
 **4.2. Test: Filtr "created" gdy użytkownik nie utworzył żadnych grup**
+
 - Oczekiwana odpowiedź: 200 z pustą tablicą
 
 **4.3. Test: Filtr "joined" gdy użytkownik jest tylko twórcą**
+
 - Oczekiwana odpowiedź: 200 z pustą tablicą
 
 **4.4. Test: Strona poza zakresem (page=999)**
+
 - Oczekiwana odpowiedź: 200 z pustą tablicą data
 
 **4.5. Test: Limit=1 (minimalna wartość)**
+
 - Oczekiwana odpowiedź: 200 z 1 elementem
 
 **4.6. Test: Limit=100 (maksymalna wartość)**
+
 - Oczekiwana odpowiedź: 200 z maksymalnie 100 elementami
 
 ### Krok 5: Dokumentacja i komentarze
 
 **5.1. Dodaj JSDoc do metody listGroups**
+
 ```typescript
 /**
  * Lists all groups user created or participates in with pagination
@@ -1140,6 +1189,7 @@ ON assignments(group_id);
 ```
 
 **5.2. Aktualizuj API documentation**
+
 - Dodaj przykłady użycia endpointu
 - Dokumentuj wszystkie query parametry
 - Uwzględnij przykłady odpowiedzi dla różnych filtrów
@@ -1277,6 +1327,7 @@ Ten plan wdrożenia zapewnia kompletny przewodnik do stworzenia endpointu `GET /
 8. **Maintainability**: Logika biznesowa w serwisach
 
 **Kluczowe różnice od POST endpoint**:
+
 - GET używa query parameters zamiast request body
 - Zwraca tablicę obiektów zamiast pojedynczego
 - Wymaga obsługi paginacji i agregacji danych

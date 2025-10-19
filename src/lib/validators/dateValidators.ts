@@ -32,10 +32,6 @@ export function getMinimumFutureDate(daysFromNow: number = 1): Date {
  * @param maxDate - Maximum allowed date
  * @returns true if date is within range, false otherwise
  */
-export function isDateInRange(
-  date: Date,
-  minDate: Date,
-  maxDate: Date
-): boolean {
+export function isDateInRange(date: Date, minDate: Date, maxDate: Date): boolean {
   return date >= minDate && date <= maxDate;
 }

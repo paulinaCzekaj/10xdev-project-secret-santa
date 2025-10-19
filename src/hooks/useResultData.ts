@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import type { UseResultDataReturn, ResultViewModel, ApiError } from "../types";
+import type { UseResultDataReturn, ResultViewModel, ApiError, DrawResultResponseDTO } from "../types";
 
 /**
  * Mapuje błąd na odpowiedni obiekt ApiError

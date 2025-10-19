@@ -5,6 +5,7 @@
 Ten endpoint umożliwia uwierzytelnionym użytkownikom tworzenie nowych grup Secret Santa. Gdy grupa zostanie utworzona, twórca jest automatycznie dodawany jako pierwszy uczestnik grupy. Endpoint zwraca kompletne informacje o utworzonej grupie, w tym liczbę uczestników (która wynosi 1 po utworzeniu).
 
 **Kluczowe funkcjonalności**:
+
 - Utworzenie nowej grupy Secret Santa z nazwą, budżetem i datą zakończenia
 - Automatyczne dodanie twórcy jako uczestnika grupy
 - Walidacja danych wejściowych (budżet > 0, prawidłowy format daty)
@@ -15,15 +16,19 @@ Ten endpoint umożliwia uwierzytelnionym użytkownikom tworzenie nowych grup Sec
 ## 2. Szczegóły żądania
 
 ### Metoda HTTP
+
 `POST`
 
 ### Struktura URL
+
 ```
 /api/groups
 ```
 
 ### Nagłówki (Headers)
+
 **Wymagane**:
+
 - `Authorization: Bearer {access_token}` - Token autoryzacyjny z Supabase Auth
 - `Content-Type: application/json`
 
@@ -34,15 +39,17 @@ Ten endpoint umożliwia uwierzytelnionym użytkownikom tworzenie nowych grup Sec
 **Parametry Query**: Brak
 
 **Request Body** (wymagane wszystkie pola):
+
 ```typescript
 {
-  name: string;        // Nazwa grupy (min 1 znak, max 255 znaków)
-  budget: number;      // Budżet grupy (musi być > 0)
-  end_date: string;    // Data zakończenia w formacie ISO 8601
+  name: string; // Nazwa grupy (min 1 znak, max 255 znaków)
+  budget: number; // Budżet grupy (musi być > 0)
+  end_date: string; // Data zakończenia w formacie ISO 8601
 }
 ```
 
 **Przykład żądania**:
+
 ```json
 POST /api/groups
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -60,6 +67,7 @@ Content-Type: application/json
 ## 3. Wykorzystywane typy
 
 ### Command Models (Request)
+
 ```typescript
 // Zdefiniowane w src/types.ts
 CreateGroupCommand {
@@ -70,6 +78,7 @@ CreateGroupCommand {
 ```
 
 ### DTOs (Response)
+
 ```typescript
 // Zdefiniowane w src/types.ts
 GroupListItemDTO extends GroupDTO {
@@ -87,6 +96,7 @@ GroupListItemDTO extends GroupDTO {
 ```
 
 ### Error Response
+
 ```typescript
 // Zdefiniowane w src/types.ts
 ApiErrorResponse {
@@ -99,25 +109,21 @@ ApiErrorResponse {
 ```
 
 ### Database Types
+
 ```typescript
 // Używane wewnętrznie
-GroupInsert = TablesInsert<"groups">
-ParticipantInsert = TablesInsert<"participants">
+GroupInsert = TablesInsert<"groups">;
+ParticipantInsert = TablesInsert<"participants">;
 ```
 
 ### Validation Schema (Zod)
+
 ```typescript
 // Do utworzenia w src/pages/api/groups/index.ts
 const CreateGroupSchema = z.object({
-  name: z.string()
-    .min(1, "Name cannot be empty")
-    .max(255, "Name is too long")
-    .trim(),
-  budget: z.number()
-    .positive("Budget must be greater than 0")
-    .finite("Budget must be a valid number"),
-  end_date: z.string()
-    .datetime("Invalid date format. Use ISO 8601 format (e.g., 2025-12-25T23:59:59Z)")
+  name: z.string().min(1, "Name cannot be empty").max(255, "Name is too long").trim(),
+  budget: z.number().positive("Budget must be greater than 0").finite("Budget must be a valid number"),
+  end_date: z.string().datetime("Invalid date format. Use ISO 8601 format (e.g., 2025-12-25T23:59:59Z)"),
 });
 ```
 
@@ -126,6 +132,7 @@ const CreateGroupSchema = z.object({
 ## 4. Szczegóły odpowiedzi
 
 ### Odpowiedź sukcesu (201 Created)
+
 ```json
 {
   "id": 1,
@@ -144,6 +151,7 @@ const CreateGroupSchema = z.object({
 ### Odpowiedzi błędów
 
 #### 401 Unauthorized - Brak autoryzacji
+
 ```json
 {
   "error": {
@@ -154,6 +162,7 @@ const CreateGroupSchema = z.object({
 ```
 
 #### 401 Unauthorized - Nieprawidłowy token
+
 ```json
 {
   "error": {
@@ -164,6 +173,7 @@ const CreateGroupSchema = z.object({
 ```
 
 #### 422 Unprocessable Entity - Brak wymaganych pól
+
 ```json
 {
   "error": {
@@ -177,6 +187,7 @@ const CreateGroupSchema = z.object({
 ```
 
 #### 400 Bad Request - Nieprawidłowe dane wejściowe
+
 ```json
 {
   "error": {
@@ -191,6 +202,7 @@ const CreateGroupSchema = z.object({
 ```
 
 #### 400 Bad Request - Nieprawidłowy format daty
+
 ```json
 {
   "error": {
@@ -205,6 +217,7 @@ const CreateGroupSchema = z.object({
 ```
 
 #### 500 Internal Server Error - Błąd serwera
+
 ```json
 {
   "error": {
@@ -244,6 +257,7 @@ const CreateGroupSchema = z.object({
 ### Szczegóły interakcji z bazą danych
 
 **Operacja 1: Wstawienie grupy**
+
 ```sql
 INSERT INTO groups (name, budget, end_date, creator_id, created_at, updated_at)
 VALUES ($1, $2, $3, $4, NOW(), NOW())
@@ -251,6 +265,7 @@ RETURNING *;
 ```
 
 **Operacja 2: Dodanie twórcy jako uczestnika**
+
 ```sql
 INSERT INTO participants (group_id, user_id, name, email, created_at)
 SELECT $1, id, email, email, NOW()
@@ -260,6 +275,7 @@ RETURNING *;
 ```
 
 **Operacja 3: Pobranie liczby uczestników**
+
 ```sql
 SELECT COUNT(*) FROM participants WHERE group_id = $1;
 ```
@@ -271,18 +287,21 @@ SELECT COUNT(*) FROM participants WHERE group_id = $1;
 ## 6. Względy bezpieczeństwa
 
 ### Uwierzytelnianie (Authentication)
+
 - **Mechanizm**: Bearer token w nagłówku Authorization
-- **Walidacja**: 
+- **Walidacja**:
   - Sprawdzenie obecności nagłówka Authorization
   - Weryfikacja tokenu przez Supabase Auth (`context.locals.supabase.auth.getUser()`)
   - Odrzucenie żądania z kodem 401, jeśli token jest nieprawidłowy lub wygasł
 
 ### Autoryzacja (Authorization)
+
 - **Uprawnienia**: Każdy uwierzytelniony użytkownik może utworzyć grupę
 - **Własność**: Twórca automatycznie staje się właścicielem grupy (`creator_id`)
 - **Przyszłe operacje**: Tylko twórca będzie mógł modyfikować/usuwać grupę (sprawdzane w innych endpointach)
 
 ### Walidacja danych wejściowych
+
 1. **Sanityzacja**:
    - Usunięcie białych znaków z początku i końca nazwy (`.trim()`)
    - Walidacja typu danych (string, number)
@@ -298,19 +317,20 @@ SELECT COUNT(*) FROM participants WHERE group_id = $1;
    - Budget: wartość skończona (finite)
 
 ### Zabezpieczenia bazy danych
+
 - **Parametryzowane zapytania**: Supabase Client automatycznie parametryzuje zapytania (ochrona przed SQL injection)
 - **Row Level Security (RLS)**: Może być włączone na poziomie bazy danych
 - **Transakcje**: Zapewnienie atomowości operacji (wszystkie sukces lub wszystkie rollback)
 
 ### Potencjalne zagrożenia i mitygacje
 
-| Zagrożenie | Opis | Mitygacja |
-|------------|------|-----------|
-| SQL Injection | Wstrzyknięcie złośliwego SQL | Użycie Supabase Client (automatyczna parametryzacja) |
-| DOS - masowe tworzenie grup | Użytkownik tworzy tysiące grup | Rate limiting (do rozważenia w przyszłości) |
-| Nieprawidłowe daty | Data w przeszłości lub dalekiej przyszłości | Walidacja zakresu dat (opcjonalnie) |
-| XSS w nazwie grupy | JavaScript w nazwie grupy | Sanityzacja na frontendzie + escaping przy renderowaniu |
-| Przekroczenie limitu długości | Bardzo długie stringi | Walidacja max length (255 znaków) |
+| Zagrożenie                    | Opis                                        | Mitygacja                                               |
+| ----------------------------- | ------------------------------------------- | ------------------------------------------------------- |
+| SQL Injection                 | Wstrzyknięcie złośliwego SQL                | Użycie Supabase Client (automatyczna parametryzacja)    |
+| DOS - masowe tworzenie grup   | Użytkownik tworzy tysiące grup              | Rate limiting (do rozważenia w przyszłości)             |
+| Nieprawidłowe daty            | Data w przeszłości lub dalekiej przyszłości | Walidacja zakresu dat (opcjonalnie)                     |
+| XSS w nazwie grupy            | JavaScript w nazwie grupy                   | Sanityzacja na frontendzie + escaping przy renderowaniu |
+| Przekroczenie limitu długości | Bardzo długie stringi                       | Walidacja max length (255 znaków)                       |
 
 ---
 
@@ -322,24 +342,24 @@ SELECT COUNT(*) FROM participants WHERE group_id = $1;
 
 ### Szczegółowa tabela błędów
 
-| Nr | Scenariusz | Warunek | Status | Kod błędu | Wiadomość | Akcja |
-|----|-----------|---------|--------|-----------|-----------|-------|
-| 1 | Brak nagłówka Authorization | `!request.headers.get('authorization')` | 401 | UNAUTHORIZED | Authorization required | Zwróć błąd, przerwij wykonanie |
-| 2 | Nieprawidłowy format tokenu | Token nie zaczyna się od "Bearer " | 401 | INVALID_TOKEN | Invalid authorization format | Zwróć błąd, przerwij wykonanie |
-| 3 | Token wygasł/nieprawidłowy | `getUser()` zwraca błąd | 401 | INVALID_TOKEN | Invalid or expired authentication token | Zwróć błąd, przerwij wykonanie |
-| 4 | Brak body w żądaniu | `!request.body` lub parsing fails | 422 | INVALID_REQUEST | Request body is required | Zwróć błąd, przerwij wykonanie |
-| 5 | Brak pola 'name' | `!name` po parsingu | 422 | MISSING_FIELD | Missing required field: name | Zwróć błąd z details |
-| 6 | Brak pola 'budget' | `budget === undefined` | 422 | MISSING_FIELD | Missing required field: budget | Zwróć błąd z details |
-| 7 | Brak pola 'end_date' | `!end_date` | 422 | MISSING_FIELD | Missing required field: end_date | Zwróć błąd z details |
-| 8 | Pusta nazwa | `name.trim().length === 0` | 400 | INVALID_INPUT | Name cannot be empty | Zwróć błąd z details |
-| 9 | Nazwa zbyt długa | `name.length > 255` | 400 | INVALID_INPUT | Name is too long (max 255 characters) | Zwróć błąd z details |
-| 10 | Budget <= 0 | `budget <= 0` | 400 | INVALID_INPUT | Budget must be greater than 0 | Zwróć błąd z details |
-| 11 | Budget nie jest liczbą | `!isFinite(budget)` | 400 | INVALID_INPUT | Budget must be a valid number | Zwróć błąd z details |
-| 12 | Nieprawidłowy format daty | Walidacja Zod `.datetime()` fails | 400 | INVALID_INPUT | Invalid date format. Use ISO 8601 | Zwróć błąd z details |
-| 13 | Błąd połączenia z bazą | Supabase connection error | 500 | DATABASE_ERROR | Database connection failed | Log błąd, zwróć ogólny komunikat |
-| 14 | Błąd wstawienia grupy | INSERT fails | 500 | DATABASE_ERROR | Failed to create group | Log błąd, rollback transakcji |
-| 15 | Błąd dodania uczestnika | INSERT participants fails | 500 | DATABASE_ERROR | Failed to add creator as participant | Log błąd, rollback transakcji |
-| 16 | Constraint violation | Naruszenie ograniczenia DB | 500 | DATABASE_ERROR | Data integrity error | Log błąd, rollback |
+| Nr  | Scenariusz                  | Warunek                                 | Status | Kod błędu       | Wiadomość                               | Akcja                            |
+| --- | --------------------------- | --------------------------------------- | ------ | --------------- | --------------------------------------- | -------------------------------- |
+| 1   | Brak nagłówka Authorization | `!request.headers.get('authorization')` | 401    | UNAUTHORIZED    | Authorization required                  | Zwróć błąd, przerwij wykonanie   |
+| 2   | Nieprawidłowy format tokenu | Token nie zaczyna się od "Bearer "      | 401    | INVALID_TOKEN   | Invalid authorization format            | Zwróć błąd, przerwij wykonanie   |
+| 3   | Token wygasł/nieprawidłowy  | `getUser()` zwraca błąd                 | 401    | INVALID_TOKEN   | Invalid or expired authentication token | Zwróć błąd, przerwij wykonanie   |
+| 4   | Brak body w żądaniu         | `!request.body` lub parsing fails       | 422    | INVALID_REQUEST | Request body is required                | Zwróć błąd, przerwij wykonanie   |
+| 5   | Brak pola 'name'            | `!name` po parsingu                     | 422    | MISSING_FIELD   | Missing required field: name            | Zwróć błąd z details             |
+| 6   | Brak pola 'budget'          | `budget === undefined`                  | 422    | MISSING_FIELD   | Missing required field: budget          | Zwróć błąd z details             |
+| 7   | Brak pola 'end_date'        | `!end_date`                             | 422    | MISSING_FIELD   | Missing required field: end_date        | Zwróć błąd z details             |
+| 8   | Pusta nazwa                 | `name.trim().length === 0`              | 400    | INVALID_INPUT   | Name cannot be empty                    | Zwróć błąd z details             |
+| 9   | Nazwa zbyt długa            | `name.length > 255`                     | 400    | INVALID_INPUT   | Name is too long (max 255 characters)   | Zwróć błąd z details             |
+| 10  | Budget <= 0                 | `budget <= 0`                           | 400    | INVALID_INPUT   | Budget must be greater than 0           | Zwróć błąd z details             |
+| 11  | Budget nie jest liczbą      | `!isFinite(budget)`                     | 400    | INVALID_INPUT   | Budget must be a valid number           | Zwróć błąd z details             |
+| 12  | Nieprawidłowy format daty   | Walidacja Zod `.datetime()` fails       | 400    | INVALID_INPUT   | Invalid date format. Use ISO 8601       | Zwróć błąd z details             |
+| 13  | Błąd połączenia z bazą      | Supabase connection error               | 500    | DATABASE_ERROR  | Database connection failed              | Log błąd, zwróć ogólny komunikat |
+| 14  | Błąd wstawienia grupy       | INSERT fails                            | 500    | DATABASE_ERROR  | Failed to create group                  | Log błąd, rollback transakcji    |
+| 15  | Błąd dodania uczestnika     | INSERT participants fails               | 500    | DATABASE_ERROR  | Failed to add creator as participant    | Log błąd, rollback transakcji    |
+| 16  | Constraint violation        | Naruszenie ograniczenia DB              | 500    | DATABASE_ERROR  | Data integrity error                    | Log błąd, rollback               |
 
 ### Przykład implementacji obsługi błędów
 
@@ -350,8 +370,8 @@ if (!authHeader) {
     JSON.stringify({
       error: {
         code: "UNAUTHORIZED",
-        message: "Authorization required"
-      }
+        message: "Authorization required",
+      },
     }),
     { status: 401 }
   );
@@ -369,10 +389,10 @@ try {
           code: "INVALID_INPUT",
           message: firstError.message,
           details: {
-            field: firstError.path.join('.'),
-            value: firstError.input
-          }
-        }
+            field: firstError.path.join("."),
+            value: firstError.input,
+          },
+        },
       }),
       { status: 400 }
     );
@@ -384,13 +404,13 @@ try {
   const result = await groupService.createGroup(userId, command);
   return new Response(JSON.stringify(result), { status: 201 });
 } catch (error) {
-  console.error('Failed to create group:', error);
+  console.error("Failed to create group:", error);
   return new Response(
     JSON.stringify({
       error: {
         code: "DATABASE_ERROR",
-        message: "Failed to create group. Please try again later."
-      }
+        message: "Failed to create group. Please try again later.",
+      },
     }),
     { status: 500 }
   );
@@ -400,10 +420,12 @@ try {
 ### Logowanie błędów
 
 **Gdzie logować**:
+
 - Błędy 4xx (400, 401, 422): Log tylko w trybie debug (opcjonalnie)
 - Błędy 5xx (500): ZAWSZE logować z pełnym stack trace
 
 **Co logować**:
+
 - Timestamp
 - User ID (jeśli dostępny)
 - Typ błędu
@@ -411,12 +433,13 @@ try {
 - Request data (bez wrażliwych informacji)
 
 **Przykład**:
+
 ```typescript
-console.error('[GROUP_CREATE_ERROR]', {
+console.error("[GROUP_CREATE_ERROR]", {
   timestamp: new Date().toISOString(),
   userId: user?.id,
   error: error.message,
-  stack: error.stack
+  stack: error.stack,
 });
 ```
 
@@ -444,6 +467,7 @@ console.error('[GROUP_CREATE_ERROR]', {
 ### Strategie optymalizacji
 
 #### Optymalizacja 1: Połączenie operacji bazodanowych
+
 ```typescript
 // Zamiast trzech zapytań:
 // 1. INSERT group
@@ -461,7 +485,7 @@ new_participant AS (
   SELECT id, $4, $5, $6 FROM new_group
   RETURNING group_id
 )
-SELECT 
+SELECT
   g.*,
   1 as participants_count,
   true as is_creator
@@ -469,6 +493,7 @@ FROM new_group g;
 ```
 
 #### Optymalizacja 2: Cache danych użytkownika
+
 ```typescript
 // W middleware: cache user data w context.locals
 context.locals.user = await supabase.auth.getUser();
@@ -478,14 +503,15 @@ const user = context.locals.user;
 ```
 
 #### Optymalizacja 3: Asynchroniczne operacje
+
 ```typescript
 // Jeśli wysyłanie powiadomień będzie wymagane:
 // Nie czekaj na wysłanie emaila przed zwróceniem odpowiedzi
 const group = await groupService.createGroup(userId, command);
 
 // Fire and forget - asynchroniczne powiadomienie
-emailService.sendGroupCreatedNotification(group).catch(err => {
-  console.error('Failed to send notification:', err);
+emailService.sendGroupCreatedNotification(group).catch((err) => {
+  console.error("Failed to send notification:", err);
 });
 
 return new Response(JSON.stringify(group), { status: 201 });
@@ -493,12 +519,12 @@ return new Response(JSON.stringify(group), { status: 201 });
 
 ### Metryki do monitorowania
 
-| Metryka | Cel | Działanie przy przekroczeniu |
-|---------|-----|------------------------------|
-| Czas odpowiedzi | < 200ms (p95) | Optymalizacja zapytań DB |
-| Liczba utworzonych grup/użytkownika/dzień | < 10 | Implementacja rate limiting |
-| Błędy 500 | < 0.1% | Analiza logów, naprawa błędów |
-| Czas transakcji DB | < 50ms | Optymalizacja zapytań |
+| Metryka                                   | Cel           | Działanie przy przekroczeniu  |
+| ----------------------------------------- | ------------- | ----------------------------- |
+| Czas odpowiedzi                           | < 200ms (p95) | Optymalizacja zapytań DB      |
+| Liczba utworzonych grup/użytkownika/dzień | < 10          | Implementacja rate limiting   |
+| Błędy 500                                 | < 0.1%        | Analiza logów, naprawa błędów |
+| Czas transakcji DB                        | < 50ms        | Optymalizacja zapytań         |
 
 ### Indeksy bazodanowe wymagane dla wydajności
 
@@ -517,6 +543,7 @@ CREATE INDEX idx_groups_created_at ON groups(created_at DESC);
 ## 9. Etapy wdrożenia
 
 ### Krok 1: Przygotowanie struktury projektu
+
 ```bash
 # Utworzenie katalogu dla serwisów (jeśli nie istnieje)
 mkdir -p src/lib/services
@@ -528,32 +555,26 @@ touch src/lib/services/group.service.ts
 ### Krok 2: Implementacja serwisu grupowego (`src/lib/services/group.service.ts`)
 
 **2.1. Importy i typy**
+
 ```typescript
-import type { SupabaseClient } from '../db/supabase.client';
-import type {
-  CreateGroupCommand,
-  GroupListItemDTO,
-  UserId,
-  GroupInsert,
-  ParticipantInsert
-} from '../types';
+import type { SupabaseClient } from "../db/supabase.client";
+import type { CreateGroupCommand, GroupListItemDTO, UserId, GroupInsert, ParticipantInsert } from "../types";
 ```
 
 **2.2. Definicja klasy serwisu**
+
 ```typescript
 export class GroupService {
   constructor(private supabase: SupabaseClient) {}
 
-  async createGroup(
-    userId: UserId,
-    command: CreateGroupCommand
-  ): Promise<GroupListItemDTO> {
+  async createGroup(userId: UserId, command: CreateGroupCommand): Promise<GroupListItemDTO> {
     // Implementacja w kolejnych krokach
   }
 }
 ```
 
 **2.3. Implementacja metody createGroup**
+
 ```typescript
 async createGroup(
   userId: UserId,
@@ -629,47 +650,47 @@ async createGroup(
 ### Krok 3: Utworzenie endpoint handlera (`src/pages/api/groups/index.ts`)
 
 **3.1. Struktura pliku**
+
 ```typescript
-import type { APIRoute } from 'astro';
-import { z } from 'zod';
-import { GroupService } from '../../../lib/services/group.service';
-import type { CreateGroupCommand, ApiErrorResponse } from '../../../types';
+import type { APIRoute } from "astro";
+import { z } from "zod";
+import { GroupService } from "../../../lib/services/group.service";
+import type { CreateGroupCommand, ApiErrorResponse } from "../../../types";
 
 export const prerender = false;
 ```
 
 **3.2. Definicja Zod schema**
+
 ```typescript
 const CreateGroupSchema = z.object({
-  name: z.string()
-    .min(1, "Name cannot be empty")
-    .max(255, "Name is too long")
-    .trim(),
-  budget: z.number()
-    .positive("Budget must be greater than 0")
-    .finite("Budget must be a valid number"),
-  end_date: z.string()
-    .datetime("Invalid date format. Use ISO 8601 format")
+  name: z.string().min(1, "Name cannot be empty").max(255, "Name is too long").trim(),
+  budget: z.number().positive("Budget must be greater than 0").finite("Budget must be a valid number"),
+  end_date: z.string().datetime("Invalid date format. Use ISO 8601 format"),
 });
 ```
 
 **3.3. Implementacja POST handler**
+
 ```typescript
 export const POST: APIRoute = async ({ request, locals }) => {
   // Guard 1: Sprawdź autentykację
   const supabase = locals.supabase;
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
   if (authError || !user) {
     const errorResponse: ApiErrorResponse = {
       error: {
-        code: 'UNAUTHORIZED',
-        message: 'Authorization required'
-      }
+        code: "UNAUTHORIZED",
+        message: "Authorization required",
+      },
     };
     return new Response(JSON.stringify(errorResponse), {
       status: 401,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -680,13 +701,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const errorResponse: ApiErrorResponse = {
       error: {
-        code: 'INVALID_REQUEST',
-        message: 'Invalid JSON in request body'
-      }
+        code: "INVALID_REQUEST",
+        message: "Invalid JSON in request body",
+      },
     };
     return new Response(JSON.stringify(errorResponse), {
       status: 422,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -699,30 +720,30 @@ export const POST: APIRoute = async ({ request, locals }) => {
       const firstError = error.errors[0];
       const errorResponse: ApiErrorResponse = {
         error: {
-          code: firstError.message.includes('required') ? 'MISSING_FIELD' : 'INVALID_INPUT',
+          code: firstError.message.includes("required") ? "MISSING_FIELD" : "INVALID_INPUT",
           message: firstError.message,
           details: {
-            field: firstError.path.join('.'),
-            value: firstError.input
-          }
-        }
+            field: firstError.path.join("."),
+            value: firstError.input,
+          },
+        },
       };
       return new Response(JSON.stringify(errorResponse), {
-        status: firstError.message.includes('required') ? 422 : 400,
-        headers: { 'Content-Type': 'application/json' }
+        status: firstError.message.includes("required") ? 422 : 400,
+        headers: { "Content-Type": "application/json" },
       });
     }
 
     // Nieznany błąd walidacji
     const errorResponse: ApiErrorResponse = {
       error: {
-        code: 'VALIDATION_ERROR',
-        message: 'Validation failed'
-      }
+        code: "VALIDATION_ERROR",
+        message: "Validation failed",
+      },
     };
     return new Response(JSON.stringify(errorResponse), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -733,20 +754,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     return new Response(JSON.stringify(group), {
       status: 201,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error('[POST /api/groups] Error:', error);
-    
+    console.error("[POST /api/groups] Error:", error);
+
     const errorResponse: ApiErrorResponse = {
       error: {
-        code: 'DATABASE_ERROR',
-        message: 'Failed to create group. Please try again later.'
-      }
+        code: "DATABASE_ERROR",
+        message: "Failed to create group. Please try again later.",
+      },
     };
     return new Response(JSON.stringify(errorResponse), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { "Content-Type": "application/json" },
     });
   }
 };
@@ -755,15 +776,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
 ### Krok 4: Weryfikacja middleware (`src/middleware/index.ts`)
 
 **4.1. Sprawdź czy middleware poprawnie inicjalizuje Supabase client**
+
 ```typescript
 // Plik powinien już zawierać inicjalizację supabase w locals
 // Upewnij się, że context.locals.supabase jest dostępne
 ```
 
 **4.2. Jeśli nie istnieje, dodaj inicjalizację**
+
 ```typescript
-import { defineMiddleware } from 'astro:middleware';
-import { supabaseClient } from './db/supabase.client';
+import { defineMiddleware } from "astro:middleware";
+import { supabaseClient } from "./db/supabase.client";
 
 export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.supabase = supabaseClient;
@@ -774,10 +797,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
 ### Krok 5: Aktualizacja typów Astro (`src/env.d.ts`)
 
 **5.1. Dodaj typy dla locals**
+
 ```typescript
 /// <reference types="astro/client" />
 
-import type { SupabaseClient } from './db/supabase.client';
+import type { SupabaseClient } from "./db/supabase.client";
 
 declare namespace App {
   interface Locals {
@@ -898,44 +922,49 @@ HAVING COUNT(p.id) = 0;
 ### Krok 8: Obsługa Edge Cases i finalne poprawki
 
 **8.1. Dodanie walidacji daty w przyszłości (opcjonalnie)**
+
 ```typescript
 // W CreateGroupSchema:
 end_date: z.string()
   .datetime("Invalid date format")
   .refine((date) => new Date(date) > new Date(), {
-    message: "End date must be in the future"
-  })
+    message: "End date must be in the future",
+  });
 ```
 
 **8.2. Dodanie limitu długości nazwy na poziomie bazy (jeśli nie istnieje)**
+
 ```sql
 -- W migracji:
-ALTER TABLE groups 
-ADD CONSTRAINT check_name_length 
+ALTER TABLE groups
+ADD CONSTRAINT check_name_length
 CHECK (char_length(name) <= 255);
 ```
 
 **8.3. Dodanie logowania dla celów monitorowania**
+
 ```typescript
 // W GroupService.createGroup:
-console.log('[GroupService.createGroup] Creating group:', {
+console.log("[GroupService.createGroup] Creating group:", {
   userId,
   groupName: command.name,
-  budget: command.budget
+  budget: command.budget,
 });
 ```
 
 ### Krok 9: Dokumentacja
 
 **9.1. Aktualizacja API documentation**
+
 - Dodaj przykłady użycia endpointu do dokumentacji API
 - Uwzględnij wszystkie możliwe kody błędów
 
 **9.2. Dodanie komentarzy JSDoc**
+
 ```typescript
 /**
  * Creates a new Secret Santa group
- * 
+ *
  * @param userId - The ID of the user creating the group (from auth token)
  * @param command - The group creation data
  * @returns The created group with participants count
@@ -978,26 +1007,29 @@ Przed zatwierdzeniem implementacji, sprawdź:
 Po implementacji podstawowej funkcjonalności, można rozważyć następujące ulepszenia:
 
 ### 10.1. Rate Limiting
+
 ```typescript
 // Ograniczenie do 10 grup na użytkownika dziennie
 const dailyLimit = await checkGroupCreationLimit(userId);
 if (dailyLimit >= 10) {
-  return errorResponse(429, 'RATE_LIMIT_EXCEEDED', 'Daily group creation limit reached');
+  return errorResponse(429, "RATE_LIMIT_EXCEEDED", "Daily group creation limit reached");
 }
 ```
 
 ### 10.2. Walidacja zakresu dat
+
 ```typescript
 // Data końcowa nie może być za daleko w przyszłości (np. max 1 rok)
 const maxDate = new Date();
 maxDate.setFullYear(maxDate.getFullYear() + 1);
 
 if (new Date(command.end_date) > maxDate) {
-  return errorResponse(400, 'INVALID_INPUT', 'End date cannot be more than 1 year in the future');
+  return errorResponse(400, "INVALID_INPUT", "End date cannot be more than 1 year in the future");
 }
 ```
 
 ### 10.3. Wsparcie dla opisów grup
+
 ```typescript
 // Dodanie opcjonalnego pola description
 export interface CreateGroupCommand {
@@ -1009,18 +1041,20 @@ export interface CreateGroupCommand {
 ```
 
 ### 10.4. Powiadomienia email
+
 ```typescript
 // Wysłanie emaila potwierdzającego utworzenie grupy
 await emailService.sendGroupCreatedEmail(user.email, group);
 ```
 
 ### 10.5. Analytics
+
 ```typescript
 // Tracking utworzenia grupy dla celów analitycznych
-analytics.track('group_created', {
+analytics.track("group_created", {
   userId: user.id,
   groupId: group.id,
-  budget: group.budget
+  budget: group.budget,
 });
 ```
 
@@ -1038,4 +1072,3 @@ Ten plan wdrożenia zapewnia kompletny przewodnik do stworzenia endpointu `POST 
 6. **Type Safety**: Pełne typowanie TypeScript
 
 Implementacja powinna zająć około 2-4 godzin dla doświadczonego developera, włączając testy i dokumentację.
-

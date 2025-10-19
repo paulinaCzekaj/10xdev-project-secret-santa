@@ -31,13 +31,13 @@ This refactoring project modernized the Secret Santa application's architecture 
 
 ### Key Metrics
 
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| **GroupView.tsx** | 468 lines | 289 lines | -38% |
-| **useGroupData.ts** | 117 lines | 81 lines | -31% |
-| **useParticipants.ts** | 163 lines | 105 lines | -36% |
-| **useExclusions.ts** | 127 lines | 86 lines | -32% |
-| **Total duplicated code** | ~385 lines | 0 lines | -100% |
+| Metric                    | Before     | After     | Change |
+| ------------------------- | ---------- | --------- | ------ |
+| **GroupView.tsx**         | 468 lines  | 289 lines | -38%   |
+| **useGroupData.ts**       | 117 lines  | 81 lines  | -31%   |
+| **useParticipants.ts**    | 163 lines  | 105 lines | -36%   |
+| **useExclusions.ts**      | 127 lines  | 86 lines  | -32%   |
+| **Total duplicated code** | ~385 lines | 0 lines   | -100%  |
 
 ---
 
@@ -57,6 +57,7 @@ src/
 ```
 
 **Problems:**
+
 - ❌ Duplicated auth token management in every hook
 - ❌ Inconsistent error handling
 - ❌ Mixed concerns (UI + logic + transformations)
@@ -88,6 +89,7 @@ src/
 ```
 
 **Benefits:**
+
 - ✅ Single source of truth for API calls
 - ✅ Consistent auth & error handling
 - ✅ Separated concerns
@@ -105,6 +107,7 @@ src/
 **Location:** `src/services/apiClient.ts`
 
 **Features:**
+
 - ✅ Automatic auth token injection
 - ✅ Centralized error handling
 - ✅ Type-safe HTTP methods
@@ -116,16 +119,16 @@ src/
 ```typescript
 class ApiClient {
   // GET request
-  async get<T>(url: string): Promise<T>
+  async get<T>(url: string): Promise<T>;
 
   // POST request
-  async post<T, D = unknown>(url: string, data?: D): Promise<T>
+  async post<T, D = unknown>(url: string, data?: D): Promise<T>;
 
   // PATCH request
-  async patch<T, D = unknown>(url: string, data: D): Promise<T>
+  async patch<T, D = unknown>(url: string, data: D): Promise<T>;
 
   // DELETE request
-  async delete<T = void>(url: string): Promise<T>
+  async delete<T = void>(url: string): Promise<T>;
 }
 
 // Singleton instance
@@ -142,7 +145,7 @@ export const apiClient = new ApiClient();
 
 ```typescript
 // When you call:
-await apiClient.get('/api/groups/123');
+await apiClient.get("/api/groups/123");
 
 // It automatically:
 // 1. Gets session token from Supabase
@@ -181,7 +184,7 @@ export const groupsService = {
 **Usage:**
 
 ```typescript
-import { groupsService } from '@/services/groupsService';
+import { groupsService } from "@/services/groupsService";
 
 // Get group
 const group = await groupsService.getById(123);
@@ -190,12 +193,12 @@ const group = await groupsService.getById(123);
 const newGroup = await groupsService.create({
   name: "Christmas 2025",
   budget: 100,
-  end_date: "2025-12-25T00:00:00Z"
+  end_date: "2025-12-25T00:00:00Z",
 });
 
 // Update group
 const updated = await groupsService.update(123, {
-  budget: 150
+  budget: 150,
 });
 
 // Delete group
@@ -232,7 +235,7 @@ export const participantsService = {
 **Usage:**
 
 ```typescript
-import { participantsService } from '@/services/participantsService';
+import { participantsService } from "@/services/participantsService";
 
 // Get participants
 const { data } = await participantsService.getByGroupId(123);
@@ -240,7 +243,7 @@ const { data } = await participantsService.getByGroupId(123);
 // Add participant
 const participant = await participantsService.create(123, {
   name: "Jan Kowalski",
-  email: "jan@example.com" // optional
+  email: "jan@example.com", // optional
 });
 
 // Access token for unregistered users
@@ -251,7 +254,7 @@ if (participant.access_token) {
 
 // Update participant
 await participantsService.update(456, {
-  name: "Jan Nowak"
+  name: "Jan Nowak",
 });
 
 // Delete participant
@@ -284,7 +287,7 @@ export const exclusionsService = {
 **Usage:**
 
 ```typescript
-import { exclusionsService } from '@/services/exclusionsService';
+import { exclusionsService } from "@/services/exclusionsService";
 
 // Get exclusions
 const { data } = await exclusionsService.getByGroupId(123);
@@ -292,7 +295,7 @@ const { data } = await exclusionsService.getByGroupId(123);
 // Add exclusion (A cannot draw B)
 const exclusion = await exclusionsService.create(123, {
   blocker_participant_id: 1, // Person A
-  blocked_participant_id: 2  // Person B
+  blocked_participant_id: 2, // Person B
 });
 
 // Delete exclusion
@@ -406,6 +409,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
 ```
 
 **Benefits:**
+
 - ✅ Only one modal can be open at a time (prevents bugs)
 - ✅ Type-safe modal types
 - ✅ Cleaner code (1 hook vs 7 states)
@@ -434,7 +438,7 @@ const groupViewModel = useMemo(() => {
 }, [group]);
 
 const participantViewModels = useMemo(() => {
-  return participants.map(p => {
+  return participants.map((p) => {
     const isCurrentUser = p.user_id === currentUserId;
     // ... 25+ more lines
   });
@@ -468,9 +472,9 @@ interface UseGroupViewModelParams {
 }
 
 const {
-  groupViewModel,           // GroupViewModel | null
-  participantViewModels,    // ParticipantViewModel[]
-  exclusionViewModels       // ExclusionViewModel[]
+  groupViewModel, // GroupViewModel | null
+  participantViewModels, // ParticipantViewModel[]
+  exclusionViewModels, // ExclusionViewModel[]
 } = useGroupViewModel(params);
 ```
 
@@ -529,6 +533,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
 ```
 
 **Benefits:**
+
 - ✅ Separated transformation logic from UI
 - ✅ Testable in isolation
 - ✅ Reusable across components
@@ -553,6 +558,7 @@ if (isLoading && !group) {
 ```
 
 **Features:**
+
 - Animated pulse effect
 - Mimics actual page structure
 - No props required
@@ -569,7 +575,7 @@ if (isLoading && !group) {
 
 ```typescript
 interface GroupViewErrorProps {
-  error: ApiError;     // Error object with message
+  error: ApiError; // Error object with message
   onRetry: () => void; // Retry callback
 }
 ```
@@ -583,6 +589,7 @@ if (groupError) {
 ```
 
 **Features:**
+
 - Error icon
 - Error message display
 - Retry button with icon
@@ -605,6 +612,7 @@ if (!group) {
 ```
 
 **Features:**
+
 - Clear message
 - Back to dashboard button
 - No props required
@@ -625,8 +633,7 @@ export const groupsService = {
   // ... existing methods
 
   // Add new method
-  duplicate: (groupId: number): Promise<GroupDTO> =>
-    apiClient.post<GroupDTO>(`/api/groups/${groupId}/duplicate`),
+  duplicate: (groupId: number): Promise<GroupDTO> => apiClient.post<GroupDTO>(`/api/groups/${groupId}/duplicate`),
 };
 ```
 
@@ -693,7 +700,7 @@ type ModalType =
   | "editParticipant"
   | "deleteParticipant"
   | "drawConfirmation"
-  | "shareGroup";  // ← Add new type
+  | "shareGroup"; // ← Add new type
 ```
 
 **Step 2:** Add convenience method
@@ -746,7 +753,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
 // ❌ Old direct fetch pattern
 const fetchData = async () => {
   const session = await supabaseClient.auth.getSession();
-  const response = await fetch('/api/groups/123', {
+  const response = await fetch("/api/groups/123", {
     headers: {
       Authorization: `Bearer ${session.data.session?.access_token}`,
     },
@@ -760,7 +767,7 @@ const fetchData = async () => {
 
 ```typescript
 // ✅ New service pattern
-import { groupsService } from '@/services/groupsService';
+import { groupsService } from "@/services/groupsService";
 
 const data = await groupsService.getById(123);
 ```
@@ -773,8 +780,7 @@ Always add to the appropriate service file:
 // src/services/groupsService.ts
 export const groupsService = {
   // Add your new endpoint here
-  myNewEndpoint: (id: number): Promise<MyDTO> =>
-    apiClient.get<MyDTO>(`/api/my-endpoint/${id}`),
+  myNewEndpoint: (id: number): Promise<MyDTO> => apiClient.get<MyDTO>(`/api/my-endpoint/${id}`),
 };
 ```
 
@@ -814,14 +820,14 @@ try {
 **✅ DO:**
 
 ```typescript
-import { groupsService } from '@/services/groupsService';
+import { groupsService } from "@/services/groupsService";
 const group = await groupsService.getById(123);
 ```
 
 **❌ DON'T:**
 
 ```typescript
-const response = await fetch('/api/groups/123');
+const response = await fetch("/api/groups/123");
 ```
 
 ### 2. Keep Hooks Focused
@@ -829,15 +835,15 @@ const response = await fetch('/api/groups/123');
 **✅ DO:** One hook per resource
 
 ```typescript
-useGroupData()       // Groups
-useParticipants()    // Participants
-useExclusions()      // Exclusions
+useGroupData(); // Groups
+useParticipants(); // Participants
+useExclusions(); // Exclusions
 ```
 
 **❌ DON'T:** Mix concerns
 
 ```typescript
-useEverything() // Groups + Participants + Exclusions
+useEverything(); // Groups + Participants + Exclusions
 ```
 
 ### 3. Use Type-Safe Service Methods
@@ -851,7 +857,7 @@ const group: GroupDetailDTO = await groupsService.getById(123);
 **❌ DON'T:**
 
 ```typescript
-const group: any = await apiClient.get('/api/groups/123');
+const group: any = await apiClient.get("/api/groups/123");
 ```
 
 ### 4. Handle Errors Gracefully
@@ -918,19 +924,19 @@ const formattedBudget = formatCurrency(group.budget);
 
 ```typescript
 // src/services/__tests__/groupsService.test.ts
-import { describe, it, expect, vi } from 'vitest';
-import { groupsService } from '../groupsService';
-import { apiClient } from '../apiClient';
+import { describe, it, expect, vi } from "vitest";
+import { groupsService } from "../groupsService";
+import { apiClient } from "../apiClient";
 
-vi.mock('../apiClient');
+vi.mock("../apiClient");
 
-describe('groupsService', () => {
-  it('should get group by id', async () => {
-    vi.mocked(apiClient.get).mockResolvedValue({ id: 123, name: 'Test' });
+describe("groupsService", () => {
+  it("should get group by id", async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ id: 123, name: "Test" });
 
     const group = await groupsService.getById(123);
 
-    expect(apiClient.get).toHaveBeenCalledWith('/api/groups/123');
+    expect(apiClient.get).toHaveBeenCalledWith("/api/groups/123");
     expect(group.id).toBe(123);
   });
 });
@@ -940,12 +946,12 @@ describe('groupsService', () => {
 
 ```typescript
 // src/hooks/__tests__/useModalState.test.ts
-import { renderHook, act } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
-import { useModalState } from '../useModalState';
+import { renderHook, act } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { useModalState } from "../useModalState";
 
-describe('useModalState', () => {
-  it('should open and close modals', () => {
+describe("useModalState", () => {
+  it("should open and close modals", () => {
     const { result } = renderHook(() => useModalState());
 
     expect(result.current.isEditGroupModalOpen).toBe(false);
@@ -1019,10 +1025,12 @@ describe('GroupView', () => {
 
 ```typescript
 // Check session before making requests
-const { data: { session } } = await supabaseClient.auth.getSession();
+const {
+  data: { session },
+} = await supabaseClient.auth.getSession();
 if (!session) {
   // Redirect to login
-  window.location.href = '/login';
+  window.location.href = "/login";
 }
 ```
 
@@ -1080,6 +1088,7 @@ Potential enhancements for future iterations:
 ## Support
 
 For questions or issues:
+
 - Check this documentation first
 - Review the usage examples
 - Look at existing code patterns

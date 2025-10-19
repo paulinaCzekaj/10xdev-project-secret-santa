@@ -3,14 +3,17 @@
 ## 1. Przegląd endpointów
 
 ### PATCH /api/groups/:id
+
 Aktualizuje szczegóły grupy Secret Santa. Operacja dostępna tylko dla twórcy grupy i tylko przed przeprowadzeniem losowania. Wszystkie pola w request body są opcjonalne, ale co najmniej jedno pole musi być podane.
 
 ### DELETE /api/groups/:id
+
 Usuwa grupę Secret Santa wraz ze wszystkimi powiązanymi danymi (uczestnicy, reguły wykluczeń, przypisania, listy życzeń). Operacja dostępna tylko dla twórcy grupy. Wykorzystuje CASCADE w bazie danych do automatycznego usuwania powiązanych rekordów.
 
 ## 2. Szczegóły żądania
 
 ### PATCH /api/groups/:id
+
 - **Metoda HTTP**: PATCH
 - **Struktura URL**: `/api/groups/:id`
 - **Headers**:
@@ -24,6 +27,7 @@ Usuwa grupę Secret Santa wraz ze wszystkimi powiązanymi danymi (uczestnicy, re
     - `budget` (number) - Nowy budżet (positive number)
     - `end_date` (string) - Nowa data zakończenia (ISO 8601 datetime)
 - **Request Body Example**:
+
 ```json
 {
   "name": "Updated Secret Santa 2025",
@@ -33,6 +37,7 @@ Usuwa grupę Secret Santa wraz ze wszystkimi powiązanymi danymi (uczestnicy, re
 ```
 
 ### DELETE /api/groups/:id
+
 - **Metoda HTTP**: DELETE
 - **Struktura URL**: `/api/groups/:id`
 - **Headers**:
@@ -46,6 +51,7 @@ Usuwa grupę Secret Santa wraz ze wszystkimi powiązanymi danymi (uczestnicy, re
 ## 3. Wykorzystywane typy
 
 ### Istniejące typy (z src/types.ts)
+
 ```typescript
 // Command dla update (wszystkie pola opcjonalne)
 export type UpdateGroupCommand = Partial<CreateGroupCommand>;
@@ -77,6 +83,7 @@ export type UserId = string;
 ```
 
 ### Nowe schematy walidacji (Zod)
+
 ```typescript
 // Schemat dla walidacji parametru ID
 const GroupIdParamSchema = z.object({
@@ -86,23 +93,13 @@ const GroupIdParamSchema = z.object({
 });
 
 // Schemat dla walidacji UpdateGroupCommand
-const UpdateGroupSchema = z.object({
-  name: z.string()
-    .min(1, "Name cannot be empty")
-    .max(255, "Name is too long")
-    .trim()
-    .optional(),
-  budget: z.number()
-    .positive("Budget must be greater than 0")
-    .finite("Budget must be a valid number")
-    .optional(),
-  end_date: z.string()
-    .datetime("Invalid date format. Use ISO 8601 format")
-    .optional(),
-}).refine(
-  (data) => Object.keys(data).length > 0,
-  { message: "At least one field must be provided for update" }
-);
+const UpdateGroupSchema = z
+  .object({
+    name: z.string().min(1, "Name cannot be empty").max(255, "Name is too long").trim().optional(),
+    budget: z.number().positive("Budget must be greater than 0").finite("Budget must be a valid number").optional(),
+    end_date: z.string().datetime("Invalid date format. Use ISO 8601 format").optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, { message: "At least one field must be provided for update" });
 ```
 
 ## 4. Szczegóły odpowiedzi
@@ -110,6 +107,7 @@ const UpdateGroupSchema = z.object({
 ### PATCH /api/groups/:id
 
 **Success (200 OK)**:
+
 ```json
 {
   "id": 1,
@@ -126,6 +124,7 @@ const UpdateGroupSchema = z.object({
 **Error Responses**:
 
 **400 Bad Request - Invalid Input**:
+
 ```json
 {
   "error": {
@@ -140,6 +139,7 @@ const UpdateGroupSchema = z.object({
 ```
 
 **400 Bad Request - No Fields**:
+
 ```json
 {
   "error": {
@@ -150,6 +150,7 @@ const UpdateGroupSchema = z.object({
 ```
 
 **400 Bad Request - Draw Completed**:
+
 ```json
 {
   "error": {
@@ -160,6 +161,7 @@ const UpdateGroupSchema = z.object({
 ```
 
 **401 Unauthorized**:
+
 ```json
 {
   "error": {
@@ -170,6 +172,7 @@ const UpdateGroupSchema = z.object({
 ```
 
 **403 Forbidden**:
+
 ```json
 {
   "error": {
@@ -180,6 +183,7 @@ const UpdateGroupSchema = z.object({
 ```
 
 **404 Not Found**:
+
 ```json
 {
   "error": {
@@ -190,6 +194,7 @@ const UpdateGroupSchema = z.object({
 ```
 
 **500 Internal Server Error**:
+
 ```json
 {
   "error": {
@@ -202,6 +207,7 @@ const UpdateGroupSchema = z.object({
 ### DELETE /api/groups/:id
 
 **Success (204 No Content)**:
+
 - Brak body w odpowiedzi
 - Status code: 204
 - Headers: standardowe
@@ -209,6 +215,7 @@ const UpdateGroupSchema = z.object({
 **Error Responses**:
 
 **400 Bad Request**:
+
 ```json
 {
   "error": {
@@ -219,6 +226,7 @@ const UpdateGroupSchema = z.object({
 ```
 
 **401 Unauthorized**:
+
 ```json
 {
   "error": {
@@ -229,6 +237,7 @@ const UpdateGroupSchema = z.object({
 ```
 
 **403 Forbidden**:
+
 ```json
 {
   "error": {
@@ -239,6 +248,7 @@ const UpdateGroupSchema = z.object({
 ```
 
 **404 Not Found**:
+
 ```json
 {
   "error": {
@@ -249,6 +259,7 @@ const UpdateGroupSchema = z.object({
 ```
 
 **500 Internal Server Error**:
+
 ```json
 {
   "error": {
@@ -373,17 +384,20 @@ const UpdateGroupSchema = z.object({
 ## 6. Względy bezpieczeństwa
 
 ### 6.1. Uwierzytelnianie
+
 - **Obecny stan (MVP)**: Używamy `DEFAULT_USER_ID` jako placeholder
 - **TODO**: Implementacja JWT Bearer token authentication z Supabase Auth
 - **Walidacja**: Sprawdzenie czy userId istnieje przed każdą operacją
 - **Response**: 401 Unauthorized jeśli brak uwierzytelnienia
 
 ### 6.2. Autoryzacja
+
 - **IDOR Prevention**: Sprawdzanie czy `userId === group.creator_id` przed update/delete
 - **Response**: 403 Forbidden jeśli użytkownik nie jest twórcą grupy
 - **Logging**: Logowanie prób nieautoryzowanego dostępu
 
 ### 6.3. Walidacja danych wejściowych
+
 - **Zod schemas**: Silna walidacja typów i formatów danych
 - **Sanityzacja**:
   - `name`: trim() - usunięcie białych znaków na początku i końcu
@@ -395,10 +409,12 @@ const UpdateGroupSchema = z.object({
   - `id`: positive integer
 
 ### 6.4. SQL Injection
+
 - **Mitigacja**: Supabase automatycznie używa prepared statements
 - **Dodatkowa ochrona**: Walidacja wszystkich parametrów przez Zod
 
 ### 6.5. Race Conditions
+
 - **Problem**: Możliwe jest, że losowanie zostanie przeprowadzone w trakcie update
 - **Mitigacja**:
   - Sprawdzanie `is_drawn` w serwisie przed update
@@ -406,10 +422,12 @@ const UpdateGroupSchema = z.object({
 - **Future improvement**: Optimistic locking lub database transactions
 
 ### 6.6. Mass Assignment
+
 - **Mitigacja**: Używanie explicit DTOs (UpdateGroupCommand) zamiast bezpośredniego mapowania request body
 - **Whitelist approach**: Tylko dozwolone pola (name, budget, end_date) mogą być zaktualizowane
 
 ### 6.7. Sensitive Data Exposure
+
 - **Brak**: Endpoint nie ujawnia wrażliwych danych (hasła, tokeny, etc.)
 - **Logging**: Unikanie logowania pełnych danych użytkownika
 
@@ -418,25 +436,30 @@ const UpdateGroupSchema = z.object({
 ### 7.1. Błędy walidacji (400 Bad Request)
 
 **Typy błędów**:
+
 1. Invalid group ID format
 2. Invalid input data (name, budget, end_date)
 3. No fields provided for update
 4. Draw already completed
 
 **Obsługa**:
+
 ```typescript
 try {
   // Validation
   const validated = UpdateGroupSchema.parse(body);
 } catch (error) {
   if (error instanceof z.ZodError) {
-    return new Response(JSON.stringify({
-      error: {
-        code: "INVALID_INPUT",
-        message: error.errors[0].message,
-        details: { errors: error.errors }
-      }
-    }), { status: 400 });
+    return new Response(
+      JSON.stringify({
+        error: {
+          code: "INVALID_INPUT",
+          message: error.errors[0].message,
+          details: { errors: error.errors },
+        },
+      }),
+      { status: 400 }
+    );
   }
 }
 ```
@@ -444,92 +467,113 @@ try {
 ### 7.2. Błędy autoryzacji (401 Unauthorized, 403 Forbidden)
 
 **401 - Unauthorized**:
+
 - Brak userId (brak uwierzytelnienia)
 - Invalid token (future)
 
 **403 - Forbidden**:
+
 - Użytkownik nie jest twórcą grupy
 
 **Obsługa**:
+
 ```typescript
 // 401
 if (!userId) {
-  return new Response(JSON.stringify({
-    error: {
-      code: "UNAUTHORIZED",
-      message: "Authentication required"
-    }
-  }), { status: 401 });
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Authentication required",
+      },
+    }),
+    { status: 401 }
+  );
 }
 
 // 403
 if (group.creator_id !== userId) {
-  return new Response(JSON.stringify({
-    error: {
-      code: "FORBIDDEN",
-      message: "Only the group creator can update/delete this group"
-    }
-  }), { status: 403 });
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "FORBIDDEN",
+        message: "Only the group creator can update/delete this group",
+      },
+    }),
+    { status: 403 }
+  );
 }
 ```
 
 ### 7.3. Błędy not found (404 Not Found)
 
 **Typy błędów**:
+
 - Grupa nie istnieje
 - Grupa została już usunięta
 
 **Obsługa**:
+
 ```typescript
 const group = await groupService.getGroupById(id);
 if (!group) {
-  return new Response(JSON.stringify({
-    error: {
-      code: "GROUP_NOT_FOUND",
-      message: "Group not found"
-    }
-  }), { status: 404 });
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "GROUP_NOT_FOUND",
+        message: "Group not found",
+      },
+    }),
+    { status: 404 }
+  );
 }
 ```
 
 ### 7.4. Błędy serwera (500 Internal Server Error)
 
 **Typy błędów**:
+
 - Database connection errors
 - Unexpected exceptions
 - Supabase API errors
 
 **Obsługa**:
+
 ```typescript
 try {
   // Service call
 } catch (error) {
   console.error("[PATCH /api/groups/:id] Error:", error);
-  return new Response(JSON.stringify({
-    error: {
-      code: "INTERNAL_ERROR",
-      message: "An unexpected error occurred"
-    }
-  }), { status: 500 });
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred",
+      },
+    }),
+    { status: 500 }
+  );
 }
 ```
 
 ### 7.5. Error logging
 
 **Co logować**:
+
 - Wszystkie błędy 500 (z pełnym stack trace)
 - Próby nieautoryzowanego dostępu (403)
 - Błędy walidacji (dla monitoringu)
 - Database errors
 
 **Format logów**:
+
 ```typescript
 console.error("[PATCH /api/groups/:id] Error:", {
   groupId: params.id,
   userId: userId,
   error: error.message,
   stack: error.stack,
-  timestamp: new Date().toISOString()
+  timestamp: new Date().toISOString(),
 });
 ```
 
@@ -538,11 +582,13 @@ console.error("[PATCH /api/groups/:id] Error:", {
 ### 8.1. Optymalizacja zapytań do bazy danych
 
 **PATCH endpoint**:
+
 - **1 query**: Fetch group + check is_drawn (combined with JOIN on assignments)
 - **1 query**: Update group
 - **Total**: 2 database round trips
 
 **Optymalizacja**:
+
 ```sql
 -- Single query to check group + is_drawn + authorization
 SELECT g.*,
@@ -552,16 +598,19 @@ WHERE g.id = $1
 ```
 
 **DELETE endpoint**:
+
 - **1 query**: Fetch group (for authorization check)
 - **1 query**: Delete group (CASCADE handles related records)
 - **Total**: 2 database round trips
 
 **Optymalizacja możliwa**:
+
 - Można połączyć check + delete w jeden query z RLS policies (future)
 
 ### 8.2. Indeksowanie
 
 **Istniejące indeksy** (z database schema):
+
 - `groups.id` - PRIMARY KEY (automatyczny index)
 - `groups.creator_id` - INDEX (dla szybkiego lookup)
 
@@ -570,17 +619,20 @@ WHERE g.id = $1
 ### 8.3. Caching
 
 **PATCH endpoint**:
+
 - **Cache invalidation**: Po update należy invalidate cache dla:
   - GET /api/groups/:id
   - GET /api/groups (list)
 - **Strategy**: No caching dla PATCH (zawsze fresh data)
 
 **DELETE endpoint**:
+
 - **Cache invalidation**: Po delete należy invalidate cache dla:
   - GET /api/groups (list)
 - **Strategy**: No caching dla DELETE
 
 **Response headers**:
+
 ```typescript
 // PATCH - return fresh data
 headers: {
@@ -597,15 +649,18 @@ headers: {
 ### 8.4. Potencjalne wąskie gardła
 
 **Database locks**:
+
 - UPDATE/DELETE operations lock the row
 - Minimal impact (short transactions)
 
 **CASCADE DELETE performance**:
+
 - Deleting group with many participants/exclusions/assignments może być wolne
 - **Mitigacja**: Database handles CASCADE efficiently with foreign keys
 - **Future**: Consider soft delete for large groups
 
 **Network latency**:
+
 - 2 round trips do Supabase
 - **Mitigacja**: Use Supabase connection pooling
 - **Future**: Consider database transactions to combine queries
@@ -613,6 +668,7 @@ headers: {
 ### 8.5. Rate limiting
 
 **Recommendation**:
+
 - Implement rate limiting dla UPDATE/DELETE operations
 - Prevent abuse (spam updates/deletes)
 - **Future**: Add rate limiting middleware
@@ -798,21 +854,9 @@ import type {
  */
 const UpdateGroupSchema = z
   .object({
-    name: z
-      .string()
-      .min(1, "Name cannot be empty")
-      .max(255, "Name is too long")
-      .trim()
-      .optional(),
-    budget: z
-      .number()
-      .positive("Budget must be greater than 0")
-      .finite("Budget must be a valid number")
-      .optional(),
-    end_date: z
-      .string()
-      .datetime("Invalid date format. Use ISO 8601 format (e.g., 2025-12-25T23:59:59Z)")
-      .optional(),
+    name: z.string().min(1, "Name cannot be empty").max(255, "Name is too long").trim().optional(),
+    budget: z.number().positive("Budget must be greater than 0").finite("Budget must be a valid number").optional(),
+    end_date: z.string().datetime("Invalid date format. Use ISO 8601 format (e.g., 2025-12-25T23:59:59Z)").optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field must be provided for update",
@@ -1234,6 +1278,7 @@ curl -X DELETE http://localhost:4321/api/groups/99999
 **4.4. Kryteria akceptacji**
 
 ✅ PATCH endpoint:
+
 - [ ] Akceptuje wszystkie opcjonalne pola (name, budget, end_date)
 - [ ] Wymaga przynajmniej jednego pola
 - [ ] Waliduje format i wartości pól
@@ -1245,6 +1290,7 @@ curl -X DELETE http://localhost:4321/api/groups/99999
 - [ ] Aktualizuje pole `updated_at`
 
 ✅ DELETE endpoint:
+
 - [ ] Usuwa grupę i wszystkie powiązane dane (CASCADE)
 - [ ] Sprawdza autoryzację (tylko twórca)
 - [ ] Zwraca 204 No Content przy sukcesie
@@ -1257,6 +1303,7 @@ curl -X DELETE http://localhost:4321/api/groups/99999
 **5.1. Aktualizacja API documentation**
 
 Zaktualizuj plik `.ai/api-plan.md` z nowymi endpointami:
+
 - Dodaj szczegóły PATCH /api/groups/:id
 - Dodaj szczegóły DELETE /api/groups/:id
 - Dodaj przykłady request/response
@@ -1265,16 +1312,19 @@ Zaktualizuj plik `.ai/api-plan.md` z nowymi endpointami:
 **5.2. Aktualizacja CHANGELOG**
 
 Dodaj wpis do CHANGELOG.md (jeśli istnieje):
+
 ```markdown
 ## [Unreleased]
 
 ### Added
+
 - PATCH /api/groups/:id - Update group endpoint
 - DELETE /api/groups/:id - Delete group endpoint
 - GroupService.updateGroup() method
 - GroupService.deleteGroup() method
 
 ### Security
+
 - Authorization checks for update/delete operations
 - Input validation with Zod schemas
 ```
@@ -1282,6 +1332,7 @@ Dodaj wpis do CHANGELOG.md (jeśli istnieje):
 **5.3. Code comments**
 
 Upewnij się, że:
+
 - Wszystkie metody mają JSDoc comments
 - Wszystkie złożone logiki mają inline comments
 - Wszystkie error codes są udokumentowane
@@ -1291,6 +1342,7 @@ Upewnij się, że:
 Przed mergowaniem sprawdź:
 
 **Funkcjonalność**:
+
 - [ ] PATCH endpoint działa zgodnie ze specyfikacją
 - [ ] DELETE endpoint działa zgodnie ze specyfikacją
 - [ ] Wszystkie edge cases są obsłużone
@@ -1298,6 +1350,7 @@ Przed mergowaniem sprawdź:
 - [ ] Autoryzacja działa poprawnie
 
 **Bezpieczeństwo**:
+
 - [ ] Sprawdzanie creator_id przed operacjami
 - [ ] Walidacja wszystkich inputów
 - [ ] Proper error messages (nie ujawniają sensitive data)
@@ -1305,6 +1358,7 @@ Przed mergowaniem sprawdź:
 - [ ] IDOR prevention
 
 **Kod**:
+
 - [ ] Kod jest czytelny i zgodny z coding standards
 - [ ] Brak code duplication
 - [ ] Proper error handling
@@ -1313,11 +1367,13 @@ Przed mergowaniem sprawdź:
 - [ ] Comments są aktualne
 
 **Testy**:
+
 - [ ] Wszystkie testy manualne przechodzą
 - [ ] Wszystkie edge cases są przetestowane
 - [ ] CASCADE delete działa poprawnie
 
 **Dokumentacja**:
+
 - [ ] API documentation zaktualizowana
 - [ ] Code comments dodane
 - [ ] CHANGELOG zaktualizowany (jeśli istnieje)
@@ -1325,36 +1381,43 @@ Przed mergowaniem sprawdź:
 ### Etap 7: Future Improvements
 
 **7.1. Authentication**
+
 - [ ] Replace DEFAULT_USER_ID with actual JWT authentication
 - [ ] Implement Bearer token validation
 - [ ] Add refresh token mechanism
 
 **7.2. Soft Delete**
+
 - [ ] Implement soft delete instead of hard delete
 - [ ] Add `deleted_at` field to groups table
 - [ ] Filter out deleted groups in queries
 
 **7.3. Audit Log**
+
 - [ ] Log all update/delete operations
 - [ ] Track who made changes and when
 - [ ] Add audit_log table
 
 **7.4. Optimistic Locking**
+
 - [ ] Add version field to groups table
 - [ ] Implement optimistic locking for updates
 - [ ] Prevent concurrent modifications
 
 **7.5. Rate Limiting**
+
 - [ ] Add rate limiting middleware
 - [ ] Limit update/delete operations per user
 - [ ] Prevent abuse
 
 **7.6. Webhooks**
+
 - [ ] Trigger webhooks on group update/delete
 - [ ] Allow external integrations
 - [ ] Notify participants about changes
 
 **7.7. Batch Operations**
+
 - [ ] Allow batch update of multiple groups
 - [ ] Allow batch delete of multiple groups
 - [ ] Optimize database queries
@@ -1364,6 +1427,7 @@ Przed mergowaniem sprawdź:
 ## Podsumowanie
 
 Ten plan implementacji obejmuje:
+
 - ✅ Dwa nowe endpointy API (PATCH i DELETE)
 - ✅ Dwie nowe metody w GroupService
 - ✅ Pełną walidację danych wejściowych
@@ -1374,6 +1438,7 @@ Ten plan implementacji obejmuje:
 - ✅ Dokumentację i testy
 
 Implementacja zgodna z:
+
 - Istniejącymi wzorcami w kodzie
 - Tech stackiem (Astro, TypeScript, Supabase)
 - Coding practices z dokumentacji

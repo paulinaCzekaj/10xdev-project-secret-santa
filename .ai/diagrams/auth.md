@@ -3,6 +3,7 @@
 Ten diagram przedstawia kompleksowy przepływ autentykacji w aplikacji Secret Santa, wykorzystującej Astro 5 (SSR), React 19 i Supabase Auth.
 
 <mermaid_diagram>
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -286,49 +287,61 @@ sequenceDiagram
 
     Note over U,DB: Kluczowe elementy bezpieczeństwa:<br/>1. JWT tokens w localStorage<br/>2. Middleware sprawdza sesję przy każdym żądaniu<br/>3. API endpoints wymagają autentykacji<br/>4. Access tokens: TTL 1h, Refresh: 24h-30d<br/>5. Automatyczne odświeżanie tokenów<br/>6. RLS (Row Level Security) w produkcji<br/>7. Unikalne UUID tokeny dla niezarejestrowanych
 ```
+
 </mermaid_diagram>
 
 ## Wyjaśnienie przepływów
 
 ### 1. Rejestracja (US-001)
+
 Nowy użytkownik tworzy konto z emailem i hasłem. W MVP email confirmation jest **wyłączona**, więc użytkownik jest automatycznie logowany po rejestracji i przekierowywany do dashboard.
 
 ### 2. Logowanie (US-002)
+
 Użytkownik podaje credentials, Supabase weryfikuje je i zwraca JWT tokens. Session jest przechowywana w localStorage przez Supabase SDK.
 
 ### 3. Dostęp do chronionej trasy (US-002 punkt 5)
+
 Strony jak `/dashboard` i `/groups/:id` wymagają autentykacji. Middleware sprawdza sesję, a jeśli jej brak, przekierowuje do `/login` z parametrem `redirectTo`.
 
 ### 4. Automatyczne odświeżanie tokenu
+
 Supabase SDK automatycznie wykrywa wygaśnięcie access token (1h TTL) i używa refresh token do pobrania nowego access token, bez przerywania działania aplikacji.
 
 ### 5. Reset hasła (US-003)
+
 Dwuetapowy proces: wysłanie linku na email, a następnie ustawienie nowego hasła przez formularz. Po zmianie hasła wszystkie sesje użytkownika są unieważniane.
 
 ### 6. Wylogowanie (US-004)
+
 Proste wywołanie `signOut()` unieważnia refresh token w bazie i usuwa session z localStorage.
 
 ### 7. Dostęp dla niezarejestrowanych (US-013)
+
 Uczestnicy bez konta otrzymują unikalny link UUID do wyniku losowania. System śledzi otwarcia linku (PRD 3.4) przez zapisywanie `last_accessed_at` i `access_count`.
 
 ## Komponenty techniczne
 
 ### Middleware (`src/middleware/index.ts`)
+
 - Dodaje `supabaseClient` do `context.locals`
 - Sprawdza sesję przy każdym żądaniu
 - Udostępnia `session` i `user` w `context.locals`
 
 ### Auth Utils (`src/lib/utils/auth.utils.ts`)
+
 - `requireAuth()` - sprawdza sesję w Astro pages
 - `getCurrentUser()` - pobiera aktualnego użytkownika
 - `hasGroupAccess()` - weryfikuje dostęp do grupy
 
 ### API Auth Utils (`src/lib/utils/api-auth.utils.ts`)
+
 - `requireApiAuth()` - sprawdza autentykację w API endpoints
 - `requireGroupOwner()` - weryfikuje czy użytkownik jest twórcą grupy
 - `requireGroupAccess()` - sprawdza dostęp jako twórca lub uczestnik
 
 ### React Components
+
 - `LoginForm.tsx` - formularz logowania z walidacją Zod
 - `RegisterForm.tsx` - formularz rejestracji
 - `ForgotPasswordForm.tsx` - formularz zapomnienia hasła
@@ -337,6 +350,7 @@ Uczestnicy bez konta otrzymują unikalny link UUID do wyniku losowania. System �
 - `Dashboard.tsx` - pulpit użytkownika
 
 ### Astro Pages
+
 - `/login.astro` - strona logowania
 - `/register.astro` - strona rejestracji
 - `/forgot-password.astro` - strona zapomnienia hasła
@@ -348,21 +362,26 @@ Uczestnicy bez konta otrzymują unikalny link UUID do wyniku losowania. System �
 ## Bezpieczeństwo
 
 ### JWT Tokens
+
 - **Access Token**: JWT z TTL 1 godzina, zawiera `user_id`, `email`, `role`
 - **Refresh Token**: TTL 24 godziny - 30 dni, służy do odnawiania access token
 
 ### Rate Limiting (Supabase Auth)
+
 - Rejestracja: 10 prób/godzinę na IP
 - Logowanie: 30 prób/godzinę na IP
 - Reset hasła: 5 prób/godzinę na email
 
 ### Row Level Security (RLS)
+
 W produkcji należy włączyć RLS na tabelach:
+
 - `groups` - tylko twórca ma pełny dostęp
 - `participants` - tylko twórca grupy może edytować
 - `assignments` - tylko uczestnik widzi swoje przypisanie
 
 ### Tokeny dla niezarejestrowanych
+
 - UUID v4 (trudny do odgadnięcia)
 - Unikalny indeks w bazie
 - Śledzenie dostępu (last_accessed_at, access_count)
@@ -370,12 +389,14 @@ W produkcji należy włączyć RLS na tabelach:
 ## Status implementacji
 
 ✅ Obecny stan:
+
 - Konfiguracja Supabase Client
 - Middleware z supabaseClient
 - Sprawdzanie sesji w `/groups/[id].astro`
 - API endpoints z TODO dla autentykacji
 
 ❌ Do zaimplementowania:
+
 - Rozszerzenie middleware o sesję
 - Wszystkie strony autentykacji
 - Wszystkie komponenty React
