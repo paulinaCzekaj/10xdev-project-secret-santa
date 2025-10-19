@@ -1,0 +1,20 @@
+# Docker Compose for local testing (similar to CI pipeline)
+version: '3.8'
+
+services:
+  secret-santa-test:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PUBLIC_SUPABASE_URL=https://test-project.supabase.co
+      - PUBLIC_SUPABASE_ANON_KEY=test-anon-key
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
