@@ -3,7 +3,7 @@ import type {
   CreateOrUpdateWishlistCommand,
   WishlistDTO,
   WishlistWithHtmlDTO,
-  ParticipantTokenQuery,
+  ParticipantWithGroupDTO,
   UserId,
 } from "../../types";
 
@@ -145,7 +145,7 @@ export class WishlistService {
     participantId: number,
     authUserId: UserId | null,
     participantToken: string | null,
-    participantWithGroup: any
+    participantWithGroup: ParticipantWithGroupDTO
   ): Promise<void> {
     console.log("[WishlistService.validateWishlistAccess] Validating access", {
       participantId,
@@ -203,7 +203,7 @@ export class WishlistService {
    *   console.log(`Participant in group ${participant.group_id}`);
    * }
    */
-  async getParticipantWithGroupInfo(id: number) {
+  async getParticipantWithGroupInfo(id: number): Promise<ParticipantWithGroupDTO | null> {
     console.log("[WishlistService.getParticipantWithGroupInfo] Starting", { participantId: id });
 
     try {

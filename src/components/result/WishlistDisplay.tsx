@@ -33,10 +33,10 @@ function WishlistDisplay({ content, contentHtml, personName }: WishlistDisplayPr
         {/* Header */}
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-center justify-center w-10 h-10 bg-red-600 rounded-lg shadow-sm">
+            <div className="flex items-center justify-center w-10 h-10 bg-amber-500 rounded-lg shadow-sm">
               <List className="w-5 h-5 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-red-600 dark:text-red-400">
+            <h3 className="text-xl font-bold text-amber-600 dark:text-amber-400">
               🎅 Lista życzeń: {personName}
             </h3>
           </div>
@@ -80,16 +80,16 @@ function WishlistDisplay({ content, contentHtml, personName }: WishlistDisplayPr
       {/* Header */}
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-3">
-          <div className="flex items-center justify-center w-10 h-10 bg-red-600 rounded-lg shadow-sm">
+          <div className="flex items-center justify-center w-10 h-10 bg-amber-500 rounded-lg shadow-sm">
             <List className="w-5 h-5 text-white" />
           </div>
-          <h3 className="text-xl font-bold text-red-600 dark:text-red-400">
+          <h3 className="text-xl font-bold text-amber-600 dark:text-amber-400">
             🎅 Lista życzeń: {personName}
           </h3>
         </div>
 
         {/* Świąteczny intro text */}
-        <div className="bg-red-50 dark:bg-red-950 border-l-4 border-red-600 p-3 mb-4 rounded">
+        <div className="bg-amber-50 dark:bg-amber-950 border-l-4 border-amber-500 p-3 mb-4 rounded">
           <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
             🎄 <strong>Ho ho ho!</strong> {personName.split(' ')[0]} przygotował{personName.includes('a') ? 'a' : ''} dla Ciebie listę swoich świątecznych marzeń.
             Niech te pomysły pomogą Ci wybrać idealny prezent pod choinkę! 🎁✨

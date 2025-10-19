@@ -1,12 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabaseClient } from "@/db/supabase.client";
-import type {
-  ExclusionRuleListItemDTO,
-  CreateExclusionRuleCommand,
-  ExclusionRuleDTO,
-  ApiError,
-  PaginatedExclusionRulesDTO
-} from "@/types";
+import { exclusionsService } from "@/services/exclusionsService";
+import type { ExclusionRuleListItemDTO, CreateExclusionRuleCommand, ApiError } from "@/types";
 
 /**
  * Hook do zarządzania regułami wykluczeń
@@ -23,19 +17,7 @@ export function useExclusions(groupId: number) {
     setError(null);
 
     try {
-      const session = await supabaseClient.auth.getSession();
-      const response = await fetch(`/api/groups/${groupId}/exclusions`, {
-        headers: {
-          Authorization: `Bearer ${session.data.session?.access_token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || "Błąd pobierania wykluczeń");
-      }
-
-      const data: PaginatedExclusionRulesDTO = await response.json();
+      const data = await exclusionsService.getByGroupId(groupId);
       setExclusions(data.data);
     } catch (err) {
       setError({
@@ -51,22 +33,7 @@ export function useExclusions(groupId: number) {
   const addExclusion = useCallback(
     async (command: CreateExclusionRuleCommand) => {
       try {
-        const session = await supabaseClient.auth.getSession();
-        const response = await fetch(`/api/groups/${groupId}/exclusions`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.data.session?.access_token}`,
-          },
-          body: JSON.stringify(command),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error?.message || "Błąd dodawania wykluczenia");
-        }
-
-        const newExclusion: ExclusionRuleDTO = await response.json();
+        const newExclusion = await exclusionsService.create(groupId, command);
         await fetchExclusions(); // Odśwież listę
 
         return { success: true, data: newExclusion };
@@ -84,19 +51,7 @@ export function useExclusions(groupId: number) {
   const deleteExclusion = useCallback(
     async (exclusionId: number) => {
       try {
-        const session = await supabaseClient.auth.getSession();
-        const response = await fetch(`/api/exclusions/${exclusionId}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${session.data.session?.access_token}`,
-          },
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error?.message || "Błąd usuwania wykluczenia");
-        }
-
+        await exclusionsService.delete(exclusionId);
         await fetchExclusions(); // Odśwież listę
 
         return { success: true };

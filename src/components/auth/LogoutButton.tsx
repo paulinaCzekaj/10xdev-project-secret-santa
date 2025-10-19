@@ -37,7 +37,7 @@ export default function LogoutButton() {
       onClick={handleLogout}
       disabled={isLoading}
       variant="ghost"
-      className="text-sm text-gray-700 hover:text-red-600 hover:bg-red-50 font-medium transition-colors"
+      className="text-sm text-gray-700 hover:text-red-500 hover:bg-red-50 font-medium transition-colors"
     >
       <LogOut className="mr-2 h-4 w-4" />
       {isLoading ? "Wylogowywanie..." : "Wyloguj"}

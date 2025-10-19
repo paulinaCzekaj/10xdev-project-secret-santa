@@ -37,6 +37,15 @@ The project leverages a modern tech stack to deliver a fast, efficient, and inte
     *   **Open Source**: Can be hosted locally or on a custom server.
     *   **Built-in User Authentication**: Handles user registration, login, and session management.
 
+### Testing
+*   **Vitest**: Fast test framework for unit and integration tests, with native Vite integration.
+*   **React Testing Library**: Library for testing React components from the user's perspective.
+*   **Playwright**: End-to-end testing tool for automating interactions in real browsers (Chromium, Firefox, WebKit).
+*   **Mock Service Worker (MSW)**: API mocking library for realistic component testing without a real backend.
+*   **Storybook**: Tool for developing and testing UI components in isolation.
+*   **Chromatic**: Service for automated visual regression testing integrated with Storybook.
+*   **axe-core**: Accessibility testing engine integrated with Playwright and React Testing Library.
+
 ### CI/CD and Hosting
 *   **GitHub Actions**: For automated Continuous Integration and Continuous Deployment pipelines.
 *   **DigitalOcean**: For application hosting via Docker images.

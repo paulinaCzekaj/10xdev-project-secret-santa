@@ -93,7 +93,7 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 shadow-lg">
+    <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 shadow-lg" data-testid="login-form-container">
       {/* Welcome Header */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Witaj ponownie!</h2>
@@ -101,7 +101,7 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" data-testid="login-form">
           {/* Email Field */}
           <FormField
             control={form.control}
@@ -117,6 +117,7 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
                     disabled={isSubmitting}
                     autoComplete="email"
                     className="h-11 bg-gray-50 border-gray-300 focus:border-red-500 focus:ring-red-500"
+                    data-testid="login-email-input"
                   />
                 </FormControl>
                 <FormMessage />
@@ -140,12 +141,14 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
                       disabled={isSubmitting}
                       autoComplete="current-password"
                       className="h-11 pr-10 bg-gray-50 border-gray-300 focus:border-red-500 focus:ring-red-500"
+                      data-testid="login-password-input"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                       tabIndex={-1}
+                      data-testid="login-password-toggle"
                     >
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
@@ -158,7 +161,7 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
 
           {/* Forgot Password Link */}
           <div className="flex justify-end">
-            <a href="/forgot-password" className="text-sm text-red-600 hover:text-red-700 font-medium cursor-pointer">
+            <a href="/forgot-password" className="text-sm text-red-500 hover:text-red-600 font-medium cursor-pointer">
               Zapomniałeś hasła?
             </a>
           </div>
@@ -173,8 +176,9 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
             disabled={!isFormValid}
+            data-testid="login-submit-button"
           >
             {isSubmitting && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
             {isSubmitting ? "Logowanie..." : "Zaloguj się"}
@@ -184,7 +188,7 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
           <div className="text-center pt-4 border-t border-gray-200">
             <p className="text-sm text-gray-600">
               Nie masz konta?{" "}
-              <a href="/register" className="text-red-600 hover:text-red-700 font-semibold cursor-pointer">
+              <a href="/register" className="text-red-500 hover:text-red-600 font-semibold cursor-pointer">
                 Zarejestruj się
               </a>
             </p>

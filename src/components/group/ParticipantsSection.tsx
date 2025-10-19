@@ -38,13 +38,13 @@ export function ParticipantsSection({
   };
 
   return (
-    <section>
+    <section data-testid="participants-section">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
             Uczestnicy
-            <span className="text-sm font-normal text-muted-foreground">
+            <span className="text-sm font-normal text-muted-foreground" data-testid="participants-count">
               ({participants.length})
             </span>
           </CardTitle>

@@ -119,7 +119,7 @@ export default function ForgotPasswordForm({ isLoggedIn }: ForgotPasswordFormPro
           {/* Back to Login */}
           <Button
             onClick={() => (window.location.href = "/login")}
-            className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
           >
             Wróć do logowania
           </Button>
@@ -200,7 +200,7 @@ export default function ForgotPasswordForm({ isLoggedIn }: ForgotPasswordFormPro
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
             disabled={!isFormValid}
           >
             {isSubmitting && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
@@ -211,7 +211,7 @@ export default function ForgotPasswordForm({ isLoggedIn }: ForgotPasswordFormPro
           <div className="text-center pt-4 border-t border-gray-200">
             <p className="text-sm text-gray-600">
               Pamiętasz hasło?{" "}
-              <a href="/login" className="text-red-600 hover:text-red-700 font-semibold cursor-pointer">
+              <a href="/login" className="text-red-500 hover:text-red-600 font-semibold cursor-pointer">
                 Zaloguj się
               </a>
             </p>
