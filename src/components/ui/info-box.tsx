@@ -11,7 +11,7 @@ interface InfoBoxProps {
 const variantStyles = {
   info: {
     container: "bg-pink-50 border-pink-200",
-    icon: "text-red-500",
+    icon: "text-red-400",
     IconComponent: Info,
   },
   warning: {

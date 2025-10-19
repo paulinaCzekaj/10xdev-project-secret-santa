@@ -62,7 +62,7 @@ export default function ResetPasswordForm({ accessToken }: ResetPasswordFormProp
 
           <Button
             onClick={() => (window.location.href = "/forgot-password")}
-            className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
           >
             Wygeneruj nowy link
           </Button>
@@ -137,7 +137,7 @@ export default function ResetPasswordForm({ accessToken }: ResetPasswordFormProp
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
             disabled={!isFormValid}
           >
             {isSubmitting && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}

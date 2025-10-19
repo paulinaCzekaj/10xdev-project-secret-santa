@@ -135,7 +135,7 @@ export default function RegisterForm() {
                     Akceptuję{" "}
                     <button
                       type="button"
-                      className="text-red-600 hover:text-red-700 underline bg-transparent border-none p-0 font-normal"
+                      className="text-red-500 hover:text-red-600 underline bg-transparent border-none p-0 font-normal"
                       onClick={() => toast.info("Regulamin będzie dostępny wkrótce")}
                     >
                       regulamin
@@ -143,7 +143,7 @@ export default function RegisterForm() {
                     i{" "}
                     <button
                       type="button"
-                      className="text-red-600 hover:text-red-700 underline bg-transparent border-none p-0 font-normal"
+                      className="text-red-500 hover:text-red-600 underline bg-transparent border-none p-0 font-normal"
                       onClick={() => toast.info("Polityka prywatności będzie dostępna wkrótce")}
                     >
                       politykę prywatności
@@ -165,7 +165,7 @@ export default function RegisterForm() {
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
             disabled={!isFormValid}
           >
             {isSubmitting && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
@@ -176,7 +176,7 @@ export default function RegisterForm() {
           <div className="text-center pt-4 border-t border-gray-200">
             <p className="text-sm text-gray-600">
               Masz już konto?{" "}
-              <a href="/login" className="text-red-600 hover:text-red-700 font-semibold cursor-pointer">
+              <a href="/login" className="text-red-500 hover:text-red-600 font-semibold cursor-pointer">
                 Zaloguj się
               </a>
             </p>

@@ -22,7 +22,7 @@ export function GroupHeader({ group, isCreator, canEdit, isDrawn, onEditClick, o
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <CardTitle className="text-3xl font-bold text-red-600 dark:text-red-400" data-testid="group-name">🎄 {group.name} 🎄</CardTitle>
+              <CardTitle className="text-3xl font-bold text-red-500 dark:text-red-400" data-testid="group-name">🎄 {group.name} 🎄</CardTitle>
               <Badge
                 variant={group.statusBadge.variant}
                 className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"

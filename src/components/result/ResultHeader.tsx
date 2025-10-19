@@ -54,7 +54,7 @@ function ResultHeader({ group, isAuthenticated }: ResultHeaderProps) {
   const StatusBadge = () => {
     if (group.isExpired) {
       return (
-        <Badge variant="destructive" className="text-xs">
+        <Badge variant="secondary" className="text-xs">
           Wydarzenie zakończone
         </Badge>
       );
@@ -86,7 +86,7 @@ function ResultHeader({ group, isAuthenticated }: ResultHeaderProps) {
       {/* Event Card - czytelny design */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-red-600 dark:text-red-400 mb-2">🎅 {group.name}</h1>
+          <h1 className="text-3xl font-bold text-red-500 dark:text-red-400 mb-2">🎅 {group.name}</h1>
           <StatusBadge />
         </div>
 
@@ -107,7 +107,7 @@ function ResultHeader({ group, isAuthenticated }: ResultHeaderProps) {
           {/* Data zakończenia */}
           <div className="bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-900 dark:to-rose-900 rounded-lg p-4 border border-red-200 dark:border-red-700">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-12 h-12 bg-red-600 rounded-full">
+              <div className="flex items-center justify-center w-12 h-12 bg-red-500 rounded-full">
                 <Calendar className="w-6 h-6 text-white" />
               </div>
               <div>

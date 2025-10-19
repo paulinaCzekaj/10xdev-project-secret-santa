@@ -161,7 +161,7 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
 
           {/* Forgot Password Link */}
           <div className="flex justify-end">
-            <a href="/forgot-password" className="text-sm text-red-600 hover:text-red-700 font-medium cursor-pointer">
+            <a href="/forgot-password" className="text-sm text-red-500 hover:text-red-600 font-medium cursor-pointer">
               Zapomniałeś hasła?
             </a>
           </div>
@@ -176,7 +176,7 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
             disabled={!isFormValid}
             data-testid="login-submit-button"
           >
@@ -188,7 +188,7 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
           <div className="text-center pt-4 border-t border-gray-200">
             <p className="text-sm text-gray-600">
               Nie masz konta?{" "}
-              <a href="/register" className="text-red-600 hover:text-red-700 font-semibold cursor-pointer">
+              <a href="/register" className="text-red-500 hover:text-red-600 font-semibold cursor-pointer">
                 Zarejestruj się
               </a>
             </p>
