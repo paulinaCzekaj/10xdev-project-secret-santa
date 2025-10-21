@@ -3,14 +3,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// Dropdown menu components will be imported as needed
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Edit, Trash2, Copy, MoreHorizontal, CheckCircle, XCircle, Heart, Eye, EyeOff } from "lucide-react";
+import { Edit, Trash2, Copy } from "lucide-react";
 import { toast } from "sonner";
 import type { ParticipantViewModel } from "@/types";
 

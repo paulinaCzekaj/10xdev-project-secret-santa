@@ -41,7 +41,7 @@ export function DeleteParticipantModal({ participant, isOpen, onClose, onConfirm
             <div>
               <AlertDialogTitle>Czy na pewno chcesz usunąć tego uczestnika?</AlertDialogTitle>
               <AlertDialogDescription className="mt-2">
-                Uczestnik <strong>"{participant.displayName}"</strong> zostanie trwale usunięty z grupy. Tej operacji
+                Uczestnik <strong>&bdquo;{participant.displayName}&rdquo;</strong> zostanie trwale usunięty z grupy. Tej operacji
                 nie można cofnąć.
               </AlertDialogDescription>
             </div>

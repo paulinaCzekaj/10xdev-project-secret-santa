@@ -429,7 +429,7 @@ export class ParticipantService {
       }
 
       // Check if participant's user_id matches group's creator_id
-      const isCreator = data.user_id !== null && data.user_id === (data.group as any).creator_id;
+      const isCreator = data.user_id !== null && data.user_id === (data.group as { creator_id: string }).creator_id;
 
       console.log("[ParticipantService.isParticipantCreator] Creator check complete", {
         participantId,

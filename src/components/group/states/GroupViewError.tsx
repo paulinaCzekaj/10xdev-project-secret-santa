@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+// Using HTML button instead of Button component
 import type { ApiError } from "@/types";
 
 /**

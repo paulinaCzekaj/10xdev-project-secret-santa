@@ -46,7 +46,7 @@ export class AssignmentsService {
    */
   async createBatch(
     groupId: number,
-    assignments: Array<{ giver_participant_id: number; receiver_participant_id: number }>
+    assignments: { giver_participant_id: number; receiver_participant_id: number }[]
   ): Promise<AssignmentDTO[]> {
     // Guard: Validate input
     if (!groupId) {

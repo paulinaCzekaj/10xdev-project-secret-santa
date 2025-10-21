@@ -38,6 +38,7 @@ export default function CreateGroupForm() {
       });
 
       // Redirect to group management page
+      // eslint-disable-next-line react-compiler/react-compiler
       window.location.href = `/groups/${result.id}`;
     } catch (error) {
       // Error is already handled by the hook

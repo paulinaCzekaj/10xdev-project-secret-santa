@@ -111,7 +111,7 @@ export function DrawConfirmationModal({
               <li>• Uczestnicy będą mogli zobaczyć swoje wyniki</li>
               <li>• Nie będzie można edytować listy uczestników</li>
               <li>• Nie będzie można zmieniać wykluczeń</li>
-              <li>• Grupa przejdzie w tryb "tylko do odczytu"</li>
+              <li>• Grupa przejdzie w tryb &bdquo;tylko do odczytu&rdquo;</li>
             </ul>
           </div>
         </div>

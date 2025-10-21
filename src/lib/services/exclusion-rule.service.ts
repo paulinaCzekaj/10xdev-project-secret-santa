@@ -293,8 +293,8 @@ export class ExclusionRuleService {
         blocker_participant_id: rule.blocker_participant_id,
         blocked_participant_id: rule.blocked_participant_id,
         created_at: rule.created_at,
-        blocker_name: (rule.blocker as any)?.name || "Unknown",
-        blocked_name: (rule.blocked as any)?.name || "Unknown",
+        blocker_name: (rule.blocker as { name: string } | null)?.name || "Unknown",
+        blocked_name: (rule.blocked as { name: string } | null)?.name || "Unknown",
       }));
 
       console.log("[ExclusionRuleService.getExclusionRulesForGroup] Successfully retrieved exclusion rules", {

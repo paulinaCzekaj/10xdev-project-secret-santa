@@ -498,7 +498,7 @@ export class GroupService {
           countQuery = countQuery.eq("creator_id", userId);
           break;
 
-        case "joined":
+        case "joined": {
           // Only groups where user is participant but not creator
           // This requires a subquery - we'll handle it differently
           const { data: joinedGroupIds } = await this.supabase
@@ -523,9 +523,10 @@ export class GroupService {
           groupsQuery = groupsQuery.in("id", groupIds).neq("creator_id", userId);
           countQuery = countQuery.in("id", groupIds).neq("creator_id", userId);
           break;
+        }
 
         case "all":
-        default:
+        default: {
           // Groups where user is creator OR participant
           const { data: allParticipations } = await this.supabase
             .from("participants")
@@ -545,6 +546,7 @@ export class GroupService {
             countQuery = countQuery.or(`creator_id.eq.${userId},id.in.(${participantGroupIds.join(",")})`);
           }
           break;
+        }
       }
 
       // Step 2: Execute count query

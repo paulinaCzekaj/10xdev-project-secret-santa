@@ -12,6 +12,7 @@ interface UseGroupViewHandlersParams {
   deleteExclusion: (id: number) => Promise<{ success: boolean; error?: string }>;
   setOptimisticParticipants?: (id: number) => void;
   setOptimisticExclusions?: (id: number) => void;
+  navigate?: (path: string) => void;
 }
 
 export const useGroupViewHandlers = ({
@@ -23,6 +24,7 @@ export const useGroupViewHandlers = ({
   deleteExclusion,
   setOptimisticParticipants,
   setOptimisticExclusions,
+  navigate,
 }: UseGroupViewHandlersParams) => {
   // Obsługa zdarzeń GroupHeader
   const handleEditGroupClick = useCallback(() => {
@@ -41,8 +43,8 @@ export const useGroupViewHandlers = ({
 
   const handleGroupDeleted = useCallback(() => {
     // Przekierowanie do dashboard
-    window.location.href = "/dashboard";
-  }, []);
+    navigate?.('/dashboard');
+  }, [navigate]);
 
   // Obsługa zdarzeń związanych z uczestnikami
   const handleParticipantAdded = useCallback(() => {

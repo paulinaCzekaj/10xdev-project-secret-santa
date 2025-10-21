@@ -160,8 +160,8 @@ test.describe("Group Creation Flow (POM)", () => {
 
     // Check for validation message
     const validationMsg = await groupViewPage.getDrawValidationMessage();
-    if (validationMsg) {
-    }
+    expect(validationMsg).toBeTruthy();
+    expect(validationMsg).toContain("losowania");
 
     // ==========================================
     // FINAL SUCCESS MESSAGE

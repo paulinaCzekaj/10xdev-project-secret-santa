@@ -59,7 +59,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     const { participantId } = ParticipantIdParamSchema.parse({ participantId: params.participantId });
 
     // Guard 2: Authentication
-    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    const userIdOrResponse = requireApiAuth({ locals, request, params });
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }
@@ -222,7 +222,7 @@ export const DELETE: APIRoute = async ({ params, locals, request }) => {
     const { participantId } = ParticipantIdParamSchema.parse({ participantId: params.participantId });
 
     // Guard 2: Authentication
-    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    const userIdOrResponse = requireApiAuth({ locals, request, params });
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }

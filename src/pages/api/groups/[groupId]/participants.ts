@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { ParticipantService } from "../../../../lib/services/participant.service";
 import { requireApiAuth, requireGroupAccess, requireGroupOwner } from "../../../../lib/utils/api-auth.utils";
-import type { CreateParticipantCommand, ApiErrorResponse, ParticipantListItemDTO } from "../../../../types";
+import type { CreateParticipantCommand, ApiErrorResponse } from "../../../../types";
 
 export const prerender = false;
 export const trailingSlash = "never";
@@ -50,14 +50,14 @@ export const GET: APIRoute = async ({ params, request, locals }) => {
     const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
     // Guard 2: Authentication
-    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    const userIdOrResponse = requireApiAuth({ locals, request, params });
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }
     userId = userIdOrResponse;
 
     // Guard 3: Check group access (owner or participant)
-    const accessOrResponse = await requireGroupAccess({ locals, request } as any, groupId);
+    const accessOrResponse = await requireGroupAccess({ locals, request, params }, groupId);
     if (accessOrResponse !== true) {
       return accessOrResponse;
     }

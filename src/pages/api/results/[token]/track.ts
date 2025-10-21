@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { ParticipantService } from "../../../../lib/services/participant.service";
-import type { ApiErrorResponse, ResultAccessTrackingDTO } from "../../../../types";
+// No types needed for this endpoint
 
 export const prerender = false;
 

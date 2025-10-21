@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { ResultsService } from "../../../../lib/services/results.service";
 import { requireApiAuth } from "../../../../lib/utils/api-auth.utils";
-import type { ApiErrorResponse } from "../../../../types";
+// No additional types needed
 
 export const prerender = false;
 

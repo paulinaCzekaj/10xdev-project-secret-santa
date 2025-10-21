@@ -18,7 +18,6 @@ import { toast } from "sonner";
 import type {
   ParticipantViewModel,
   EditParticipantFormViewModel,
-  ParticipantDTO,
   UpdateParticipantCommand,
 } from "@/types";
 

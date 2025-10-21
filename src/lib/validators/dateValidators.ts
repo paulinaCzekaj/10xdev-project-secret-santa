@@ -18,7 +18,7 @@ export function isFutureDate(date: Date): boolean {
  * @param daysFromNow - Number of days from today (default: 1)
  * @returns Date object set to N days from now at midnight
  */
-export function getMinimumFutureDate(daysFromNow: number = 1): Date {
+export function getMinimumFutureDate(daysFromNow = 1): Date {
   const date = new Date();
   date.setDate(date.getDate() + daysFromNow);
   date.setHours(0, 0, 0, 0);

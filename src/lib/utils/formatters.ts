@@ -63,7 +63,7 @@ export function getInitials(name: string): string {
  * @param isCurrentUser - Whether this is the current user's email
  * @returns Formatted email or "Brak" if no email
  */
-export function formatParticipantEmail(email?: string, isCurrentUser: boolean = false): string {
+export function formatParticipantEmail(email?: string, isCurrentUser = false): string {
   if (!email) return "Brak";
 
   if (isCurrentUser) return email;
@@ -85,7 +85,7 @@ export function formatParticipantEmail(email?: string, isCurrentUser: boolean = 
  * @param isCurrentUser - Whether this is the current user
  * @returns Formatted name with "(Ty)" suffix if current user
  */
-export function formatParticipantName(name: string, isCurrentUser: boolean = false): string {
+export function formatParticipantName(name: string, isCurrentUser = false): string {
   return isCurrentUser ? `${name} (Ty)` : name;
 }
 
@@ -190,7 +190,7 @@ export function formatResultStatus(viewed: boolean) {
  * @param isExpired - Whether the end date has passed
  * @returns Badge object with text and variant
  */
-export function formatGroupStatusBadge(isDrawn: boolean, isExpired: boolean = false) {
+export function formatGroupStatusBadge(isDrawn: boolean, isExpired = false) {
   if (isDrawn) {
     if (isExpired) {
       return {

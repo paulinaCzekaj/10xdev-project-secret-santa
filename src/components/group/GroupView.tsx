@@ -86,6 +86,8 @@ export default function GroupView({ groupId }: GroupViewProps) {
     deleteExclusion,
     setOptimisticParticipants,
     setOptimisticExclusions,
+    // eslint-disable-next-line react-compiler/react-compiler
+    navigate: (path: string) => (window.location.href = path),
   });
 
   // Warunki wyświetlania

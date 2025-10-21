@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, DollarSign, Gift } from "lucide-react";
+// Card components not needed for this component
+import { Calendar, DollarSign } from "lucide-react";
 
 interface ResultHeaderProps {
   group: {
