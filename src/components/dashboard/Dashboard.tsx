@@ -118,7 +118,7 @@ interface GroupCardProps {
   isCreator: boolean;
 }
 
-function GroupCard({ group, isCreator }: GroupCardProps) {
+function GroupCard({ group }: GroupCardProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pl-PL", {
       year: "numeric",

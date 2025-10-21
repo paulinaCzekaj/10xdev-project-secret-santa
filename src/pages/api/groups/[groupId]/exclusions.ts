@@ -208,6 +208,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     try {
       body = await request.json();
     } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const errorResponse: ApiErrorResponse = {
         error: {
           code: "INVALID_REQUEST",

@@ -152,6 +152,7 @@ test.describe("Create Secret Santa Group Flow", () => {
     const currentUrl = page.url();
     const groupIdMatch = currentUrl.match(/\/groups\/(\d+)/);
     expect(groupIdMatch).not.toBeNull();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const groupId = groupIdMatch![1];
 
     // ==========================================

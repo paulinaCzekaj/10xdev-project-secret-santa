@@ -34,6 +34,7 @@ export default function RegisterForm() {
     try {
       await register(data);
     } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       // Error already handled in hook
     }
   };

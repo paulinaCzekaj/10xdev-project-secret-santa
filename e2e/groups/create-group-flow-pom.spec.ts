@@ -48,6 +48,7 @@ test.describe("Group Creation Flow (POM)", () => {
     await dashboardPage.expectToBeOnDashboard();
 
     // Verify dashboard loaded with welcome message
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const welcomeMsg = await dashboardPage.getWelcomeMessage();
 
     // ==========================================
@@ -55,6 +56,7 @@ test.describe("Group Creation Flow (POM)", () => {
     // ==========================================
 
     // Check if there are existing groups or empty state
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const hasGroups = await dashboardPage.hasCreatedGroups();
 
     if (await dashboardPage.isEmptyStateVisible()) {
@@ -112,8 +114,10 @@ test.describe("Group Creation Flow (POM)", () => {
 
     await groupViewPage.expectGroupName(groupName);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const displayedBudget = await groupViewPage.getBudget();
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const endDate = await groupViewPage.getEndDate();
 
     // Verify status badge shows "W trakcie" (not drawn yet)
@@ -217,6 +221,7 @@ test.describe("Group Creation Flow (POM)", () => {
     await dashboardPage.expectGroupWithName(uniqueGroupName);
 
     // Get all group names
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const groupNames = await dashboardPage.getGroupNames();
   });
 
@@ -280,7 +285,7 @@ test.describe("Create Group Form Validation (POM)", () => {
     expect(isDisabled).toBeTruthy();
   });
 
-  test("validates budget is positive integer", async ({ page }) => {
+  test("validates budget is positive integer", async ({ page: _page }) => {
     await createGroupPage.fillName("Valid Name");
     await createGroupPage.fillBudget(-10); // Negative budget
 

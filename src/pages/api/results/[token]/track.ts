@@ -27,7 +27,7 @@ const AccessTokenParamSchema = z.object({
  *
  * @note No authentication required - uses access token
  */
-export const POST: APIRoute = async ({ params, locals, request }) => {
+export const POST: APIRoute = async ({ params, locals }) => {
   console.log("[POST /api/results/:token/track] Endpoint hit", { token: params.token });
 
   try {

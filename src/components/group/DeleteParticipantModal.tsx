@@ -10,7 +10,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AlertTriangle } from "lucide-react";
-import { toast } from "sonner";
 import type { ParticipantViewModel } from "@/types";
 
 interface DeleteParticipantModalProps {

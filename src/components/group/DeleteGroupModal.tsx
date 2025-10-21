@@ -32,6 +32,7 @@ export function DeleteGroupModal({ isOpen, groupName, onClose, onConfirm, delete
         toast.error(result.error || "Nie udało się usunąć grupy");
       }
     } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       toast.error("Wystąpił błąd podczas usuwania grupy");
     }
   };

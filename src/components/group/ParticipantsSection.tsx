@@ -27,7 +27,9 @@ export function ParticipantsSection({
   isDrawn,
   isCreator,
   onParticipantAdded,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onParticipantUpdated,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onParticipantDeleted,
   onEditParticipant,
   onDeleteParticipant,

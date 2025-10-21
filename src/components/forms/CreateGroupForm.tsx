@@ -5,7 +5,6 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
 import { InfoBox } from "@/components/ui/info-box";
 import { createGroupFormSchema, type CreateGroupFormViewModel } from "@/schemas/group.schemas";
 import { useCreateGroup } from "@/hooks/useCreateGroup";
@@ -41,6 +40,7 @@ export default function CreateGroupForm() {
       // eslint-disable-next-line react-compiler/react-compiler
       window.location.href = `/groups/${result.id}`;
     } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       // Error is already handled by the hook
       toast.error("Nie udało się utworzyć loterii", {
         description: apiError || "Wystąpił nieoczekiwany błąd",
