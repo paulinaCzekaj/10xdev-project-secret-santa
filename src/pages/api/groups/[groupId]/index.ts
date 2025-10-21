@@ -178,8 +178,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     let body: unknown;
     try {
       body = await request.json();
-    } catch (error) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch {
       const errorResponse: ApiErrorResponse = {
         error: {
           code: "INVALID_REQUEST",

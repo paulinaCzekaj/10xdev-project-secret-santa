@@ -85,8 +85,7 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
       } else {
         toast.error(result.error || "Nie udało się dodać wykluczenia. Spróbuj ponownie.");
       }
-    } catch (error) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch {
       toast.error("Nie udało się dodać wykluczenia. Spróbuj ponownie.");
     }
   };

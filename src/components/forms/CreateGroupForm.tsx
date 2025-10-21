@@ -39,8 +39,7 @@ export default function CreateGroupForm() {
       // Redirect to group management page
       // eslint-disable-next-line react-compiler/react-compiler
       window.location.href = `/groups/${result.id}`;
-    } catch (error) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch {
       // Error is already handled by the hook
       toast.error("Nie udało się utworzyć loterii", {
         description: apiError || "Wystąpił nieoczekiwany błąd",

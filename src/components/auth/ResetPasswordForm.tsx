@@ -34,8 +34,7 @@ export default function ResetPasswordForm({ accessToken }: ResetPasswordFormProp
   const onSubmit = async (data: ResetPasswordFormData) => {
     try {
       await resetPassword(data);
-    } catch (error) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch {
       // Error already handled in hook
     }
   };

@@ -173,7 +173,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     let body: unknown;
     try {
       body = await request.json();
-    } catch (error) {
+    } catch {
       const errorResponse: ApiErrorResponse = {
         error: {
           code: "INVALID_REQUEST",

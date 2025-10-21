@@ -46,8 +46,7 @@ export function DrawConfirmationModal({
         toast.error(result.error || "Nie udało się wykonać losowania");
         setIsExecuting(false);
       }
-    } catch (error) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch {
       toast.error("Wystąpił błąd podczas wykonania losowania");
       setIsExecuting(false);
     }

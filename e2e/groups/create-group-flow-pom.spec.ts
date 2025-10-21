@@ -285,7 +285,7 @@ test.describe("Create Group Form Validation (POM)", () => {
     expect(isDisabled).toBeTruthy();
   });
 
-  test("validates budget is positive integer", async ({ page: _page }) => {
+  test("validates budget is positive integer", async () => {
     await createGroupPage.fillName("Valid Name");
     await createGroupPage.fillBudget(-10); // Negative budget
 
