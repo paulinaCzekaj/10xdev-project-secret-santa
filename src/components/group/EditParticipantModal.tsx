@@ -15,11 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { User, Mail } from "lucide-react";
 import { toast } from "sonner";
-import type {
-  ParticipantViewModel,
-  EditParticipantFormViewModel,
-  UpdateParticipantCommand,
-} from "@/types";
+import type { ParticipantViewModel, EditParticipantFormViewModel, UpdateParticipantCommand } from "@/types";
 
 // Schema walidacji dla formularza edycji uczestnika
 const editParticipantFormSchema = z.object({

@@ -43,7 +43,7 @@ export const useGroupViewHandlers = ({
 
   const handleGroupDeleted = useCallback(() => {
     // Przekierowanie do dashboard
-    navigate?.('/dashboard');
+    navigate?.("/dashboard");
   }, [navigate]);
 
   // Obsługa zdarzeń związanych z uczestnikami

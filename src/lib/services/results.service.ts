@@ -9,6 +9,23 @@ import type {
 } from "../../types";
 
 /**
+ * Type for participant data used in formatting
+ */
+interface ParticipantData {
+  id: number;
+  name: string;
+  result_viewed_at: string | null;
+}
+
+/**
+ * Type for assigned participant data used in formatting
+ */
+interface AssignedParticipantData {
+  id: number;
+  name: string;
+}
+
+/**
  * Service for managing Secret Santa draw results retrieval
  */
 export class ResultsService {
@@ -373,7 +390,7 @@ export class ResultsService {
   /**
    * Formats participant data for response
    */
-  private formatParticipantInfo(participant: { id: number; name: string; result_viewed_at: string | null }): ResultParticipantInfo {
+  private formatParticipantInfo(participant: ParticipantData): ResultParticipantInfo {
     return {
       id: participant.id,
       name: participant.name,
@@ -384,7 +401,10 @@ export class ResultsService {
   /**
    * Formats assigned participant data for response
    */
-  private formatAssignedParticipant(assignedParticipant: { id: number; name: string }, wishlist: string | null): ResultAssignedParticipant {
+  private formatAssignedParticipant(
+    assignedParticipant: AssignedParticipantData,
+    wishlist: string | null
+  ): ResultAssignedParticipant {
     return {
       id: assignedParticipant.id,
       name: assignedParticipant.name,

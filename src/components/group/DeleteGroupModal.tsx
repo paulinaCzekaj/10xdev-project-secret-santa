@@ -47,8 +47,8 @@ export function DeleteGroupModal({ isOpen, groupName, onClose, onConfirm, delete
             <div>
               <AlertDialogTitle>Czy na pewno chcesz usunąć tę grupę?</AlertDialogTitle>
               <AlertDialogDescription className="mt-2">
-                Ta akcja jest nieodwracalna. Spowoduje trwałe usunięcie grupy <strong>&bdquo;{groupName}&rdquo;</strong> wraz ze
-                wszystkimi uczestnikami, wykluczeniami i wynikami losowania.
+                Ta akcja jest nieodwracalna. Spowoduje trwałe usunięcie grupy <strong>&bdquo;{groupName}&rdquo;</strong>{" "}
+                wraz ze wszystkimi uczestnikami, wykluczeniami i wynikami losowania.
               </AlertDialogDescription>
             </div>
           </div>

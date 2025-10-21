@@ -105,7 +105,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Guard 6: Check if user is group owner
-    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, participant.group_id);
+    const ownerOrResponse = await requireGroupOwner({ locals }, participant.group_id);
     if (ownerOrResponse !== true) {
       return ownerOrResponse;
     }
@@ -248,7 +248,7 @@ export const DELETE: APIRoute = async ({ params, locals, request }) => {
     }
 
     // Guard 4: Check if user is group owner
-    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, participant.group_id);
+    const ownerOrResponse = await requireGroupOwner({ locals }, participant.group_id);
     if (ownerOrResponse !== true) {
       return ownerOrResponse;
     }

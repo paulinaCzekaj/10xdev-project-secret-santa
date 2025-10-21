@@ -362,7 +362,7 @@ export class ExclusionRuleService {
       }
 
       const groupId = exclusionRule.group_id;
-      const groupCreatorId = (exclusionRule.groups as any).creator_id;
+      const groupCreatorId = (exclusionRule.groups as { creator_id: number }).creator_id;
 
       console.log("[ExclusionRuleService.deleteExclusionRule] Exclusion rule found", {
         exclusionRuleId,

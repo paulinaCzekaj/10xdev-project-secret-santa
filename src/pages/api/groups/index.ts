@@ -85,7 +85,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           message: firstError.message,
           details: {
             field: firstError.path.join("."),
-            value: (body as any)?.[firstError.path[0]],
+            value: (body as Record<string, unknown>)?.[firstError.path[0]],
           },
         },
       };
@@ -160,7 +160,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   console.log("[GET /api/groups] Endpoint hit");
 
   // Guard 0: Authentication
-  const userIdOrResponse = requireApiAuth({ locals, request } as any);
+  const userIdOrResponse = requireApiAuth({ locals });
   if (typeof userIdOrResponse !== "string") {
     return userIdOrResponse;
   }

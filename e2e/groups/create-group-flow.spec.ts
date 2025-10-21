@@ -152,8 +152,9 @@ test.describe("Create Secret Santa Group Flow", () => {
     const currentUrl = page.url();
     const groupIdMatch = currentUrl.match(/\/groups\/(\d+)/);
     expect(groupIdMatch).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const groupId = groupIdMatch![1];
+
+    const groupId = groupIdMatch?.[1] ?? "";
+    expect(groupId).toBeTruthy();
 
     // ==========================================
     // STEP 5.1: Verify Group Header Section

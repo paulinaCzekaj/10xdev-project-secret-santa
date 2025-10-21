@@ -32,7 +32,7 @@ const ParticipantIdParamSchema = z.object({
  *
  * @note Authentication required - user must be the participant or have access
  */
-export const POST: APIRoute = async ({ params, locals, request, url }) => {
+export const POST: APIRoute = async ({ params, locals, url }) => {
   console.log("[POST /api/participants/:participantId/reveal] Endpoint hit", {
     participantId: params.participantId,
   });
@@ -61,7 +61,7 @@ export const POST: APIRoute = async ({ params, locals, request, url }) => {
       }
     } else {
       // Check for regular authentication
-      const userIdOrResponse = requireApiAuth({ locals, request } as any);
+      const userIdOrResponse = requireApiAuth({ locals });
       if (typeof userIdOrResponse === "string") {
         isAuthenticated = true;
       }

@@ -157,14 +157,14 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
     // Guard 2: Authentication
-    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    const userIdOrResponse = requireApiAuth({ locals });
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }
     userId = userIdOrResponse;
 
     // Guard 3: Check if user is group owner
-    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, groupId);
+    const ownerOrResponse = await requireGroupOwner({ locals }, groupId);
     if (ownerOrResponse !== true) {
       return ownerOrResponse;
     }
@@ -199,7 +199,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
             message: firstError.message,
             details: {
               field: firstError.path.join("."),
-              value: (body as any)?.[firstError.path[0]],
+              value: (body as Record<string, unknown>)?.[firstError.path[0]],
             },
           },
         };

@@ -2,10 +2,15 @@ import type { APIContext } from "astro";
 import type { ApiErrorResponse } from "@/types";
 
 /**
+ * Type for authentication context - minimal required properties from APIContext
+ */
+type AuthContext = Pick<APIContext, "locals">;
+
+/**
  * Weryfikuje sesję użytkownika w endpoincie API
  * Zwraca user_id lub odpowiedź 401
  */
-export function requireApiAuth(context: APIContext): string | Response {
+export function requireApiAuth(context: AuthContext): string | Response {
   const { user } = context.locals;
 
   if (!user) {
@@ -28,7 +33,7 @@ export function requireApiAuth(context: APIContext): string | Response {
  * Sprawdza czy użytkownik jest twórcą grupy
  * Zwraca true lub odpowiedź 403
  */
-export async function requireGroupOwner(context: APIContext, groupId: number): Promise<true | Response> {
+export async function requireGroupOwner(context: AuthContext, groupId: number): Promise<true | Response> {
   const userIdOrResponse = requireApiAuth(context);
 
   if (typeof userIdOrResponse !== "string") {
@@ -72,7 +77,7 @@ export async function requireGroupOwner(context: APIContext, groupId: number): P
 /**
  * Sprawdza czy użytkownik ma dostęp do grupy (jako twórca lub uczestnik)
  */
-export async function requireGroupAccess(context: APIContext, groupId: number): Promise<true | Response> {
+export async function requireGroupAccess(context: AuthContext, groupId: number): Promise<true | Response> {
   const userIdOrResponse = requireApiAuth(context);
 
   if (typeof userIdOrResponse !== "string") {
