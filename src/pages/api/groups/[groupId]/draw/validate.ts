@@ -51,7 +51,7 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
     const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
     // Guard 2: Authentication
-    const userIdOrResponse = requireApiAuth({ locals, request, params });
+    const userIdOrResponse = requireApiAuth({ locals });
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }
@@ -60,7 +60,7 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
     console.log("[POST /api/groups/:groupId/draw/validate] User authenticated", { userId, groupId });
 
     // Guard 3: Check if user is group owner
-    const ownerOrResponse = await requireGroupOwner({ locals, request, params }, groupId);
+    const ownerOrResponse = await requireGroupOwner({ locals }, groupId);
     if (ownerOrResponse !== true) {
       return ownerOrResponse;
     }

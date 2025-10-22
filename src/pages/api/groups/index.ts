@@ -47,7 +47,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   console.log("[POST /api/groups] Endpoint hit");
 
   // Guard 0: Authentication
-  const userIdOrResponse = requireApiAuth({ locals, request, params: {} });
+  const userIdOrResponse = requireApiAuth({ locals });
   if (typeof userIdOrResponse !== "string") {
     return userIdOrResponse;
   }

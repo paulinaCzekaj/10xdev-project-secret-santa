@@ -18,6 +18,18 @@ interface ParticipantData {
 }
 
 /**
+ * Type for full participant data from database
+ */
+interface ParticipantDataFromDB {
+  id: number;
+  group_id: number;
+  user_id: string | null;
+  name: string;
+  email: string | null;
+  result_viewed_at: string | null;
+}
+
+/**
  * Type for assigned participant data used in formatting
  */
 interface AssignedParticipantData {
@@ -171,7 +183,7 @@ export class ResultsService {
     groupId?: number,
     userId?: UserId,
     token?: string
-  ): Promise<{ participant: ResultParticipantInfo; group: ResultGroupInfo }> {
+  ): Promise<{ participant: ParticipantDataFromDB; group: ResultGroupInfo }> {
     // Step 1: Check if draw is completed
     const targetGroupId = groupId || (await this.getGroupIdFromToken(token || ""));
 
@@ -394,7 +406,7 @@ export class ResultsService {
     return {
       id: participant.id,
       name: participant.name,
-      result_viewed_at: participant.result_viewed_at,
+      result_viewed_at: participant.result_viewed_at || undefined,
     };
   }
 

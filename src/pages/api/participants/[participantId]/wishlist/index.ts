@@ -74,7 +74,7 @@ export const PUT: APIRoute = async ({ params, request, locals, url }) => {
     const { token: queryToken } = ParticipantTokenQuerySchema.parse(queryParams);
 
     // Guard 3: Authentication - try Bearer token first, then participant token
-    const userIdOrResponse = requireApiAuth({ locals, request, params });
+    const userIdOrResponse = requireApiAuth({ locals });
 
     if (typeof userIdOrResponse === "string") {
       // Bearer token authentication successful
@@ -286,7 +286,7 @@ export const GET: APIRoute = async ({ params, request, locals, url }) => {
     const { token: queryToken } = ParticipantTokenQuerySchema.parse(queryParams);
 
     // Guard 3: Authentication - try Bearer token first, then participant token
-    const userIdOrResponse = requireApiAuth({ locals, request, params });
+    const userIdOrResponse = requireApiAuth({ locals });
 
     if (typeof userIdOrResponse === "string") {
       // Bearer token authentication successful
@@ -468,7 +468,7 @@ export const DELETE: APIRoute = async ({ params, request, locals, url }) => {
     const { token: queryToken } = ParticipantTokenQuerySchema.parse(queryParams);
 
     // Guard 3: Authentication - try Bearer token first, then participant token
-    const userIdOrResponse = requireApiAuth({ locals, request, params });
+    const userIdOrResponse = requireApiAuth({ locals });
 
     if (typeof userIdOrResponse === "string") {
       // Bearer token authentication successful

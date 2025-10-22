@@ -43,7 +43,7 @@ export const DELETE: APIRoute = async ({ params, request, locals }) => {
     const { id: exclusionRuleId } = ExclusionRuleIdParamSchema.parse({ id: params.id });
 
     // Guard 2: Authentication
-    const userIdOrResponse = requireApiAuth({ locals, request, params });
+    const userIdOrResponse = requireApiAuth({ locals });
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }

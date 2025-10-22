@@ -50,14 +50,14 @@ export const GET: APIRoute = async ({ params, request, locals }) => {
     const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
     // Guard 2: Authentication
-    const userIdOrResponse = requireApiAuth({ locals, request, params });
+    const userIdOrResponse = requireApiAuth({ locals });
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }
     userId = userIdOrResponse;
 
     // Guard 3: Check group access (owner or participant)
-    const accessOrResponse = await requireGroupAccess({ locals, request, params }, groupId);
+    const accessOrResponse = await requireGroupAccess({ locals }, groupId);
     if (accessOrResponse !== true) {
       return accessOrResponse;
     }
