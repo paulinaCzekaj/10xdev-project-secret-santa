@@ -1,0 +1,14 @@
+name = "secret-santa-app"
+compatibility_date = "2025-10-22"
+
+# KV binding for sessions
+[[kv_namespaces]]
+binding = "SESSION"
+id = "your-kv-namespace-id"
+preview_id = "your-preview-kv-namespace-id"
+
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+[env.preview]
+vars = { ENVIRONMENT = "preview" }
