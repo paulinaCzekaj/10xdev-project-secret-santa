@@ -64,7 +64,35 @@ Projekt został w pełni przygotowany do deploymentu na Cloudflare Pages z autom
 4. Nazwa projektu: **`secret-santa-app`** (ważne - zgodne z `wrangler.toml`)
 5. Kliknij **Create project**
 
-### Krok 5: Utwórz KV Namespace (dla sesji)
+### Krok 5: Skonfiguruj zmienne środowiskowe w Cloudflare Pages (WAŻNE!)
+
+⚠️ **Krytyczne:** Zmienne środowiskowe dodane w GitHub Secrets działają tylko podczas build-time. Aby aplikacja działała w runtime, musisz dodać zmienne bezpośrednio w Cloudflare Dashboard.
+
+1. W [Cloudflare Dashboard](https://dash.cloudflare.com/) przejdź do **Workers & Pages**
+2. Znajdź i kliknij na projekt **`secret-santa-app`**
+3. Przejdź do zakładki **Settings** → **Environment variables**
+4. W sekcji **Production** kliknij **Add variable** i dodaj:
+
+   **Zmienna 1:**
+   - Variable name: `PUBLIC_SUPABASE_URL`
+   - Value: Twój Supabase URL (np. `https://xxx.supabase.co`)
+   - Kliknij **Save**
+
+   **Zmienna 2:**
+   - Variable name: `PUBLIC_SUPABASE_ANON_KEY`
+   - Value: Twój Supabase Anon Key
+   - Kliknij **Save**
+
+5. Powtórz proces dla środowiska **Preview** (jeśli planujesz używać preview deployments)
+
+**Gdzie znaleźć wartości Supabase?**
+- Zaloguj się do [Supabase Dashboard](https://supabase.com/dashboard)
+- Wybierz swój projekt
+- Przejdź do **Settings** → **API**
+- Skopiuj **Project URL** (dla `PUBLIC_SUPABASE_URL`)
+- Skopiuj **anon public** key (dla `PUBLIC_SUPABASE_ANON_KEY`)
+
+### Krok 6: Utwórz KV Namespace (dla sesji)
 
 1. W Cloudflare Dashboard przejdź do **Workers & Pages** → **KV**
 2. Kliknij **Create namespace**
@@ -79,7 +107,7 @@ Projekt został w pełni przygotowany do deploymentu na Cloudflare Pages z autom
    preview_id = "OPCJONALNY-PREVIEW-ID"
    ```
 
-### Krok 6: Testuj Deployment
+### Krok 7: Testuj Deployment
 
 1. Commit i push zmian do brancha `master`:
    ```bash
@@ -103,6 +131,20 @@ Projekt został w pełni przygotowany do deploymentu na Cloudflare Pages z autom
 ---
 
 ## 🆘 Troubleshooting
+
+### ❌ Błąd: "Supabase credentials missing" w runtime Cloudflare
+**Objaw:** Aplikacja buduje się poprawnie, ale w logach Cloudflare widzisz błąd:
+```
+Error: Supabase credentials missing. Please check your .env file and ensure PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY are set.
+```
+
+**Przyczyna:** Zmienne środowiskowe z GitHub Secrets są dostępne tylko podczas build-time, nie w runtime.
+
+**Rozwiązanie:**
+1. Przejdź do Cloudflare Dashboard → Workers & Pages → secret-santa-app
+2. Zakładka **Settings** → **Environment variables**
+3. Dodaj `PUBLIC_SUPABASE_URL` i `PUBLIC_SUPABASE_ANON_KEY` (zobacz **Krok 5** powyżej)
+4. Po dodaniu zmiennych, wykonaj **redeploy** (przejdź do Deployments → kliknij "..." przy ostatnim deploymencie → Retry deployment)
 
 ### Deployment failuje z błędem 401/403
 - Sprawdź czy `CLOUDFLARE_API_TOKEN` ma poprawne uprawnienia (Cloudflare Pages - Edit)

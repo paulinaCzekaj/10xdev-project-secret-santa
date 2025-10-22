@@ -1,6 +1,54 @@
 # Changelog - Cloudflare Pages Deployment Setup
 
-## Data: 2025-10-22
+## Data: 2025-10-22 - Uzupełnienie dokumentacji: Runtime Environment Variables
+
+### Podsumowanie zmian
+
+Rozszerzono dokumentację o krytyczne informacje dotyczące konfiguracji zmiennych środowiskowych w runtime Cloudflare Pages. Dodano instrukcje rozwiązania problemu "Supabase credentials missing" oraz wyjaśniono różnicę między build-time a runtime variables.
+
+---
+
+### 1. Dokumentacja rozszerzona
+
+#### `SETUP-CLOUDFLARE.md`
+**Nowy Krok 5: Skonfiguruj zmienne środowiskowe w Cloudflare Pages**
+- Dodano szczegółowe instrukcje dodawania `PUBLIC_SUPABASE_URL` i `PUBLIC_SUPABASE_ANON_KEY` w Cloudflare Dashboard
+- Wyjaśniono różnicę między build-time (GitHub Secrets) a runtime (Cloudflare Dashboard)
+- Zaktualizowano numerację kroków (poprzedni Krok 5 → Krok 6, itd.)
+
+**Rozszerzona sekcja Troubleshooting:**
+- Dodano nowy punkt: "❌ Błąd: Supabase credentials missing w runtime Cloudflare"
+- Opisano objawy, przyczynę i krok po kroku rozwiązanie problemu
+- Dodano instrukcję jak wykonać redeploy po dodaniu zmiennych
+
+#### `.github/DEPLOYMENT-SETUP.md`
+**Nowa Sekcja 3: Konfiguracja zmiennych środowiskowych w Cloudflare Pages (Runtime)**
+- Wyjaśniono dlaczego GitHub Secrets nie wystarczają do działania aplikacji
+- Dodano tabelę z wymaganymi zmiennymi i ich źródłami
+- Szczegółowe kroki konfiguracji przez Cloudflare Dashboard
+- Zaktualizowano numerację sekcji (poprzednia Sekcja 3 → Sekcja 4, itd.)
+
+**Rozszerzona sekcja Troubleshooting (Sekcja 7):**
+- Dodano "❌ Runtime Error: Supabase credentials missing" jako pierwszy punkt
+- Wyjaśniono przyczynę i rozwiązanie z linkiem do Sekcji 3
+- Zaktualizowano punkt "Build fails" o rozróżnienie build-time vs runtime
+
+---
+
+### 2. Kluczowe informacje dla użytkowników
+
+**Problem:** Aplikacja buduje się poprawnie, ale w runtime na Cloudflare widzisz błąd:
+```
+Error: Supabase credentials missing. Please check your .env file and ensure PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY are set.
+```
+
+**Przyczyna:** Zmienne z GitHub Secrets działają tylko podczas `npm run build`, nie w runtime.
+
+**Rozwiązanie:** Dodaj zmienne w Cloudflare Dashboard → Workers & Pages → secret-santa-app → Settings → Environment variables
+
+---
+
+## Data: 2025-10-22 - Fix Deployment Timeout Issue
 
 ### Podsumowanie zmian
 

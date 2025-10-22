@@ -10,6 +10,7 @@ jobs:
   lint:
     name: Lint Code
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -29,6 +30,7 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -55,6 +57,7 @@ jobs:
   build-and-deploy:
     name: Build and Deploy to Cloudflare Pages
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [lint, unit-tests]
     permissions:
       contents: read
