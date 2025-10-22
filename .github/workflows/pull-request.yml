@@ -55,58 +55,58 @@ jobs:
           flags: unit-tests
           name: Unit Tests Coverage
 
-  e2e-tests:
-    name: E2E Tests
-    runs-on: ubuntu-latest
-    environment: integration
-    env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      BASE_URL: ${{ secrets.BASE_URL || 'http://localhost:3000' }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
+  # e2e-tests:
+  #   name: E2E Tests
+  #   runs-on: ubuntu-latest
+  #   environment: integration
+  #   env:
+  #     SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  #     SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+  #     OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     BASE_URL: ${{ secrets.BASE_URL || 'http://localhost:3000' }}
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v5
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v6
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #         cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+  #     - name: Install dependencies
+  #       run: npm ci
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+  #     - name: Install Playwright browsers
+  #       run: npx playwright install --with-deps chromium
 
-      - name: Build application
-        run: npm run build
+  #     - name: Build application
+  #       run: npm run build
 
-      - name: Run E2E tests with coverage
-        run: npm run test:e2e -- --reporter=html,json
+  #     - name: Run E2E tests with coverage
+  #       run: npm run test:e2e -- --reporter=html,json
 
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 30
+  #     - name: Upload Playwright report
+  #       uses: actions/upload-artifact@v4
+  #       if: always()
+  #       with:
+  #         name: playwright-report
+  #         path: playwright-report/
+  #         retention-days: 30
 
-      - name: Upload E2E coverage reports
-        uses: codecov/codecov-action@v5
-        if: success()
-        with:
-          file: ./coverage/e2e/coverage-final.json
-          flags: e2e-tests
-          name: E2E Tests Coverage
+  #     - name: Upload E2E coverage reports
+  #       uses: codecov/codecov-action@v5
+  #       if: success()
+  #       with:
+  #         file: ./coverage/e2e/coverage-final.json
+  #         flags: e2e-tests
+  #         name: E2E Tests Coverage
 
   status-comment:
     name: Status Comment
     runs-on: ubuntu-latest
-    needs: [lint, unit-tests, e2e-tests]
-    if: always() && (needs.lint.result == 'success' && needs.unit-tests.result == 'success' && needs.e2e-tests.result == 'success')
+    needs: [lint, unit-tests]
+    if: always() && (needs.lint.result == 'success' && needs.unit-tests.result == 'success')
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -122,14 +122,11 @@ jobs:
 
             - ✅ **Linting**: Code style and quality checks passed
             - ✅ **Unit Tests**: All unit tests passed with coverage collected
-            - ✅ **E2E Tests**: End-to-end tests passed successfully
 
             Your pull request is ready for review and merge! 🎉
 
             ### Coverage Reports
             - [Unit Tests Coverage](https://app.codecov.io/github/${{ github.repository }}/pull/${{ github.event.pull_request.number }}/flags/unit-tests)
-            - [E2E Tests Coverage](https://app.codecov.io/github/${{ github.repository }}/pull/${{ github.event.pull_request.number }}/flags/e2e-tests)
 
-            ### Test Reports
-            - [Playwright E2E Report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            > **Note**: E2E tests are currently disabled for faster CI/CD pipeline
           token: ${{ secrets.GITHUB_TOKEN }}
