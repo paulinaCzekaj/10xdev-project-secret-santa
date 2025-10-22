@@ -51,7 +51,7 @@ jobs:
       - name: Upload coverage reports
         uses: codecov/codecov-action@v5
         with:
-          file: ./coverage/coverage-final.json
+          files: ./coverage/coverage-final.json
           flags: unit-tests
           name: Unit Tests Coverage
 

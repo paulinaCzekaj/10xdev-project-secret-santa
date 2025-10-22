@@ -56,7 +56,7 @@ The project leverages a modern tech stack to deliver a fast, efficient, and inte
 ### CI/CD and Hosting
 
 - **GitHub Actions**: For automated Continuous Integration and Continuous Deployment pipelines.
-- **DigitalOcean**: For application hosting via Docker images.
+- **Cloudflare Pages**: For serverless application hosting with global CDN and edge functions.
 
 ## Getting Started Locally
 
@@ -99,6 +99,22 @@ In the project directory, you can run:
 - `npm run lint`: Runs ESLint to check for code quality issues.
 - `npm run lint:fix`: Runs ESLint and attempts to fix any identifiable issues.
 - `npm run format`: Formats the code using Prettier.
+- `npm run test`: Runs unit tests with Vitest.
+- `npm run test:coverage`: Runs unit tests with coverage reports.
+- `npm run test:e2e`: Runs end-to-end tests with Playwright.
+
+## Deployment
+
+The application is configured for automatic deployment to Cloudflare Pages via GitHub Actions.
+
+### Quick Start:
+1. Set up required GitHub Secrets (see [Deployment Setup](.github/DEPLOYMENT-SETUP.md))
+2. Push to `master` branch
+3. GitHub Actions automatically builds and deploys to Cloudflare Pages
+
+For detailed deployment instructions, see:
+- [Deployment Setup Guide](.github/DEPLOYMENT-SETUP.md)
+- [Cloudflare Deployment Guide](CLOUDFLARE-DEPLOYMENT.md)
 
 ## Project Scope
 
