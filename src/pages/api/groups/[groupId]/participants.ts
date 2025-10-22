@@ -40,7 +40,7 @@ const CreateParticipantSchema = z.object({
  *
  * @note Authentication required
  */
-export const GET: APIRoute = async ({ params, request, locals }) => {
+export const GET: APIRoute = async ({ params, locals }) => {
   console.log("[GET /api/groups/:groupId/participants] Endpoint hit", { groupId: params.groupId });
 
   let userId: string | undefined;

@@ -40,7 +40,7 @@ const GroupIdParamSchema = z.object({
  *
  * @note Authentication required
  */
-export const POST: APIRoute = async ({ params, locals, request }) => {
+export const POST: APIRoute = async ({ params, locals }) => {
   console.log("[POST /api/groups/:groupId/draw] Endpoint hit", { groupId: params.groupId });
 
   let userId: string | undefined;

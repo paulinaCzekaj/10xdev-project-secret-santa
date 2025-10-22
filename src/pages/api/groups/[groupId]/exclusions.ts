@@ -52,7 +52,7 @@ const CreateExclusionRuleSchema = z
  *
  * @note Authentication required
  */
-export const GET: APIRoute = async ({ params, request, locals }) => {
+export const GET: APIRoute = async ({ params, locals }) => {
   console.log("[GET /api/groups/:groupId/exclusions] Endpoint hit", { groupId: params.groupId });
 
   let userId: string | undefined;

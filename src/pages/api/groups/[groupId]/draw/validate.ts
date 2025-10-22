@@ -37,7 +37,7 @@ const GroupIdParamSchema = z.object({
  * @note Authentication required
  * @note Only group creator can validate draw possibility
  */
-export const POST: APIRoute = async ({ params, locals, request }) => {
+export const POST: APIRoute = async ({ params, locals }) => {
   console.log("[POST /api/groups/:groupId/draw/validate] Endpoint hit", { groupId: params.groupId });
 
   let userId: string | undefined;

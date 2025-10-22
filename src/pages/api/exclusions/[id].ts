@@ -33,7 +33,7 @@ const ExclusionRuleIdParamSchema = z.object({
  *
  * @note Authentication required
  */
-export const DELETE: APIRoute = async ({ params, request, locals }) => {
+export const DELETE: APIRoute = async ({ params, locals }) => {
   console.log("[DELETE /api/exclusions/:id] Endpoint hit", { id: params.id });
 
   let userId: string | undefined;

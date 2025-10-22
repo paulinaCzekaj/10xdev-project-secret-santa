@@ -212,7 +212,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
  *
  * @note Authentication required
  */
-export const DELETE: APIRoute = async ({ params, locals, request }) => {
+export const DELETE: APIRoute = async ({ params, locals }) => {
   console.log("[DELETE /api/participants/:participantId] Endpoint hit", { participantId: params.participantId });
 
   let userId: string | undefined;
