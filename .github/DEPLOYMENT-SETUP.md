@@ -68,7 +68,42 @@ Przed pierwszym deploymentem musisz utworzyć projekt w Cloudflare Pages:
 4. Wybierz **Direct Upload** (GitHub Actions będzie przesyłać pliki)
 5. Nazwa projektu: `secret-santa-app` (zgodne z `wrangler.toml`)
 
-## 3. Konfiguracja KV Namespace (dla sesji)
+## 3. Konfiguracja zmiennych środowiskowych w Cloudflare Pages (Runtime)
+
+⚠️ **Krytyczne dla działania aplikacji:** GitHub Secrets (z sekcji 1) działają tylko podczas **build-time**. Aby aplikacja działała poprawnie w **runtime** na Cloudflare Pages, musisz dodać zmienne środowiskowe bezpośrednio w ustawieniach projektu Cloudflare.
+
+### Dlaczego to jest potrzebne?
+
+- **Build-time variables** (GitHub Secrets) → dostępne tylko podczas `npm run build`
+- **Runtime variables** (Cloudflare Dashboard) → dostępne gdy aplikacja jest uruchomiona i obsługuje requesty użytkowników
+
+### Krok po kroku:
+
+1. W [Cloudflare Dashboard](https://dash.cloudflare.com/) przejdź do **Workers & Pages**
+2. Znajdź i kliknij na projekt **`secret-santa-app`**
+3. Przejdź do zakładki **Settings** → **Environment variables**
+4. W sekcji **Production** dodaj następujące zmienne:
+
+   | Variable Name | Value | Gdzie znaleźć |
+   |---------------|-------|---------------|
+   | `PUBLIC_SUPABASE_URL` | `https://xxx.supabase.co` | Supabase Dashboard → Settings → API → Project URL |
+   | `PUBLIC_SUPABASE_ANON_KEY` | Twój anon/public key | Supabase Dashboard → Settings → API → anon public |
+
+5. Dla każdej zmiennej:
+   - Kliknij **Add variable**
+   - Wpisz nazwę zmiennej
+   - Wklej wartość
+   - Kliknij **Save**
+
+6. **(Opcjonalnie)** Powtórz proces dla środowiska **Preview**, jeśli planujesz używać preview deployments
+
+### Ważne uwagi:
+
+- Te zmienne muszą mieć prefiks `PUBLIC_` zgodnie z wymaganiami Astro dla zmiennych client-side
+- Po dodaniu zmiennych, następny deployment automatycznie je pobierze
+- Jeśli już masz działający deployment, wykonaj **Retry deployment** aby zastosować zmienne
+
+## 4. Konfiguracja KV Namespace (dla sesji)
 
 Projekt używa Cloudflare KV do przechowywania sesji użytkowników:
 
@@ -84,7 +119,7 @@ Projekt używa Cloudflare KV do przechowywania sesji użytkowników:
    preview_id = "opcjonalny-preview-namespace-id"
    ```
 
-## 4. Workflow CI/CD
+## 5. Workflow CI/CD
 
 ### `.github/workflows/master.yml`
 
@@ -105,7 +140,7 @@ Workflow wykonuje następujące kroki:
 - `build-and-deploy` - build aplikacji i wdrożenie przez Wrangler
 - `status-notification` - informacja o statusie deploymentu
 
-## 5. Weryfikacja konfiguracji
+## 6. Weryfikacja konfiguracji
 
 Aby sprawdzić czy wszystko działa poprawnie:
 
@@ -115,15 +150,32 @@ Aby sprawdzić czy wszystko działa poprawnie:
 4. Obserwuj wykonanie workflow
 5. Po sukcesie, aplikacja powinna być dostępna pod adresem Cloudflare Pages
 
-## 6. Troubleshooting
+## 7. Troubleshooting
+
+### ❌ Runtime Error: "Supabase credentials missing"
+**Problem:** Aplikacja buduje się poprawnie w GitHub Actions, ale po wdrożeniu na Cloudflare widzisz błąd w logach:
+```
+Error: Supabase credentials missing. Please check your .env file and ensure PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY are set.
+```
+
+**Przyczyna:** Zmienne środowiskowe z GitHub Secrets są dostępne tylko podczas build (npm run build), ale nie są dostępne w runtime gdy aplikacja obsługuje requesty.
+
+**Rozwiązanie:**
+1. Dodaj zmienne środowiskowe w Cloudflare Dashboard (zobacz **Sekcja 3**)
+2. Po dodaniu zmiennych:
+   - Przejdź do **Deployments** w projekcie Cloudflare
+   - Znajdź ostatni deployment
+   - Kliknij menu "..." → **Retry deployment**
+3. Sprawdź logi - błąd powinien zniknąć
 
 ### Deployment fails z błędem 401/403
 - Sprawdź czy `CLOUDFLARE_API_TOKEN` jest poprawny i ma odpowiednie uprawnienia
 - Sprawdź czy `CLOUDFLARE_ACCOUNT_ID` jest poprawny
 
 ### Build fails z błędem "Missing environment variables"
-- Sprawdź czy wszystkie Supabase secrets są ustawione
-- Upewnij się, że nazwy secrets są dokładnie takie jak w workflow
+- Sprawdź czy wszystkie Supabase secrets są ustawione w GitHub Secrets
+- Upewnij się, że nazwy secrets są dokładnie takie jak w workflow (case-sensitive)
+- Pamiętaj: build-time secrets (GitHub) ≠ runtime variables (Cloudflare Dashboard)
 
 ### KV binding error
 - Sprawdź czy KV namespace istnieje w Cloudflare Dashboard

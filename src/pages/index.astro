@@ -1,18 +1,48 @@
 ---
-import Welcome from "../components/Welcome.astro";
-import Layout from "../layouts/Layout.astro";
+import Header from "../components/landing/Header.tsx";
+import HeroSection from "../components/landing/HeroSection.astro";
+import FeaturesSection from "../components/landing/FeaturesSection.astro";
+import TraditionsSection from "../components/landing/TraditionsSection.astro";
+import CTASection from "../components/landing/CTASection.astro";
+import Footer from "../components/landing/Footer.astro";
+import "../styles/global.css";
 
 // Enable SSR for this page
 export const prerender = false;
 
 // Check if user is already logged in
-const { user } = Astro.locals;
+const user = Astro.locals.user;
 if (user) {
   // User is logged in - redirect to dashboard
   return Astro.redirect("/dashboard");
 }
 ---
 
-<Layout>
-  <Welcome />
-</Layout>
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Organizuj wymianę prezentów Secret Santa łatwo i bezproblemowo. Twórz loterie, zarządzaj uczestnikami i ciesz się świąteczną zabawą!"
+    />
+    <title>Gift Exchange - Wymiana Prezentów Secret Santa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="font-['Poppins',sans-serif] antialiased">
+    <Header client:load />
+    <main>
+      <HeroSection />
+      <FeaturesSection />
+      <TraditionsSection />
+      <CTASection />
+    </main>
+    <Footer />
+  </body>
+</html>
