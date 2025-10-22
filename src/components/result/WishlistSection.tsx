@@ -27,7 +27,7 @@ function WishlistSection({
   assignedPersonName,
   participantId,
   groupEndDate,
-  accessToken
+  accessToken,
 }: WishlistSectionProps) {
   return (
     <div className="space-y-6">

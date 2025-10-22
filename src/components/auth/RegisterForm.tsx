@@ -33,7 +33,7 @@ export default function RegisterForm() {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       await register(data);
-    } catch (error) {
+    } catch {
       // Error already handled in hook
     }
   };

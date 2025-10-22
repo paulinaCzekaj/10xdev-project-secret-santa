@@ -5,7 +5,6 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
 import { InfoBox } from "@/components/ui/info-box";
 import { createGroupFormSchema, type CreateGroupFormViewModel } from "@/schemas/group.schemas";
 import { useCreateGroup } from "@/hooks/useCreateGroup";
@@ -38,8 +37,9 @@ export default function CreateGroupForm() {
       });
 
       // Redirect to group management page
+      // eslint-disable-next-line react-compiler/react-compiler
       window.location.href = `/groups/${result.id}`;
-    } catch (error) {
+    } catch {
       // Error is already handled by the hook
       toast.error("Nie udało się utworzyć loterii", {
         description: apiError || "Wystąpił nieoczekiwany błąd",
@@ -48,7 +48,10 @@ export default function CreateGroupForm() {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 shadow-lg" data-testid="create-group-form-container">
+    <div
+      className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 shadow-lg"
+      data-testid="create-group-form-container"
+    >
       <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" data-testid="create-group-form">
           {/* Group Name Field */}
@@ -94,13 +97,7 @@ export default function CreateGroupForm() {
           />
 
           {/* API Error Message */}
-          {apiError && (
-            <InfoBox
-              variant="error"
-              title="Błąd"
-              description={apiError}
-            />
-          )}
+          {apiError && <InfoBox variant="error" title="Błąd" description={apiError} />}
 
           {/* Submit Button */}
           <Button

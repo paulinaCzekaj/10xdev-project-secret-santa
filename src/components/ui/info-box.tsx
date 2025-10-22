@@ -30,34 +30,19 @@ const variantStyles = {
  * Reusable InfoBox component for displaying informational messages
  * Supports three variants: info (pink), warning (yellow), error (red)
  */
-export function InfoBox({
-  variant = "info",
-  title,
-  description,
-  className,
-}: InfoBoxProps) {
+export function InfoBox({ variant = "info", title, description, className }: InfoBoxProps) {
   const styles = variantStyles[variant];
   const Icon = styles.IconComponent;
 
   return (
-    <div
-      className={cn(
-        "border rounded-lg p-4",
-        styles.container,
-        className
-      )}
-    >
+    <div className={cn("border rounded-lg p-4", styles.container, className)}>
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5">
           <Icon className={cn("w-5 h-5", styles.icon)} />
         </div>
         <div className="flex-1">
-          <h3 className="text-sm font-semibold text-gray-900 mb-1">
-            {title}
-          </h3>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            {description}
-          </p>
+          <h3 className="text-sm font-semibold text-gray-900 mb-1">{title}</h3>
+          <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
         </div>
       </div>
     </div>

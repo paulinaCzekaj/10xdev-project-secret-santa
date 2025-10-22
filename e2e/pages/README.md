@@ -52,6 +52,7 @@ await loginPage.expectSubmitButtonDisabled();
 ```
 
 **Key Methods**:
+
 - `goto()` - Navigate to login page
 - `login(email, password)` - Complete login flow
 - `fillEmail(email)` - Fill email field
@@ -90,6 +91,7 @@ await dashboardPage.expectGroupWithName("My Group");
 ```
 
 **Key Methods**:
+
 - `goto()` - Navigate to dashboard
 - `clickCreateGroupCta()` - Click main CTA button
 - `clickCreateGroupEmptyState()` - Click empty state button
@@ -127,6 +129,7 @@ await createGroupPage.expectValidationError("Nazwa loterii");
 ```
 
 **Key Methods**:
+
 - `goto()` - Navigate to create group page
 - `createGroup(name, budget, date)` - Complete form and submit
 - `fillName(name)` - Fill group name
@@ -175,6 +178,7 @@ await groupViewPage.expectDrawButtonDisabled();
 ```
 
 **Key Methods**:
+
 - `gotoGroup(groupId)` - Navigate to group page
 - `getGroupName()` - Get group name text
 - `getGroupStatus()` - Get status badge text
@@ -250,6 +254,7 @@ await expect(groupViewPage.drawButton).toHaveAttribute("disabled");
 ### 1. Use Semantic Selectors First
 
 Prioritize selectors in this order:
+
 1. By test ID (`data-testid`)
 2. By role (`getByRole`)
 3. By label (`getByLabel`)

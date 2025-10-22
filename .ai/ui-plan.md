@@ -7,6 +7,7 @@ System opiera się na podejściu mobile-first, z wykorzystaniem Astro do rendero
 ## 2. Lista widoków
 
 ### Landing Page
+
 - **Ścieżka widoku:** `/`
 - **Główny cel:** Prezentacja aplikacji dla niezalogowanych użytkowników, zachęta do rejestracji lub logowania.
 - **Kluczowe informacje:** Krótki opis aplikacji, główne korzyści, CTA do logowania/rejestracji.
@@ -14,6 +15,7 @@ System opiera się na podejściu mobile-first, z wykorzystaniem Astro do rendero
 - **UX, dostępność i bezpieczeństwo:** Responsywny design (przystosowany do mobile), wyraźne kontrasty, odpowiednie etykiety ARIA, automatyczna redirekcja do dashboardu dla zalogowanych.
 
 ### Strony Autentykacji
+
 - **Logowanie**
   - **Ścieżka widoku:** `/login`
   - **Główny cel:** Umożliwienie zalogowania się istniejącego użytkownika.
@@ -36,6 +38,7 @@ System opiera się na podejściu mobile-first, z wykorzystaniem Astro do rendero
   - **UX, dostępność i bezpieczeństwo:** Prosty, czytelny interfejs z odpowiednią walidacją.
 
 ### Dashboard (Widok chroniony dla zalogowanych)
+
 - **Ścieżka widoku:** `/dashboard`
 - **Główny cel:** Prezentacja listy grup podzielonych na „Grupy, które stworzyłem” oraz „Grupy, do których należę”.
 - **Kluczowe informacje:** Karty/grids grup z nazwą, budżetem, datą zakończenia, liczbą uczestników, statusem (przed/post losowaniem), badge rolą (twórca/uczestnik).
@@ -43,6 +46,7 @@ System opiera się na podejściu mobile-first, z wykorzystaniem Astro do rendero
 - **UX, dostępność i bezpieczeństwo:** Responsywność – grid 1/2/3 kolumny w zależności od urządzenia, focus management na interaktywnych elementach, przyciski z czytelnymi etykietami i feedbackiem (toast notifications).
 
 ### Tworzenie Grupy
+
 - **Ścieżka widoku:** `/groups/new`
 - **Główny cel:** Umożliwienie stworzenia nowej grupy Secret Santa.
 - **Kluczowe informacje:** Formularz z polami: nazwa grupy, budżet, data zakończenia.
@@ -50,15 +54,17 @@ System opiera się na podejściu mobile-first, z wykorzystaniem Astro do rendero
 - **UX, dostępność i bezpieczeństwo:** Walidacja pól (inline, regex dla email przy dodawaniu uczestników później), feedback na sukces (redirect + toast), responsywny design.
 
 ### Widok Grupy
+
 - **Ścieżka widoku:** `/groups/:id`
 - **Główny cel:** Zarządzanie szczegółami grupy – przed losowaniem (edycja, dodawanie uczestników, wykluczenia) oraz podgląd po losowaniu.
-- **Kluczowe informacje:** 
+- **Kluczowe informacje:**
   - **Przed losowaniem:** Informacje o grupie (nazwa, budżet, data), lista uczestników (tabela/karty), sekcja wykluczeń, przyciski edycji i usuwania grupy, formularz dodawania uczestników i wykluczeń oraz przycisk „Rozpocznij losowanie”.
   - **Po losowaniu:** Widok read-only, dodatkowe kolumny statusu listu i wyniku, przyciski kopiowania linku z tokenem oraz „Zobacz mój wynik”.
 - **Kluczowe komponenty:** Nagłówek grupy, tabela lub karty uczestników, modal edycji uczestników, inline formularze, sekcja wykluczeń, przycisk do losowania.
 - **UX, dostępność i bezpieczeństwo:** Dla mobile – przyjazne karty zamiast tabel; zabezpieczenie przed edycją po losowaniu; widoczny status operacji (np. disabled button „Rozpocznij losowanie” gdy uczestników jest za mało); ARIA labels dla przycisków edycji i dynamiczne komunikaty o statusie.
 
 ### Strona Wyniku
+
 - **Ścieżka widoku:** `/groups/:id/result` (dla zalogowanych) lub `/results/:token` (dla niezarejestrowanych lub zalogowanych)
 - **Główny cel:** Prezentacja wyniku losowania, z interaktywnym odkrywaniem wyniku oraz edycją listy do św. Mikołaja.
 - **Kluczowe informacje:** Nagłówek grupy (nazwa, budżet, data), interaktywny element prezentu (animowany, do odkrycia wyniku), wynik (wylosowana osoba) oraz sekcja list (list do św. Mikołaja) – osobno wyświetlane edytowane pola dla własnego listu i listy wylosowanej osoby.
@@ -130,5 +136,7 @@ System opiera się na podejściu mobile-first, z wykorzystaniem Astro do rendero
 - **Date Picker:** Komponent bazujący na Shadcn Calendar skonfigurowany na format DD.MM.YYYY.
 - **Dropdown/Select:** Komponenty do wyboru uczestników przy dodawaniu wykluczeń.
 - **Button – akcje:** Ikony przy edycji, kopiowaniu linków oraz akcjach CRUD, wszystkie z ARIA label oraz feedbackiem wizualnym.
+
+```
 
 ```

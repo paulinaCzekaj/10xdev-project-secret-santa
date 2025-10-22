@@ -47,7 +47,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   console.log("[POST /api/groups] Endpoint hit");
 
   // Guard 0: Authentication
-  const userIdOrResponse = requireApiAuth({ locals, request } as any);
+  const userIdOrResponse = requireApiAuth({ locals, request, params: {} });
   if (typeof userIdOrResponse !== "string") {
     return userIdOrResponse;
   }
@@ -59,7 +59,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   let body: unknown;
   try {
     body = await request.json();
-  } catch (error) {
+  } catch {
     const errorResponse: ApiErrorResponse = {
       error: {
         code: "INVALID_REQUEST",
@@ -85,7 +85,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           message: firstError.message,
           details: {
             field: firstError.path.join("."),
-            value: (body as any)?.[firstError.path[0]],
+            value: (body as Record<string, unknown>)?.[firstError.path[0]],
           },
         },
       };
@@ -118,7 +118,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const group = await groupService.createGroup(userId, validatedData, {
-      name: user.user_metadata?.full_name || user.email?.split('@')[0] || "Unknown User",
+      name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Unknown User",
       email: user.email || "user@example.com",
     });
 
@@ -160,7 +160,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   console.log("[GET /api/groups] Endpoint hit");
 
   // Guard 0: Authentication
-  const userIdOrResponse = requireApiAuth({ locals, request } as any);
+  const userIdOrResponse = requireApiAuth({ locals });
   if (typeof userIdOrResponse !== "string") {
     return userIdOrResponse;
   }

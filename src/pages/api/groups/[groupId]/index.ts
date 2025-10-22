@@ -46,7 +46,7 @@ const UpdateGroupSchema = z
  *
  * @note Authentication required
  */
-export const GET: APIRoute = async ({ params, locals, request }) => {
+export const GET: APIRoute = async ({ params, locals }) => {
   console.log("[GET /api/groups/:groupId] Endpoint hit", { groupId: params.groupId });
 
   let userId: string | undefined;
@@ -56,14 +56,14 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
     const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
     // Guard 2: Authentication
-    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    const userIdOrResponse = requireApiAuth({ locals });
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }
     userId = userIdOrResponse;
 
     // Guard 3: Check group access (owner or participant)
-    const accessOrResponse = await requireGroupAccess({ locals, request } as any, groupId);
+    const accessOrResponse = await requireGroupAccess({ locals }, groupId);
     if (accessOrResponse !== true) {
       return accessOrResponse;
     }
@@ -162,14 +162,14 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
     // Guard 2: Authentication
-    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    const userIdOrResponse = requireApiAuth({ locals });
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }
     userId = userIdOrResponse;
 
     // Guard 3: Check if user is group owner
-    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, groupId);
+    const ownerOrResponse = await requireGroupOwner({ locals }, groupId);
     if (ownerOrResponse !== true) {
       return ownerOrResponse;
     }
@@ -178,7 +178,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     let body: unknown;
     try {
       body = await request.json();
-    } catch (error) {
+    } catch {
       const errorResponse: ApiErrorResponse = {
         error: {
           code: "INVALID_REQUEST",
@@ -309,7 +309,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
  *
  * @note Authentication required
  */
-export const DELETE: APIRoute = async ({ params, locals, request }) => {
+export const DELETE: APIRoute = async ({ params, locals }) => {
   console.log("[DELETE /api/groups/:groupId] Endpoint hit", { groupId: params.groupId });
 
   let userId: string | undefined;
@@ -319,14 +319,14 @@ export const DELETE: APIRoute = async ({ params, locals, request }) => {
     const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
     // Guard 2: Authentication
-    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    const userIdOrResponse = requireApiAuth({ locals });
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }
     userId = userIdOrResponse;
 
     // Guard 3: Check if user is group owner
-    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, groupId);
+    const ownerOrResponse = await requireGroupOwner({ locals }, groupId);
     if (ownerOrResponse !== true) {
       return ownerOrResponse;
     }

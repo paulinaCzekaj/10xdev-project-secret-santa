@@ -10,22 +10,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -68,12 +57,7 @@ interface GroupEditModalProps {
   onSave: () => void; // Zmiana - tylko callback bez parametrów
 }
 
-export function GroupEditModal({
-  group,
-  isOpen,
-  onClose,
-  onSave,
-}: GroupEditModalProps) {
+export function GroupEditModal({ group, isOpen, onClose, onSave }: GroupEditModalProps) {
   const { updateGroup } = useGroupData(group.id);
 
   const form = useForm<EditGroupFormViewModel>({
@@ -123,9 +107,7 @@ export function GroupEditModal({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edytuj grupę</DialogTitle>
-          <DialogDescription>
-            Zmień podstawowe informacje o grupie Secret Santa.
-          </DialogDescription>
+          <DialogDescription>Zmień podstawowe informacje o grupie Secret Santa.</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -174,16 +156,9 @@ export function GroupEditModal({
                       <FormControl>
                         <Button
                           variant="outline"
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
+                          className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                         >
-                          {field.value ? (
-                            format(field.value, "PPP", { locale: pl })
-                          ) : (
-                            <span>Wybierz datę</span>
-                          )}
+                          {field.value ? format(field.value, "PPP", { locale: pl }) : <span>Wybierz datę</span>}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
@@ -193,9 +168,7 @@ export function GroupEditModal({
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
-                        disabled={(date) =>
-                          date < new Date() || date < new Date("1900-01-01")
-                        }
+                        disabled={(date) => date < new Date() || date < new Date("1900-01-01")}
                         initialFocus
                       />
                     </PopoverContent>

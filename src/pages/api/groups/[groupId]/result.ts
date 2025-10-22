@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { ResultsService } from "../../../../lib/services/results.service";
 import { requireApiAuth, requireGroupAccess } from "../../../../lib/utils/api-auth.utils";
-import type { ApiErrorResponse, DrawResultResponseDTO } from "../../../../types";
+import type { ApiErrorResponse } from "../../../../types";
 
 export const prerender = false;
 
@@ -43,14 +43,14 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
     const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
     // Guard 2: Authentication - get user ID
-    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    const userIdOrResponse = requireApiAuth({ locals, request, params });
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }
     userId = userIdOrResponse;
 
     // Guard 3: Check group access (user must be a participant)
-    const accessOrResponse = await requireGroupAccess({ locals, request } as any, groupId);
+    const accessOrResponse = await requireGroupAccess({ locals, request, params }, groupId);
     if (accessOrResponse !== true) {
       return accessOrResponse;
     }
@@ -86,7 +86,7 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
         error: {
           code: "INVALID_INPUT",
           message: "Invalid group ID format",
-          details: error.errors,
+          details: { errors: error.errors },
         },
       };
       return new Response(JSON.stringify(errorResponse), {

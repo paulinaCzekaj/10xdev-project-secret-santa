@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { ResultsService } from "../../../../lib/services/results.service";
-import type { ApiErrorResponse, DrawResultResponseDTO } from "../../../../types";
+import type { ApiErrorResponse } from "../../../../types";
 
 export const prerender = false;
 
@@ -65,7 +65,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
         error: {
           code: "INVALID_INPUT",
           message: "Invalid access token format",
-          details: error.errors,
+          details: { errors: error.errors },
         },
       };
       return new Response(JSON.stringify(errorResponse), {

@@ -64,7 +64,7 @@ export function AddParticipantForm({ groupId, onSuccess }: AddParticipantFormPro
       } else {
         toast.error(result.error || "Nie udało się dodać uczestnika. Spróbuj ponownie.");
       }
-    } catch (error) {
+    } catch {
       toast.error("Nie udało się dodać uczestnika. Spróbuj ponownie.");
     }
   };

@@ -5,6 +5,7 @@
 Endpoint `POST /api/groups/:groupId/participants` umożliwia dodanie nowego uczestnika do istniejącej grupy Secret Santa. Tylko twórca grupy może dodawać uczestników, i tylko przed wykonaniem losowania. Endpoint generuje unikalny token dostępu dla każdego uczestnika, który może zostać użyty przez niezarejestrowanych użytkowników do dostępu do ich wyniku losowania.
 
 **Kluczowe funkcjonalności:**
+
 - Dodawanie uczestnika z imieniem (wymagane) i opcjonalnym emailem
 - Walidacja uprawnień (tylko creator grupy)
 - Sprawdzanie czy losowanie nie zostało wykonane
@@ -15,25 +16,30 @@ Endpoint `POST /api/groups/:groupId/participants` umożliwia dodanie nowego ucze
 ## 2. Szczegóły żądania
 
 ### HTTP Method
+
 `POST`
 
 ### URL Structure
+
 ```
 /api/groups/:groupId/participants
 ```
 
 ### Path Parameters
-| Parameter | Type | Required | Description | Validation |
-|-----------|------|----------|-------------|------------|
-| groupId | number | Yes | ID grupy do której dodajemy uczestnika | Positive integer |
+
+| Parameter | Type   | Required | Description                            | Validation       |
+| --------- | ------ | -------- | -------------------------------------- | ---------------- |
+| groupId   | number | Yes      | ID grupy do której dodajemy uczestnika | Positive integer |
 
 ### Headers
-| Header | Required | Description |
-|--------|----------|-------------|
-| Authorization | Yes | Bearer token (format: `Bearer {access_token}`) |
-| Content-Type | Yes | application/json |
+
+| Header        | Required | Description                                    |
+| ------------- | -------- | ---------------------------------------------- |
+| Authorization | Yes      | Bearer token (format: `Bearer {access_token}`) |
+| Content-Type  | Yes      | application/json                               |
 
 ### Request Body
+
 ```typescript
 {
   "name": string,      // REQUIRED: Imię uczestnika (1-255 znaków, po trim)
@@ -42,6 +48,7 @@ Endpoint `POST /api/groups/:groupId/participants` umożliwia dodanie nowego ucze
 ```
 
 **Przykład:**
+
 ```json
 {
   "name": "Jane Smith",
@@ -50,6 +57,7 @@ Endpoint `POST /api/groups/:groupId/participants` umożliwia dodanie nowego ucze
 ```
 
 ### Validation Rules
+
 - `name`:
   - Wymagany
   - Minimum 1 znak (po trim)
@@ -63,6 +71,7 @@ Endpoint `POST /api/groups/:groupId/participants` umożliwia dodanie nowego ucze
 ## 3. Wykorzystywane typy
 
 ### Command Models (Input)
+
 ```typescript
 // Z types.ts - już zdefiniowane
 CreateParticipantCommand {
@@ -72,6 +81,7 @@ CreateParticipantCommand {
 ```
 
 ### DTOs (Output)
+
 ```typescript
 // Z types.ts - już zdefiniowane
 ParticipantWithTokenDTO extends ParticipantDTO {
@@ -86,6 +96,7 @@ ParticipantWithTokenDTO extends ParticipantDTO {
 ```
 
 ### Database Types
+
 ```typescript
 // Z types.ts - już zdefiniowane
 ParticipantInsert {
@@ -98,6 +109,7 @@ ParticipantInsert {
 ```
 
 ### Error Types
+
 ```typescript
 // Z types.ts - już zdefiniowane
 ApiErrorResponse {
@@ -112,6 +124,7 @@ ApiErrorResponse {
 ## 4. Szczegóły odpowiedzi
 
 ### Success Response (201 Created)
+
 ```json
 {
   "id": 2,
@@ -125,6 +138,7 @@ ApiErrorResponse {
 ```
 
 **Headers:**
+
 ```
 Content-Type: application/json
 Cache-Control: no-cache, no-store, must-revalidate
@@ -133,6 +147,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ### Error Responses
 
 #### 400 Bad Request - Invalid Input
+
 ```json
 {
   "error": {
@@ -147,6 +162,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 #### 400 Bad Request - Email Already Exists
+
 ```json
 {
   "error": {
@@ -161,6 +177,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 #### 400 Bad Request - Draw Already Completed
+
 ```json
 {
   "error": {
@@ -171,6 +188,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 #### 401 Unauthorized
+
 ```json
 {
   "error": {
@@ -181,6 +199,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 #### 403 Forbidden - Not Creator
+
 ```json
 {
   "error": {
@@ -191,6 +210,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 #### 404 Not Found - Group Not Found
+
 ```json
 {
   "error": {
@@ -201,6 +221,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 #### 422 Unprocessable Entity - Missing Required Field
+
 ```json
 {
   "error": {
@@ -214,6 +235,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 #### 500 Internal Server Error
+
 ```json
 {
   "error": {
@@ -226,6 +248,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ## 5. Przepływ danych
 
 ### High-Level Flow
+
 ```
 1. Client Request
    ↓
@@ -332,11 +355,13 @@ async addParticipantToGroup(
 ### Database Interactions
 
 **Tables involved:**
+
 1. `groups` - read (check existence, get creator_id)
 2. `assignments` - read (check if draw completed)
 3. `participants` - read (check email uniqueness), write (insert new participant)
 
 **Queries:**
+
 1. SELECT from groups WHERE id = :groupId
 2. SELECT from assignments WHERE group_id = :groupId LIMIT 1
 3. SELECT from participants WHERE group_id = :groupId AND email = :email (if email provided)
@@ -345,28 +370,33 @@ async addParticipantToGroup(
 ## 6. Względy bezpieczeństwa
 
 ### Authentication & Authorization
+
 - **Auth Token Verification**: Middleware Astro weryfikuje token JWT z Supabase Auth
 - **Creator-Only Access**: Tylko twórca grupy (creator_id === userId) może dodawać uczestników
 - **Token Scope**: Bearer token musi mieć dostęp do zasobu (w przyszłości - RLS policies)
 
 ### Input Validation
+
 - **Zod Schema Validation**: Wszystkie inputy validowane przez Zod przed przetworzeniem
 - **XSS Prevention**: Automatyczny trim i sanitization przez Zod
 - **SQL Injection Prevention**: Supabase client używa prepared statements
 - **Email Format Validation**: Zod email validator
 
 ### Access Token Generation
+
 - **Cryptographically Secure**: Użycie `crypto.randomUUID()` (UUID v4)
 - **Uniqueness**: UUID gwarantuje unikalność (collision probability: ~10^-18)
 - **Unpredictability**: Token niemożliwy do odgadnięcia
 - **Storage**: Token powinien być przechowywany w dedykowanej tabeli (future enhancement)
 
 ### Business Logic Security
+
 - **Draw State Protection**: Nie można dodawać uczestników po losowaniu
 - **Email Uniqueness**: Zapobiega duplikatom w grupie
 - **Group Existence Check**: Zapobiega dodawaniu do nieistniejących grup
 
 ### Optional: Rate Limiting
+
 ```typescript
 // Future enhancement
 // Limit: 10 requests per minute per user per group
@@ -374,6 +404,7 @@ async addParticipantToGroup(
 ```
 
 ### Security Checklist
+
 - ✅ Authentication required (Bearer token)
 - ✅ Authorization check (creator only)
 - ✅ Input validation (Zod schemas)
@@ -386,24 +417,25 @@ async addParticipantToGroup(
 ## 7. Obsługa błędów
 
 ### Error Handling Strategy
+
 Używamy pattern "guard clauses" z early returns dla każdego typu błędu.
 
 ### Error Mapping Table
 
-| Scenario | Error Code | HTTP Status | Message | Details |
-|----------|-----------|-------------|---------|---------|
-| Invalid JSON body | INVALID_REQUEST | 400 | Invalid JSON in request body | - |
-| Invalid email format | INVALID_INPUT | 400 | Invalid email format | field, value |
-| Name too long | INVALID_INPUT | 400 | Name is too long | field, value |
-| Email exists in group | DUPLICATE_EMAIL | 400 | Email already exists in this group | email, groupId |
-| Draw completed | DRAW_COMPLETED | 400 | Cannot add participants after draw | - |
-| No auth token | UNAUTHORIZED | 401 | Authentication required | - |
-| Invalid token | UNAUTHORIZED | 401 | Invalid authentication token | - |
-| Not group creator | FORBIDDEN | 403 | Only the group creator can add participants | - |
-| Group not found | GROUP_NOT_FOUND | 404 | Group not found | groupId |
-| Missing name field | MISSING_FIELD | 422 | Name is required | field: "name" |
-| Database error | DATABASE_ERROR | 500 | Failed to add participant | - |
-| Unexpected error | INTERNAL_ERROR | 500 | An unexpected error occurred | - |
+| Scenario              | Error Code      | HTTP Status | Message                                     | Details        |
+| --------------------- | --------------- | ----------- | ------------------------------------------- | -------------- |
+| Invalid JSON body     | INVALID_REQUEST | 400         | Invalid JSON in request body                | -              |
+| Invalid email format  | INVALID_INPUT   | 400         | Invalid email format                        | field, value   |
+| Name too long         | INVALID_INPUT   | 400         | Name is too long                            | field, value   |
+| Email exists in group | DUPLICATE_EMAIL | 400         | Email already exists in this group          | email, groupId |
+| Draw completed        | DRAW_COMPLETED  | 400         | Cannot add participants after draw          | -              |
+| No auth token         | UNAUTHORIZED    | 401         | Authentication required                     | -              |
+| Invalid token         | UNAUTHORIZED    | 401         | Invalid authentication token                | -              |
+| Not group creator     | FORBIDDEN       | 403         | Only the group creator can add participants | -              |
+| Group not found       | GROUP_NOT_FOUND | 404         | Group not found                             | groupId        |
+| Missing name field    | MISSING_FIELD   | 422         | Name is required                            | field: "name"  |
+| Database error        | DATABASE_ERROR  | 500         | Failed to add participant                   | -              |
+| Unexpected error      | INTERNAL_ERROR  | 500         | An unexpected error occurred                | -              |
 
 ### Error Handling Implementation
 
@@ -416,44 +448,62 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
       const firstError = error.errors[0];
-      return new Response(JSON.stringify({
-        error: {
-          code: firstError.message.includes("required") ? "MISSING_FIELD" : "INVALID_INPUT",
-          message: firstError.message,
-          details: { field: firstError.path.join("."), value: body[firstError.path[0]] }
-        }
-      }), { status: firstError.message.includes("required") ? 422 : 400 });
+      return new Response(
+        JSON.stringify({
+          error: {
+            code: firstError.message.includes("required") ? "MISSING_FIELD" : "INVALID_INPUT",
+            message: firstError.message,
+            details: { field: firstError.path.join("."), value: body[firstError.path[0]] },
+          },
+        }),
+        { status: firstError.message.includes("required") ? 422 : 400 }
+      );
     }
 
     // Handle service errors
     if (error instanceof Error) {
       switch (error.message) {
         case "GROUP_NOT_FOUND":
-          return new Response(JSON.stringify({
-            error: { code: "GROUP_NOT_FOUND", message: "Group not found" }
-          }), { status: 404 });
+          return new Response(
+            JSON.stringify({
+              error: { code: "GROUP_NOT_FOUND", message: "Group not found" },
+            }),
+            { status: 404 }
+          );
 
         case "FORBIDDEN":
-          return new Response(JSON.stringify({
-            error: { code: "FORBIDDEN", message: "Only the group creator can add participants" }
-          }), { status: 403 });
+          return new Response(
+            JSON.stringify({
+              error: { code: "FORBIDDEN", message: "Only the group creator can add participants" },
+            }),
+            { status: 403 }
+          );
 
         case "DRAW_COMPLETED":
-          return new Response(JSON.stringify({
-            error: { code: "DRAW_COMPLETED", message: "Cannot add participants after draw has been completed" }
-          }), { status: 400 });
+          return new Response(
+            JSON.stringify({
+              error: { code: "DRAW_COMPLETED", message: "Cannot add participants after draw has been completed" },
+            }),
+            { status: 400 }
+          );
 
         case "DUPLICATE_EMAIL":
-          return new Response(JSON.stringify({
-            error: { code: "DUPLICATE_EMAIL", message: "Email already exists in this group" }
-          }), { status: 400 });
+          return new Response(
+            JSON.stringify({
+              error: { code: "DUPLICATE_EMAIL", message: "Email already exists in this group" },
+            }),
+            { status: 400 }
+          );
       }
     }
 
     // Generic error
-    return new Response(JSON.stringify({
-      error: { code: "INTERNAL_ERROR", message: "An unexpected error occurred" }
-    }), { status: 500 });
+    return new Response(
+      JSON.stringify({
+        error: { code: "INTERNAL_ERROR", message: "An unexpected error occurred" },
+      }),
+      { status: 500 }
+    );
   }
 };
 ```
@@ -463,15 +513,20 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 ```typescript
 // Service level logging
 console.log("[ParticipantService.addParticipantToGroup] Starting", {
-  groupId, userId, participantName: command.name
+  groupId,
+  userId,
+  participantName: command.name,
 });
 
 console.log("[ParticipantService.addParticipantToGroup] Group found", {
-  groupId, creatorId: group.creator_id
+  groupId,
+  creatorId: group.creator_id,
 });
 
 console.error("[ParticipantService.addParticipantToGroup] Error", {
-  groupId, userId, error
+  groupId,
+  userId,
+  error,
 });
 ```
 
@@ -480,25 +535,30 @@ console.error("[ParticipantService.addParticipantToGroup] Error", {
 ### Database Performance
 
 **Query Optimization:**
+
 - Używamy `.single()` zamiast `.limit(1)` dla jednoznacznych wyników
 - Index na `participants.group_id` już istnieje (foreign key)
 - Index na `participants.email` może poprawić performance (future enhancement)
 - Partial unique index: `CREATE UNIQUE INDEX participants_group_email_unique ON participants(group_id, email) WHERE email IS NOT NULL`
 
 **N+1 Query Prevention:**
+
 - Endpoint wykonuje stały zestaw queries (nie ma N+1 problem)
 - Total queries: 4 (group check, assignments check, email check, insert)
 
 ### Response Time Targets
+
 - **Target**: < 200ms (p50)
 - **Acceptable**: < 500ms (p95)
 - **Maximum**: < 1000ms (p99)
 
 ### Caching Strategy
+
 - **No caching** dla tego endpointa (mutating operation)
 - Cache invalidation dla GET /api/groups/:id po dodaniu uczestnika (future)
 
 ### Potential Bottlenecks
+
 1. **Email uniqueness check**: Może być wolne dla dużych grup
    - **Solution**: Index na (group_id, email)
 2. **UUID generation**: Minimalny overhead (~1ms)
@@ -506,11 +566,13 @@ console.error("[ParticipantService.addParticipantToGroup] Error", {
    - **Future optimization**: Database function lub transaction
 
 ### Scalability Considerations
+
 - **Concurrent inserts**: Supabase/Postgres handles concurrency z row-level locking
 - **Large groups**: Email uniqueness query może być wolniejsze (index pomaga)
 - **Future**: Consider database function dla całej logiki (1 round-trip zamiast 4)
 
 ### Monitoring Metrics
+
 ```typescript
 // Future enhancement - metrics to track
 - Request rate per user
@@ -525,6 +587,7 @@ console.error("[ParticipantService.addParticipantToGroup] Error", {
 ### Phase 1: Setup & Infrastructure (Priorytet: Wysoki)
 
 **1.1. Utworzenie katalogu struktury**
+
 ```bash
 mkdir -p src/pages/api/groups/[groupId]
 mkdir -p src/lib/services
@@ -532,10 +595,12 @@ mkdir -p src/lib/utils
 ```
 
 **1.2. Utworzenie pliku serwisu**
+
 - Plik: `src/lib/services/participant.service.ts`
 - Zawartość: Klasa `ParticipantService` z metodą `addParticipantToGroup`
 
 **1.3. Utworzenie utility dla generowania tokenów** (opcjonalne)
+
 - Plik: `src/lib/utils/token.utils.ts`
 - Funkcja: `generateAccessToken(): string` używająca `crypto.randomUUID()`
 
@@ -544,6 +609,7 @@ mkdir -p src/lib/utils
 **2.1. Implementacja ParticipantService**
 
 Struktura klasy:
+
 ```typescript
 export class ParticipantService {
   constructor(private supabase: SupabaseClient) {}
@@ -559,6 +625,7 @@ export class ParticipantService {
 ```
 
 **2.2. Implementacja kroków walidacji:**
+
 1. Sprawdzenie istnienia grupy
 2. Weryfikacja uprawnień (is creator)
 3. Sprawdzenie czy draw nie został wykonany
@@ -568,6 +635,7 @@ export class ParticipantService {
 7. Zwrócenie wyniku
 
 **2.3. Dodanie error handling**
+
 - Try-catch blocks
 - Custom error messages
 - Console logging dla debugowania
@@ -575,22 +643,25 @@ export class ParticipantService {
 ### Phase 3: API Endpoint Implementation (Priorytet: Wysoki)
 
 **3.1. Utworzenie pliku endpointa**
+
 - Plik: `src/pages/api/groups/[groupId]/participants.ts`
 - Dodanie prerender i trailingSlash config
 
 **3.2. Zdefiniowanie Zod schemas**
+
 ```typescript
 const GroupIdParamSchema = z.object({
-  id: z.coerce.number().int().positive("Group ID must be a positive integer")
+  id: z.coerce.number().int().positive("Group ID must be a positive integer"),
 });
 
 const CreateParticipantSchema = z.object({
   name: z.string().min(1, "Name cannot be empty").max(255, "Name is too long").trim(),
-  email: z.string().email("Invalid email format").optional()
+  email: z.string().email("Invalid email format").optional(),
 });
 ```
 
 **3.3. Implementacja handler POST**
+
 - Guard 1: Validate groupId parameter
 - Guard 2: Check authentication (locals.user lub DEFAULT_USER_ID)
 - Guard 3: Parse and validate request body
@@ -598,6 +669,7 @@ const CreateParticipantSchema = z.object({
 - Return appropriate response
 
 **3.4. Implementacja obsługi błędów**
+
 - Zod validation errors → 400/422
 - Service errors (GROUP_NOT_FOUND, FORBIDDEN, etc.) → mapped status codes
 - Generic errors → 500
@@ -605,6 +677,7 @@ const CreateParticipantSchema = z.object({
 ### Phase 4: Testing (Priorytet: Średni)
 
 **4.1. Unit Tests dla Service Layer**
+
 - Test: grupa nie istnieje → throw GROUP_NOT_FOUND
 - Test: user nie jest creatorem → throw FORBIDDEN
 - Test: draw został wykonany → throw DRAW_COMPLETED
@@ -613,6 +686,7 @@ const CreateParticipantSchema = z.object({
 - Test: generowanie unikalnego access_token
 
 **4.2. Integration Tests dla Endpoint**
+
 - Test: poprawny request → 201 + valid response
 - Test: niepoprawny groupId → 400
 - Test: brak auth → 401
@@ -624,6 +698,7 @@ const CreateParticipantSchema = z.object({
 - Test: draw completed → 400
 
 **4.3. Manual Testing via Postman/Thunder Client**
+
 - Wszystkie success scenarios
 - Wszystkie error scenarios
 - Edge cases (puste stringi, bardzo długie wartości, null values)
@@ -631,11 +706,13 @@ const CreateParticipantSchema = z.object({
 ### Phase 5: Documentation & Refinement (Priorytet: Niski)
 
 **5.1. Dokumentacja API**
+
 - Dodanie JSDoc comments do service methods
 - Dodanie przykładów użycia w komentarzach
 - Update API documentation (jeśli istnieje)
 
 **5.2. Code Review Checklist**
+
 - Czy wszystkie guard clauses są na miejscu?
 - Czy error messages są user-friendly?
 - Czy logging jest wystarczający?
@@ -643,6 +720,7 @@ const CreateParticipantSchema = z.object({
 - Czy code follows project conventions?
 
 **5.3. Performance Review**
+
 - Sprawdzenie query performance (EXPLAIN ANALYZE)
 - Dodanie indexów jeśli potrzebne
 - Monitorowanie response times
@@ -650,12 +728,14 @@ const CreateParticipantSchema = z.object({
 ### Phase 6: Deployment & Monitoring (Priorytet: Niski)
 
 **6.1. Deployment**
+
 - Merge do main branch
 - Deploy to staging environment
 - Smoke testing na staging
 - Deploy to production
 
 **6.2. Monitoring Setup** (future)
+
 - Dodanie metryki do monitoring dashboard
 - Alert setup dla error rate > 5%
 - Performance monitoring (response time)
@@ -665,19 +745,23 @@ const CreateParticipantSchema = z.object({
 ## Dodatkowe Uwagi
 
 ### Bulk Operations - Decyzja dla MVP
+
 **Rekomendacja: NIE implementować bulk operations w MVP**
 
 **Powody:**
+
 - PRD nie wymaga tej funkcjonalności
 - Komplikuje API design i error handling
 - Frontend może wywołać endpoint wielokrotnie
 - Transactional complexity (co jeśli część się powiedzie, część nie?)
 
 **Alternatywy:**
+
 - Frontend: sequential calls z progress bar
 - Future enhancement: POST /api/groups/:groupId/participants/bulk
 
 ### Future Enhancements (Post-MVP)
+
 1. **Access Token Storage**: Dedykowana tabela `participant_tokens` z timestamp
 2. **Email to User Linking**: Automatyczne powiązanie z user_id jeśli email zarejestrowany
 3. **Bulk Operations**: Endpoint do dodawania wielu uczestników naraz
@@ -691,6 +775,7 @@ const CreateParticipantSchema = z.object({
 ## Podsumowanie
 
 Ten plan implementacji zapewnia:
+
 - ✅ Pełną walidację inputów i biznesową
 - ✅ Bezpieczne generowanie access tokenów
 - ✅ Konsystencję z istniejącym kodem (GroupService pattern)

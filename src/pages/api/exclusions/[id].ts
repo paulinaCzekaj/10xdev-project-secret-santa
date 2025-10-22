@@ -2,9 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { ExclusionRuleService } from "../../../lib/services/exclusion-rule.service";
 import { requireApiAuth } from "../../../lib/utils/api-auth.utils";
-import type {
-  ApiErrorResponse,
-} from "../../../types";
+import type { ApiErrorResponse } from "../../../types";
 
 export const prerender = false;
 export const trailingSlash = "never";
@@ -45,7 +43,7 @@ export const DELETE: APIRoute = async ({ params, request, locals }) => {
     const { id: exclusionRuleId } = ExclusionRuleIdParamSchema.parse({ id: params.id });
 
     // Guard 2: Authentication
-    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    const userIdOrResponse = requireApiAuth({ locals, request, params });
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }

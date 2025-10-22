@@ -42,14 +42,11 @@ export function ExclusionsSection({
           <CardTitle className="flex items-center gap-2">
             <Ban className="h-5 w-5" />
             Reguły wykluczeń
-            <span className="text-sm font-normal text-muted-foreground">
-              ({exclusions.length})
-            </span>
+            <span className="text-sm font-normal text-muted-foreground">({exclusions.length})</span>
           </CardTitle>
           {canEdit && !isDrawn && (
             <p className="text-sm text-muted-foreground">
-              Zdefiniuj pary osób, które nie mogą wylosować siebie nawzajem.
-              Wykluczenia są jednokierunkowe.
+              Zdefiniuj pary osób, które nie mogą wylosować siebie nawzajem. Wykluczenia są jednokierunkowe.
             </p>
           )}
         </CardHeader>
@@ -76,9 +73,7 @@ export function ExclusionsSection({
           ) : (
             <div className="text-center py-8">
               <Ban className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                Brak zdefiniowanych wykluczeń
-              </p>
+              <p className="text-muted-foreground">Brak zdefiniowanych wykluczeń</p>
               {canEdit && !isDrawn && participants.length >= 2 && (
                 <p className="text-sm text-muted-foreground mt-2">
                   Wykluczenia są opcjonalne i mogą być dodane powyżej

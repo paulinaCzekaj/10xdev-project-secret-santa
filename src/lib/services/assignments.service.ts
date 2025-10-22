@@ -46,7 +46,7 @@ export class AssignmentsService {
    */
   async createBatch(
     groupId: number,
-    assignments: Array<{ giver_participant_id: number; receiver_participant_id: number }>
+    assignments: { giver_participant_id: number; receiver_participant_id: number }[]
   ): Promise<AssignmentDTO[]> {
     // Guard: Validate input
     if (!groupId) {
@@ -66,10 +66,7 @@ export class AssignmentsService {
 
     // Execute batch insert
     // Note: Supabase handles this as a single transaction automatically
-    const { data, error } = await this.supabase
-      .from("assignments")
-      .insert(assignmentsToInsert)
-      .select();
+    const { data, error } = await this.supabase.from("assignments").insert(assignmentsToInsert).select();
 
     if (error) {
       throw new Error("Failed to create assignments");

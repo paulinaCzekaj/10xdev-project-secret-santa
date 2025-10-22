@@ -59,7 +59,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     const { participantId } = ParticipantIdParamSchema.parse({ participantId: params.participantId });
 
     // Guard 2: Authentication
-    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    const userIdOrResponse = requireApiAuth({ locals, request, params });
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }
@@ -69,7 +69,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     let body: unknown;
     try {
       body = await request.json();
-    } catch (error) {
+    } catch {
       const errorResponse: ApiErrorResponse = {
         error: {
           code: "INVALID_REQUEST",
@@ -105,7 +105,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Guard 6: Check if user is group owner
-    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, participant.group_id);
+    const ownerOrResponse = await requireGroupOwner({ locals }, participant.group_id);
     if (ownerOrResponse !== true) {
       return ownerOrResponse;
     }
@@ -127,7 +127,11 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
 
     // Guard 8: If email is being updated, check uniqueness
     if (validatedData.email) {
-      const emailExists = await participantService.checkEmailUniqueness(validatedData.email, participant.group_id, participantId);
+      const emailExists = await participantService.checkEmailUniqueness(
+        validatedData.email,
+        participant.group_id,
+        participantId
+      );
       if (emailExists) {
         const errorResponse: ApiErrorResponse = {
           error: {
@@ -218,7 +222,7 @@ export const DELETE: APIRoute = async ({ params, locals, request }) => {
     const { participantId } = ParticipantIdParamSchema.parse({ participantId: params.participantId });
 
     // Guard 2: Authentication
-    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    const userIdOrResponse = requireApiAuth({ locals, request, params });
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }
@@ -244,7 +248,7 @@ export const DELETE: APIRoute = async ({ params, locals, request }) => {
     }
 
     // Guard 4: Check if user is group owner
-    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, participant.group_id);
+    const ownerOrResponse = await requireGroupOwner({ locals }, participant.group_id);
     if (ownerOrResponse !== true) {
       return ownerOrResponse;
     }

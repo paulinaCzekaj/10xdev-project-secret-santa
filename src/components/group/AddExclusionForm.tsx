@@ -85,7 +85,7 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
       } else {
         toast.error(result.error || "Nie udało się dodać wykluczenia. Spróbuj ponownie.");
       }
-    } catch (error) {
+    } catch {
       toast.error("Nie udało się dodać wykluczenia. Spróbuj ponownie.");
     }
   };
@@ -167,14 +167,12 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
             </div>
 
             <p className="text-sm text-muted-foreground">
-              Wykluczenia są jednokierunkowe.{" "}
-              <span className="text-red-600 font-medium">Osoba A</span>{" "}
+              Wykluczenia są jednokierunkowe. <span className="text-red-600 font-medium">Osoba A</span>{" "}
               <span className="text-muted-foreground">nie może wylosować</span>{" "}
               <span className="text-green-600 font-medium">osoby B</span>, ale{" "}
               <span className="text-green-600 font-medium">osoba B</span>{" "}
               <span className="text-muted-foreground">może wylosować</span>{" "}
-              <span className="text-red-600 font-medium">osobę A</span>{" "}
-              (chyba że zostanie dodane odwrotne wykluczenie).
+              <span className="text-red-600 font-medium">osobę A</span> (chyba że zostanie dodane odwrotne wykluczenie).
             </p>
           </form>
         </Form>

@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { ParticipantService } from "../../../../lib/services/participant.service";
-import type { ApiErrorResponse, ResultAccessTrackingDTO } from "../../../../types";
+// No types needed for this endpoint
 
 export const prerender = false;
 
@@ -27,7 +27,7 @@ const AccessTokenParamSchema = z.object({
  *
  * @note No authentication required - uses access token
  */
-export const POST: APIRoute = async ({ params, locals, request }) => {
+export const POST: APIRoute = async ({ params, locals }) => {
   console.log("[POST /api/results/:token/track] Endpoint hit", { token: params.token });
 
   try {

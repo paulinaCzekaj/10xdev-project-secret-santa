@@ -46,7 +46,7 @@ export function DrawConfirmationModal({
         toast.error(result.error || "Nie udało się wykonać losowania");
         setIsExecuting(false);
       }
-    } catch (error) {
+    } catch {
       toast.error("Wystąpił błąd podczas wykonania losowania");
       setIsExecuting(false);
     }
@@ -111,7 +111,7 @@ export function DrawConfirmationModal({
               <li>• Uczestnicy będą mogli zobaczyć swoje wyniki</li>
               <li>• Nie będzie można edytować listy uczestników</li>
               <li>• Nie będzie można zmieniać wykluczeń</li>
-              <li>• Grupa przejdzie w tryb "tylko do odczytu"</li>
+              <li>• Grupa przejdzie w tryb &bdquo;tylko do odczytu&rdquo;</li>
             </ul>
           </div>
         </div>

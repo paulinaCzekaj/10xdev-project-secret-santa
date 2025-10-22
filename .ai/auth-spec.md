@@ -3,16 +3,20 @@
 ## 1. WSTĘP
 
 ### 1.1. Cel dokumentu
+
 Niniejszy dokument zawiera szczegółową specyfikację techniczną modułu autentykacji dla aplikacji Secret Santa. Specyfikacja opisuje architekturę, komponenty, kontrakt API oraz przepływy danych niezbędne do realizacji funkcjonalności określonych w PRD (US-001 do US-004).
 
 ### 1.2. Zakres funkcjonalny
+
 Moduł autentykacji obejmuje następujące funkcjonalności:
+
 - **US-001**: Rejestracja nowego użytkownika (email + hasło)
 - **US-002**: Logowanie użytkownika
 - **US-003**: Resetowanie hasła
 - **US-004**: Wylogowanie użytkownika
 
 ### 1.3. Stack technologiczny
+
 - **Frontend**: Astro 5 (SSR) + React 19 (komponenty interaktywne)
 - **Backend**: Astro API Routes + Supabase jako BaaS
 - **Autentykacja**: Supabase Auth
@@ -22,7 +26,9 @@ Moduł autentykacji obejmuje następujące funkcjonalności:
 - **Typy**: TypeScript 5
 
 ### 1.4. Architektura obecna
+
 Projekt już posiada:
+
 - Konfigurację Supabase Client (`src/db/supabase.client.ts`)
 - Middleware Astro dostarczający `supabaseClient` do `context.locals`
 - Strukturę API endpointów w `src/pages/api/`
@@ -32,6 +38,7 @@ Projekt już posiada:
 - Istniejące endpointy używają `DEFAULT_USER_ID` - należy je zaktualizować
 
 ### 1.5. Założenia projektowe
+
 1. **Bezpieczeństwo przede wszystkim**: Wszystkie operacje autentykacji wykorzystują Supabase Auth
 2. **Server-Side Rendering**: Sprawdzanie sesji na poziomie serwera (Astro)
 3. **Progressive Enhancement**: Strony działają bez JS, React dodaje interaktywność
@@ -53,35 +60,40 @@ Projekt już posiada:
 **Layout**: `src/layouts/AuthLayout.astro` (nowy - minimalistyczny layout bez nawigacji)
 
 **Odpowiedzialność**:
+
 - Sprawdzenie czy użytkownik jest już zalogowany (jeśli tak → redirect do `/dashboard`)
 - Renderowanie komponentu `LoginForm` (React)
 - Obsługa przekierowań po logowaniu
 - Wyświetlanie komunikatów z URL query params (np. `?message=password_reset_success`)
 
 **Logika SSR**:
+
 ```typescript
 // Pseudo-kod struktury
-const { data: { session } } = await supabaseClient.auth.getSession();
+const {
+  data: { session },
+} = await supabaseClient.auth.getSession();
 
 if (session) {
   // Użytkownik już zalogowany
-  const redirectTo = Astro.url.searchParams.get('redirectTo') || '/dashboard';
+  const redirectTo = Astro.url.searchParams.get("redirectTo") || "/dashboard";
   return Astro.redirect(redirectTo);
 }
 
 // Pobierz komunikat z query params (jeśli istnieje)
-const message = Astro.url.searchParams.get('message');
+const message = Astro.url.searchParams.get("message");
 const messageText = getMessageText(message); // Helper do mapowania kodów na teksty
 ```
 
 **Props przekazywane do komponentu**:
+
 - `redirectTo?: string` - URL do przekierowania po logowaniu
 - `message?: { type: 'success' | 'error' | 'info', text: string }` - Komunikat do wyświetlenia
 
 **Meta tags**:
+
 ```html
-<title>Logowanie | Secret Santa</title>
-<meta name="robots" content="noindex, nofollow">
+<title>Logowanie | Secret Santa</title> <meta name="robots" content="noindex, nofollow" />
 ```
 
 ---
@@ -93,27 +105,32 @@ const messageText = getMessageText(message); // Helper do mapowania kodów na te
 **Layout**: `src/layouts/AuthLayout.astro`
 
 **Odpowiedzialność**:
+
 - Sprawdzenie czy użytkownik jest już zalogowany (jeśli tak → redirect do `/dashboard`)
 - Renderowanie komponentu `RegisterForm` (React)
 - Obsługa przekierowań po rejestracji
 - Wyświetlanie komunikatów informacyjnych
 
 **Logika SSR**:
+
 ```typescript
-const { data: { session } } = await supabaseClient.auth.getSession();
+const {
+  data: { session },
+} = await supabaseClient.auth.getSession();
 
 if (session) {
-  return Astro.redirect('/dashboard');
+  return Astro.redirect("/dashboard");
 }
 ```
 
 **Props przekazywane do komponentu**:
+
 - `redirectTo?: string` - URL do przekierowania po rejestracji
 
 **Meta tags**:
+
 ```html
-<title>Rejestracja | Secret Santa</title>
-<meta name="robots" content="noindex, nofollow">
+<title>Rejestracja | Secret Santa</title> <meta name="robots" content="noindex, nofollow" />
 ```
 
 ---
@@ -125,24 +142,29 @@ if (session) {
 **Layout**: `src/layouts/AuthLayout.astro`
 
 **Odpowiedzialność**:
+
 - Renderowanie komponentu `ForgotPasswordForm` (React)
 - Wyświetlanie komunikatu sukcesu po wysłaniu emaila
 - Opcjonalnie: sprawdzenie czy użytkownik jest zalogowany (może chcieć zmienić hasło)
 
 **Logika SSR**:
+
 ```typescript
 // Opcjonalne: pokazać komunikat jeśli użytkownik jest zalogowany
-const { data: { session } } = await supabaseClient.auth.getSession();
+const {
+  data: { session },
+} = await supabaseClient.auth.getSession();
 const isLoggedIn = !!session;
 ```
 
 **Props przekazywane do komponentu**:
+
 - `isLoggedIn: boolean` - Czy użytkownik jest zalogowany
 
 **Meta tags**:
+
 ```html
-<title>Resetowanie hasła | Secret Santa</title>
-<meta name="robots" content="noindex, nofollow">
+<title>Resetowanie hasła | Secret Santa</title> <meta name="robots" content="noindex, nofollow" />
 ```
 
 ---
@@ -154,12 +176,14 @@ const isLoggedIn = !!session;
 **Layout**: `src/layouts/AuthLayout.astro`
 
 **Odpowiedzialność**:
+
 - Walidacja tokenu resetowania hasła z URL (fragment hash lub query params)
 - Renderowanie komponentu `ResetPasswordForm` (React) jeśli token jest ważny
 - Wyświetlanie błędu jeśli token jest nieprawidłowy lub wygasł
 - Przekierowanie do `/login` po udanym resecie
 
 **Logika SSR**:
+
 ```typescript
 // Supabase Auth przesyła token w URL jako fragment (#access_token=...)
 // Astro nie ma bezpośredniego dostępu do fragmentu, więc:
@@ -168,24 +192,25 @@ const isLoggedIn = !!session;
 // 3. Token jest przekazywany do komponentu React
 
 // Alternatywnie: konfiguracja Supabase Auth może użyć query params
-const accessToken = Astro.url.searchParams.get('access_token');
-const type = Astro.url.searchParams.get('type');
+const accessToken = Astro.url.searchParams.get("access_token");
+const type = Astro.url.searchParams.get("type");
 
-if (type !== 'recovery') {
+if (type !== "recovery") {
   // Nieprawidłowy lub brakujący token
-  return Astro.redirect('/forgot-password?error=invalid_token');
+  return Astro.redirect("/forgot-password?error=invalid_token");
 }
 
 // Token będzie weryfikowany w komponencie React przez Supabase Auth
 ```
 
 **Props przekazywane do komponentu**:
+
 - `accessToken?: string` - Token dostępu (może być null, wtedy pobierany client-side)
 
 **Meta tags**:
+
 ```html
-<title>Ustaw nowe hasło | Secret Santa</title>
-<meta name="robots" content="noindex, nofollow">
+<title>Ustaw nowe hasło | Secret Santa</title> <meta name="robots" content="noindex, nofollow" />
 ```
 
 ---
@@ -197,17 +222,21 @@ if (type !== 'recovery') {
 **Layout**: `src/layouts/Layout.astro` (główny layout z nawigacją)
 
 **Odpowiedzialność**:
+
 - **Ochrona trasy**: Sprawdzenie sesji, przekierowanie do `/login` jeśli brak
 - Pobranie danych użytkownika z Supabase Auth
 - Pobranie list grup (utworzonych przez użytkownika i tych, do których należy)
 - Renderowanie komponentu `Dashboard` (React) z danymi
 
 **Logika SSR**:
+
 ```typescript
-const { data: { session } } = await supabaseClient.auth.getSession();
+const {
+  data: { session },
+} = await supabaseClient.auth.getSession();
 
 if (!session) {
-  return Astro.redirect('/login?redirectTo=/dashboard');
+  return Astro.redirect("/login?redirectTo=/dashboard");
 }
 
 // Pobierz ID użytkownika
@@ -215,22 +244,23 @@ const userId = session.user.id;
 
 // Pobierz grupy z API (lub bezpośrednio z serwisu)
 const groupService = new GroupService(supabaseClient);
-const { data: groups } = await groupService.listGroups(userId, { filter: 'all' });
+const { data: groups } = await groupService.listGroups(userId, { filter: "all" });
 
 // Rozdziel grupy na utworzone i dołączone
-const createdGroups = groups.filter(g => g.is_creator);
-const joinedGroups = groups.filter(g => !g.is_creator);
+const createdGroups = groups.filter((g) => g.is_creator);
+const joinedGroups = groups.filter((g) => !g.is_creator);
 ```
 
 **Props przekazywane do komponentu**:
+
 - `user: { id: string, email: string }` - Dane użytkownika
 - `createdGroups: GroupListItemDTO[]` - Grupy utworzone przez użytkownika
 - `joinedGroups: GroupListItemDTO[]` - Grupy, do których należy użytkownik
 
 **Meta tags**:
+
 ```html
-<title>Mój pulpit | Secret Santa</title>
-<meta name="robots" content="noindex, nofollow">
+<title>Mój pulpit | Secret Santa</title> <meta name="robots" content="noindex, nofollow" />
 ```
 
 ---
@@ -242,18 +272,22 @@ const joinedGroups = groups.filter(g => !g.is_creator);
 **Zmiany**: Dodać logikę przekierowania dla zalogowanych użytkowników
 
 **Logika SSR**:
+
 ```typescript
-const { data: { session } } = await supabaseClient.auth.getSession();
+const {
+  data: { session },
+} = await supabaseClient.auth.getSession();
 
 if (session) {
   // Użytkownik zalogowany - przekieruj do dashboard
-  return Astro.redirect('/dashboard');
+  return Astro.redirect("/dashboard");
 }
 
 // Użytkownik niezalogowany - pokaż stronę powitalną/landing page
 ```
 
 **Modyfikacje**:
+
 - Dodać CTA (Call-to-Action) do rejestracji i logowania
 - Zaktualizować `Welcome.astro` lub stworzyć nowy komponent `LandingPage.astro`
 
@@ -266,8 +300,11 @@ if (session) {
 **Zmiany**: Aktualizacja komunikatu błędu i przekierowania
 
 **Logika SSR** (obecna, do zachowania):
+
 ```typescript
-const { data: { session } } = await supabaseClient.auth.getSession();
+const {
+  data: { session },
+} = await supabaseClient.auth.getSession();
 
 if (!session) {
   return Astro.redirect(`/login?redirectTo=/groups/${id}`);
@@ -288,11 +325,14 @@ if (!session) {
 **Zmiany**: Dodać sprawdzenie sesji (obecnie brak ochrony)
 
 **Logika SSR do dodania**:
+
 ```typescript
-const { data: { session } } = await supabaseClient.auth.getSession();
+const {
+  data: { session },
+} = await supabaseClient.auth.getSession();
 
 if (!session) {
-  return Astro.redirect('/login?redirectTo=/groups/new');
+  return Astro.redirect("/login?redirectTo=/groups/new");
 }
 ```
 
@@ -303,6 +343,7 @@ if (!session) {
 **Plik**: `src/layouts/AuthLayout.astro`
 
 **Odpowiedzialność**:
+
 - Minimalistyczny layout dla stron autentykacji
 - Brak nawigacji głównej aplikacji
 - Centrowanie formularzy
@@ -310,6 +351,7 @@ if (!session) {
 - Responsywny design
 
 **Struktura**:
+
 ```astro
 ---
 interface Props {
@@ -358,38 +400,37 @@ const { title } = Astro.props;
 #### 2.3.1. LoginForm (`src/components/auth/LoginForm.tsx`)
 
 **Odpowiedzialność**:
+
 - Wyświetlanie i walidacja formularza logowania
 - Obsługa submit (wywołanie Supabase Auth)
 - Wyświetlanie błędów walidacji i błędów API
 - Przekierowanie po udanym logowaniu
 
 **Props**:
+
 ```typescript
 interface LoginFormProps {
   redirectTo?: string;
   message?: {
-    type: 'success' | 'error' | 'info';
+    type: "success" | "error" | "info";
     text: string;
   };
 }
 ```
 
 **Schemat walidacji (Zod)**:
+
 ```typescript
 const loginFormSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'Email jest wymagany')
-    .email('Nieprawidłowy format email'),
-  password: z
-    .string()
-    .min(6, 'Hasło musi mieć co najmniej 6 znaków'),
+  email: z.string().min(1, "Email jest wymagany").email("Nieprawidłowy format email"),
+  password: z.string().min(6, "Hasło musi mieć co najmniej 6 znaków"),
 });
 
 type LoginFormData = z.infer<typeof loginFormSchema>;
 ```
 
 **Struktura komponentu**:
+
 - Wykorzystuje `react-hook-form` z `zodResolver`
 - Pola: email (Input), password (Input type="password")
 - Przycisk submit: "Zaloguj się"
@@ -399,6 +440,7 @@ type LoginFormData = z.infer<typeof loginFormSchema>;
 **UWAGA**: Checkbox "Zapamiętaj mnie" nie jest wymieniony w PRD, więc pomijamy go w MVP
 
 **Logika submit**:
+
 ```typescript
 const onSubmit = async (data: LoginFormData) => {
   setIsSubmitting(true);
@@ -415,12 +457,12 @@ const onSubmit = async (data: LoginFormData) => {
     }
 
     // Sukces - przekieruj
-    toast.success('Zalogowano pomyślnie!');
-    window.location.href = redirectTo || '/dashboard';
+    toast.success("Zalogowano pomyślnie!");
+    window.location.href = redirectTo || "/dashboard";
   } catch (error) {
     const errorMessage = getAuthErrorMessage(error);
     setApiError(errorMessage);
-    toast.error('Błąd logowania', { description: errorMessage });
+    toast.error("Błąd logowania", { description: errorMessage });
   } finally {
     setIsSubmitting(false);
   }
@@ -428,16 +470,17 @@ const onSubmit = async (data: LoginFormData) => {
 ```
 
 **Error mapping** (helper):
+
 ```typescript
 function getAuthErrorMessage(error: any): string {
   const errorMessages: Record<string, string> = {
-    'Invalid login credentials': 'Nieprawidłowy email lub hasło',
-    'Email not confirmed': 'Email nie został potwierdzony. Sprawdź swoją skrzynkę.',
-    'User not found': 'Użytkownik nie istnieje',
+    "Invalid login credentials": "Nieprawidłowy email lub hasło",
+    "Email not confirmed": "Email nie został potwierdzony. Sprawdź swoją skrzynkę.",
+    "User not found": "Użytkownik nie istnieje",
     // ... inne błędy
   };
 
-  return errorMessages[error.message] || 'Wystąpił błąd podczas logowania. Spróbuj ponownie.';
+  return errorMessages[error.message] || "Wystąpił błąd podczas logowania. Spróbuj ponownie.";
 }
 ```
 
@@ -446,12 +489,14 @@ function getAuthErrorMessage(error: any): string {
 #### 2.3.2. RegisterForm (`src/components/auth/RegisterForm.tsx`)
 
 **Odpowiedzialność**:
+
 - Wyświetlanie i walidacja formularza rejestracji
 - Obsługa submit (wywołanie Supabase Auth)
 - Wyświetlanie błędów walidacji i błędów API
 - Przekierowanie lub wyświetlenie komunikatu po rejestracji
 
 **Props**:
+
 ```typescript
 interface RegisterFormProps {
   redirectTo?: string;
@@ -459,37 +504,34 @@ interface RegisterFormProps {
 ```
 
 **Schemat walidacji (Zod)**:
+
 ```typescript
-const registerFormSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'Email jest wymagany')
-    .email('Nieprawidłowy format email'),
-  password: z
-    .string()
-    .min(8, 'Hasło musi mieć co najmniej 8 znaków')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Hasło musi zawierać małą literę, dużą literę i cyfrę'
-    ),
-  confirmPassword: z
-    .string()
-    .min(1, 'Potwierdzenie hasła jest wymagane'),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Hasła nie są identyczne',
-  path: ['confirmPassword'],
-});
+const registerFormSchema = z
+  .object({
+    email: z.string().min(1, "Email jest wymagany").email("Nieprawidłowy format email"),
+    password: z
+      .string()
+      .min(8, "Hasło musi mieć co najmniej 8 znaków")
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Hasło musi zawierać małą literę, dużą literę i cyfrę"),
+    confirmPassword: z.string().min(1, "Potwierdzenie hasła jest wymagane"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Hasła nie są identyczne",
+    path: ["confirmPassword"],
+  });
 
 type RegisterFormData = z.infer<typeof registerFormSchema>;
 ```
 
 **Struktura komponentu**:
+
 - Pola: email, password, confirmPassword
 - Checkbox "Akceptuję regulamin" (wymagane)
 - Przycisk submit: "Zarejestruj się"
 - Link do `/login` ("Masz już konto?")
 
 **Logika submit**:
+
 ```typescript
 const onSubmit = async (data: RegisterFormData) => {
   setIsSubmitting(true);
@@ -514,20 +556,20 @@ const onSubmit = async (data: RegisterFormData) => {
     // Sprawdź czy Supabase wymaga potwierdzenia email
     if (authData.user && !authData.session) {
       // Email confirmation required (nie powinno wystąpić w MVP)
-      toast.success('Sprawdź swoją skrzynkę email!', {
-        description: 'Wysłaliśmy link potwierdzający. Kliknij w niego, aby aktywować konto.',
+      toast.success("Sprawdź swoją skrzynkę email!", {
+        description: "Wysłaliśmy link potwierdzający. Kliknij w niego, aby aktywować konto.",
       });
       // W przyszłości (post-MVP): redirect do strony informacyjnej
       // window.location.href = '/email-confirmation-required';
     } else {
       // Auto-login enabled (no email confirmation) - DOMYŚLNE DLA MVP
-      toast.success('Konto utworzone pomyślnie!');
-      window.location.href = redirectTo || '/dashboard';
+      toast.success("Konto utworzone pomyślnie!");
+      window.location.href = redirectTo || "/dashboard";
     }
   } catch (error) {
     const errorMessage = getAuthErrorMessage(error);
     setApiError(errorMessage);
-    toast.error('Błąd rejestracji', { description: errorMessage });
+    toast.error("Błąd rejestracji", { description: errorMessage });
   } finally {
     setIsSubmitting(false);
   }
@@ -539,11 +581,13 @@ const onSubmit = async (data: RegisterFormData) => {
 #### 2.3.3. ForgotPasswordForm (`src/components/auth/ForgotPasswordForm.tsx`)
 
 **Odpowiedzialność**:
+
 - Wyświetlanie formularza z polem email
 - Obsługa submit (wywołanie Supabase Auth resetPassword)
 - Wyświetlenie komunikatu sukcesu po wysłaniu emaila
 
 **Props**:
+
 ```typescript
 interface ForgotPasswordFormProps {
   isLoggedIn?: boolean;
@@ -551,36 +595,33 @@ interface ForgotPasswordFormProps {
 ```
 
 **Schemat walidacji (Zod)**:
+
 ```typescript
 const forgotPasswordFormSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'Email jest wymagany')
-    .email('Nieprawidłowy format email'),
+  email: z.string().min(1, "Email jest wymagany").email("Nieprawidłowy format email"),
 });
 
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordFormSchema>;
 ```
 
 **Struktura komponentu**:
+
 - Pole: email
 - Przycisk submit: "Wyślij link resetujący"
 - Link do `/login` ("Pamiętasz hasło?")
 - Stan sukcesu: komunikat "Email został wysłany"
 
 **Logika submit**:
+
 ```typescript
 const onSubmit = async (data: ForgotPasswordFormData) => {
   setIsSubmitting(true);
   setApiError(null);
 
   try {
-    const { error } = await supabaseClient.auth.resetPasswordForEmail(
-      data.email,
-      {
-        redirectTo: `${window.location.origin}/reset-password`,
-      }
-    );
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(data.email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
 
     if (error) {
       throw error;
@@ -588,13 +629,13 @@ const onSubmit = async (data: ForgotPasswordFormData) => {
 
     // Sukces
     setEmailSent(true);
-    toast.success('Email wysłany!', {
-      description: 'Sprawdź swoją skrzynkę i kliknij w link resetujący.',
+    toast.success("Email wysłany!", {
+      description: "Sprawdź swoją skrzynkę i kliknij w link resetujący.",
     });
   } catch (error) {
     const errorMessage = getAuthErrorMessage(error);
     setApiError(errorMessage);
-    toast.error('Błąd', { description: errorMessage });
+    toast.error("Błąd", { description: errorMessage });
   } finally {
     setIsSubmitting(false);
   }
@@ -606,12 +647,14 @@ const onSubmit = async (data: ForgotPasswordFormData) => {
 #### 2.3.4. ResetPasswordForm (`src/components/auth/ResetPasswordForm.tsx`)
 
 **Odpowiedzialność**:
+
 - Weryfikacja tokenu dostępu
 - Wyświetlanie formularza nowego hasła
 - Obsługa submit (wywołanie Supabase Auth updateUser)
 - Przekierowanie po udanej zmianie hasła
 
 **Props**:
+
 ```typescript
 interface ResetPasswordFormProps {
   accessToken?: string; // Może być null - wtedy pobierany z URL hash
@@ -619,27 +662,26 @@ interface ResetPasswordFormProps {
 ```
 
 **Schemat walidacji (Zod)**:
+
 ```typescript
-const resetPasswordFormSchema = z.object({
-  password: z
-    .string()
-    .min(8, 'Hasło musi mieć co najmniej 8 znaków')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Hasło musi zawierać małą literę, dużą literę i cyfrę'
-    ),
-  confirmPassword: z
-    .string()
-    .min(1, 'Potwierdzenie hasła jest wymagane'),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Hasła nie są identyczne',
-  path: ['confirmPassword'],
-});
+const resetPasswordFormSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, "Hasło musi mieć co najmniej 8 znaków")
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Hasło musi zawierać małą literę, dużą literę i cyfrę"),
+    confirmPassword: z.string().min(1, "Potwierdzenie hasła jest wymagane"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Hasła nie są identyczne",
+    path: ["confirmPassword"],
+  });
 
 type ResetPasswordFormData = z.infer<typeof resetPasswordFormSchema>;
 ```
 
 **Struktura komponentu**:
+
 - useEffect do weryfikacji tokenu przy montowaniu
 - Pola: password, confirmPassword
 - Przycisk submit: "Ustaw nowe hasło"
@@ -647,6 +689,7 @@ type ResetPasswordFormData = z.infer<typeof resetPasswordFormSchema>;
 - Stan błędu jeśli token jest nieprawidłowy
 
 **Logika inicjalizacji**:
+
 ```typescript
 useEffect(() => {
   const verifyToken = async () => {
@@ -654,7 +697,7 @@ useEffect(() => {
     const token = accessToken || extractTokenFromHash();
 
     if (!token) {
-      setTokenError('Brak tokenu resetowania hasła');
+      setTokenError("Brak tokenu resetowania hasła");
       return;
     }
 
@@ -662,7 +705,7 @@ useEffect(() => {
       // Supabase automatycznie weryfikuje token przy setSession
       const { error } = await supabaseClient.auth.setSession({
         access_token: token,
-        refresh_token: '', // Nie jest wymagany dla recovery
+        refresh_token: "", // Nie jest wymagany dla recovery
       });
 
       if (error) {
@@ -671,7 +714,7 @@ useEffect(() => {
 
       setTokenValid(true);
     } catch (error) {
-      setTokenError('Token jest nieprawidłowy lub wygasł');
+      setTokenError("Token jest nieprawidłowy lub wygasł");
     }
   };
 
@@ -680,6 +723,7 @@ useEffect(() => {
 ```
 
 **Logika submit**:
+
 ```typescript
 const onSubmit = async (data: ResetPasswordFormData) => {
   setIsSubmitting(true);
@@ -695,13 +739,13 @@ const onSubmit = async (data: ResetPasswordFormData) => {
     }
 
     // Sukces
-    toast.success('Hasło zmienione pomyślnie!');
+    toast.success("Hasło zmienione pomyślnie!");
     // Przekieruj do logowania z komunikatem sukcesu
-    window.location.href = '/login?message=password_reset_success';
+    window.location.href = "/login?message=password_reset_success";
   } catch (error) {
     const errorMessage = getAuthErrorMessage(error);
     setApiError(errorMessage);
-    toast.error('Błąd', { description: errorMessage });
+    toast.error("Błąd", { description: errorMessage });
   } finally {
     setIsSubmitting(false);
   }
@@ -713,6 +757,7 @@ const onSubmit = async (data: ResetPasswordFormData) => {
 #### 2.3.5. Dashboard (`src/components/dashboard/Dashboard.tsx`)
 
 **Odpowiedzialność**:
+
 - Wyświetlanie powitania z imieniem użytkownika
 - Lista grup utworzonych przez użytkownika
 - Lista grup, do których użytkownik należy
@@ -720,6 +765,7 @@ const onSubmit = async (data: ResetPasswordFormData) => {
 - Linki do szczegółów grup
 
 **Props**:
+
 ```typescript
 interface DashboardProps {
   user: {
@@ -732,6 +778,7 @@ interface DashboardProps {
 ```
 
 **Struktura komponentu**:
+
 - Header z powitaniem: "Witaj, {email}"
 - Sekcja: "Grupy, które stworzyłem" z kartami grup
 - Sekcja: "Grupy, do których należę" z kartami grup
@@ -739,6 +786,7 @@ interface DashboardProps {
 - Przycisk CTA: "Utwórz nową grupę Secret Santa"
 
 **Komponenty pomocnicze**:
+
 - `GroupCard.tsx` - karta grupy z podstawowymi informacjami
 - `EmptyState.tsx` - komunikat gdy brak grup
 
@@ -751,13 +799,17 @@ interface DashboardProps {
 **Plik**: `src/layouts/Layout.astro`
 
 **Zmiany**:
+
 - Dodać nawigację z przyciskami autentykacji
 - Warunkowo renderować przyciski w zależności od stanu sesji
 
 **Logika**:
+
 ```astro
 ---
-const { data: { session } } = await supabaseClient.auth.getSession();
+const {
+  data: { session },
+} = await supabaseClient.auth.getSession();
 const isLoggedIn = !!session;
 const userEmail = session?.user?.email;
 ---
@@ -767,30 +819,30 @@ const userEmail = session?.user?.email;
   <div class="container mx-auto px-4">
     <div class="flex justify-between items-center h-16">
       <!-- Logo -->
-      <a href={isLoggedIn ? '/dashboard' : '/'} class="text-xl font-bold text-red-600">
-        🎅 Secret Santa
-      </a>
+      <a href={isLoggedIn ? "/dashboard" : "/"} class="text-xl font-bold text-red-600"> 🎅 Secret Santa </a>
 
       <!-- Auth buttons -->
       <div class="flex items-center gap-4">
-        {isLoggedIn ? (
-          <>
-            <span class="text-sm text-gray-600">{userEmail}</span>
-            <a href="/dashboard" class="text-sm text-gray-700 hover:text-red-600">
-              Pulpit
-            </a>
-            <LogoutButton client:load />
-          </>
-        ) : (
-          <>
-            <a href="/login" class="text-sm text-gray-700 hover:text-red-600">
-              Logowanie
-            </a>
-            <a href="/register" class="btn btn-primary">
-              Rejestracja
-            </a>
-          </>
-        )}
+        {
+          isLoggedIn ? (
+            <>
+              <span class="text-sm text-gray-600">{userEmail}</span>
+              <a href="/dashboard" class="text-sm text-gray-700 hover:text-red-600">
+                Pulpit
+              </a>
+              <LogoutButton client:load />
+            </>
+          ) : (
+            <>
+              <a href="/login" class="text-sm text-gray-700 hover:text-red-600">
+                Logowanie
+              </a>
+              <a href="/register" class="btn btn-primary">
+                Rejestracja
+              </a>
+            </>
+          )
+        }
       </div>
     </div>
   </div>
@@ -802,6 +854,7 @@ const userEmail = session?.user?.email;
 #### 2.4.2. LogoutButton (`src/components/auth/LogoutButton.tsx`)
 
 **Odpowiedzialność**:
+
 - Przycisk wylogowania
 - Obsługa wywołania Supabase Auth signOut
 - Przekierowanie do strony głównej po wylogowaniu
@@ -809,6 +862,7 @@ const userEmail = session?.user?.email;
 **Props**: Brak
 
 **Struktura**:
+
 ```typescript
 export default function LogoutButton() {
   const [isLoading, setIsLoading] = useState(false);
@@ -852,11 +906,13 @@ export default function LogoutButton() {
 #### 2.5.1. Reguły walidacji
 
 **Email**:
+
 - Wymagany
 - Format email (regex)
 - Długość max 255 znaków
 
 **Hasło (rejestracja/reset)**:
+
 - Wymagane
 - Minimum 8 znaków
 - Co najmniej jedna mała litera
@@ -865,10 +921,12 @@ export default function LogoutButton() {
 - Opcjonalnie: znak specjalny
 
 **Hasło (logowanie)**:
+
 - Wymagane
 - Minimum 6 znaków (mniejsze wymagania dla kompatybilności)
 
 **Potwierdzenie hasła**:
+
 - Wymagane
 - Musi być identyczne z hasłem
 
@@ -877,26 +935,29 @@ export default function LogoutButton() {
 #### 2.5.2. Komunikaty błędów
 
 **Walidacja client-side** (Zod):
+
 - Wyświetlane pod polami formularza
 - Kolor czerwony
 - Ikona błędu
 - Real-time validation (onChange)
 
 **Błędy API** (Supabase Auth):
+
 - Wyświetlane nad formularzem w Alert box
 - Mapowanie błędów Supabase na polskie komunikaty
 - Toast notification dla feedback
 
 **Przykłady mapowania**:
+
 ```typescript
 const authErrorMessages: Record<string, string> = {
-  'Invalid login credentials': 'Nieprawidłowy email lub hasło',
-  'Email not confirmed': 'Potwierdź swój email, aby się zalogować',
-  'User already registered': 'Użytkownik z tym adresem email już istnieje',
-  'Password should be at least 6 characters': 'Hasło musi mieć co najmniej 6 znaków',
-  'Invalid email': 'Nieprawidłowy format adresu email',
-  'Email rate limit exceeded': 'Zbyt wiele prób. Spróbuj ponownie później.',
-  'Token has expired or is invalid': 'Link wygasł lub jest nieprawidłowy',
+  "Invalid login credentials": "Nieprawidłowy email lub hasło",
+  "Email not confirmed": "Potwierdź swój email, aby się zalogować",
+  "User already registered": "Użytkownik z tym adresem email już istnieje",
+  "Password should be at least 6 characters": "Hasło musi mieć co najmniej 6 znaków",
+  "Invalid email": "Nieprawidłowy format adresu email",
+  "Email rate limit exceeded": "Zbyt wiele prób. Spróbuj ponownie później.",
+  "Token has expired or is invalid": "Link wygasł lub jest nieprawidłowy",
 };
 ```
 
@@ -907,6 +968,7 @@ const authErrorMessages: Record<string, string> = {
 #### 2.6.1. Scenariusz: Rejestracja nowego użytkownika
 
 **Przebieg**:
+
 1. Użytkownik wchodzi na `/` → widzi landing page z przyciskiem "Zarejestruj się"
 2. Kliknięcie w "Zarejestruj się" → przekierowanie do `/register`
 3. Wypełnienie formularza: email, hasło, potwierdzenie hasła
@@ -921,6 +983,7 @@ const authErrorMessages: Record<string, string> = {
 "Po pomyślnej rejestracji jestem automatycznie logowany i przekierowany na główny pulpit (dashboard)"
 
 **Obsługa błędów**:
+
 - Email już istnieje → komunikat "Użytkownik z tym adresem email już istnieje"
 - Hasła niezgodne → komunikat "Hasła nie są identyczne"
 - Błąd serwera → komunikat "Wystąpił błąd. Spróbuj ponownie później."
@@ -930,6 +993,7 @@ const authErrorMessages: Record<string, string> = {
 #### 2.6.2. Scenariusz: Logowanie użytkownika
 
 **Przebieg**:
+
 1. Użytkownik wchodzi na `/login`
 2. Wypełnienie formularza: email, hasło
 3. Kliknięcie "Zaloguj się"
@@ -942,6 +1006,7 @@ const authErrorMessages: Record<string, string> = {
    - Toast z opisem błędu
 
 **Obsługa błędów**:
+
 - Nieprawidłowe credentials → "Nieprawidłowy email lub hasło"
 - Email nie potwierdzony → "Potwierdź swój email, aby się zalogować"
 - Za dużo prób → "Zbyt wiele prób. Spróbuj ponownie później."
@@ -951,6 +1016,7 @@ const authErrorMessages: Record<string, string> = {
 #### 2.6.3. Scenariusz: Resetowanie hasła
 
 **Przebieg**:
+
 1. Użytkownik na `/login` klika "Zapomniałem hasła"
 2. Przekierowanie do `/forgot-password`
 3. Wypełnienie pola email
@@ -969,6 +1035,7 @@ const authErrorMessages: Record<string, string> = {
 14. Komunikat na `/login`: "Hasło zostało zmienione. Zaloguj się przy użyciu nowego hasła."
 
 **Obsługa błędów**:
+
 - Token wygasł → komunikat "Link wygasł. Wygeneruj nowy link."
 - Token nieprawidłowy → komunikat "Link jest nieprawidłowy"
 - Nowe hasło za słabe → komunikaty walidacji
@@ -978,6 +1045,7 @@ const authErrorMessages: Record<string, string> = {
 #### 2.6.4. Scenariusz: Wylogowanie użytkownika
 
 **Przebieg**:
+
 1. Zalogowany użytkownik klika przycisk "Wyloguj" w nawigacji
 2. Wywołanie `supabaseClient.auth.signOut()`
 3. Sukces:
@@ -992,6 +1060,7 @@ const authErrorMessages: Record<string, string> = {
 #### 2.6.5. Scenariusz: Dostęp do chronionej trasy bez logowania
 
 **Przebieg**:
+
 1. Użytkownik niezalogowany próbuje wejść na `/dashboard`
 2. Middleware sprawdza sesję
 3. Brak sesji → przekierowanie do `/login?redirectTo=/dashboard`
@@ -999,11 +1068,13 @@ const authErrorMessages: Record<string, string> = {
 5. Po zalogowaniu → automatyczne przekierowanie do `/dashboard`
 
 **Chronione trasy** (zgodnie z PRD US-002 punkt 5):
+
 - `/dashboard`
 - `/groups/new`
 - `/groups/:id` (widok zarządzania grupą - wymaga autentykacji)
 
 **Publiczne trasy**:
+
 - `/`
 - `/login`
 - `/register`
@@ -1012,6 +1083,7 @@ const authErrorMessages: Record<string, string> = {
 - `/results/:token` (dostęp dla niezarejestrowanych przez token)
 
 **WAŻNE - zgodność z PRD US-002**:
+
 - **Punkt 5**: "Użytkownik nie może wchodzić na widok grupy bez logowania" → `/groups/:id` wymaga autentykacji
 - **Punkt 6**: "Użytkownik może widzieć swój wynik w losowaniu bez logowania" → `/results/:token` jest publiczne
 - **Rozwiązanie**: `/results/:token` to **osobna strona** od `/groups/:id`. Niezarejestrowani użytkownicy otrzymują link do `/results/:token`, nie do `/groups/:id`
@@ -1028,11 +1100,13 @@ const authErrorMessages: Record<string, string> = {
 Middleware dostarcza tylko `supabaseClient` do `context.locals`.
 
 **Zmiany**:
+
 - Dodać pobieranie sesji użytkownika
 - Dodać informacje o użytkowniku do `context.locals`
 - Zachować kompatybilność wsteczną
 
 **Nowa struktura**:
+
 ```typescript
 import { defineMiddleware } from "astro:middleware";
 import { supabaseClient } from "../db/supabase.client";
@@ -1042,7 +1116,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.supabase = supabaseClient;
 
   // Pobierz sesję użytkownika
-  const { data: { session } } = await supabaseClient.auth.getSession();
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
 
   // Dodaj informacje o sesji i użytkowniku do locals
   context.locals.session = session;
@@ -1053,6 +1129,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 ```
 
 **Aktualizacja typów** (`src/env.d.ts`):
+
 ```typescript
 /// <reference types="astro/client" />
 
@@ -1087,11 +1164,13 @@ interface ImportMeta {
 **Plik**: `src/lib/utils/auth.utils.ts` (nowy)
 
 **Odpowiedzialność**:
+
 - Helper functions do sprawdzania autentykacji
 - Helpers do przekierowań
 - Mapowanie komunikatów
 
 **Struktura**:
+
 ```typescript
 import type { AstroGlobal } from "astro";
 
@@ -1112,7 +1191,7 @@ export function requireAuth(Astro: AstroGlobal): void {
  * Sprawdza czy użytkownik NIE jest zalogowany
  * Jeśli jest, przekierowuje do wskazanej lokalizacji (domyślnie /dashboard)
  */
-export function requireGuest(Astro: AstroGlobal, redirectTo: string = '/dashboard'): void {
+export function requireGuest(Astro: AstroGlobal, redirectTo: string = "/dashboard"): void {
   const { session } = Astro.locals;
 
   if (session) {
@@ -1128,7 +1207,7 @@ export function getCurrentUser(Astro: AstroGlobal) {
   const { user } = Astro.locals;
 
   if (!user) {
-    throw new Error('User not authenticated');
+    throw new Error("User not authenticated");
   }
 
   return user;
@@ -1138,17 +1217,9 @@ export function getCurrentUser(Astro: AstroGlobal) {
  * Sprawdza czy użytkownik ma dostęp do określonej grupy
  * @returns true jeśli użytkownik jest twórcą lub uczestnikiem grupy
  */
-export async function hasGroupAccess(
-  userId: string,
-  groupId: number,
-  supabase: any
-): Promise<boolean> {
+export async function hasGroupAccess(userId: string, groupId: number, supabase: any): Promise<boolean> {
   // Sprawdź czy użytkownik jest twórcą grupy
-  const { data: group } = await supabase
-    .from('groups')
-    .select('creator_id')
-    .eq('id', groupId)
-    .single();
+  const { data: group } = await supabase.from("groups").select("creator_id").eq("id", groupId).single();
 
   if (group?.creator_id === userId) {
     return true;
@@ -1156,10 +1227,10 @@ export async function hasGroupAccess(
 
   // Sprawdź czy użytkownik jest uczestnikiem grupy
   const { data: participant } = await supabase
-    .from('participants')
-    .select('id')
-    .eq('group_id', groupId)
-    .eq('user_id', userId)
+    .from("participants")
+    .select("id")
+    .eq("group_id", groupId)
+    .eq("user_id", userId)
     .single();
 
   return !!participant;
@@ -1172,21 +1243,21 @@ export function getMessageText(code: string | null): { type: string; text: strin
   if (!code) return null;
 
   const messages: Record<string, { type: string; text: string }> = {
-    'password_reset_success': {
-      type: 'success',
-      text: 'Hasło zostało zmienione. Zaloguj się przy użyciu nowego hasła.',
+    password_reset_success: {
+      type: "success",
+      text: "Hasło zostało zmienione. Zaloguj się przy użyciu nowego hasła.",
     },
-    'email_confirmed': {
-      type: 'success',
-      text: 'Email został potwierdzony. Możesz się teraz zalogować.',
+    email_confirmed: {
+      type: "success",
+      text: "Email został potwierdzony. Możesz się teraz zalogować.",
     },
-    'session_expired': {
-      type: 'info',
-      text: 'Twoja sesja wygasła. Zaloguj się ponownie.',
+    session_expired: {
+      type: "info",
+      text: "Twoja sesja wygasła. Zaloguj się ponownie.",
     },
-    'unauthorized': {
-      type: 'error',
-      text: 'Nie masz uprawnień do tej operacji.',
+    unauthorized: {
+      type: "error",
+      text: "Nie masz uprawnień do tej operacji.",
     },
   };
 
@@ -1205,25 +1276,27 @@ Wszystkie istniejące endpointy API używające `DEFAULT_USER_ID` muszą zostać
 **Przykład aktualizacji** (`src/pages/api/groups/index.ts`):
 
 **Przed**:
+
 ```typescript
 const groupService = new GroupService(supabase);
 const group = await groupService.createGroup(DEFAULT_USER_ID, validatedData);
 ```
 
 **Po**:
+
 ```typescript
 // Guard: Sprawdź autentykację
 const { session } = locals;
 if (!session) {
   const errorResponse: ApiErrorResponse = {
     error: {
-      code: 'UNAUTHORIZED',
-      message: 'Authentication required',
+      code: "UNAUTHORIZED",
+      message: "Authentication required",
     },
   };
   return new Response(JSON.stringify(errorResponse), {
     status: 401,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   });
 }
 
@@ -1296,6 +1369,7 @@ const group = await groupService.createGroup(userId, validatedData);
 #### 3.2.3. Wspólny pattern autentykacji dla API
 
 **Helper do standaryzacji** (`src/lib/utils/api-auth.utils.ts`):
+
 ```typescript
 import type { APIContext } from "astro";
 import type { ApiErrorResponse } from "@/types";
@@ -1310,13 +1384,13 @@ export function requireApiAuth(context: APIContext): string | Response {
   if (!session) {
     const errorResponse: ApiErrorResponse = {
       error: {
-        code: 'UNAUTHORIZED',
-        message: 'Authentication required',
+        code: "UNAUTHORIZED",
+        message: "Authentication required",
       },
     };
     return new Response(JSON.stringify(errorResponse), {
       status: 401,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -1327,48 +1401,41 @@ export function requireApiAuth(context: APIContext): string | Response {
  * Sprawdza czy użytkownik jest twórcą grupy
  * Zwraca true lub odpowiedź 403
  */
-export async function requireGroupOwner(
-  context: APIContext,
-  groupId: number
-): Promise<true | Response> {
+export async function requireGroupOwner(context: APIContext, groupId: number): Promise<true | Response> {
   const userIdOrResponse = requireApiAuth(context);
 
-  if (typeof userIdOrResponse !== 'string') {
+  if (typeof userIdOrResponse !== "string") {
     return userIdOrResponse;
   }
 
   const userId = userIdOrResponse;
   const { supabase } = context.locals;
 
-  const { data: group, error } = await supabase
-    .from('groups')
-    .select('creator_id')
-    .eq('id', groupId)
-    .single();
+  const { data: group, error } = await supabase.from("groups").select("creator_id").eq("id", groupId).single();
 
   if (error || !group) {
     const errorResponse: ApiErrorResponse = {
       error: {
-        code: 'NOT_FOUND',
-        message: 'Group not found',
+        code: "NOT_FOUND",
+        message: "Group not found",
       },
     };
     return new Response(JSON.stringify(errorResponse), {
       status: 404,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
     });
   }
 
   if (group.creator_id !== userId) {
     const errorResponse: ApiErrorResponse = {
       error: {
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to perform this action',
+        code: "FORBIDDEN",
+        message: "You do not have permission to perform this action",
       },
     };
     return new Response(JSON.stringify(errorResponse), {
       status: 403,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -1378,13 +1445,10 @@ export async function requireGroupOwner(
 /**
  * Sprawdza czy użytkownik ma dostęp do grupy (jako twórca lub uczestnik)
  */
-export async function requireGroupAccess(
-  context: APIContext,
-  groupId: number
-): Promise<true | Response> {
+export async function requireGroupAccess(context: APIContext, groupId: number): Promise<true | Response> {
   const userIdOrResponse = requireApiAuth(context);
 
-  if (typeof userIdOrResponse !== 'string') {
+  if (typeof userIdOrResponse !== "string") {
     return userIdOrResponse;
   }
 
@@ -1392,11 +1456,7 @@ export async function requireGroupAccess(
   const { supabase } = context.locals;
 
   // Sprawdź czy użytkownik jest twórcą
-  const { data: group } = await supabase
-    .from('groups')
-    .select('creator_id')
-    .eq('id', groupId)
-    .single();
+  const { data: group } = await supabase.from("groups").select("creator_id").eq("id", groupId).single();
 
   if (group?.creator_id === userId) {
     return true;
@@ -1404,10 +1464,10 @@ export async function requireGroupAccess(
 
   // Sprawdź czy użytkownik jest uczestnikiem
   const { data: participant } = await supabase
-    .from('participants')
-    .select('id')
-    .eq('group_id', groupId)
-    .eq('user_id', userId)
+    .from("participants")
+    .select("id")
+    .eq("group_id", groupId)
+    .eq("user_id", userId)
     .single();
 
   if (participant) {
@@ -1417,25 +1477,26 @@ export async function requireGroupAccess(
   // Brak dostępu
   const errorResponse: ApiErrorResponse = {
     error: {
-      code: 'FORBIDDEN',
-      message: 'You do not have access to this group',
+      code: "FORBIDDEN",
+      message: "You do not have access to this group",
     },
   };
   return new Response(JSON.stringify(errorResponse), {
     status: 403,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   });
 }
 ```
 
 **Przykład użycia**:
+
 ```typescript
 // W endpoincie
 export const POST: APIRoute = async (context) => {
   const userIdOrResponse = requireApiAuth(context);
 
   // Jeśli nie jest stringiem, to jest to Response z błędem
-  if (typeof userIdOrResponse !== 'string') {
+  if (typeof userIdOrResponse !== "string") {
     return userIdOrResponse;
   }
 
@@ -1455,6 +1516,7 @@ Gdy twórca grupy dodaje uczestnika z adresem email, system powinien sprawdzić 
 **Modyfikacja** (`src/lib/services/participant.service.ts`):
 
 **W metodzie `addParticipant`** (lub podobnej):
+
 ```typescript
 async addParticipant(
   groupId: number,
@@ -1502,27 +1564,32 @@ async addParticipant(
 #### 3.3.2. Alternatywne podejście: Linkowanie przy logowaniu
 
 Prościejsze podejście dla MVP:
+
 - Uczestnicy są dodawani bez `user_id`
 - Gdy zalogowany użytkownik wchodzi do grupy, system sprawdza czy jego email pasuje do któregoś uczestnika
 - Jeśli tak, automatycznie linkuje uczestnika z kontem
 
 **Hook w middleware lub w komponencie Dashboard**:
+
 ```typescript
 // Pseudo-kod
 async function linkParticipantsOnLogin(userId: string, userEmail: string, supabase: any) {
   // Znajdź wszystkich uczestników z tym emailem bez user_id
   const { data: participants } = await supabase
-    .from('participants')
-    .select('id')
-    .eq('email', userEmail)
-    .is('user_id', null);
+    .from("participants")
+    .select("id")
+    .eq("email", userEmail)
+    .is("user_id", null);
 
   if (participants && participants.length > 0) {
     // Zaktualizuj wszystkich znalezionych uczestników
     await supabase
-      .from('participants')
+      .from("participants")
       .update({ user_id: userId })
-      .in('id', participants.map(p => p.id));
+      .in(
+        "id",
+        participants.map((p) => p.id)
+      );
   }
 }
 ```
@@ -1536,6 +1603,7 @@ async function linkParticipantsOnLogin(userId: string, userEmail: string, supaba
 Wszystkie endpointy powinny mieć jednolitą strukturę walidacji:
 
 **Schemat walidacji**:
+
 1. Sprawdzenie autentykacji (`requireApiAuth`)
 2. Sprawdzenie uprawnień (`requireGroupOwner` / `requireGroupAccess`)
 3. Walidacja danych wejściowych (Zod schema)
@@ -1543,13 +1611,14 @@ Wszystkie endpointy powinny mieć jednolitą strukturę walidacji:
 5. Obsługa błędów
 
 **Przykład pełnego endpointu** (POST /api/groups):
+
 ```typescript
 export const POST: APIRoute = async (context) => {
   const { request, locals } = context;
 
   // Guard 1: Autentykacja
   const userIdOrResponse = requireApiAuth(context);
-  if (typeof userIdOrResponse !== 'string') {
+  if (typeof userIdOrResponse !== "string") {
     return userIdOrResponse;
   }
   const userId = userIdOrResponse;
@@ -1561,13 +1630,13 @@ export const POST: APIRoute = async (context) => {
   } catch (error) {
     const errorResponse: ApiErrorResponse = {
       error: {
-        code: 'INVALID_REQUEST',
-        message: 'Invalid JSON in request body',
+        code: "INVALID_REQUEST",
+        message: "Invalid JSON in request body",
       },
     };
     return new Response(JSON.stringify(errorResponse), {
       status: 422,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -1580,17 +1649,17 @@ export const POST: APIRoute = async (context) => {
       const firstError = error.errors[0];
       const errorResponse: ApiErrorResponse = {
         error: {
-          code: 'INVALID_INPUT',
+          code: "INVALID_INPUT",
           message: firstError.message,
           details: {
-            field: firstError.path.join('.'),
+            field: firstError.path.join("."),
             value: (body as any)?.[firstError.path[0]],
           },
         },
       };
       return new Response(JSON.stringify(errorResponse), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -1604,20 +1673,20 @@ export const POST: APIRoute = async (context) => {
 
     return new Response(JSON.stringify(group), {
       status: 201,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error('[POST /api/groups] Error:', error);
+    console.error("[POST /api/groups] Error:", error);
 
     const errorResponse: ApiErrorResponse = {
       error: {
-        code: 'DATABASE_ERROR',
-        message: 'Failed to create group',
+        code: "DATABASE_ERROR",
+        message: "Failed to create group",
       },
     };
     return new Response(JSON.stringify(errorResponse), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
     });
   }
 };
@@ -1632,15 +1701,15 @@ export const POST: APIRoute = async (context) => {
 ```typescript
 // Rozszerzenie istniejącego typu
 export type ApiErrorCode =
-  | 'UNAUTHORIZED'           // 401 - Brak autentykacji
-  | 'FORBIDDEN'              // 403 - Brak uprawnień
-  | 'NOT_FOUND'              // 404 - Zasób nie istnieje
-  | 'INVALID_REQUEST'        // 422 - Nieprawidłowy format żądania
-  | 'INVALID_INPUT'          // 400 - Nieprawidłowe dane wejściowe
-  | 'VALIDATION_ERROR'       // 400 - Błąd walidacji
-  | 'MISSING_FIELD'          // 422 - Brakujące pole
-  | 'DATABASE_ERROR'         // 500 - Błąd bazy danych
-  | 'SERVER_ERROR';          // 500 - Ogólny błąd serwera
+  | "UNAUTHORIZED" // 401 - Brak autentykacji
+  | "FORBIDDEN" // 403 - Brak uprawnień
+  | "NOT_FOUND" // 404 - Zasób nie istnieje
+  | "INVALID_REQUEST" // 422 - Nieprawidłowy format żądania
+  | "INVALID_INPUT" // 400 - Nieprawidłowe dane wejściowe
+  | "VALIDATION_ERROR" // 400 - Błąd walidacji
+  | "MISSING_FIELD" // 422 - Brakujące pole
+  | "DATABASE_ERROR" // 500 - Błąd bazy danych
+  | "SERVER_ERROR"; // 500 - Ogólny błąd serwera
 
 export interface ApiErrorResponse {
   error: {
@@ -1660,11 +1729,13 @@ export interface ApiErrorResponse {
 **Plik**: `src/lib/services/group.service.ts`
 
 **Zmiany**:
+
 - Wszystkie metody przyjmują `userId` jako pierwszy parametr
 - Usunięcie referencji do `DEFAULT_USER_ID`
 - Dodanie metod sprawdzających uprawnienia
 
 **Nowe metody**:
+
 ```typescript
 /**
  * Sprawdza czy użytkownik jest twórcą grupy
@@ -1707,6 +1778,7 @@ async hasGroupAccess(userId: string, groupId: number): Promise<boolean> {
 **Plik**: `src/lib/services/participant.service.ts`
 
 **Zmiany**:
+
 - Dodanie automatycznego linkowania uczestników (jeśli implementowane)
 - Metody walidujące dostęp
 
@@ -1717,30 +1789,37 @@ async hasGroupAccess(userId: string, groupId: number): Promise<boolean> {
 #### 3.6.1. Scenariusze testowe dla API
 
 **Test 1: Tworzenie grupy jako zalogowany użytkownik**
+
 - Request: POST /api/groups z valid data + auth token
 - Expected: 201 Created, grupa z `creator_id = user.id`
 
 **Test 2: Tworzenie grupy bez autentykacji**
+
 - Request: POST /api/groups bez auth token
 - Expected: 401 Unauthorized
 
 **Test 3: Dostęp do grupy jako twórca**
+
 - Request: GET /api/groups/:id przez użytkownika będącego twórcą
 - Expected: 200 OK z danymi grupy
 
 **Test 4: Dostęp do grupy jako uczestnik**
+
 - Request: GET /api/groups/:id przez użytkownika będącego uczestnikiem
 - Expected: 200 OK z danymi grupy
 
 **Test 5: Dostęp do grupy bez uprawnień**
+
 - Request: GET /api/groups/:id przez użytkownika nie należącego do grupy
 - Expected: 403 Forbidden
 
 **Test 6: Edycja grupy przez nie-twórcę**
+
 - Request: PATCH /api/groups/:id przez uczestnika (nie twórcy)
 - Expected: 403 Forbidden
 
 **Test 7: Usunięcie grupy przez twórcę**
+
 - Request: DELETE /api/groups/:id przez twórcę
 - Expected: 204 No Content
 
@@ -1753,11 +1832,13 @@ async hasGroupAccess(userId: string, groupId: number): Promise<boolean> {
 #### 4.1.1. Obecna konfiguracja
 
 Projekt już posiada:
+
 - Zainstalowany pakiet `@supabase/supabase-js` (v2.75.0)
 - Skonfigurowany `supabaseClient` w `src/db/supabase.client.ts`
 - Zmienne środowiskowe: `PUBLIC_SUPABASE_URL` i `PUBLIC_SUPABASE_ANON_KEY`
 
 **Brak**:
+
 - Konfiguracji redirect URLs w Supabase Dashboard
 - Konfiguracji email templates
 - Ustawień polityk haseł
@@ -1769,6 +1850,7 @@ Projekt już posiada:
 **1. Redirect URLs (Authentication → URL Configuration)**
 
 Dodać dozwolone URL przekierowań:
+
 ```
 # Development
 http://localhost:3000/dashboard
@@ -1782,6 +1864,7 @@ https://yourdomain.com/reset-password
 **2. Email Templates (Authentication → Email Templates)**
 
 **Szablon: Confirm Signup**
+
 ```html
 <h2>Potwierdź swoje konto</h2>
 <p>Witaj w Secret Santa!</p>
@@ -1791,6 +1874,7 @@ https://yourdomain.com/reset-password
 ```
 
 **Szablon: Reset Password**
+
 ```html
 <h2>Resetowanie hasła</h2>
 <p>Otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta Secret Santa.</p>
@@ -1801,10 +1885,12 @@ https://yourdomain.com/reset-password
 ```
 
 **3. Polityki haseł (Authentication → Policies)**
+
 - Minimum 6 znaków (dla kompatybilności z istniejącymi użytkownikami)
 - W aplikacji: walidacja 8+ znaków + litery + cyfry dla nowych kont
 
 **4. Email Confirmation**
+
 - **MVP**: **WYŁĄCZONA** (auto-confirm users) - zgodnie z PRD US-001 punkt 5: "Po pomyślnej rejestracji jestem automatycznie logowany i przekierowany na główny pulpit (dashboard)"
 - **Przyszłość**: Włączona dla bezpieczeństwa (post-MVP)
 
@@ -1817,6 +1903,7 @@ https://yourdomain.com/reset-password
 **Metoda**: `supabaseClient.auth.signUp()`
 
 **Parametry**:
+
 ```typescript
 {
   email: string;
@@ -1829,6 +1916,7 @@ https://yourdomain.com/reset-password
 ```
 
 **Proces**:
+
 1. Użytkownik wypełnia formularz rejestracji
 2. Client wywołuje `signUp()` z email i hasłem
 3. **Jeśli email confirmation wyłączona**:
@@ -1843,6 +1931,7 @@ https://yourdomain.com/reset-password
    - Użytkownik klika link → przekierowanie do `/dashboard` + auto-login
 
 **Kluczowe uwagi**:
+
 - Email musi być unikalny w bazie `auth.users`
 - Hasło jest hashowane przez Supabase (bcrypt)
 - Session token jest przechowywany w localStorage (przez Supabase SDK)
@@ -1854,6 +1943,7 @@ https://yourdomain.com/reset-password
 **Metoda**: `supabaseClient.auth.signInWithPassword()`
 
 **Parametry**:
+
 ```typescript
 {
   email: string;
@@ -1862,6 +1952,7 @@ https://yourdomain.com/reset-password
 ```
 
 **Proces**:
+
 1. Użytkownik wypełnia formularz logowania
 2. Client wywołuje `signInWithPassword()`
 3. Supabase weryfikuje credentials
@@ -1874,6 +1965,7 @@ https://yourdomain.com/reset-password
    - Frontend wyświetla zmapowany komunikat błędu
 
 **Kluczowe uwagi**:
+
 - Session ma domyślny TTL (Time To Live) 1 godzinę
 - Refresh token ma TTL 24 godziny (może być dłużej w zależności od konfiguracji)
 - SDK automatycznie refreshuje tokeny w tle
@@ -1885,6 +1977,7 @@ https://yourdomain.com/reset-password
 **Metoda**: `supabaseClient.auth.signOut()`
 
 **Proces**:
+
 1. Użytkownik klika "Wyloguj"
 2. Client wywołuje `signOut()`
 3. Supabase unieważnia refresh token
@@ -1892,6 +1985,7 @@ https://yourdomain.com/reset-password
 5. Frontend przekierowuje do `/`
 
 **Kluczowe uwagi**:
+
 - `signOut()` zawsze zwraca sukces (nawet jeśli użytkownik nie był zalogowany)
 - Po wylogowaniu wszystkie chronione trasy powinny przekierować do `/login`
 
@@ -1902,6 +1996,7 @@ https://yourdomain.com/reset-password
 **Metoda 1**: `supabaseClient.auth.resetPasswordForEmail()`
 
 **Parametry**:
+
 ```typescript
 {
   email: string;
@@ -1912,6 +2007,7 @@ https://yourdomain.com/reset-password
 ```
 
 **Proces - Krok 1** (Wysłanie emaila):
+
 1. Użytkownik wchodzi na `/forgot-password`
 2. Wypełnia pole email
 3. Client wywołuje `resetPasswordForEmail()`
@@ -1922,6 +2018,7 @@ https://yourdomain.com/reset-password
 **Metoda 2**: `supabaseClient.auth.updateUser()`
 
 **Parametry**:
+
 ```typescript
 {
   password: string;
@@ -1929,6 +2026,7 @@ https://yourdomain.com/reset-password
 ```
 
 **Proces - Krok 2** (Ustawienie nowego hasła):
+
 1. Użytkownik klika link w emailu
 2. Przekierowanie do `/reset-password` z tokenem w URL
 3. Frontend wyciąga token i wywołuje `setSession()` aby zweryfikować token
@@ -1939,6 +2037,7 @@ https://yourdomain.com/reset-password
 8. Frontend przekierowuje do `/login` z komunikatem sukcesu
 
 **Kluczowe uwagi**:
+
 - Token resetowania ma TTL 1 godzinę
 - Token może być użyty tylko raz
 - Po użyciu tokenu wszystkie sesje użytkownika są unieważniane
@@ -1948,22 +2047,28 @@ https://yourdomain.com/reset-password
 #### 4.2.5. Sesje i tokeny
 
 **Access Token**:
+
 - JWT zawierający `user_id`, `email`, `role` i inne metadata
 - TTL: 1 godzina (domyślnie)
 - Używany do autoryzacji w API
 
 **Refresh Token**:
+
 - Token do odnawiania access token
 - TTL: 24 godziny - 30 dni (konfigurowalny)
 - Przechowywany w localStorage przez SDK
 
 **Automatyczny refresh**:
+
 - Supabase SDK automatycznie odświeża access token przed wygaśnięciem
 - Nie wymaga interwencji developera
 
 **Pobieranie sesji**:
+
 ```typescript
-const { data: { session } } = await supabaseClient.auth.getSession();
+const {
+  data: { session },
+} = await supabaseClient.auth.getSession();
 
 if (session) {
   const userId = session.user.id;
@@ -1973,13 +2078,14 @@ if (session) {
 ```
 
 **Nasłuchiwanie zmian sesji** (opcjonalnie):
+
 ```typescript
 supabaseClient.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_IN') {
+  if (event === "SIGNED_IN") {
     // Użytkownik zalogowany
-  } else if (event === 'SIGNED_OUT') {
+  } else if (event === "SIGNED_OUT") {
     // Użytkownik wylogowany
-  } else if (event === 'TOKEN_REFRESHED') {
+  } else if (event === "TOKEN_REFRESHED") {
     // Token odświeżony
   }
 });
@@ -1997,6 +2103,7 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 **Przykładowe polityki** (z migracji, zakomentowane):
 
 **Grupy** (`groups` table):
+
 ```sql
 -- Twórca ma pełny dostęp do swoich grup
 CREATE POLICY "Creators have full access to their groups"
@@ -2020,6 +2127,7 @@ USING (
 ```
 
 **Uczestnicy** (`participants` table):
+
 ```sql
 -- Twórcy grup mogą zarządzać uczestnikami
 CREATE POLICY "Group creators can manage participants"
@@ -2048,6 +2156,7 @@ USING (
 ```
 
 **Aktywacja RLS**:
+
 ```sql
 -- W przyszłości, przed production:
 ALTER TABLE public.groups ENABLE ROW LEVEL SECURITY;
@@ -2060,14 +2169,17 @@ ALTER TABLE public.participants ENABLE ROW LEVEL SECURITY;
 #### 4.3.2. HTTPS i ciasteczka
 
 **Development**:
+
 - HTTP localhost jest OK
 - Ciasteczka session przechowywane w localStorage
 
 **Production**:
+
 - HTTPS obowiązkowe
 - Opcjonalnie: przejście na httpOnly cookies dla lepszego bezpieczeństwa
 
 **Konfiguracja dla cookies** (opcjonalnie, post-MVP):
+
 ```typescript
 const supabase = createClient(url, key, {
   auth: {
@@ -2084,15 +2196,17 @@ const supabase = createClient(url, key, {
 #### 4.3.3. Rate limiting
 
 Supabase Auth ma wbudowane rate limiting:
+
 - **Rejestracja**: 10 prób / godzinę na IP
 - **Logowanie**: 30 prób / godzinę na IP
 - **Reset hasła**: 5 prób / godzinę na email
 
 **Obsługa błędu**:
+
 ```typescript
 // Error: Email rate limit exceeded
-if (error.message.includes('rate limit')) {
-  toast.error('Zbyt wiele prób. Spróbuj ponownie później.');
+if (error.message.includes("rate limit")) {
+  toast.error("Zbyt wiele prób. Spróbuj ponownie później.");
 }
 ```
 
@@ -2101,14 +2215,17 @@ if (error.message.includes('rate limit')) {
 #### 4.3.4. Walidacja input
 
 **Client-side** (UX):
+
 - Zod schemas w komponentach React
 - Real-time validation z React Hook Form
 
 **Server-side** (bezpieczeństwo):
+
 - Walidacja w API endpointach (już istnieje)
 - Supabase automatycznie sanitizuje input SQL injection
 
 **CSRF**:
+
 - Nie dotyczy, bo używamy JWT (stateless auth)
 - Brak cookies = brak problemu CSRF
 
@@ -2121,6 +2238,7 @@ if (error.message.includes('rate limit')) {
 Każdy uczestnik (niezależnie czy ma konto) ma unikalny `access_token` generowany przy dodawaniu do grupy.
 
 **Z migracji** (`20251013000001_add_access_token_to_participants.sql`):
+
 ```sql
 ALTER TABLE public.participants
 ADD COLUMN access_token text NOT NULL DEFAULT gen_random_uuid()::text;
@@ -2130,12 +2248,14 @@ ON public.participants(access_token);
 ```
 
 **Generowanie tokenu**:
+
 - Automatycznie przy INSERT (default value)
 - UUID v4 (trudny do odgadnięcia)
 - Unikalny w całej tabeli
 
 **Śledzenie dostępu** (OBOWIĄZKOWE zgodnie z PRD 3.4 i US-013):
 Wymagana nowa migracja dodająca kolumny:
+
 ```sql
 ALTER TABLE public.participants
 ADD COLUMN last_accessed_at timestamptz,
@@ -2151,6 +2271,7 @@ Te kolumny będą aktualizowane przy każdym dostępie do `/results/:token`
 **Planowany endpoint**: `GET /api/results/:token` lub `GET /results/:token` (strona Astro)
 
 **Logika**:
+
 1. Niezarejestrowany użytkownik dostaje link: `/results/:token`
 2. Strona sprawdza czy token istnieje w `participants`
 3. Jeśli tak, wyciąga:
@@ -2162,6 +2283,7 @@ Te kolumny będą aktualizowane przy każdym dostępie do `/results/:token`
 4. Renderuje widok wyniku (taki sam jak dla zalogowanych)
 
 **Przykład implementacji** (Astro page):
+
 ```typescript
 // src/pages/results/[token].astro
 ---
@@ -2199,6 +2321,7 @@ await supabaseClient
 ```
 
 **Bezpieczeństwo**:
+
 - Token jest trudny do odgadnięcia (UUID v4)
 - Brak rate limiting (bo token jest "hasłem")
 - **Śledzenie otwarć (OBOWIĄZKOWE dla MVP - zgodnie z PRD 3.4 i US-013)**:
@@ -2213,6 +2336,7 @@ await supabaseClient
 **Scenariusz**: Niezarejestrowany uczestnik chce założyć konto
 
 **Proces**:
+
 1. Niezarejestrowany uczestnik ma `email` w `participants` (ale `user_id` jest NULL)
 2. Uczestnik rejestruje się z tym samym emailem
 3. System automatycznie linkuje uczestnika z nowym kontem (sekcja 3.3)
@@ -2225,6 +2349,7 @@ await supabaseClient
 #### 4.5.1. Usunięcie DEFAULT_USER_ID
 
 **Obecny plik**: `src/db/supabase.client.ts`
+
 ```typescript
 export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 ```
@@ -2232,6 +2357,7 @@ export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 **Akcja**: Usunąć tę stałą po integracji autentykacji
 
 **Miejsca do aktualizacji**:
+
 - Wszystkie endpointy API (sekcja 3.2)
 - Wszystkie serwisy (sekcja 3.5)
 - Komponenty wykorzystujące hardcoded user ID
@@ -2241,10 +2367,12 @@ export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 #### 4.5.2. Aktualizacja komponentów
 
 **CreateGroupForm** (już używa sesji):
+
 - Już pobiera `session.access_token` dla API calls ✓
 - Brak zmian wymaganych
 
 **GroupView i inne komponenty**:
+
 - Powinny działać z nowym systemem bez zmian
 - Dane użytkownika pochodzą z API endpointów (które będą używać prawdziwych user ID)
 
@@ -2253,6 +2381,7 @@ export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 #### 4.5.3. Migracje bazy danych
 
 **Obecne migracje są OK** - nie wymagają zmian:
+
 - Tabela `participants` już ma `user_id uuid references auth.users(id)`
 - Tabela `groups` już ma `creator_id uuid references auth.users(id)`
 - Access tokeny są już zaimplementowane
@@ -2266,18 +2395,21 @@ export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 ### 5.1. Architektura końcowa
 
 **Frontend**:
+
 - 4 strony autentykacji: login, register, forgot-password, reset-password
 - 1 dashboard użytkownika
 - Nawigacja z przyciskami autentykacji
 - 5 komponentów React: LoginForm, RegisterForm, ForgotPasswordForm, ResetPasswordForm, LogoutButton
 
 **Backend**:
+
 - Middleware dostarczający sesję do wszystkich tras
 - Helpers do ochrony tras (auth.utils.ts, api-auth.utils.ts)
 - 11 endpointów API zaktualizowanych o autentykację
 - Services layer z metodami sprawdzającymi uprawnienia
 
 **Autentykacja**:
+
 - Supabase Auth jako provider
 - JWT tokens (access + refresh)
 - Email/hasło jako metoda logowania
@@ -2289,6 +2421,7 @@ export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 ### 5.2. Kolejność implementacji
 
 **Faza 1: Podstawowa autentykacja** (priorytet wysoki)
+
 1. Rozszerzenie middleware o pobieranie sesji
 2. Aktualizacja typów w `env.d.ts`
 3. Stworzenie `AuthLayout.astro`
@@ -2299,27 +2432,32 @@ export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 8. Ochrona tras: dodanie guards do `/dashboard`, `/groups/new`, `/groups/[id]`
 
 **Faza 2: Aktualizacja API** (priorytet wysoki)
+
 1. Implementacja helperów: `auth.utils.ts`, `api-auth.utils.ts`
 2. Aktualizacja wszystkich 11 endpointów API (dodanie autentykacji)
 3. Usunięcie `DEFAULT_USER_ID` z kodu
 4. Aktualizacja serwisów (GroupService, ParticipantService)
 
 **Faza 3: Reset hasła** (priorytet średni)
+
 1. Konfiguracja email templates w Supabase Dashboard
 2. Konfiguracja redirect URLs
 3. Implementacja `ForgotPasswordForm.tsx` i `/forgot-password`
 4. Implementacja `ResetPasswordForm.tsx` i `/reset-password`
 
 **Faza 4: Dashboard** (priorytet średni)
+
 1. Implementacja strony `/dashboard.astro`
 2. Implementacja komponentu `Dashboard.tsx`
 3. Implementacja pomocniczych komponentów: GroupCard, EmptyState
 
 **Faza 5: Linkowanie uczestników** (priorytet niski)
+
 1. Implementacja automatycznego linkowania przy logowaniu (sekcja 3.3.2)
 2. Aktualizacja `ParticipantService` (opcjonalne, sekcja 3.3.1)
 
 **Faza 6: Bezpieczeństwo** (przed production)
+
 1. Aktywacja RLS na wszystkich tabelach
 2. Test wszystkich polityk RLS
 3. Wymuszenie HTTPS
@@ -2330,6 +2468,7 @@ export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 ### 5.3. Checklist implementacji
 
 **UI (Frontend)**:
+
 - [ ] `src/layouts/AuthLayout.astro`
 - [ ] `src/pages/login.astro`
 - [ ] `src/pages/register.astro`
@@ -2351,6 +2490,7 @@ export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 - [ ] Aktualizacja `src/pages/groups/new.astro` (ochrona)
 
 **Backend**:
+
 - [ ] Aktualizacja `src/middleware/index.ts`
 - [ ] Aktualizacja `src/env.d.ts`
 - [ ] Nowy plik `src/lib/utils/auth.utils.ts`
@@ -2366,6 +2506,7 @@ export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 - [ ] Usunięcie `DEFAULT_USER_ID` z `src/db/supabase.client.ts`
 
 **Konfiguracja Supabase**:
+
 - [ ] Konfiguracja Redirect URLs w Dashboard
 - [ ] Konfiguracja Email Templates (Confirm Signup, Reset Password)
 - [ ] Konfiguracja polityk haseł
@@ -2373,6 +2514,7 @@ export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 - [ ] **Nowa migracja: dodanie last_accessed_at i access_count do participants** (OBOWIĄZKOWE - PRD 3.4)
 
 **Testy**:
+
 - [ ] Test rejestracji nowego użytkownika
 - [ ] Test logowania użytkownika
 - [ ] Test wylogowania
@@ -2388,6 +2530,7 @@ export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 ### 5.4. Znane ograniczenia i przyszłe usprawnienia
 
 **Ograniczenia MVP**:
+
 1. Brak weryfikacji emaila (dla uproszczenia)
 2. Brak uwierzytelniania dwuskładnikowego (2FA)
 3. Brak logowania przez OAuth (Google, Facebook)
@@ -2397,6 +2540,7 @@ export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 7. RLS wyłączone (dla development)
 
 **Przyszłe usprawnienia** (post-MVP):
+
 1. **Email verification**: Włączenie potwierdzania emaila przed logowaniem
 2. **OAuth providers**: Dodanie logowania przez Google, Facebook, GitHub
 3. **2FA**: Implementacja dwuskładnikowego uwierzytelniania (TOTP)
@@ -2415,6 +2559,7 @@ export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 ### 5.5. Metryki sukcesu
 
 **Techniczne**:
+
 - [ ] 100% endpointów API chronione autentykacją
 - [ ] 0 miejsc z `DEFAULT_USER_ID` w produkcyjnym kodzie
 - [ ] Wszystkie chronione trasy przekierowują do `/login` bez sesji
@@ -2422,6 +2567,7 @@ export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 - [ ] 100% pokrycia scenariuszy testowych (manualnych)
 
 **Użytkowe** (zgodne z PRD 6.1):
+
 - [ ] US-001: Użytkownik może się zarejestrować
 - [ ] US-002: Użytkownik może się zalogować
 - [ ] US-003: Użytkownik może zresetować hasło
@@ -2429,6 +2575,7 @@ export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 - [ ] Niezarejestrowany uczestnik może zobaczyć wynik przez link
 
 **Bezpieczeństwo**:
+
 - [ ] Brak wrażliwych danych w localStorage (tylko Supabase session)
 - [ ] Wszystkie hasła są hashowane (przez Supabase)
 - [ ] Access tokeny dla niezarejestrowanych są nieprzewidywalne (UUID v4)
@@ -2441,6 +2588,7 @@ export const DEFAULT_USER_ID = "94ea8dc9-638c-4b4b-87f5-f6b0846b790b";
 **Przykład użycia w nowym komponencie**:
 
 **Astro page** (SSR):
+
 ```typescript
 ---
 import { requireAuth } from '@/lib/utils/auth.utils';
@@ -2457,18 +2605,21 @@ const userId = session.user.id;
 ```
 
 **React component** (client-side):
+
 ```typescript
-import { supabaseClient } from '@/db/supabase.client';
+import { supabaseClient } from "@/db/supabase.client";
 
 async function myApiCall() {
   // Pobierz session token
-  const { data: { session } } = await supabaseClient.auth.getSession();
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
 
   // Wywołaj API z tokenem w headerze
-  const response = await fetch('/api/my-endpoint', {
+  const response = await fetch("/api/my-endpoint", {
     headers: {
-      'Authorization': `Bearer ${session?.access_token}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session?.access_token}`,
+      "Content-Type": "application/json",
     },
   });
 
@@ -2477,13 +2628,14 @@ async function myApiCall() {
 ```
 
 **API endpoint**:
+
 ```typescript
-import { requireApiAuth } from '@/lib/utils/api-auth.utils';
+import { requireApiAuth } from "@/lib/utils/api-auth.utils";
 
 export const POST: APIRoute = async (context) => {
   // Weryfikuj autentykację
   const userIdOrResponse = requireApiAuth(context);
-  if (typeof userIdOrResponse !== 'string') {
+  if (typeof userIdOrResponse !== "string") {
     return userIdOrResponse; // Zwróć błąd 401
   }
 
@@ -2497,15 +2649,18 @@ export const POST: APIRoute = async (context) => {
 ### 5.7. Kontakt i wsparcie
 
 **Dla pytań dotyczących implementacji**:
+
 - Sprawdź tę specyfikację
 - Przejrzyj dokumentację Supabase Auth: https://supabase.com/docs/guides/auth
 - Przejrzyj dokumentację Astro middleware: https://docs.astro.build/en/guides/middleware/
 
 **Dla problemów z konfiguracją Supabase**:
+
 - Supabase Dashboard: https://app.supabase.com
 - Supabase Discord: https://discord.supabase.com
 
 **Dla problemów z kodem**:
+
 - Sprawdź czy wszystkie kroki z checklist są wykonane
 - Sprawdź console.log w przeglądarce i serwerze
 - Sprawdź Network tab w DevTools (czy tokeny są wysyłane)
@@ -2516,4 +2671,3 @@ export const POST: APIRoute = async (context) => {
 
 Data utworzenia: 2025-10-13
 Wersja: 1.0
-

@@ -19,16 +19,16 @@
 ### Example 1: Simple GET Request
 
 ```typescript
-import { groupsService } from '@/services/groupsService';
-import { toast } from 'sonner';
+import { groupsService } from "@/services/groupsService";
+import { toast } from "sonner";
 
 async function loadGroup(groupId: number) {
   try {
     const group = await groupsService.getById(groupId);
-    console.log('Group loaded:', group.name);
+    console.log("Group loaded:", group.name);
     return group;
   } catch (error) {
-    toast.error('Failed to load group');
+    toast.error("Failed to load group");
     console.error(error);
     return null;
   }
@@ -38,8 +38,8 @@ async function loadGroup(groupId: number) {
 ### Example 2: Creating a Resource
 
 ```typescript
-import { participantsService } from '@/services/participantsService';
-import { toast } from 'sonner';
+import { participantsService } from "@/services/participantsService";
+import { toast } from "sonner";
 
 async function addParticipant(groupId: number, name: string, email?: string) {
   try {
@@ -52,14 +52,14 @@ async function addParticipant(groupId: number, name: string, email?: string) {
     if (participant.access_token) {
       const link = `${window.location.origin}/results/${participant.access_token}`;
       await navigator.clipboard.writeText(link);
-      toast.success('Participant added! Access link copied to clipboard.');
+      toast.success("Participant added! Access link copied to clipboard.");
     } else {
-      toast.success('Participant added successfully!');
+      toast.success("Participant added successfully!");
     }
 
     return participant;
   } catch (error) {
-    toast.error('Failed to add participant');
+    toast.error("Failed to add participant");
     return null;
   }
 }
@@ -68,8 +68,8 @@ async function addParticipant(groupId: number, name: string, email?: string) {
 ### Example 3: Updating a Resource
 
 ```typescript
-import { groupsService } from '@/services/groupsService';
-import { toast } from 'sonner';
+import { groupsService } from "@/services/groupsService";
+import { toast } from "sonner";
 
 async function updateGroupBudget(groupId: number, newBudget: number) {
   try {
@@ -80,7 +80,7 @@ async function updateGroupBudget(groupId: number, newBudget: number) {
     toast.success(`Budget updated to ${newBudget} PLN`);
     return updated;
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Update failed';
+    const message = error instanceof Error ? error.message : "Update failed";
     toast.error(message);
     return null;
   }
@@ -90,20 +90,20 @@ async function updateGroupBudget(groupId: number, newBudget: number) {
 ### Example 4: Deleting with Confirmation
 
 ```typescript
-import { exclusionsService } from '@/services/exclusionsService';
-import { toast } from 'sonner';
+import { exclusionsService } from "@/services/exclusionsService";
+import { toast } from "sonner";
 
 async function deleteExclusion(exclusionId: number, onSuccess: () => void) {
   // Show confirmation dialog
-  const confirmed = window.confirm('Are you sure you want to delete this exclusion?');
+  const confirmed = window.confirm("Are you sure you want to delete this exclusion?");
   if (!confirmed) return;
 
   try {
     await exclusionsService.delete(exclusionId);
-    toast.success('Exclusion deleted');
+    toast.success("Exclusion deleted");
     onSuccess(); // Refresh list
   } catch (error) {
-    toast.error('Failed to delete exclusion');
+    toast.error("Failed to delete exclusion");
   }
 }
 ```
@@ -111,8 +111,8 @@ async function deleteExclusion(exclusionId: number, onSuccess: () => void) {
 ### Example 5: Multiple Sequential Requests
 
 ```typescript
-import { groupsService } from '@/services/groupsService';
-import { participantsService } from '@/services/participantsService';
+import { groupsService } from "@/services/groupsService";
+import { participantsService } from "@/services/participantsService";
 
 async function duplicateGroup(originalGroupId: number) {
   try {
@@ -138,7 +138,7 @@ async function duplicateGroup(originalGroupId: number) {
 
     return newGroup;
   } catch (error) {
-    console.error('Duplication failed:', error);
+    console.error("Duplication failed:", error);
     throw error;
   }
 }
@@ -147,9 +147,9 @@ async function duplicateGroup(originalGroupId: number) {
 ### Example 6: Parallel Requests
 
 ```typescript
-import { groupsService } from '@/services/groupsService';
-import { participantsService } from '@/services/participantsService';
-import { exclusionsService } from '@/services/exclusionsService';
+import { groupsService } from "@/services/groupsService";
+import { participantsService } from "@/services/participantsService";
+import { exclusionsService } from "@/services/exclusionsService";
 
 async function loadAllGroupData(groupId: number) {
   try {
@@ -166,7 +166,7 @@ async function loadAllGroupData(groupId: number) {
       exclusions: exclusionsResult.data,
     };
   } catch (error) {
-    console.error('Failed to load group data:', error);
+    console.error("Failed to load group data:", error);
     throw error;
   }
 }
@@ -494,8 +494,7 @@ export default function EditGroupForm({ groupId, initialData, onSuccess }) {
 export const groupsService = {
   // ... existing methods
 
-  archive: (groupId: number): Promise<GroupDTO> =>
-    apiClient.patch<GroupDTO>(`/api/groups/${groupId}/archive`, {}),
+  archive: (groupId: number): Promise<GroupDTO> => apiClient.patch<GroupDTO>(`/api/groups/${groupId}/archive`, {}),
 };
 ```
 
@@ -514,7 +513,7 @@ export function useGroupData(groupId: number) {
     } catch (err) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: err instanceof Error ? err.message : "Unknown error",
       };
     }
   }, [groupId, refetch]);
@@ -630,7 +629,7 @@ export default function LiveGroupView({ groupId }) {
 
 ```typescript
 // ❌ Bypassing service layer
-const response = await fetch('/api/groups/123');
+const response = await fetch("/api/groups/123");
 const group = await response.json();
 ```
 
@@ -638,7 +637,7 @@ const group = await response.json();
 
 ```typescript
 // ✅ Using service layer
-import { groupsService } from '@/services/groupsService';
+import { groupsService } from "@/services/groupsService";
 const group = await groupsService.getById(123);
 ```
 
@@ -687,7 +686,7 @@ const { groupViewModel } = useGroupViewModel({ group, ... });
 ```typescript
 // ❌ No error handling
 await groupsService.update(id, data);
-toast.success('Updated!');
+toast.success("Updated!");
 ```
 
 **DO:**
@@ -696,9 +695,9 @@ toast.success('Updated!');
 // ✅ Proper error handling
 try {
   await groupsService.update(id, data);
-  toast.success('Updated!');
+  toast.success("Updated!");
 } catch (error) {
-  toast.error(error instanceof Error ? error.message : 'Update failed');
+  toast.error(error instanceof Error ? error.message : "Update failed");
 }
 ```
 
@@ -798,9 +797,7 @@ function SearchParticipants({ groupId }) {
 ```typescript
 // ✅ Batch multiple updates
 async function updateMultipleParticipants(updates) {
-  const promises = updates.map(({ id, data }) =>
-    participantsService.update(id, data)
-  );
+  const promises = updates.map(({ id, data }) => participantsService.update(id, data));
 
   await Promise.all(promises);
   toast.success(`Updated ${updates.length} participants`);
@@ -837,10 +834,10 @@ exclusionsService.delete(id)
 ```typescript
 // Modal Management
 const modals = useModalState();
-modals.openEditGroupModal()
-modals.openDeleteParticipantModal(participant)
-modals.closeModal()
-modals.isEditGroupModalOpen
+modals.openEditGroupModal();
+modals.openDeleteParticipantModal(participant);
+modals.closeModal();
+modals.isEditGroupModalOpen;
 
 // Data Transformations
 const { groupViewModel, participantViewModels, exclusionViewModels } = useGroupViewModel({

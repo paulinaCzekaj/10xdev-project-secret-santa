@@ -272,10 +272,7 @@ export class ExclusionRuleService {
         .order("created_at", { ascending: true });
 
       if (queryError) {
-        console.error(
-          "[ExclusionRuleService.getExclusionRulesForGroup] Failed to get exclusion rules:",
-          queryError
-        );
+        console.error("[ExclusionRuleService.getExclusionRulesForGroup] Failed to get exclusion rules:", queryError);
         throw new Error("Failed to get exclusion rules");
       }
 
@@ -296,8 +293,8 @@ export class ExclusionRuleService {
         blocker_participant_id: rule.blocker_participant_id,
         blocked_participant_id: rule.blocked_participant_id,
         created_at: rule.created_at,
-        blocker_name: (rule.blocker as any)?.name || "Unknown",
-        blocked_name: (rule.blocked as any)?.name || "Unknown",
+        blocker_name: (rule.blocker as { name: string } | null)?.name || "Unknown",
+        blocked_name: (rule.blocked as { name: string } | null)?.name || "Unknown",
       }));
 
       console.log("[ExclusionRuleService.getExclusionRulesForGroup] Successfully retrieved exclusion rules", {
@@ -345,11 +342,13 @@ export class ExclusionRuleService {
       // Step 1: Get exclusion rule with group information
       const { data: exclusionRule, error: ruleError } = await this.supabase
         .from("exclusion_rules")
-        .select(`
+        .select(
+          `
           id,
           group_id,
           groups!inner(id, creator_id)
-        `)
+        `
+        )
         .eq("id", exclusionRuleId)
         .single();
 
@@ -363,7 +362,7 @@ export class ExclusionRuleService {
       }
 
       const groupId = exclusionRule.group_id;
-      const groupCreatorId = (exclusionRule.groups as any).creator_id;
+      const groupCreatorId = (exclusionRule.groups as { creator_id: number }).creator_id;
 
       console.log("[ExclusionRuleService.deleteExclusionRule] Exclusion rule found", {
         exclusionRuleId,
@@ -401,10 +400,7 @@ export class ExclusionRuleService {
       console.log("[ExclusionRuleService.deleteExclusionRule] Draw not completed - can delete exclusion rule");
 
       // Step 4: Delete the exclusion rule
-      const { error: deleteError } = await this.supabase
-        .from("exclusion_rules")
-        .delete()
-        .eq("id", exclusionRuleId);
+      const { error: deleteError } = await this.supabase.from("exclusion_rules").delete().eq("id", exclusionRuleId);
 
       if (deleteError) {
         console.error("[ExclusionRuleService.deleteExclusionRule] Failed to delete exclusion rule:", deleteError);

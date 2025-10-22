@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
-import { afterEach } from "vitest";
+import { afterEach, vi } from "vitest";
 
 // Cleanup after each test
 afterEach(() => {
@@ -24,19 +24,19 @@ Object.defineProperty(window, "matchMedia", {
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
-  disconnect() {}
-  observe() {}
+  constructor() {} // eslint-disable-line @typescript-eslint/no-useless-constructor, @typescript-eslint/no-empty-function
+  disconnect() {} // eslint-disable-line @typescript-eslint/no-empty-function
+  observe() {} // eslint-disable-line @typescript-eslint/no-empty-function
   takeRecords() {
     return [];
   }
-  unobserve() {}
+  unobserve() {} // eslint-disable-line @typescript-eslint/no-empty-function
 } as unknown as typeof IntersectionObserver;
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
-  constructor() {}
-  disconnect() {}
-  observe() {}
-  unobserve() {}
+  constructor() {} // eslint-disable-line @typescript-eslint/no-useless-constructor, @typescript-eslint/no-empty-function
+  disconnect() {} // eslint-disable-line @typescript-eslint/no-empty-function
+  observe() {} // eslint-disable-line @typescript-eslint/no-empty-function
+  unobserve() {} // eslint-disable-line @typescript-eslint/no-empty-function
 } as unknown as typeof ResizeObserver;

@@ -9,13 +9,13 @@ Przeanalizowałem wszystkie pliki w folderze `src/components/` pod kątem liczby
 
 ## 📈 TOP 5 plików o największej złożoności
 
-| Pozycja | Plik | Liczba linii | Lokalizacja |
-|---------|------|-------------|-------------|
-| 1 | GroupView.tsx | 468 linii | `src/components/group/GroupView.tsx` |
-| 2 | ResetPasswordForm.tsx | 320 linii | `src/components/auth/ResetPasswordForm.tsx` |
-| 3 | RegisterForm.tsx | 312 linii | `src/components/auth/RegisterForm.tsx` |
-| 4 | ResultView.tsx | 259 linii | `src/components/result/ResultView.tsx` |
-| 5 | ResultReveal.tsx | 235 linii | `src/components/result/ResultReveal.tsx` |
+| Pozycja | Plik                  | Liczba linii | Lokalizacja                                 |
+| ------- | --------------------- | ------------ | ------------------------------------------- |
+| 1       | GroupView.tsx         | 468 linii    | `src/components/group/GroupView.tsx`        |
+| 2       | ResetPasswordForm.tsx | 320 linii    | `src/components/auth/ResetPasswordForm.tsx` |
+| 3       | RegisterForm.tsx      | 312 linii    | `src/components/auth/RegisterForm.tsx`      |
+| 4       | ResultView.tsx        | 259 linii    | `src/components/result/ResultView.tsx`      |
+| 5       | ResultReveal.tsx      | 235 linii    | `src/components/result/ResultReveal.tsx`    |
 
 ---
 
@@ -24,6 +24,7 @@ Przeanalizowałem wszystkie pliki w folderze `src/components/` pod kątem liczby
 ### 1. **GroupView.tsx** (468 linii) - Główny kontener widoku grupy
 
 **Potencjalne problemy złożoności:**
+
 - **Wielozadaniowość**: Komponent zarządza 5+ różnymi hookami, wieloma modalami, złożoną logiką transformacji danych
 - **Duże funkcje transformacji**: `transformGroupToViewModel` (30+ linii) i `transformParticipantsToViewModels` (30+ linii)
 - **Złożona obsługa zdarzeń**: Ponad 15 funkcji obsługi zdarzeń w jednym komponencie
@@ -32,6 +33,7 @@ Przeanalizowałem wszystkie pliki w folderze `src/components/` pod kątem liczby
 **Sugerowane refaktoryzacje:**
 
 #### 🔄 Custom Hook: `useGroupViewLogic`
+
 ```typescript
 // src/hooks/useGroupViewLogic.ts
 export function useGroupViewLogic(groupId: number) {
@@ -57,12 +59,13 @@ export function useGroupViewLogic(groupId: number) {
     handleDeleteGroup,
     handleParticipantActions,
     handleExclusionActions,
-    handleDrawActions
+    handleDrawActions,
   };
 }
 ```
 
 #### 🔄 Komponenty potomne dla stanów:
+
 ```typescript
 // GroupViewLoading.tsx, GroupViewError.tsx, GroupViewContent.tsx
 function GroupViewContent({ groupViewModel, ...props }) {
@@ -77,11 +80,9 @@ function GroupViewContent({ groupViewModel, ...props }) {
 ```
 
 #### 🔄 Memoizacja złożonych transformacji:
+
 ```typescript
-const transformGroupToViewModel = useMemo(
-  () => createGroupTransformer(currentUserId),
-  [currentUserId]
-);
+const transformGroupToViewModel = useMemo(() => createGroupTransformer(currentUserId), [currentUserId]);
 ```
 
 **💡 Korzyści:** Redukcja komponentu z 468 do ~100 linii, lepsza testowalność, separacja odpowiedzialności.
@@ -91,6 +92,7 @@ const transformGroupToViewModel = useMemo(
 ### 2. **ResetPasswordForm.tsx** (320 linii) - Formularz resetowania hasła
 
 **Potencjalne problemy złożoności:**
+
 - **Złożona logika tokenów**: Wielokrotne warunki sprawdzania tokenów z URL hash
 - **Duplikacja UI**: Podobne pola hasła z toggle'ami widoczności
 - **Wielokrotne stany ładowania**: Token verification + form submission
@@ -99,6 +101,7 @@ const transformGroupToViewModel = useMemo(
 **Sugerowane refaktoryzacje:**
 
 #### 🔄 Custom Hook: `usePasswordReset`
+
 ```typescript
 // src/hooks/usePasswordReset.ts
 export function usePasswordReset(accessToken?: string) {
@@ -114,6 +117,7 @@ export function usePasswordReset(accessToken?: string) {
 ```
 
 #### 🔄 Reużywalny komponent pola hasła:
+
 ```typescript
 // PasswordField.tsx
 interface PasswordFieldProps {
@@ -139,6 +143,7 @@ export function PasswordField({
 ```
 
 #### 🔄 Stan maszyny dla flow:
+
 ```typescript
 type ResetFlowState = "verifying_token" | "token_error" | "ready" | "submitting" | "success";
 
@@ -146,6 +151,7 @@ const [flowState, setFlowState] = useState<ResetFlowState>("verifying_token");
 ```
 
 #### 🔄 Komponenty dla stanów flow:
+
 ```typescript
 function ResetPasswordFlow({ flowState, tokenError, onSubmit }) {
   switch (flowState) {
@@ -164,6 +170,7 @@ function ResetPasswordFlow({ flowState, tokenError, onSubmit }) {
 ### 3. **RegisterForm.tsx** (312 linii) - Formularz rejestracji
 
 **Potencjalne problemy złożoności:**
+
 - **Duplikacja pól hasła**: Identyczna logika dla password i confirmPassword
 - **Złożone wymagania hasła**: Wielokrotne warunki sprawdzania regex w JSX
 - **Wielokrotne walidacje**: Zod schema + real-time validation w UI
@@ -172,29 +179,35 @@ function ResetPasswordFlow({ flowState, tokenError, onSubmit }) {
 **Sugerowane refaktoryzacje:**
 
 #### 🔄 Custom Hook: `usePasswordValidation`
+
 ```typescript
 // src/hooks/usePasswordValidation.ts
 export function usePasswordValidation(password: string) {
-  const requirements = useMemo(() => [
-    { key: "length", label: "8+ znaków", regex: /.{8,}/ },
-    { key: "lowercase", label: "mała litera", regex: /[a-z]/ },
-    { key: "uppercase", label: "duża litera", regex: /[A-Z]/ },
-    { key: "number", label: "cyfra", regex: /\d/ },
-  ], []);
+  const requirements = useMemo(
+    () => [
+      { key: "length", label: "8+ znaków", regex: /.{8,}/ },
+      { key: "lowercase", label: "mała litera", regex: /[a-z]/ },
+      { key: "uppercase", label: "duża litera", regex: /[A-Z]/ },
+      { key: "number", label: "cyfra", regex: /\d/ },
+    ],
+    []
+  );
 
-  const validationResults = useMemo(() =>
-    requirements.map(req => ({
-      ...req,
-      isValid: req.regex.test(password),
-    })),
+  const validationResults = useMemo(
+    () =>
+      requirements.map((req) => ({
+        ...req,
+        isValid: req.regex.test(password),
+      })),
     [password, requirements]
   );
 
-  return { requirements: validationResults, isValid: validationResults.every(r => r.isValid) };
+  return { requirements: validationResults, isValid: validationResults.every((r) => r.isValid) };
 }
 ```
 
 #### 🔄 Komponent wymagań hasła:
+
 ```typescript
 // PasswordRequirements.tsx
 export function PasswordRequirements({ password }: { password: string }) {
@@ -216,6 +229,7 @@ export function PasswordRequirements({ password }: { password: string }) {
 ```
 
 #### 🔄 Reużywalny komponent pól formularza:
+
 ```typescript
 // FormFieldComponents.tsx
 export function PasswordInput({ name, label, placeholder }: PasswordInputProps) {
@@ -245,10 +259,13 @@ export function PasswordInput({ name, label, placeholder }: PasswordInputProps) 
 ```
 
 #### 🔄 Separacja logiki biznesowej:
+
 ```typescript
 // useRegistration.ts
 export function useRegistration() {
-  const form = useForm<RegisterFormData>({ /* config */ });
+  const form = useForm<RegisterFormData>({
+    /* config */
+  });
 
   const onSubmit = async (data: RegisterFormData) => {
     // Logika rejestracji
@@ -265,6 +282,7 @@ export function useRegistration() {
 ### 4. **ResultView.tsx** (259 linii) - Widok wyników
 
 **Potencjalne problemy złożoności:**
+
 - **Wielokrotne komponenty błędów**: 6 różnych stanów błędów z podobnym JSX
 - **Złożona logika dostępu**: Wielokrotne warunki dla authenticated/unauthenticated
 - **Duplikacja wrapperów błędów**: Powtarzający się `ErrorWrapper` pattern
@@ -273,6 +291,7 @@ export function useRegistration() {
 **Sugerowane refaktoryzacje:**
 
 #### 🔄 Komponenty stanów błędów:
+
 ```typescript
 // ResultErrorStates.tsx
 export function DrawNotCompletedError() {
@@ -292,6 +311,7 @@ export function DrawNotCompletedError() {
 ```
 
 #### 🔄 Custom Hook: `useResultViewState`
+
 ```typescript
 // src/hooks/useResultViewState.ts
 export function useResultViewState(groupId?: number, token?: string, isAuthenticated?: boolean) {
@@ -309,6 +329,7 @@ export function useResultViewState(groupId?: number, token?: string, isAuthentic
 ```
 
 #### 🔄 Główny komponent z pattern matching:
+
 ```typescript
 // ResultViewRenderer.tsx
 export function ResultViewRenderer({ viewState, result, error }) {
@@ -329,6 +350,7 @@ export function ResultViewRenderer({ viewState, result, error }) {
 ```
 
 #### 🔄 Lazy loading dla ciężkich komponentów:
+
 ```typescript
 const ResultSuccess = lazy(() => import("./ResultSuccess"));
 const ResultReveal = lazy(() => import("./ResultReveal"));
@@ -346,6 +368,7 @@ const ResultReveal = lazy(() => import("./ResultReveal"));
 ### 5. **ResultReveal.tsx** (235 linii) - Komponent odkrywania wyników
 
 **Potencjalne problemy złożoności:**
+
 - **Złożona animacja prezentu**: Dużo JSX dla wizualnych efektów
 - **Wielokrotne warunki renderowania**: Revealed vs not revealed states
 - **Złożona logika konfetti**: Sprawdzanie preferencji użytkownika, lazy loading
@@ -354,6 +377,7 @@ const ResultReveal = lazy(() => import("./ResultReveal"));
 **Sugerowane refaktoryzacje:**
 
 #### 🔄 Separacja komponentów wizualnych:
+
 ```typescript
 // GiftBox.tsx - Komponent prezentu
 export function GiftBox({ onClick, isAnimating }: GiftBoxProps) {
@@ -393,14 +417,10 @@ export function RevealButton({ onClick, isAnimating }: RevealButtonProps) {
 ```
 
 #### 🔄 Custom Hook: `useGiftReveal`
+
 ```typescript
 // src/hooks/useGiftReveal.ts
-export function useGiftReveal({
-  isRevealed,
-  participantId,
-  accessToken,
-  onReveal
-}: GiftRevealProps) {
+export function useGiftReveal({ isRevealed, participantId, accessToken, onReveal }: GiftRevealProps) {
   const [isAnimating, setIsAnimating] = useState(false);
   const prefersReducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
 
@@ -417,7 +437,7 @@ export function useGiftReveal({
       try {
         const response = await fetch(`/api/participants/${participantId}/reveal`, {
           method: "POST",
-          headers: accessToken ? { "Authorization": `Bearer ${accessToken}` } : {},
+          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
         });
         // obsługa odpowiedzi
       } catch (error) {
@@ -433,6 +453,7 @@ export function useGiftReveal({
 ```
 
 #### 🔄 Lazy loading konfetti:
+
 ```typescript
 // useConfetti.ts
 export function useConfetti(isActive: boolean, prefersReducedMotion: boolean) {
@@ -463,6 +484,7 @@ export function useConfetti(isActive: boolean, prefersReducedMotion: boolean) {
 ```
 
 #### 🔄 Separacja stanów renderowania:
+
 ```typescript
 function RevealedState({ assignedPerson }: { assignedPerson: Person }) {
   return (
@@ -492,13 +514,13 @@ function UnrevealedState({ onReveal, isAnimating }: UnrevealedStateProps) {
 
 ## 📊 **Podsumowanie rekomendacji refaktoryzacji**
 
-| Plik | Aktualnie | Po refaktoryzacji | Główna strategia |
-|------|-----------|-------------------|------------------|
-| GroupView.tsx | 468 linii | ~100 linii | Custom hooks + komponenty potomne |
-| ResetPasswordForm.tsx | 320 linii | ~150 linii | Stan maszyny + reużywalne komponenty |
-| RegisterForm.tsx | 312 linii | ~180 linii | Hooks walidacji + komponenty pól |
-| ResultView.tsx | 259 linii | ~100 linii | Komponenty stanów + lazy loading |
-| ResultReveal.tsx | 235 linii | ~120 linii | Separacja wizualna + hooks animacji |
+| Plik                  | Aktualnie | Po refaktoryzacji | Główna strategia                     |
+| --------------------- | --------- | ----------------- | ------------------------------------ |
+| GroupView.tsx         | 468 linii | ~100 linii        | Custom hooks + komponenty potomne    |
+| ResetPasswordForm.tsx | 320 linii | ~150 linii        | Stan maszyny + reużywalne komponenty |
+| RegisterForm.tsx      | 312 linii | ~180 linii        | Hooks walidacji + komponenty pól     |
+| ResultView.tsx        | 259 linii | ~100 linii        | Komponenty stanów + lazy loading     |
+| ResultReveal.tsx      | 235 linii | ~120 linii        | Separacja wizualna + hooks animacji  |
 
 ## 🔑 Kluczowe wzorce refaktoryzacji
 

@@ -3,7 +3,9 @@
 ## Podsumowanie problemu
 
 ### Problem główny: Kalendarz (DatePicker) nie działał
+
 **Objawy:**
+
 - Kliknięcie przycisku "Wybierz datę" nie otwierało kalendarza
 - Brak reakcji na interakcje użytkownika
 - W konsoli błąd: `supabaseUrl is required`
@@ -11,33 +13,41 @@
 ### Przyczyny zidentyfikowane
 
 #### 1. Problem ze zmiennymi środowiskowymi (GŁÓWNA PRZYCZYNA - ROZWIĄZANA)
+
 **Diagnoza:**
+
 - W Astro, zmienne `import.meta.env` są domyślnie dostępne tylko po stronie serwera
 - Komponenty React z dyrektywą `client:load` działają po stronie klienta
 - Supabase client inicjalizował się bez URL i klucza w przeglądarce
 
 **Rozwiązanie zastosowane:**
+
 - ✅ Dodano zmienne z prefiksem `PUBLIC_` do `.env`
 - ✅ Zaktualizowano `supabase.client.ts` aby używał `PUBLIC_SUPABASE_URL` i `PUBLIC_SUPABASE_ANON_KEY`
 - ✅ Dodano fallback do zwykłych zmiennych dla kompatybilności server-side
 
 #### 2. Problem z Popover z Shadcn/ui (PRAWDOPODOBNIE ROZWIĄZANY)
+
 **Możliwe przyczyny (wymagają weryfikacji):**
 
 a) **Hydratacja komponentów Radix UI w Astro**
-   - Radix UI Popover może mieć problemy z hydracją w środowisku Astro
-   - `client:load` vs `client:only="react"` daje różne wyniki
-   - Komponent może potrzebować pełnej kontroli nad lifecycle
+
+- Radix UI Popover może mieć problemy z hydracją w środowisku Astro
+- `client:load` vs `client:only="react"` daje różne wyniki
+- Komponent może potrzebować pełnej kontroli nad lifecycle
 
 b) **Brak kontrolowanego stanu**
-   - Pierwsze próby używały niekontrolowanego Popover
-   - Wymagane było dodanie `open` i `onOpenChange` props
+
+- Pierwsze próby używały niekontrolowanego Popover
+- Wymagane było dodanie `open` i `onOpenChange` props
 
 c) **Wersja react-day-picker**
-   - Shadcn/ui używa react-day-picker v9
-   - API mogło się zmienić między wersjami
+
+- Shadcn/ui używa react-day-picker v9
+- API mogło się zmienić między wersjami
 
 **Rozwiązanie zastosowane:**
+
 - ✅ Utworzono dedykowany komponent `DatePicker` który enkapsuluje logikę
 - ✅ Dodano kontrolowany stan `open/setOpen`
 - ✅ Dodano jawny handler `onClick` na przycisku
@@ -47,6 +57,7 @@ c) **Wersja react-day-picker**
 ## Status aktualny
 
 ### Co działa ✅
+
 1. **Formularz renderuje się poprawnie**
 2. **Wszystkie pola są widoczne** (nazwa, budżet, data)
 3. **Walidacja działa** - przycisk jest disabled gdy pola niewypełnione
@@ -56,11 +67,13 @@ c) **Wersja react-day-picker**
 7. **Wygląd dostosowany** - różowe tło, białe karty, czerwony przycisk
 
 ### Co wymaga weryfikacji ⚠️
+
 1. **Czy kalendarz się otwiera?** - wymaga testu użytkownika
 2. **Czy wybór daty działa?** - wymaga testu użytkownika
 3. **Czy formularz submituje się poprawnie?** - endpoint działa, ale czy cały flow?
 
 ### Co wymaga poprawy (potencjalnie) 🔧
+
 1. **Logi debug w DatePicker** - powinny być usunięte w produkcji
 2. **Brak obsługi błędów Supabase** - jeśli zmienne są puste, tylko console.error
 3. **Redirect po utworzeniu** - endpoint `/groups/1` zwraca 404 (nie istnieje jeszcze ten widok)
@@ -68,35 +81,42 @@ c) **Wersja react-day-picker**
 ## Analiza głębsza: Dlaczego kalendarz mógł nie działać?
 
 ### Teoria 1: Problem z Portal w Astro
+
 **Obserwacja:** Popover używa Radix Portal do renderowania contentu poza głównym DOM tree
 
 **Potencjalny problem:**
+
 - Portal może próbować renderować się przed pełną hydracją Astro
 - `document.body` może nie być gotowy w momencie montowania komponentu
 - Z-index może powodować że kalendarz renderuje się, ale jest pod innymi elementami
 
 **Jak zweryfikować:**
+
 ```javascript
 // W DevTools, po kliknięciu przycisku:
-document.querySelectorAll('[data-radix-portal]')
+document.querySelectorAll("[data-radix-portal]");
 // Jeśli zwraca elementy - Portal działa, problem z CSS/z-index
 // Jeśli puste - Portal nie renderuje się
 ```
 
 **Możliwe rozwiązania:**
+
 - Użycie `modal={false}` w Popover
 - Dodanie własnego kontenera Portal
 - Zwiększenie z-index w PopoverContent
 
 ### Teoria 2: Event listeners nie attachują się
+
 **Obserwacja:** Kliknięcie przycisku nie wywołuje żadnej akcji
 
 **Potencjalny problem:**
+
 - React event system może kolidować z Astro view transitions
 - Events mogą być attachowane przed pełną hydracją
 - `onClick` może być override'owany przez inny handler
 
 **Jak zweryfikować:**
+
 ```javascript
 // Sprawdź logi w konsoli po kliknięciu:
 // Jeśli widać "DatePicker: button clicked" - handler działa
@@ -104,26 +124,31 @@ document.querySelectorAll('[data-radix-portal]')
 ```
 
 **Możliwe rozwiązania:**
+
 - Użycie `useEffect` z `addEventListener` zamiast `onClick`
 - Dodanie `key` do komponentu aby wymusić pełny remount
 - Użycie `client:only="react"` dla izolacji od Astro
 
 ### Teoria 3: CSS blokuje interakcje
+
 **Obserwacja:** Przycisk renderuje się, ale nie jest klikalny
 
 **Potencjalny problem:**
+
 - `pointer-events: none` gdzieś w hierarchii CSS
 - Inny element z wyższym z-index pokrywa przycisk
 - Parent container ma `overflow: hidden` który ukrywa PopoverContent
 
 **Jak zweryfikować:**
+
 ```javascript
 // W DevTools:
-getComputedStyle(buttonElement).pointerEvents
+getComputedStyle(buttonElement).pointerEvents;
 // Powinno być "auto" lub undefined
 ```
 
 **Możliwe rozwiązania:**
+
 - Sprawdzenie CSS w DevTools Inspector
 - Dodanie `style={{ pointerEvents: 'auto' }}` do przycisku
 - Zwiększenie z-index dla Popover
@@ -131,19 +156,23 @@ getComputedStyle(buttonElement).pointerEvents
 ## Plan działania na kolejny wątek
 
 ### Krok 1: Weryfikacja czy problem został rozwiązany ✅
+
 **Akcja:** Użytkownik testuje czy kalendarz działa po naprawie zmiennych środowiskowych
 
 **Jeśli DZIAŁA:**
+
 - Usunąć logi debug z DatePicker
 - Zaktualizować dokumentację
 - Przejść do kolejnych funkcjonalności
 
 **Jeśli NIE DZIAŁA:**
+
 - Przejść do Kroku 2
 
 ### Krok 2: Diagnostyka szczegółowa 🔍
 
 #### Test A: Sprawdź logi w konsoli
+
 ```
 Oczekiwane logi po kliknięciu przycisku:
 1. "DatePicker: button clicked, current open: false"
@@ -156,23 +185,25 @@ Jeśli widzisz:
 ```
 
 #### Test B: Sprawdź DOM w DevTools
+
 ```javascript
 // Po kliknięciu przycisku, wykonaj w konsoli:
-document.querySelector('[data-state="open"]')
+document.querySelector('[data-state="open"]');
 // Jeśli zwraca element - Popover próbuje się otworzyć
 
-document.querySelectorAll('[data-radix-popper-content-wrapper]')
+document.querySelectorAll("[data-radix-popper-content-wrapper]");
 // Jeśli zwraca elementy - Content renderuje się
 
 // Sprawdź position
-const content = document.querySelector('[data-radix-popper-content-wrapper]');
+const content = document.querySelector("[data-radix-popper-content-wrapper]");
 if (content) console.log(getComputedStyle(content).position, getComputedStyle(content).zIndex);
 ```
 
 #### Test C: Sprawdź czy Calendar się renderuje
+
 ```javascript
 // Po kliknięciu przycisku:
-document.querySelector('.rdp')
+document.querySelector(".rdp");
 // Jeśli zwraca element - Calendar renderuje się (problem z widocznością)
 // Jeśli null - Calendar nie renderuje się (problem z Popover)
 ```
@@ -180,12 +211,15 @@ document.querySelector('.rdp')
 ### Krok 3: Rozwiązania alternatywne (jeśli problem persystuje)
 
 #### Opcja A: Natywny `<input type="date">`
+
 **Zalety:**
+
 - Działa zawsze, w każdej przeglądarce
 - Brak dependencies (Calendar, Popover)
 - Natywny UX dla mobile
 
 **Wady:**
+
 - Mniej kontroli nad wyglądem
 - Brak customizacji
 - Format zależy od locale przeglądarki
@@ -193,26 +227,33 @@ document.querySelector('.rdp')
 **Kiedy użyć:** Jeśli żadne inne rozwiązanie nie działa
 
 #### Opcja B: Inna biblioteka datepicker
+
 **Możliwości:**
+
 - `react-datepicker` - najpopularniejsza, stabilna
 - `@mui/x-date-pickers` - z Material UI
 - `react-date-picker` - lekka alternatywa
 
 **Zalety:**
+
 - Sprawdzone w produkcji
 - Lepsza dokumentacja dla Astro/React
 
 **Wady:**
+
 - Dodatkowa dependency
 - Może wymagać zmiany styli
 
 #### Opcja C: Custom modal zamiast Popover
+
 **Idea:**
+
 - Użyć `<dialog>` HTML5 zamiast Popover
 - Calendar w modal overlay
 - Pełna kontrola nad z-index i pozycją
 
 **Implementacja:**
+
 ```typescript
 <dialog ref={dialogRef}>
   <Calendar />
@@ -228,6 +269,7 @@ Po rozwiązaniu problemu:
    - Niepotrzebne komentarze
 
 2. **Dodać error handling:**
+
    ```typescript
    if (!supabaseUrl || !supabaseAnonKey) {
      throw new Error("Supabase not configured");
@@ -247,12 +289,14 @@ Po rozwiązaniu problemu:
 ## Wnioski i rekomendacje
 
 ### Co zadziałało dobrze ✅
+
 1. **Systematyczne podejście** - testowanie różnych hipotez
 2. **Izolacja problemu** - utworzenie dedykowanego komponentu DatePicker
 3. **Debugging** - dodanie logów pomogło zidentyfikować problem
 4. **Fallback strategy** - support dla różnych zmiennych środowiskowych
 
 ### Co można poprawić 📈
+
 1. **Wcześniejsza weryfikacja env variables** - problem był oczywisty patrząc na błąd
 2. **Testowanie w przeglądarce** - więcej manual testingu zamiast zgadywania
 3. **Dokumentacja Astro quirks** - knowledge base o problemach Astro + React
@@ -298,4 +342,3 @@ Po rozwiązaniu problemu:
 5. Czy przekierowanie do `/groups/{id}` jest potrzebne teraz czy później?
 
 **Gotowe do kontynuacji w kolejnym wątku! 🚀**
-

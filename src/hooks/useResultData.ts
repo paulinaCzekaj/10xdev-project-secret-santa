@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import type { UseResultDataReturn, ResultViewModel, ApiError } from "../types";
+import type { UseResultDataReturn, ResultViewModel, ApiError, DrawResultResponseDTO } from "../types";
 
 /**
  * Mapuje błąd na odpowiedni obiekt ApiError
@@ -94,6 +94,19 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
   }, []);
 
   /**
+   * Konwertuje URL-e w tekście na HTML linki
+   * Prosta implementacja - można przenieść do useWishlistLinking hook
+   */
+  const convertUrlsToLinks = useCallback((text: string): string => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.replace(
+      urlRegex,
+      (url) =>
+        `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${url}</a>`
+    );
+  }, []);
+
+  /**
    * Transformuje DTO z API na ViewModel
    */
   const transformToViewModel = useCallback(
@@ -133,21 +146,9 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
       getInitials,
       isAuthenticated,
       token,
+      convertUrlsToLinks,
     ]
   );
-
-  /**
-   * Konwertuje URL-e w tekście na HTML linki
-   * Prosta implementacja - można przenieść do useWishlistLinking hook
-   */
-  const convertUrlsToLinks = useCallback((text: string): string => {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.replace(
-      urlRegex,
-      (url) =>
-        `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${url}</a>`
-    );
-  }, []);
 
   /**
    * Pobiera dane z API

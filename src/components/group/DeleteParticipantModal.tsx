@@ -10,7 +10,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AlertTriangle } from "lucide-react";
-import { toast } from "sonner";
 import type { ParticipantViewModel } from "@/types";
 
 interface DeleteParticipantModalProps {
@@ -20,12 +19,7 @@ interface DeleteParticipantModalProps {
   onConfirm: (participantId: number) => void;
 }
 
-export function DeleteParticipantModal({
-  participant,
-  isOpen,
-  onClose,
-  onConfirm,
-}: DeleteParticipantModalProps) {
+export function DeleteParticipantModal({ participant, isOpen, onClose, onConfirm }: DeleteParticipantModalProps) {
   const handleConfirm = () => {
     if (participant) {
       onConfirm(participant.id);
@@ -46,8 +40,8 @@ export function DeleteParticipantModal({
             <div>
               <AlertDialogTitle>Czy na pewno chcesz usunąć tego uczestnika?</AlertDialogTitle>
               <AlertDialogDescription className="mt-2">
-                Uczestnik <strong>"{participant.displayName}"</strong> zostanie trwale usunięty z grupy.
-                Tej operacji nie można cofnąć.
+                Uczestnik <strong>&bdquo;{participant.displayName}&rdquo;</strong> zostanie trwale usunięty z grupy. Tej
+                operacji nie można cofnąć.
               </AlertDialogDescription>
             </div>
           </div>

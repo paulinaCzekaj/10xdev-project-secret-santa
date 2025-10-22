@@ -1,4 +1,4 @@
-import { Page, Locator } from "@playwright/test";
+import type { Page, Locator } from "@playwright/test";
 
 /**
  * Base Page Object Model class
@@ -126,5 +126,28 @@ export class BasePage {
    */
   async takeScreenshot(name: string): Promise<void> {
     await this.page.screenshot({ path: `test-results/${name}.png` });
+  }
+
+  /**
+   * Fill input field with proper event triggering for React Hook Form
+   * This ensures onChange validation is triggered properly
+   */
+  async fillInputForReactHookForm(locator: Locator, value: string): Promise<void> {
+    // Focus the input first
+    await locator.click();
+
+    // Wait for the field to be fully focused and ready
+    // Increased to 500ms to prevent losing first characters
+    await this.page.waitForTimeout(500);
+
+    // Type the value character by character to simulate real user input
+    // This is more reliable for React Hook Form than fill()
+    await locator.pressSequentially(value, { delay: 30 });
+
+    // Blur to trigger onBlur validation
+    await locator.blur();
+
+    // Wait for React Hook Form to process validation
+    await this.page.waitForTimeout(1000);
   }
 }

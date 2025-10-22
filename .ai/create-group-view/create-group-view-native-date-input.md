@@ -3,6 +3,7 @@
 ## Problem
 
 Komponent Calendar z Shadcn/ui (oparty na react-day-picker) nie działał poprawnie w środowisku Astro z React. Kalendarz nie otwierał się po kliknięciu, mimo prób naprawienia przez:
+
 - Dodanie kontrolowanego stanu Popover
 - Dodanie jawnego onClick handlera
 - Różne konfiguracje react-day-picker
@@ -23,6 +24,7 @@ Komponent Calendar z Shadcn/ui (oparty na react-day-picker) nie działał popraw
 ### Zmiany w kodzie
 
 #### Usunięte importy:
+
 ```tsx
 // USUNIĘTE:
 import { format } from "date-fns";
@@ -36,6 +38,7 @@ const [datePickerOpen, setDatePickerOpen] = React.useState(false);
 ```
 
 #### Nowa implementacja:
+
 ```tsx
 <FormField
   control={form.control}
@@ -73,13 +76,16 @@ const [datePickerOpen, setDatePickerOpen] = React.useState(false);
 ### Jak to działa
 
 #### 1. Konwersja Date → string dla input:
+
 ```tsx
 value={field.value ? new Date(field.value).toISOString().split("T")[0] : ""}
 ```
+
 - Konwertuje obiekt `Date` do formatu `YYYY-MM-DD` wymaganego przez `input[type="date"]`
 - Jeśli brak wartości, ustawia pusty string
 
 #### 2. Konwersja string → Date dla formularza:
+
 ```tsx
 onChange={(e) => {
   const dateValue = e.target.value;  // Format: "YYYY-MM-DD"
@@ -92,25 +98,24 @@ onChange={(e) => {
 ```
 
 #### 3. Walidacja dat w przyszłości:
+
 ```tsx
 min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split("T")[0]}
 ```
+
 - Ustawia minimalną datę na jutro
 - Przeglądarka automatycznie blokuje wybór wcześniejszych dat
 
 ## Porównanie: Przed i Po
 
 ### PRZED (skomplikowane, nie działało):
+
 ```tsx
 // ~40 linii kodu
 <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
   <PopoverTrigger asChild>
     <FormControl>
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => setDatePickerOpen(true)}
-      >
+      <Button type="button" variant="outline" onClick={() => setDatePickerOpen(true)}>
         {field.value ? format(field.value, "dd.MM.yyyy") : <span>dd/mm/yyyy</span>}
         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
       </Button>
@@ -134,9 +139,11 @@ min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split(
   </PopoverContent>
 </Popover>
 ```
+
 ❌ **Problem:** Nie działało - kalendarz się nie otwierał
 
 ### PO (proste, działa):
+
 ```tsx
 // ~20 linii kodu
 <Input
@@ -158,36 +165,43 @@ min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split(
   className="h-11 bg-gray-50 border-gray-300 focus:border-red-500 focus:ring-red-500"
 />
 ```
+
 ✅ **Rozwiązanie:** Działa natywnie w każdej przeglądarce
 
 ## Wygląd w różnych przeglądarkach
 
 ### Desktop (Chrome, Firefox, Edge):
+
 - Kliknięcie pokazuje natywny picker kalendarza
 - Użytkownik może wpisać datę ręcznie
 - Format wyświetlania zależy od locale przeglądarki
 
 ### Mobile (iOS Safari, Chrome Mobile):
+
 - Kliknięcie pokazuje natywny mobile date picker (koło z datami)
 - Optymalizowane pod dotyk
 - Lepsze UX niż custom kalendarz
 
 ### Walidacja:
+
 - Atrybut `min` automatycznie wyłącza nieprawidłowe daty
 - Użytkownik nie może wybrać daty wcześniejszej niż jutro
 
 ## Formatowanie daty
 
 ### W formularzu (wewnętrznie):
+
 - Typ: `Date` object
 - Używany przez Zod do walidacji
 - Konwertowany do ISO string przy wysyłaniu do API
 
 ### W input (wyświetlanie):
+
 - Format: `YYYY-MM-DD` (wymagany przez HTML5)
 - Przykład: `2025-10-13`
 
 ### W API (wysyłane):
+
 - Format: ISO 8601 string
 - Przykład: `2025-10-13T00:00:00.000Z`
 - Konwersja: `date.toISOString()`
@@ -195,31 +209,34 @@ min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split(
 ## Bundle size
 
 ### PRZED:
+
 - react-day-picker: ~60KB
 - date-fns: ~20KB (tylko format)
 - Popover components: ~10KB
 - **Total: ~90KB dodatkowego kodu**
 
 ### PO:
+
 - Natywny `<input type="date">`: **0KB** (built-in)
 - **Redukcja: ~90KB** (faster load time)
 
 ## Kompatybilność przeglądarek
 
-| Przeglądarka | Wsparcie | Uwagi |
-|--------------|----------|-------|
-| Chrome | ✅ Pełne | Od wersji 20 |
-| Firefox | ✅ Pełne | Od wersji 57 |
-| Safari | ✅ Pełne | Od wersji 14.1 |
-| Edge | ✅ Pełne | Od wersji 12 |
-| iOS Safari | ✅ Pełne | Native picker |
-| Android Chrome | ✅ Pełne | Native picker |
+| Przeglądarka   | Wsparcie | Uwagi          |
+| -------------- | -------- | -------------- |
+| Chrome         | ✅ Pełne | Od wersji 20   |
+| Firefox        | ✅ Pełne | Od wersji 57   |
+| Safari         | ✅ Pełne | Od wersji 14.1 |
+| Edge           | ✅ Pełne | Od wersji 12   |
+| iOS Safari     | ✅ Pełne | Native picker  |
+| Android Chrome | ✅ Pełne | Native picker  |
 
 **Wsparcie: 97%+ użytkowników** (dane z caniuse.com)
 
 ## Testowanie
 
 ### Desktop:
+
 1. Otwórz `http://localhost:3001/groups/new`
 2. Kliknij pole "Data losowania"
 3. **Oczekiwany rezultat:** Pokazuje się natywny picker kalendarza przeglądarki
@@ -227,6 +244,7 @@ min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split(
 5. **Oczekiwany rezultat:** Data zapisuje się w polu
 
 ### Mobile (emulacja w DevTools):
+
 1. Otwórz DevTools (F12)
 2. Włącz Device Toolbar (Ctrl+Shift+M)
 3. Wybierz "iPhone 12 Pro" lub inne urządzenie mobile
@@ -234,6 +252,7 @@ min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split(
 5. **Oczekiwany rezultat:** Pokazuje się native mobile date picker
 
 ### Walidacja:
+
 1. Spróbuj wpisać datę ręcznie: `10/10/2024` (przeszłość)
 2. **Oczekiwany rezultat:** Przeglądarka pokazuje błąd walidacji
 3. Wybierz jutrzejszą datę z pickera
@@ -242,6 +261,7 @@ min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split(
 ## Status
 
 ✅ **Problem z kalendarzem został ostatecznie rozwiązany**
+
 - Działa natywnie we wszystkich nowoczesnych przeglądarkach
 - Prostszy kod, łatwiejszy w utrzymaniu
 - Lepsze UX na mobile
@@ -249,11 +269,13 @@ min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split(
 - Brak dodatkowych zależności
 
 ✅ **Build przeszedł pomyślnie**
+
 - Bundle size zmniejszony o ~90KB
 - Brak błędów kompilacji
 - Brak błędów linter'a
 
 ✅ **Wszystkie poprzednie poprawki zachowane**
+
 - Terminologia "loteria"
 - Walidacja w czasie rzeczywistym
 - Przycisk disabled gdy formularz niepoprawny
@@ -263,6 +285,7 @@ min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split(
 ## Pliki zmodyfikowane
 
 **`src/components/forms/CreateGroupForm.tsx`:**
+
 - Usunięto: Calendar, Popover, date-fns, CalendarIcon, cn, datePickerOpen state
 - Dodano: Natywny `<input type="date">` z konwersjami Date <-> string
 - Uproszczono: ~20 linii zamiast ~40
@@ -277,4 +300,3 @@ Jeśli z jakiegoś powodu natywny input nie spełnia wymagań, można rozważyć
 4. **flatpickr** - vanilla JS, można owinąć w React
 
 Jednak natywny `<input type="date">` jest **najbardziej zalecanym rozwiązaniem** dla prostych przypadków użycia jak ten.
-

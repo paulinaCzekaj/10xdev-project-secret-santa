@@ -2,6 +2,7 @@ import * as React from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
 export const PasswordInputWithToggle = React.forwardRef<HTMLInputElement, PasswordInputProps>(
@@ -10,12 +11,7 @@ export const PasswordInputWithToggle = React.forwardRef<HTMLInputElement, Passwo
 
     return (
       <div className="relative">
-        <Input
-          type={showPassword ? "text" : "password"}
-          className={`pr-10 ${className || ""}`}
-          ref={ref}
-          {...props}
-        />
+        <Input type={showPassword ? "text" : "password"} className={`pr-10 ${className || ""}`} ref={ref} {...props} />
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}

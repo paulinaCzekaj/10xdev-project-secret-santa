@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { ParticipantService } from "../../../../lib/services/participant.service";
 import { requireApiAuth, requireGroupAccess, requireGroupOwner } from "../../../../lib/utils/api-auth.utils";
-import type { CreateParticipantCommand, ApiErrorResponse, ParticipantListItemDTO } from "../../../../types";
+import type { CreateParticipantCommand, ApiErrorResponse } from "../../../../types";
 
 export const prerender = false;
 export const trailingSlash = "never";
@@ -50,14 +50,14 @@ export const GET: APIRoute = async ({ params, request, locals }) => {
     const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
     // Guard 2: Authentication
-    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    const userIdOrResponse = requireApiAuth({ locals, request, params });
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }
     userId = userIdOrResponse;
 
     // Guard 3: Check group access (owner or participant)
-    const accessOrResponse = await requireGroupAccess({ locals, request } as any, groupId);
+    const accessOrResponse = await requireGroupAccess({ locals, request, params }, groupId);
     if (accessOrResponse !== true) {
       return accessOrResponse;
     }
@@ -157,14 +157,14 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
     // Guard 2: Authentication
-    const userIdOrResponse = requireApiAuth({ locals, request } as any);
+    const userIdOrResponse = requireApiAuth({ locals });
     if (typeof userIdOrResponse !== "string") {
       return userIdOrResponse;
     }
     userId = userIdOrResponse;
 
     // Guard 3: Check if user is group owner
-    const ownerOrResponse = await requireGroupOwner({ locals, request } as any, groupId);
+    const ownerOrResponse = await requireGroupOwner({ locals }, groupId);
     if (ownerOrResponse !== true) {
       return ownerOrResponse;
     }
@@ -173,7 +173,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     let body: unknown;
     try {
       body = await request.json();
-    } catch (error) {
+    } catch {
       const errorResponse: ApiErrorResponse = {
         error: {
           code: "INVALID_REQUEST",
@@ -199,7 +199,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
             message: firstError.message,
             details: {
               field: firstError.path.join("."),
-              value: (body as any)?.[firstError.path[0]],
+              value: (body as Record<string, unknown>)?.[firstError.path[0]],
             },
           },
         };

@@ -5,6 +5,7 @@
 The **Add Exclusion Rule** endpoint allows group creators to define one-way exclusion rules for Secret Santa draws. An exclusion rule specifies that a particular participant (the "blocker") cannot be assigned to give a gift to another specific participant (the "blocked"). This is useful for scenarios like preventing spouses from drawing each other or avoiding conflicts of interest.
 
 **Key Characteristics:**
+
 - **Purpose**: Create a one-way exclusion rule within a Secret Santa group
 - **Authorization Model**: Only the group creator can add exclusion rules
 - **Timing Constraint**: Rules can only be added before the draw is executed
@@ -14,19 +15,23 @@ The **Add Exclusion Rule** endpoint allows group creators to define one-way excl
 ## 2. Request Details
 
 ### HTTP Method
+
 `POST`
 
 ### URL Structure
+
 ```
 /api/groups/:groupId/exclusions
 ```
 
 **Path Parameters:**
+
 - `groupId` (number, required): The unique identifier of the Secret Santa group
   - Must be a positive integer
   - Group must exist in the database
 
 ### Headers
+
 ```
 Authorization: Bearer {access_token}
 Content-Type: application/json
@@ -35,6 +40,7 @@ Content-Type: application/json
 **Note**: In the current implementation, authentication uses a placeholder (`DEFAULT_USER_ID`) until Supabase Auth is fully integrated.
 
 ### Request Body
+
 ```json
 {
   "blocker_participant_id": 1,
@@ -44,12 +50,13 @@ Content-Type: application/json
 
 **Request Body Schema:**
 
-| Field | Type | Required | Constraints | Description |
-|-------|------|----------|-------------|-------------|
-| `blocker_participant_id` | number | Yes | Positive integer | ID of the participant who cannot draw the blocked participant |
-| `blocked_participant_id` | number | Yes | Positive integer | ID of the participant who cannot be drawn by the blocker |
+| Field                    | Type   | Required | Constraints      | Description                                                   |
+| ------------------------ | ------ | -------- | ---------------- | ------------------------------------------------------------- |
+| `blocker_participant_id` | number | Yes      | Positive integer | ID of the participant who cannot draw the blocked participant |
+| `blocked_participant_id` | number | Yes      | Positive integer | ID of the participant who cannot be drawn by the blocker      |
 
 **Validation Rules:**
+
 1. Both IDs must be positive integers
 2. `blocker_participant_id` must NOT equal `blocked_participant_id`
 3. Both participants must exist in the database
@@ -60,6 +67,7 @@ Content-Type: application/json
 ## 3. Types Used
 
 ### Command Model (Input)
+
 ```typescript
 // From src/types.ts lines 152-155
 export interface CreateExclusionRuleCommand {
@@ -69,21 +77,23 @@ export interface CreateExclusionRuleCommand {
 ```
 
 ### Response DTO (Output)
+
 ```typescript
 // From src/types.ts lines 159-160
 export type ExclusionRuleDTO = Tables<"exclusion_rules">;
 
 // Database structure (from database.types.ts):
 {
-  id: number;                      // Auto-generated
-  group_id: number;                // Inherited from path parameter
-  blocker_participant_id: number;  // From request body
-  blocked_participant_id: number;  // From request body
-  created_at: string;              // ISO 8601 timestamp
+  id: number; // Auto-generated
+  group_id: number; // Inherited from path parameter
+  blocker_participant_id: number; // From request body
+  blocked_participant_id: number; // From request body
+  created_at: string; // ISO 8601 timestamp
 }
 ```
 
 ### Error Response
+
 ```typescript
 // From src/types.ts lines 20-26
 export interface ApiErrorResponse {
@@ -96,6 +106,7 @@ export interface ApiErrorResponse {
 ```
 
 ### Insert Type (Database Operation)
+
 ```typescript
 // From src/types.ts line 342
 export type ExclusionRuleInsert = TablesInsert<"exclusion_rules">;
@@ -113,6 +124,7 @@ export type ExclusionRuleInsert = TablesInsert<"exclusion_rules">;
 ## 4. Response Details
 
 ### Success Response (201 Created)
+
 ```json
 {
   "id": 1,
@@ -124,19 +136,23 @@ export type ExclusionRuleInsert = TablesInsert<"exclusion_rules">;
 ```
 
 **Headers:**
+
 ```
 Content-Type: application/json
 Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 **Status Code**: `201 Created`
+
 - Indicates the exclusion rule was successfully created
 - Returns the complete exclusion rule object including the generated ID
 
 ### Error Responses
 
 #### 400 Bad Request
+
 **Scenarios:**
+
 1. Invalid data types (non-numeric IDs)
 2. Same participant for blocker and blocked
 3. Draw already completed
@@ -184,6 +200,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 ```
 
 #### 401 Unauthorized
+
 ```json
 {
   "error": {
@@ -192,9 +209,11 @@ Cache-Control: no-cache, no-store, must-revalidate
   }
 }
 ```
+
 **Scenario**: Missing or invalid Bearer token
 
 #### 403 Forbidden
+
 ```json
 {
   "error": {
@@ -203,9 +222,11 @@ Cache-Control: no-cache, no-store, must-revalidate
   }
 }
 ```
+
 **Scenario**: Authenticated user is not the group creator
 
 #### 404 Not Found
+
 ```json
 {
   "error": {
@@ -223,11 +244,14 @@ Cache-Control: no-cache, no-store, must-revalidate
   }
 }
 ```
+
 **Scenarios**:
+
 - Group with specified ID doesn't exist
 - One or both participants don't exist
 
 #### 422 Unprocessable Entity
+
 ```json
 {
   "error": {
@@ -240,9 +264,11 @@ Cache-Control: no-cache, no-store, must-revalidate
   }
 }
 ```
+
 **Scenario**: Missing required fields in request body
 
 #### 500 Internal Server Error
+
 ```json
 {
   "error": {
@@ -251,6 +277,7 @@ Cache-Control: no-cache, no-store, must-revalidate
   }
 }
 ```
+
 **Scenario**: Unexpected database or server errors
 
 ## 5. Data Flow
@@ -316,12 +343,14 @@ Cache-Control: no-cache, no-store, must-revalidate
 ### Database Interactions
 
 **Tables Accessed:**
+
 1. `groups` - Validate existence and check creator
 2. `assignments` - Check if draw completed
 3. `participants` - Validate participant existence and group membership
 4. `exclusion_rules` - Check duplicates and insert new rule
 
 **Query Patterns:**
+
 - Single row lookups: `.single()` for groups
 - Existence checks: `.maybeSingle()` for assignments and duplicate rules
 - Multiple row validation: `.in()` for participant validation
@@ -330,17 +359,20 @@ Cache-Control: no-cache, no-store, must-revalidate
 ## 6. Security Considerations
 
 ### Authentication
+
 - **Current Implementation**: Uses `DEFAULT_USER_ID` placeholder
 - **Production**: Will use Bearer token from `Authorization` header
 - **Validation**: Check token exists and is valid
 - **Error Handling**: Return 401 if missing or invalid
 
 ### Authorization
+
 - **Group Creator Check**: Verify `group.creator_id === userId`
 - **Rationale**: Only group creators should manage exclusion rules
 - **Error Handling**: Return 403 if user is not creator
 
 ### Input Validation
+
 - **Zod Schemas**: Validate all inputs at API route level
 - **Type Safety**: TypeScript ensures type correctness
 - **Sanitization**: Zod `.trim()` for string inputs (if added)
@@ -349,17 +381,20 @@ Cache-Control: no-cache, no-store, must-revalidate
   - Non-empty required fields
 
 ### Business Logic Validation
+
 - **Group Membership**: Ensure participants belong to the specified group
 - **Temporal Constraints**: Prevent modifications after draw completion
 - **Logical Constraints**: Prevent self-exclusions and duplicate rules
 - **Error Handling**: Return appropriate 400 status codes with clear messages
 
 ### SQL Injection Prevention
+
 - **Supabase SDK**: Uses parameterized queries automatically
 - **No Raw SQL**: All queries use Supabase query builder
 - **Type Safety**: TypeScript prevents type-related SQL issues
 
 ### Data Integrity
+
 - **Database Constraints**:
   - UNIQUE constraint on (group_id, blocker_participant_id, blocked_participant_id)
   - CHECK constraint: blocker_participant_id ≠ blocked_participant_id
@@ -374,6 +409,7 @@ Cache-Control: no-cache, no-store, must-revalidate
 #### Client Errors (4xx)
 
 **400 Bad Request** - Invalid input or business rule violations
+
 ```typescript
 Scenarios:
 - Invalid data types
@@ -390,6 +426,7 @@ Handling Strategy:
 ```
 
 **401 Unauthorized** - Authentication failures
+
 ```typescript
 Scenarios:
 - Missing Bearer token
@@ -401,6 +438,7 @@ Handling Strategy:
 ```
 
 **403 Forbidden** - Authorization failures
+
 ```typescript
 Scenarios:
 - User is not the group creator
@@ -411,6 +449,7 @@ Handling Strategy:
 ```
 
 **404 Not Found** - Resource not found
+
 ```typescript
 Scenarios:
 - Group doesn't exist
@@ -422,6 +461,7 @@ Handling Strategy:
 ```
 
 **422 Unprocessable Entity** - Missing required fields
+
 ```typescript
 Scenarios:
 - blocker_participant_id not provided
@@ -435,6 +475,7 @@ Handling Strategy:
 #### Server Errors (5xx)
 
 **500 Internal Server Error** - Unexpected errors
+
 ```typescript
 Scenarios:
 - Database connection failures
@@ -473,12 +514,15 @@ try {
   if (error instanceof Error) {
     // Handle known service errors
     if (error.message === "GROUP_NOT_FOUND") {
-      return new Response(JSON.stringify({
-        error: {
-          code: "GROUP_NOT_FOUND",
-          message: "Group not found"
-        }
-      }), { status: 404 });
+      return new Response(
+        JSON.stringify({
+          error: {
+            code: "GROUP_NOT_FOUND",
+            message: "Group not found",
+          },
+        }),
+        { status: 404 }
+      );
     }
     // ... other error cases
   }
@@ -487,12 +531,15 @@ try {
   console.error("[POST /api/groups/:groupId/exclusions] Error:", error);
 
   // Return generic 500 error
-  return new Response(JSON.stringify({
-    error: {
-      code: "DATABASE_ERROR",
-      message: "Failed to create exclusion rule. Please try again later."
-    }
-  }), { status: 500 });
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: "DATABASE_ERROR",
+        message: "Failed to create exclusion rule. Please try again later.",
+      },
+    }),
+    { status: 500 }
+  );
 }
 ```
 
@@ -501,6 +548,7 @@ try {
 ### Query Optimization
 
 **Batch Validation Queries:**
+
 ```typescript
 // Instead of 2 separate queries for each participant
 const { data: participants } = await supabase
@@ -513,12 +561,14 @@ const { data: participants } = await supabase
 ```
 
 **Index Utilization:**
+
 - `groups.id` - Primary key index
 - `groups.creator_id` - Indexed for quick creator lookups
 - `participants.group_id` - Indexed for group membership queries
 - `exclusion_rules (group_id, blocker_participant_id, blocked_participant_id)` - UNIQUE index for duplicate checks
 
 **Limit Query Results:**
+
 ```typescript
 // For existence checks, use LIMIT 1
 .limit(1).maybeSingle()
@@ -527,10 +577,12 @@ const { data: participants } = await supabase
 ### Caching Strategy
 
 **Not Applicable for POST Endpoints:**
+
 - POST requests should never be cached
 - Response includes `Cache-Control: no-cache, no-store, must-revalidate` header
 
 **Future Optimization for GET Endpoints:**
+
 - Cache group metadata (creator_id, is_drawn)
 - Invalidate cache on exclusion rule creation
 - Short TTL (5-10 minutes) for participant lists
@@ -538,15 +590,18 @@ const { data: participants } = await supabase
 ### Scalability Considerations
 
 **Current Implementation:**
+
 - Single database transaction per request
 - O(1) complexity for all validations (indexed lookups)
 - No N+1 query problems
 
 **Potential Bottlenecks:**
+
 - High concurrent writes to same group (rare in practice)
 - Database connection pool exhaustion under load
 
 **Mitigation Strategies:**
+
 - Database-level UNIQUE constraint prevents race conditions
 - Supabase handles connection pooling automatically
 - Rate limiting at API gateway level (future)
@@ -554,12 +609,14 @@ const { data: participants } = await supabase
 ### Monitoring Recommendations
 
 **Key Metrics:**
+
 1. Response time (target: < 200ms)
 2. Error rate by status code
 3. Request volume per group
 4. Database query duration
 
 **Logging:**
+
 - All validation failures (debug level)
 - Authorization failures (info level)
 - Database errors (error level)
@@ -572,6 +629,7 @@ const { data: participants } = await supabase
 **File**: `src/lib/services/exclusion-rule.service.ts`
 
 **Tasks:**
+
 1. Import required types from `src/types.ts` and `src/db/supabase.client.ts`
 2. Create `ExclusionRuleService` class with constructor accepting `SupabaseClient`
 3. Implement `createExclusionRule(groupId, userId, command)` method:
@@ -589,14 +647,10 @@ const { data: participants } = await supabase
 6. Throw descriptive errors for each failure scenario
 
 **Code Structure:**
+
 ```typescript
 import type { SupabaseClient } from "../../db/supabase.client";
-import type {
-  CreateExclusionRuleCommand,
-  ExclusionRuleDTO,
-  ExclusionRuleInsert,
-  UserId,
-} from "../../types";
+import type { CreateExclusionRuleCommand, ExclusionRuleDTO, ExclusionRuleInsert, UserId } from "../../types";
 
 export class ExclusionRuleService {
   constructor(private supabase: SupabaseClient) {}
@@ -616,6 +670,7 @@ export class ExclusionRuleService {
 **File**: `src/pages/api/groups/[groupId]/exclusions.ts`
 
 **Tasks:**
+
 1. Set `export const prerender = false` and `export const trailingSlash = "never"`
 2. Create Zod schemas:
    - `GroupIdParamSchema`: Validate groupId is positive integer
@@ -633,17 +688,17 @@ export class ExclusionRuleService {
 5. Include detailed logging
 
 **Zod Schema Example:**
+
 ```typescript
-const CreateExclusionRuleSchema = z.object({
-  blocker_participant_id: z.coerce.number().int().positive(),
-  blocked_participant_id: z.coerce.number().int().positive(),
-}).refine(
-  (data) => data.blocker_participant_id !== data.blocked_participant_id,
-  {
+const CreateExclusionRuleSchema = z
+  .object({
+    blocker_participant_id: z.coerce.number().int().positive(),
+    blocked_participant_id: z.coerce.number().int().positive(),
+  })
+  .refine((data) => data.blocker_participant_id !== data.blocked_participant_id, {
     message: "Blocker and blocked participants cannot be the same",
     path: ["blocked_participant_id"],
-  }
-);
+  });
 ```
 
 <!-- ### Step 3: Test the Implementation
@@ -685,6 +740,7 @@ SELECT * FROM exclusion_rules WHERE group_id = 1;
 ### Step 4: Integration Verification
 
 **Checklist:**
+
 - [ ] Service compiles without TypeScript errors
 - [ ] API endpoint compiles without TypeScript errors
 - [ ] All imports resolve correctly
@@ -697,6 +753,7 @@ SELECT * FROM exclusion_rules WHERE group_id = 1;
 - [ ] Logging is comprehensive and useful
 
 **Code Quality:**
+
 - [ ] Follow guard clause pattern (early returns)
 - [ ] Use const for all variables that don't change
 - [ ] Add JSDoc comments for public methods
@@ -709,6 +766,7 @@ SELECT * FROM exclusion_rules WHERE group_id = 1;
 ### Step 5: Documentation Updates
 
 **Files to Update:**
+
 - [x] This implementation plan (complete)
 - [ ] API documentation (if exists)
 - [ ] Postman/Thunder Client collection (if exists)
@@ -717,6 +775,7 @@ SELECT * FROM exclusion_rules WHERE group_id = 1;
 ### Step 6: Future Enhancements
 
 **Not in Scope for MVP:**
+
 1. Bulk creation of exclusion rules
 2. Bidirectional exclusion rules (A excludes B and B excludes A)
 3. Exclusion rule deletion endpoint
@@ -729,6 +788,7 @@ SELECT * FROM exclusion_rules WHERE group_id = 1;
 10. GraphQL API support
 
 **Potential Optimizations:**
+
 1. Add database function `is_group_creator(p_group_id, p_user_id)` similar to `is_user_in_group`
 2. Cache group metadata (creator_id, is_drawn) in Redis
 3. Batch validation using database functions
@@ -759,6 +819,7 @@ CREATE INDEX idx_exclusion_rules_blocked ON exclusion_rules(blocked_participant_
 ```
 
 **Constraints:**
+
 - `exclusion_rules_unique`: Prevents duplicate rules
 - `exclusion_rules_check_different`: Prevents self-exclusions
 - Foreign keys: Ensure referential integrity
@@ -766,21 +827,21 @@ CREATE INDEX idx_exclusion_rules_blocked ON exclusion_rules(blocked_participant_
 
 ## Appendix B: Error Code Reference
 
-| HTTP Status | Error Code | Scenario | User Action |
-|-------------|-----------|----------|-------------|
-| 400 | `INVALID_INPUT` | Invalid data types or format | Check request format |
-| 400 | `SAME_PARTICIPANT` | Blocker and blocked are same | Use different participants |
-| 400 | `DRAW_COMPLETED` | Draw already executed | Cannot add rules after draw |
-| 400 | `DUPLICATE_RULE` | Rule already exists | No action needed (idempotent) |
-| 400 | `INVALID_PARTICIPANTS` | Participants not in group | Verify participant IDs |
-| 400 | `INVALID_REQUEST` | Invalid JSON | Fix JSON syntax |
-| 401 | `UNAUTHORIZED` | Missing/invalid auth token | Login or refresh token |
-| 403 | `FORBIDDEN` | User is not creator | Contact group creator |
-| 404 | `GROUP_NOT_FOUND` | Group doesn't exist | Verify group ID |
-| 404 | `PARTICIPANT_NOT_FOUND` | Participant doesn't exist | Verify participant IDs |
-| 422 | `MISSING_FIELD` | Required field missing | Add missing field |
-| 422 | `VALIDATION_ERROR` | Validation failed | Check field values |
-| 500 | `DATABASE_ERROR` | Database error | Retry or contact support |
+| HTTP Status | Error Code              | Scenario                     | User Action                   |
+| ----------- | ----------------------- | ---------------------------- | ----------------------------- |
+| 400         | `INVALID_INPUT`         | Invalid data types or format | Check request format          |
+| 400         | `SAME_PARTICIPANT`      | Blocker and blocked are same | Use different participants    |
+| 400         | `DRAW_COMPLETED`        | Draw already executed        | Cannot add rules after draw   |
+| 400         | `DUPLICATE_RULE`        | Rule already exists          | No action needed (idempotent) |
+| 400         | `INVALID_PARTICIPANTS`  | Participants not in group    | Verify participant IDs        |
+| 400         | `INVALID_REQUEST`       | Invalid JSON                 | Fix JSON syntax               |
+| 401         | `UNAUTHORIZED`          | Missing/invalid auth token   | Login or refresh token        |
+| 403         | `FORBIDDEN`             | User is not creator          | Contact group creator         |
+| 404         | `GROUP_NOT_FOUND`       | Group doesn't exist          | Verify group ID               |
+| 404         | `PARTICIPANT_NOT_FOUND` | Participant doesn't exist    | Verify participant IDs        |
+| 422         | `MISSING_FIELD`         | Required field missing       | Add missing field             |
+| 422         | `VALIDATION_ERROR`      | Validation failed            | Check field values            |
+| 500         | `DATABASE_ERROR`        | Database error               | Retry or contact support      |
 
 ## Appendix C: Testing Scenarios
 
@@ -827,4 +888,4 @@ CREATE INDEX idx_exclusion_rules_blocked ON exclusion_rules(blocked_participant_
 
 ---
 
-*This implementation plan provides comprehensive guidance for implementing the Add Exclusion Rule endpoint. Follow the steps sequentially, validate each step, and ensure all tests pass before considering the implementation complete.*
+_This implementation plan provides comprehensive guidance for implementing the Add Exclusion Rule endpoint. Follow the steps sequentially, validate each step, and ensure all tests pass before considering the implementation complete._

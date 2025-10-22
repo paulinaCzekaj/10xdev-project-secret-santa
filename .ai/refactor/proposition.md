@@ -9,18 +9,23 @@
 ## TOP 5 Plików o Największej Liczbie LOC
 
 ### 1. GroupView.tsx - 385 LOC
+
 **Ścieżka:** `src/components/group/GroupView.tsx`
 
 ### 2. RegisterForm.tsx - 290 LOC
+
 **Ścieżka:** `src/components/auth/RegisterForm.tsx`
 
 ### 3. ResetPasswordForm.tsx - 273 LOC
+
 **Ścieżka:** `src/components/auth/ResetPasswordForm.tsx`
 
 ### 4. dropdown-menu.tsx - 238 LOC
+
 **Ścieżka:** `src/components/ui/dropdown-menu.tsx`
 
 ### 5. CreateGroupForm.tsx - 230 LOC
+
 **Ścieżka:** `src/components/forms/CreateGroupForm.tsx`
 
 ---
@@ -33,6 +38,7 @@
 **Rola:** Główny komponent zarządzania grupą Secret Santa
 
 ### Zidentyfikowane problemy:
+
 - Łączy logikę biznesową z prezentacją (naruszenie Single Responsibility Principle)
 - Zarządza 5 różnymi modalami z osobnym stanem dla każdego
 - Zawiera 3 duże funkcje transformujące DTO → ViewModel
@@ -41,8 +47,10 @@
 ### Rekomendowane refaktoryzacje:
 
 #### a) Container/Presenter Pattern
+
 **Problem:** Komponent łączy logikę biznesową z prezentacją
 **Rozwiązanie:** Rozdzielić na:
+
 ```
 src/components/group/
   ├── GroupViewContainer.tsx  # Logika, stan, hooks
@@ -50,6 +58,7 @@ src/components/group/
 ```
 
 **Implementacja:**
+
 ```tsx
 // GroupViewContainer.tsx
 export default function GroupViewContainer({ groupId }: GroupViewProps) {
@@ -72,6 +81,7 @@ export function GroupViewPresenter({ viewModel, modals }: PresenterProps) {
 ```
 
 **Uzasadnienie:**
+
 - Zgodne z React coding standards - separation of concerns
 - Poprawia testowalność (można testować logikę i UI osobno)
 - Ułatwia reużywalność komponentów prezentacyjnych
@@ -82,10 +92,12 @@ export function GroupViewPresenter({ viewModel, modals }: PresenterProps) {
 ---
 
 #### b) Custom Hook dla transformacji ViewModel
+
 **Problem:** Trzy duże funkcje transformujące (linie 84-156) w komponencie
 **Rozwiązanie:** Ekstrakcja do dedykowanego hooka
 
 **Implementacja:**
+
 ```tsx
 // src/hooks/useGroupViewModels.ts
 export function useGroupViewModels(
@@ -94,10 +106,7 @@ export function useGroupViewModels(
   exclusions: ExclusionRuleListItemDTO[],
   currentUserId: string | null
 ) {
-  const groupViewModel = useMemo(
-    () => group ? transformGroupToViewModel(group) : null,
-    [group]
-  );
+  const groupViewModel = useMemo(() => (group ? transformGroupToViewModel(group) : null), [group]);
 
   const participantViewModels = useMemo(
     () => transformParticipantsToViewModels(participants, currentUserId, group),
@@ -114,6 +123,7 @@ export function useGroupViewModels(
 ```
 
 **Uzasadnienie:**
+
 - Redukuje złożoność komponentu z 385 do ~250 LOC
 - Umożliwia testowanie transformacji w izolacji z Vitest
 - Zgodne z React hooks philosophy
@@ -124,11 +134,13 @@ export function useGroupViewModels(
 ---
 
 #### c) Compound Components Pattern dla modalów
+
 **Problem:** 5 różnych modalów z osobnym zarządzaniem stanem (linie 68-74)
 
 **Rozwiązanie:** Implementacja `<ModalManager>` z kontekstem
 
 **Implementacja:**
+
 ```tsx
 // src/components/group/modals/ModalManager.tsx
 const ModalContext = createContext<ModalState>(null);
@@ -162,10 +174,11 @@ export function ModalManager({ children }: ModalManagerProps) {
 // Użycie
 <ModalManager>
   <GroupView {...props} />
-</ModalManager>
+</ModalManager>;
 ```
 
 **Uzasadnienie:**
+
 - Eliminuje 5 stanów boolowskich i ich settery
 - Centralizuje zarządzanie modalami
 - Redukuje prop drilling
@@ -176,11 +189,13 @@ export function ModalManager({ children }: ModalManagerProps) {
 ---
 
 #### d) Ekstrakcja komponentów dla stanów UI
+
 **Problem:** Inline JSX dla stanów loading/error/empty (linie 280-357)
 
 **Rozwiązanie:** Utworzyć osobne komponenty
 
 **Implementacja:**
+
 ```tsx
 // src/components/group/states/GroupViewSkeleton.tsx
 export function GroupViewSkeleton() {
@@ -201,9 +216,7 @@ export function GroupViewError({ error, onRetry }: ErrorProps) {
   return (
     <div className="text-center py-12">
       <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-        Nie udało się pobrać danych grupy
-      </h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">Nie udało się pobrać danych grupy</h3>
       <p className="text-gray-600 mb-4">{error.message}</p>
       <Button onClick={onRetry}>Spróbuj ponownie</Button>
     </div>
@@ -217,6 +230,7 @@ if (!group) return <GroupViewEmpty />;
 ```
 
 **Uzasadnienie:**
+
 - Poprawia czytelność głównego komponentu
 - Zgodne z wzorcem komponentów prezentacyjnych
 - Umożliwia reużycie w innych widokach grup
@@ -232,6 +246,7 @@ if (!group) return <GroupViewEmpty />;
 **Rola:** Formularz rejestracji użytkownika
 
 ### Zidentyfikowane problemy:
+
 - Powtarzająca się logika walidacji wymagań hasła (4 podobne bloki)
 - Duplikacja kodu dla pól hasła z togglem widoczności
 - Zod schema zdefiniowana w komponencie zamiast w dedykowanym pliku
@@ -240,11 +255,13 @@ if (!group) return <GroupViewEmpty />;
 ### Rekomendowane refaktoryzacje:
 
 #### a) Custom Hook dla walidacji hasła
+
 **Problem:** Powtarzające się sprawdzanie wymagań hasła (linie 154-210)
 
 **Rozwiązanie:** Ekstrakcja do `usePasswordValidation(password)`
 
 **Implementacja:**
+
 ```tsx
 // src/hooks/usePasswordValidation.ts
 interface PasswordRequirement {
@@ -258,27 +275,27 @@ export function usePasswordValidation(password: string) {
     const requirements: PasswordRequirement[] = [
       {
         met: password.length >= 8,
-        text: 'Co najmniej 8 znaków',
-        icon: password.length >= 8 ? '✓' : '○'
+        text: "Co najmniej 8 znaków",
+        icon: password.length >= 8 ? "✓" : "○",
       },
       {
         met: /(?=.*[a-z])/.test(password),
-        text: 'Jedną małą literę (a-z)',
-        icon: /(?=.*[a-z])/.test(password) ? '✓' : '○'
+        text: "Jedną małą literę (a-z)",
+        icon: /(?=.*[a-z])/.test(password) ? "✓" : "○",
       },
       {
         met: /(?=.*[A-Z])/.test(password),
-        text: 'Jedną dużą literę (A-Z)',
-        icon: /(?=.*[A-Z])/.test(password) ? '✓' : '○'
+        text: "Jedną dużą literę (A-Z)",
+        icon: /(?=.*[A-Z])/.test(password) ? "✓" : "○",
       },
       {
         met: /(?=.*\d)/.test(password),
-        text: 'Jedną cyfrę (0-9)',
-        icon: /(?=.*\d)/.test(password) ? '✓' : '○'
-      }
+        text: "Jedną cyfrę (0-9)",
+        icon: /(?=.*\d)/.test(password) ? "✓" : "○",
+      },
     ];
 
-    const allMet = requirements.every(req => req.met);
+    const allMet = requirements.every((req) => req.met);
 
     return { requirements, allMet };
   }, [password]);
@@ -297,6 +314,7 @@ return (
 ```
 
 **Uzasadnienie:**
+
 - Zgodne z React 19 best practices - izolacja logiki w hooks
 - Eliminuje duplikację ~50 linii kodu
 - Ułatwia reużycie w innych formularzach (ChangePasswordForm, etc.)
@@ -307,11 +325,13 @@ return (
 ---
 
 #### b) Komponent PasswordRequirementItem
+
 **Problem:** Duplikacja kodu dla każdego wymagania (4x podobny blok `<li>`)
 
 **Rozwiązanie:** Utworzyć reużywalny komponent
 
 **Implementacja:**
+
 ```tsx
 // src/components/auth/PasswordRequirementItem.tsx
 interface PasswordRequirementItemProps {
@@ -324,18 +344,8 @@ interface PasswordRequirementItemProps {
 
 export function PasswordRequirementItem({ requirement }: PasswordRequirementItemProps) {
   return (
-    <li
-      className={`flex items-center gap-2 ${
-        requirement.met ? "text-green-600" : "text-gray-500"
-      }`}
-    >
-      <span
-        className={`text-xs ${
-          requirement.met ? "text-green-600" : "text-gray-400"
-        }`}
-      >
-        {requirement.icon}
-      </span>
+    <li className={`flex items-center gap-2 ${requirement.met ? "text-green-600" : "text-gray-500"}`}>
+      <span className={`text-xs ${requirement.met ? "text-green-600" : "text-gray-400"}`}>{requirement.icon}</span>
       {requirement.text}
     </li>
   );
@@ -343,6 +353,7 @@ export function PasswordRequirementItem({ requirement }: PasswordRequirementItem
 ```
 
 **Uzasadnienie:**
+
 - DRY principle - eliminuje powtórzenia
 - Łatwiejsza konserwacja stylów
 - Zgodne z atomic design pattern
@@ -353,11 +364,13 @@ export function PasswordRequirementItem({ requirement }: PasswordRequirementItem
 ---
 
 #### c) Ekstrakcja PasswordInput z togglem widoczności
+
 **Problem:** Duplikacja logiki show/hide dla dwóch pól hasła (linie 123-148 i 216-246)
 
 **Rozwiązanie:** Utworzyć reużywalny `<PasswordInputWithToggle />`
 
 **Implementacja:**
+
 ```tsx
 // src/components/ui/password-input.tsx
 interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -365,11 +378,7 @@ interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement>
   onToggleVisibility?: () => void;
 }
 
-export function PasswordInputWithToggle({
-  showPassword = false,
-  onToggleVisibility,
-  ...props
-}: PasswordInputProps) {
+export function PasswordInputWithToggle({ showPassword = false, onToggleVisibility, ...props }: PasswordInputProps) {
   const [internalShow, setInternalShow] = React.useState(false);
 
   const isControlled = onToggleVisibility !== undefined;
@@ -378,11 +387,7 @@ export function PasswordInputWithToggle({
 
   return (
     <div className="relative">
-      <Input
-        type={show ? "text" : "password"}
-        className="pr-10"
-        {...props}
-      />
+      <Input type={show ? "text" : "password"} className="pr-10" {...props} />
       <button
         type="button"
         onClick={toggle}
@@ -412,10 +417,11 @@ export function PasswordInputWithToggle({
       </FormControl>
     </FormItem>
   )}
-/>
+/>;
 ```
 
 **Uzasadnienie:**
+
 - Eliminuje ~50 linii duplikowanego kodu
 - Zgodne z component extraction pattern
 - Może być używany w całej aplikacji (ResetPasswordForm, ChangePasswordForm)
@@ -426,28 +432,24 @@ export function PasswordInputWithToggle({
 ---
 
 #### d) Separacja schemy walidacji do dedykowanego pliku
+
 **Problem:** Zod schema zdefiniowana w komponencie (linie 14-29)
 
 **Rozwiązanie:** Przenieść do `src/schemas/auth.schemas.ts`
 
 **Implementacja:**
+
 ```tsx
 // src/schemas/auth.schemas.ts
 import { z } from "zod";
 
 export const registerFormSchema = z
   .object({
-    email: z
-      .string()
-      .min(1, "Email jest wymagany")
-      .email("Nieprawidłowy format email"),
+    email: z.string().min(1, "Email jest wymagany").email("Nieprawidłowy format email"),
     password: z
       .string()
       .min(8, "Hasło musi mieć co najmniej 8 znaków")
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        "Hasło musi zawierać małą literę, dużą literę i cyfrę"
-      ),
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Hasło musi zawierać małą literę, dużą literę i cyfrę"),
     confirmPassword: z.string().min(1, "Potwierdzenie hasła jest wymagane"),
     acceptTerms: z.boolean().refine((val) => val === true, {
       message: "Musisz zaakceptować regulamin",
@@ -465,6 +467,7 @@ import { registerFormSchema, type RegisterFormData } from "@/schemas/auth.schema
 ```
 
 **Uzasadnienie:**
+
 - Umożliwia reużycie schemy (np. w testach, API validation)
 - Zgodne z Zod best practices
 - Centralizacja walidacji biznesowej
@@ -480,6 +483,7 @@ import { registerFormSchema, type RegisterFormData } from "@/schemas/auth.schema
 **Rola:** Formularz resetowania hasła z weryfikacją tokenu
 
 ### Zidentyfikowane problemy:
+
 - Złożona logika weryfikacji tokenu w useEffect (62 linie)
 - Zarządzanie wieloma stanami boolowskimi (tokenValid, tokenError, isSubmitting)
 - Duplikacja komponentu info box z wymaganiami hasła
@@ -488,11 +492,13 @@ import { registerFormSchema, type RegisterFormData } from "@/schemas/auth.schema
 ### Rekomendowane refaktoryzacje:
 
 #### a) Custom Hook dla weryfikacji tokenu
+
 **Problem:** Złożona logika weryfikacji tokenu w useEffect (linie 75-136)
 
 **Rozwiązanie:** Ekstrakcja do `useTokenVerification(accessToken)`
 
 **Implementacja:**
+
 ```tsx
 // src/hooks/useTokenVerification.ts
 interface TokenVerificationResult {
@@ -501,9 +507,7 @@ interface TokenVerificationResult {
   error: string | null;
 }
 
-export function useTokenVerification(
-  accessToken?: string
-): TokenVerificationResult {
+export function useTokenVerification(accessToken?: string): TokenVerificationResult {
   const [isValid, setIsValid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -523,7 +527,10 @@ export function useTokenVerification(
       }
 
       try {
-        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        const {
+          data: { session },
+          error,
+        } = await supabaseClient.auth.getSession();
 
         if (error) throw error;
 
@@ -573,6 +580,7 @@ export default function ResetPasswordForm({ accessToken }: ResetPasswordFormProp
 ```
 
 **Uzasadnienie:**
+
 - Zgodne z React hooks philosophy - separacja side effects od UI
 - Redukuje złożoność komponentu o ~60 linii
 - Umożliwia reużycie w innych scenariuszach (email confirmation, etc.)
@@ -583,62 +591,65 @@ export default function ResetPasswordForm({ accessToken }: ResetPasswordFormProp
 ---
 
 #### b) State Machine dla stanów formularza
+
 **Problem:** Zarządzanie wieloma stanami boolowskimi powoduje ryzyko impossible states
 
 **Rozwiązanie:** Implementacja useReducer z typowanymi stanami
 
 **Implementacja:**
+
 ```tsx
 // src/hooks/useResetPasswordState.ts
 type FormState =
-  | { status: 'verifying' }
-  | { status: 'invalid'; error: string }
-  | { status: 'valid' }
-  | { status: 'submitting' }
-  | { status: 'success' }
-  | { status: 'error'; error: string };
+  | { status: "verifying" }
+  | { status: "invalid"; error: string }
+  | { status: "valid" }
+  | { status: "submitting" }
+  | { status: "success" }
+  | { status: "error"; error: string };
 
 type FormAction =
-  | { type: 'VERIFICATION_SUCCESS' }
-  | { type: 'VERIFICATION_ERROR'; error: string }
-  | { type: 'SUBMIT_START' }
-  | { type: 'SUBMIT_SUCCESS' }
-  | { type: 'SUBMIT_ERROR'; error: string };
+  | { type: "VERIFICATION_SUCCESS" }
+  | { type: "VERIFICATION_ERROR"; error: string }
+  | { type: "SUBMIT_START" }
+  | { type: "SUBMIT_SUCCESS" }
+  | { type: "SUBMIT_ERROR"; error: string };
 
 function formReducer(state: FormState, action: FormAction): FormState {
   switch (action.type) {
-    case 'VERIFICATION_SUCCESS':
-      return { status: 'valid' };
-    case 'VERIFICATION_ERROR':
-      return { status: 'invalid', error: action.error };
-    case 'SUBMIT_START':
-      return { status: 'submitting' };
-    case 'SUBMIT_SUCCESS':
-      return { status: 'success' };
-    case 'SUBMIT_ERROR':
-      return { status: 'error', error: action.error };
+    case "VERIFICATION_SUCCESS":
+      return { status: "valid" };
+    case "VERIFICATION_ERROR":
+      return { status: "invalid", error: action.error };
+    case "SUBMIT_START":
+      return { status: "submitting" };
+    case "SUBMIT_SUCCESS":
+      return { status: "success" };
+    case "SUBMIT_ERROR":
+      return { status: "error", error: action.error };
     default:
       return state;
   }
 }
 
 export function useResetPasswordState() {
-  const [state, dispatch] = useReducer(formReducer, { status: 'verifying' });
+  const [state, dispatch] = useReducer(formReducer, { status: "verifying" });
 
   return {
     state,
-    isVerifying: state.status === 'verifying',
-    isValid: state.status === 'valid',
-    isInvalid: state.status === 'invalid',
-    isSubmitting: state.status === 'submitting',
-    isSuccess: state.status === 'success',
-    error: state.status === 'invalid' || state.status === 'error' ? state.error : null,
+    isVerifying: state.status === "verifying",
+    isValid: state.status === "valid",
+    isInvalid: state.status === "invalid",
+    isSubmitting: state.status === "submitting",
+    isSuccess: state.status === "success",
+    error: state.status === "invalid" || state.status === "error" ? state.error : null,
     dispatch,
   };
 }
 ```
 
 **Uzasadnienie:**
+
 - Eliminuje impossible states (np. `isSubmitting && tokenError`)
 - Zgodne z React state management best practices
 - Poprawia przewidywalność flow formularza
@@ -649,11 +660,13 @@ export function useResetPasswordState() {
 ---
 
 #### c) Komponent PasswordRequirementsBox
+
 **Problem:** Statyczny blok informacyjny o wymaganiach (linie 272-298) jest duplikowany
 
 **Rozwiązanie:** Ekstrakcja do reużywalnego `<PasswordRequirementsInfo />`
 
 **Implementacja:**
+
 ```tsx
 // src/components/auth/PasswordRequirementsInfo.tsx
 export function PasswordRequirementsInfo() {
@@ -675,9 +688,7 @@ export function PasswordRequirementsInfo() {
           </svg>
         </div>
         <div className="flex-1">
-          <h3 className="text-sm font-semibold text-gray-900 mb-1">
-            Wymagania hasła
-          </h3>
+          <h3 className="text-sm font-semibold text-gray-900 mb-1">Wymagania hasła</h3>
           <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
             <li>Co najmniej 8 znaków</li>
             <li>Jedna mała litera (a-z)</li>
@@ -691,10 +702,11 @@ export function PasswordRequirementsInfo() {
 }
 
 // Użycie w ResetPasswordForm, RegisterForm, ChangePasswordForm
-<PasswordRequirementsInfo />
+<PasswordRequirementsInfo />;
 ```
 
 **Uzasadnienie:**
+
 - DRY principle - eliminuje duplikację między formularzami
 - Łatwa aktualizacja wymagań w jednym miejscu
 - Może być rozszerzona o props dla dynamicznych wymagań
@@ -705,11 +717,13 @@ export function PasswordRequirementsInfo() {
 ---
 
 #### d) Error Handling Abstraction
+
 **Problem:** Funkcja `getAuthErrorMessage` (linie 63-73) jest specyficzna dla komponentu
 
 **Rozwiązanie:** Przenieść do `src/lib/utils/authErrors.ts` jako shared utility
 
 **Implementacja:**
+
 ```tsx
 // src/lib/utils/authErrors.ts
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
@@ -724,10 +738,7 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
 
 export function getAuthErrorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
-  return (
-    AUTH_ERROR_MESSAGES[message] ||
-    "Wystąpił błąd. Spróbuj ponownie później."
-  );
+  return AUTH_ERROR_MESSAGES[message] || "Wystąpił błąd. Spróbuj ponownie później.";
 }
 
 export function isAuthError(error: unknown): error is Error {
@@ -747,6 +758,7 @@ try {
 ```
 
 **Uzasadnienie:**
+
 - Mapowanie błędów Supabase powinno być centralne dla całej aplikacji
 - Łatwiejsza konserwacja - jedno źródło prawdy
 - Zgodne z DRY principle
@@ -766,6 +778,7 @@ try {
 **⚠️ VENDOR CODE - MINIMALNA INGERENCJA ZALECANA**
 
 Ten plik jest standardowym wrapperem Radix UI generowanym przez shadcn/ui CLI. Modyfikacja vendor code może utrudnić:
+
 - Aktualizacje biblioteki shadcn/ui
 - Debugging (różnice od oficjalnej implementacji)
 - Korzystanie z oficjalnej dokumentacji
@@ -773,9 +786,11 @@ Ten plik jest standardowym wrapperem Radix UI generowanym przez shadcn/ui CLI. M
 ### Rekomendacje:
 
 #### a) NIE REFAKTORYZOWAĆ vendor code
+
 **Zalecenie:** Pozostawić bez zmian
 
 **Uzasadnienie:**
+
 - Shadcn/ui components są dobrze zaprojektowane
 - Modyfikacje utrudniają aktualizacje
 - Oficjalna dokumentacja przestaje być aktualna
@@ -786,9 +801,11 @@ Ten plik jest standardowym wrapperem Radix UI generowanym przez shadcn/ui CLI. M
 ---
 
 #### b) OPCJONALNIE: Type-safe domain wrappers
+
 **Jeśli potrzebne:** Utworzyć domenowe wrappery w `src/components/domain/`
 
 **Implementacja:**
+
 ```tsx
 // src/components/domain/ParticipantActionsMenu.tsx
 import {
@@ -832,10 +849,7 @@ export function ParticipantActionsMenu({
           </DropdownMenuItem>
         )}
         {canDelete && (
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => onDelete(participant)}
-          >
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(participant)}>
             <Trash className="mr-2 h-4 w-4" />
             Usuń
           </DropdownMenuItem>
@@ -847,6 +861,7 @@ export function ParticipantActionsMenu({
 ```
 
 **Uzasadnienie:**
+
 - Zachowuje czystość UI library
 - Dodaje domain-specific behavior i type safety
 - Ułatwia konsystencję UI w całej aplikacji
@@ -862,6 +877,7 @@ export function ParticipantActionsMenu({
 **Rola:** Formularz tworzenia nowej grupy Secret Santa
 
 ### Zidentyfikowane problemy:
+
 - Logika API call bezpośrednio w komponencie (56 linii)
 - Powtarzalny pattern dla każdego pola formularza
 - Info box może być reużywalny w innych formularzach
@@ -870,11 +886,13 @@ export function ParticipantActionsMenu({
 ### Rekomendowane refaktoryzacje:
 
 #### a) Custom Hook dla logiki submita
+
 **Problem:** Logika API call bezpośrednio w komponencie (linie 62-118)
 
 **Rozwiązanie:** Ekstrakcja do `useCreateGroup()`
 
 **Implementacja:**
+
 ```tsx
 // src/hooks/useCreateGroup.ts
 interface UseCreateGroupResult {
@@ -954,6 +972,7 @@ export default function CreateGroupForm() {
 ```
 
 **Uzasadnienie:**
+
 - Zgodne z React Query/SWR pattern - separacja data fetching od UI
 - Umożliwia reużycie logiki (np. w testach E2E z Playwright)
 - Łatwiejsze testowanie z Vitest (można mockować hook)
@@ -964,11 +983,13 @@ export default function CreateGroupForm() {
 ---
 
 #### b) Typed FormField wrappers
+
 **Problem:** Powtarzalny boilerplate dla każdego pola formularza
 
 **Rozwiązanie:** Utworzyć typed wrappers dla react-hook-form
 
 **Implementacja:**
+
 ```tsx
 // src/components/forms/fields/FormFields.tsx
 import { useFormContext } from "react-hook-form";
@@ -985,14 +1006,7 @@ interface TextFormFieldProps {
   testId?: string;
 }
 
-export function TextFormField({
-  name,
-  label,
-  placeholder,
-  disabled,
-  maxLength,
-  testId,
-}: TextFormFieldProps) {
+export function TextFormField({ name, label, placeholder, disabled, maxLength, testId }: TextFormFieldProps) {
   const { control } = useFormContext();
 
   return (
@@ -1092,14 +1106,7 @@ interface DateFormFieldProps {
   testId?: string;
 }
 
-export function DateFormField({
-  name,
-  label,
-  placeholder,
-  minDate,
-  disabled,
-  testId,
-}: DateFormFieldProps) {
+export function DateFormField({ name, label, placeholder, minDate, disabled, testId }: DateFormFieldProps) {
   const { control } = useFormContext();
 
   return (
@@ -1163,10 +1170,11 @@ export function DateFormField({
       />
     </div>
   </form>
-</Form>
+</Form>;
 ```
 
 **Uzasadnienie:**
+
 - Redukuje boilerplate z ~40 linii do ~10 linii na pole
 - Zgodne z react-hook-form best practices
 - Zapewnia consistency w całej aplikacji
@@ -1178,11 +1186,13 @@ export function DateFormField({
 ---
 
 #### c) Ekstrakcja InfoBox jako reużywalny komponent
+
 **Problem:** Info box (linie 213-237) może być używany w innych formularzach
 
 **Rozwiązanie:** Utworzyć `<InfoBox variant="info" | "warning" | "error">`
 
 **Implementacja:**
+
 ```tsx
 // src/components/ui/info-box.tsx
 import { cn } from "@/lib/utils";
@@ -1269,6 +1279,7 @@ export function InfoBox({
 ```
 
 **Uzasadnienie:**
+
 - Konsystentny design system w całej aplikacji
 - DRY principle - eliminuje duplikację
 - Łatwe dodawanie nowych wariantów
@@ -1279,11 +1290,13 @@ export function InfoBox({
 ---
 
 #### d) Validator utilities dla dat
+
 **Problem:** Inline refine dla walidacji daty (linie 33-40) w schemacie
 
 **Rozwiązanie:** Ekstrakcja do `src/lib/validators/dateValidators.ts`
 
 **Implementacja:**
+
 ```tsx
 // src/lib/validators/dateValidators.ts
 export function isFutureDate(date: Date): boolean {
@@ -1292,11 +1305,7 @@ export function isFutureDate(date: Date): boolean {
   return date > today;
 }
 
-export function isDateInRange(
-  date: Date,
-  minDate: Date,
-  maxDate: Date
-): boolean {
+export function isDateInRange(date: Date, minDate: Date, maxDate: Date): boolean {
   return date >= minDate && date <= maxDate;
 }
 
@@ -1335,14 +1344,11 @@ export const createGroupFormSchema = z.object({
 // Użycie w komponencie
 import { getMinimumFutureDate } from "@/lib/validators/dateValidators";
 
-<DateFormField
-  name="end_date"
-  label="Data losowania"
-  minDate={getMinimumFutureDate(1)}
-/>
+<DateFormField name="end_date" label="Data losowania" minDate={getMinimumFutureDate(1)} />;
 ```
 
 **Uzasadnienie:**
+
 - Reużywalność w innych formularzach z datami (EditGroupForm, etc.)
 - Łatwiejsze testowanie walidacji z Vitest
 - Centralizacja logiki biznesowej
@@ -1356,13 +1362,13 @@ import { getMinimumFutureDate } from "@/lib/validators/dateValidators";
 
 ### 🔴 HIGH Priority (największy wpływ na maintainability):
 
-| # | Plik | Refaktoryzacja | Szacowany zysk LOC | Czas implementacji |
-|---|------|----------------|-------------------|-------------------|
-| 1 | GroupView.tsx | Custom hook dla ViewModels | -135 LOC | 2-3h |
-| 2 | GroupView.tsx | Container/Presenter pattern | -100 LOC | 3-4h |
-| 3 | RegisterForm.tsx | usePasswordValidation + PasswordInput | -70 LOC | 2h |
-| 4 | CreateGroupForm.tsx | useCreateGroup hook | -50 LOC | 1-2h |
-| 5 | ResetPasswordForm.tsx | useTokenVerification hook | -60 LOC | 2h |
+| #   | Plik                  | Refaktoryzacja                        | Szacowany zysk LOC | Czas implementacji |
+| --- | --------------------- | ------------------------------------- | ------------------ | ------------------ |
+| 1   | GroupView.tsx         | Custom hook dla ViewModels            | -135 LOC           | 2-3h               |
+| 2   | GroupView.tsx         | Container/Presenter pattern           | -100 LOC           | 3-4h               |
+| 3   | RegisterForm.tsx      | usePasswordValidation + PasswordInput | -70 LOC            | 2h                 |
+| 4   | CreateGroupForm.tsx   | useCreateGroup hook                   | -50 LOC            | 1-2h               |
+| 5   | ResetPasswordForm.tsx | useTokenVerification hook             | -60 LOC            | 2h                 |
 
 **Łączny szacowany zysk: ~415 LOC**
 **Łączny czas: 10-13h**
@@ -1371,15 +1377,15 @@ import { getMinimumFutureDate } from "@/lib/validators/dateValidators";
 
 ### 🟡 MEDIUM Priority:
 
-| # | Plik | Refaktoryzacja | Szacowany zysk LOC | Czas implementacji |
-|---|------|----------------|-------------------|-------------------|
-| 6 | GroupView.tsx | Compound Components dla modalów | -50 LOC | 2-3h |
-| 7 | GroupView.tsx | Ekstrakcja stanów UI | -80 LOC | 1-2h |
-| 8 | RegisterForm.tsx | PasswordRequirementItem | -30 LOC | 30min |
-| 9 | RegisterForm.tsx | Separacja Zod schemas | -15 LOC | 30min |
-| 10 | ResetPasswordForm.tsx | State Machine | -20 LOC | 2h |
-| 11 | ResetPasswordForm.tsx | Shared error handling | -10 LOC | 1h |
-| 12 | CreateGroupForm.tsx | FormField wrappers | -40 LOC | 2h |
+| #   | Plik                  | Refaktoryzacja                  | Szacowany zysk LOC | Czas implementacji |
+| --- | --------------------- | ------------------------------- | ------------------ | ------------------ |
+| 6   | GroupView.tsx         | Compound Components dla modalów | -50 LOC            | 2-3h               |
+| 7   | GroupView.tsx         | Ekstrakcja stanów UI            | -80 LOC            | 1-2h               |
+| 8   | RegisterForm.tsx      | PasswordRequirementItem         | -30 LOC            | 30min              |
+| 9   | RegisterForm.tsx      | Separacja Zod schemas           | -15 LOC            | 30min              |
+| 10  | ResetPasswordForm.tsx | State Machine                   | -20 LOC            | 2h                 |
+| 11  | ResetPasswordForm.tsx | Shared error handling           | -10 LOC            | 1h                 |
+| 12  | CreateGroupForm.tsx   | FormField wrappers              | -40 LOC            | 2h                 |
 
 **Łączny szacowany zysk: ~245 LOC**
 **Łączny czas: 9-11h**
@@ -1388,12 +1394,12 @@ import { getMinimumFutureDate } from "@/lib/validators/dateValidators";
 
 ### 🟢 LOW Priority (nice-to-have):
 
-| # | Plik | Refaktoryzacja | Szacowany zysk LOC | Czas implementacji |
-|---|------|----------------|-------------------|-------------------|
-| 13 | ResetPasswordForm.tsx | PasswordRequirementsInfo | -25 LOC | 30min |
-| 14 | dropdown-menu.tsx | Domain wrappers (opcjonalne) | N/A | 1-2h |
-| 15 | CreateGroupForm.tsx | InfoBox component | -20 LOC | 1h |
-| 16 | CreateGroupForm.tsx | Date validators | -10 LOC | 30min |
+| #   | Plik                  | Refaktoryzacja               | Szacowany zysk LOC | Czas implementacji |
+| --- | --------------------- | ---------------------------- | ------------------ | ------------------ |
+| 13  | ResetPasswordForm.tsx | PasswordRequirementsInfo     | -25 LOC            | 30min              |
+| 14  | dropdown-menu.tsx     | Domain wrappers (opcjonalne) | N/A                | 1-2h               |
+| 15  | CreateGroupForm.tsx   | InfoBox component            | -20 LOC            | 1h                 |
+| 16  | CreateGroupForm.tsx   | Date validators              | -10 LOC            | 30min              |
 
 **Łączny szacowany zysk: ~55 LOC**
 **Łączny czas: 3-4h**
@@ -1405,22 +1411,24 @@ import { getMinimumFutureDate } from "@/lib/validators/dateValidators";
 ### Performance Optimization Patterns
 
 #### 1. React.memo() dla często renderowanych komponentów
+
 ```tsx
 // src/components/group/ParticipantCard.tsx
-export const ParticipantCard = React.memo(function ParticipantCard({
-  participant,
-  onEdit,
-  onDelete
-}: ParticipantCardProps) {
-  // ...
-}, (prevProps, nextProps) => {
-  // Custom comparison dla optymalizacji
-  return prevProps.participant.id === nextProps.participant.id &&
-         prevProps.participant.name === nextProps.participant.name;
-});
+export const ParticipantCard = React.memo(
+  function ParticipantCard({ participant, onEdit, onDelete }: ParticipantCardProps) {
+    // ...
+  },
+  (prevProps, nextProps) => {
+    // Custom comparison dla optymalizacji
+    return (
+      prevProps.participant.id === nextProps.participant.id && prevProps.participant.name === nextProps.participant.name
+    );
+  }
+);
 ```
 
 **Zastosowanie:**
+
 - `ParticipantCard`
 - `ExclusionItem`
 - `GroupCard` (dashboard)
@@ -1430,6 +1438,7 @@ export const ParticipantCard = React.memo(function ParticipantCard({
 ---
 
 #### 2. useCallback dla event handlerów
+
 ```tsx
 // W GroupView.tsx
 const handleEditParticipant = useCallback((participant: ParticipantViewModel) => {
@@ -1448,21 +1457,19 @@ const handleDeleteParticipant = useCallback((participant: ParticipantViewModel) 
 ---
 
 #### 3. Code splitting z React.lazy()
+
 ```tsx
 // src/components/group/GroupView.tsx
-const GroupEditModal = React.lazy(() => import('./GroupEditModal'));
-const DeleteGroupModal = React.lazy(() => import('./DeleteGroupModal'));
-const DrawConfirmationModal = React.lazy(() => import('./DrawConfirmationModal'));
+const GroupEditModal = React.lazy(() => import("./GroupEditModal"));
+const DeleteGroupModal = React.lazy(() => import("./DeleteGroupModal"));
+const DrawConfirmationModal = React.lazy(() => import("./DrawConfirmationModal"));
 
 // W komponencie
-<Suspense fallback={<ModalLoadingSkeleton />}>
-  {isEditGroupModalOpen && (
-    <GroupEditModal {...props} />
-  )}
-</Suspense>
+<Suspense fallback={<ModalLoadingSkeleton />}>{isEditGroupModalOpen && <GroupEditModal {...props} />}</Suspense>;
 ```
 
 **Uzasadnienie:**
+
 - Modały są używane rzadko - nie powinny być w initial bundle
 - Redukuje rozmiar bundle o ~20-30%
 
@@ -1471,9 +1478,10 @@ const DrawConfirmationModal = React.lazy(() => import('./DrawConfirmationModal')
 ### Testing Patterns
 
 #### 1. Vitest - Test utilities dla custom hooks
+
 ```tsx
 // src/test/utils/hookTestUtils.ts
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from "@testing-library/react";
 
 export function testHook<T>(hook: () => T) {
   return renderHook(hook);
@@ -1481,20 +1489,20 @@ export function testHook<T>(hook: () => T) {
 
 // Użycie
 // src/hooks/__tests__/usePasswordValidation.test.ts
-import { describe, it, expect } from 'vitest';
-import { testHook } from '@/test/utils/hookTestUtils';
-import { usePasswordValidation } from '../usePasswordValidation';
+import { describe, it, expect } from "vitest";
+import { testHook } from "@/test/utils/hookTestUtils";
+import { usePasswordValidation } from "../usePasswordValidation";
 
-describe('usePasswordValidation', () => {
-  it('should validate password requirements', () => {
-    const { result } = testHook(() => usePasswordValidation('Test123'));
+describe("usePasswordValidation", () => {
+  it("should validate password requirements", () => {
+    const { result } = testHook(() => usePasswordValidation("Test123"));
 
     expect(result.current.requirements).toHaveLength(4);
     expect(result.current.allMet).toBe(true);
   });
 
-  it('should mark requirements as unmet for weak password', () => {
-    const { result } = testHook(() => usePasswordValidation('weak'));
+  it("should mark requirements as unmet for weak password", () => {
+    const { result } = testHook(() => usePasswordValidation("weak"));
 
     expect(result.current.allMet).toBe(false);
     expect(result.current.requirements[0].met).toBe(false); // length
@@ -1505,16 +1513,17 @@ describe('usePasswordValidation', () => {
 ---
 
 #### 2. Storybook - Component isolation
+
 ```tsx
 // src/components/auth/RegisterForm.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react';
-import RegisterForm from './RegisterForm';
+import type { Meta, StoryObj } from "@storybook/react";
+import RegisterForm from "./RegisterForm";
 
 const meta = {
-  title: 'Auth/RegisterForm',
+  title: "Auth/RegisterForm",
   component: RegisterForm,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
 } satisfies Meta<typeof RegisterForm>;
 
@@ -1526,7 +1535,7 @@ export const Default: Story = {};
 export const WithValidationErrors: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const submitButton = canvas.getByRole('button', { name: /zarejestruj/i });
+    const submitButton = canvas.getByRole("button", { name: /zarejestruj/i });
 
     await userEvent.click(submitButton);
 
@@ -1543,29 +1552,30 @@ export const WithValidationErrors: Story = {
 ---
 
 #### 3. Playwright - E2E test patterns
+
 ```tsx
 // e2e/create-group.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Create Group Flow', () => {
-  test('should create new group successfully', async ({ page }) => {
-    await page.goto('/dashboard');
+test.describe("Create Group Flow", () => {
+  test("should create new group successfully", async ({ page }) => {
+    await page.goto("/dashboard");
 
     await page.click('[data-testid="create-group-button"]');
 
-    await page.fill('[data-testid="create-group-name-input"]', 'Test Secret Santa');
-    await page.fill('[data-testid="create-group-budget-input"]', '100');
+    await page.fill('[data-testid="create-group-name-input"]', "Test Secret Santa");
+    await page.fill('[data-testid="create-group-budget-input"]', "100");
     await page.click('[data-testid="create-group-date-picker"]');
     // Select tomorrow's date
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    await page.click(`[data-date="${tomorrow.toISOString().split('T')[0]}"]`);
+    await page.click(`[data-date="${tomorrow.toISOString().split("T")[0]}"]`);
 
     await page.click('[data-testid="create-group-submit-button"]');
 
     // Sprawdź czy przekierowano do widoku grupy
     await expect(page).toHaveURL(/\/groups\/\d+/);
-    await expect(page.locator('h1')).toContainText('Test Secret Santa');
+    await expect(page.locator("h1")).toContainText("Test Secret Santa");
   });
 });
 ```
@@ -1577,6 +1587,7 @@ test.describe('Create Group Flow', () => {
 ### Architecture Patterns
 
 #### 1. Feature-based folder structure (dla przyszłości)
+
 ```
 src/
   features/
@@ -1607,6 +1618,7 @@ src/
 ```
 
 **Uzasadnienie:**
+
 - Skalowalna struktura dla dużych aplikacji
 - Łatwiejsze znalezienie związanych plików
 - Zgodne z Domain-Driven Design
@@ -1614,21 +1626,24 @@ src/
 ---
 
 #### 2. API Layer abstraction
+
 ```tsx
 // src/api/groups.api.ts
-import { supabaseClient } from '@/db/supabase.client';
-import type { CreateGroupCommand, GroupDTO, UpdateGroupCommand } from '@/types';
+import { supabaseClient } from "@/db/supabase.client";
+import type { CreateGroupCommand, GroupDTO, UpdateGroupCommand } from "@/types";
 
 export const groupsApi = {
   create: async (command: CreateGroupCommand): Promise<GroupDTO> => {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const {
+      data: { session },
+    } = await supabaseClient.auth.getSession();
 
-    const response = await fetch('/api/groups', {
-      method: 'POST',
+    const response = await fetch("/api/groups", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...(session?.access_token && {
-          Authorization: `Bearer ${session.access_token}`
+          Authorization: `Bearer ${session.access_token}`,
         }),
       },
       body: JSON.stringify(command),
@@ -1681,6 +1696,7 @@ export function useCreateGroup() {
 ```
 
 **Uzasadnienie:**
+
 - Centralizacja API calls
 - Łatwiejsze testowanie (można mockować cały API layer)
 - Type safety na poziomie komunikacji z API
@@ -1693,38 +1709,45 @@ export function useCreateGroup() {
 Wszystkie sugestie są zgodne z tech stackiem projektu:
 
 ### ✅ React 19
+
 - Funkcyjne komponenty z hooks
 - React.memo() dla optymalizacji
 - useCallback/useMemo dla performance
 - React.lazy() dla code splitting
 
 ### ✅ TypeScript 5
+
 - Pełna type safety we wszystkich hookach
 - Typed schemas z Zod
 - Interface/Type dla props komponentów
 - Generics dla reużywalnych utilities
 
 ### ✅ Tailwind 4
+
 - Utility-first approach w komponentach UI
 - Consistent design system (InfoBox variants)
 - Responsywne klasy (sm:, md:, lg:)
 
 ### ✅ Shadcn/ui
+
 - Zachowanie vendor code bez modyfikacji
 - Domain wrappers dla specyficznych use-case
 - Zgodność z Radix UI patterns
 
 ### ✅ Vitest
+
 - Testowanie custom hooks
 - Unit testy dla validators i utilities
 - Integration testy dla komponentów
 
 ### ✅ Playwright
+
 - E2E testy dla critical flows
 - Page Object Model dla maintainability
 - Test IDs dla stabilnych selektorów
 
 ### ✅ Zod
+
 - Centralizacja schemas w dedykowanych plikach
 - Reużywalne validators
 - Type inference z `z.infer<>`
@@ -1734,18 +1757,21 @@ Wszystkie sugestie są zgodne z tech stackiem projektu:
 ## Metryki Sukcesu Refaktoryzacji
 
 ### Przed refaktoryzacją:
+
 - **TOP 5 średnia LOC:** 283 linii
 - **Łączna złożoność cyklomatyczna:** ~150
 - **Code duplication:** ~15-20%
 - **Test coverage:** N/A (do zmierzenia)
 
 ### Po refaktoryzacji (szacowane):
+
 - **TOP 5 średnia LOC:** ~170 linii (-40%)
 - **Łączna złożoność cyklomatyczna:** ~90 (-40%)
 - **Code duplication:** <5%
 - **Test coverage:** >80% (dla nowych hooks i utilities)
 
 ### Dodatkowe metryki:
+
 - **Bundle size reduction:** ~20-30% dzięki code splitting
 - **Maintainability index:** zwiększenie o ~30-40%
 - **Time to add new feature:** redukcja o ~25-35%
@@ -1755,6 +1781,7 @@ Wszystkie sugestie są zgodne z tech stackiem projektu:
 ## Roadmap Implementacji
 
 ### Sprint 1 (Tydzień 1-2): High Priority Items
+
 - [ ] GroupView: useGroupViewModels hook
 - [ ] GroupView: Container/Presenter split
 - [ ] RegisterForm: usePasswordValidation + PasswordInput
@@ -1766,6 +1793,7 @@ Wszystkie sugestie są zgodne z tech stackiem projektu:
 ---
 
 ### Sprint 2 (Tydzień 3-4): Medium Priority Items
+
 - [ ] GroupView: ModalManager z context
 - [ ] GroupView: UI states components
 - [ ] RegisterForm: PasswordRequirementItem
@@ -1778,6 +1806,7 @@ Wszystkie sugestie są zgodne z tech stackiem projektu:
 ---
 
 ### Sprint 3 (Tydzień 5-6): Low Priority + Performance
+
 - [ ] Shared utilities (InfoBox, PasswordRequirementsInfo, validators)
 - [ ] React.memo() dla często renderowanych komponentów
 - [ ] useCallback dla event handlerów
@@ -1790,6 +1819,7 @@ Wszystkie sugestie są zgodne z tech stackiem projektu:
 ---
 
 ### Sprint 4 (Tydzień 7-8): Testing & Documentation
+
 - [ ] E2E testy z Playwright dla critical flows
 - [ ] Vitest unit testy dla wszystkich hooks
 - [ ] Chromatic visual regression tests
@@ -1815,6 +1845,7 @@ Zidentyfikowano **5 plików** o największej złożoności w katalogu `src/compo
 **ROI:** Wysoki - znacząca poprawa maintainability i developer experience
 
 Wszystkie sugestie są zgodne z:
+
 - Tech stackiem projektu (React 19, TypeScript 5, Tailwind 4)
 - Best practices z CLAUDE.md
 - Zasadami SOLID i DRY

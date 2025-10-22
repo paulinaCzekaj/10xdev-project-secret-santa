@@ -8,13 +8,13 @@ Analiza komponentów w folderze `src/components` w celu identyfikacji plików o 
 
 ## 1. TOP 5 Plików o Największej Liczbie LOC
 
-| #   | Plik                                      | LOC   | Kategoria           |
-| --- | ----------------------------------------- | ----- | ------------------- |
-| 1   | `src/components/group/GroupView.tsx`      | 289   | Group Management    |
-| 2   | `src/components/result/ResultView.tsx`    | 259   | Result Display      |
-| 3   | `src/components/result/ResultReveal.tsx`  | 235   | Result Interaction  |
-| 4   | `src/components/auth/ForgotPasswordForm.tsx` | 223 | Authentication      |
-| 5   | `src/components/group/GroupEditModal.tsx` | 221   | Group Management    |
+| #   | Plik                                         | LOC | Kategoria          |
+| --- | -------------------------------------------- | --- | ------------------ |
+| 1   | `src/components/group/GroupView.tsx`         | 289 | Group Management   |
+| 2   | `src/components/result/ResultView.tsx`       | 259 | Result Display     |
+| 3   | `src/components/result/ResultReveal.tsx`     | 235 | Result Interaction |
+| 4   | `src/components/auth/ForgotPasswordForm.tsx` | 223 | Authentication     |
+| 5   | `src/components/group/GroupEditModal.tsx`    | 221 | Group Management   |
 
 **Uwaga:** Wykluczono komponenty UI z biblioteki shadcn/ui (np. `dropdown-menu.tsx` - 255 LOC, `select.tsx` - 185 LOC).
 
@@ -23,19 +23,23 @@ Analiza komponentów w folderze `src/components` w celu identyfikacji plików o 
 ## 2. Szczegółowa Analiza i Propozycje Refaktoryzacji
 
 ### **1. GroupView.tsx (289 linii)**
+
 **Lokalizacja:** `src/components/group/GroupView.tsx`
 
 #### Analiza
+
 Główny komponent orkiestrujący widok grupy. Już przeszedł znaczącą refaktoryzację (widoczne użycie custom hooks: `useGroupData`, `useParticipants`, `useExclusions`, `useDraw`, `useModalState`, `useGroupViewModel`). Jednak nadal zawiera dużo event handlerów (linie 69-163) i logiki koordynacyjnej renderowania 5 modali (linie 249-286).
 
 #### Potencjalne Kierunki Refaktoryzacji
 
 ##### a) **Wzorzec: Custom Hook dla Event Handlers**
+
 **Linie:** 69-163 (~90 linii)
 
 **Problem:** Event handlers są rozproszone po całym komponencie, co utrudnia nawigację i testowanie.
 
 **Rozwiązanie:**
+
 ```typescript
 // hooks/useGroupViewHandlers.ts
 export const useGroupViewHandlers = ({
@@ -45,7 +49,7 @@ export const useGroupViewHandlers = ({
   refetchExclusions,
   deleteParticipant,
   deleteExclusion,
-  executeDraw
+  executeDraw,
 }) => {
   const handleGroupUpdated = useCallback(() => {
     refetchGroup();
@@ -80,6 +84,7 @@ export const useGroupViewHandlers = ({
 ```
 
 **Użycie w komponencie:**
+
 ```typescript
 const handlers = useGroupViewHandlers({
   modals,
@@ -93,23 +98,25 @@ const handlers = useGroupViewHandlers({
 ```
 
 **Korzyści:**
+
 - ✅ Redukcja głównego komponentu o ~90 linii
 - ✅ Łatwiejsze testowanie jednostkowe handlerów jako osobnej logiki
 - ✅ Lepsza czytelność głównego komponentu (fokus na strukturę UI)
 - ✅ Zgodność z React best practices (separacja logiki)
 
 ##### b) **React 19: useOptimistic dla operacji DELETE**
+
 **Linie:** 129-141, 156-163
 
 **Problem:** Optimistic updates są implementowane ręcznie z ręcznym zarządzaniem rollback.
 
 **Rozwiązanie (React 19):**
+
 ```typescript
 import { useOptimistic } from "react";
 
-const [optimisticParticipants, deleteOptimisticParticipant] = useOptimistic(
-  participants,
-  (state, deletedId: number) => state.filter(p => p.id !== deletedId)
+const [optimisticParticipants, deleteOptimisticParticipant] = useOptimistic(participants, (state, deletedId: number) =>
+  state.filter((p) => p.id !== deletedId)
 );
 
 const handleConfirmDeleteParticipant = async () => {
@@ -131,17 +138,20 @@ const handleConfirmDeleteParticipant = async () => {
 ```
 
 **Korzyści:**
+
 - ✅ Automatyczne zarządzanie rollback przez React
 - ✅ Lepsza synchronizacja UI z backendem
 - ✅ Mniej boilerplate code
 - ✅ Lepsze wsparcie dla concurrent features React 19
 
 ##### c) **Wzorzec: Modal Registry Pattern**
+
 **Linie:** 249-286
 
 **Problem:** Renderowanie 5 modali bezpośrednio w JSX prowadzi do dużej ilości powtarzalnego kodu.
 
 **Rozwiązanie:**
+
 ```typescript
 // constants/modalRegistry.tsx
 import { GroupEditModal } from "@/components/group/GroupEditModal";
@@ -180,6 +190,7 @@ return (
 ```
 
 **Korzyści:**
+
 - ✅ Redukcja powtórzeń w renderowaniu modali
 - ✅ Łatwiejsze dodawanie nowych modali (wystarczy dodać do config)
 - ✅ Lepsze typowanie TypeScript
@@ -190,19 +201,23 @@ return (
 ---
 
 ### **2. ResultView.tsx (259 linii)**
+
 **Lokalizacja:** `src/components/result/ResultView.tsx`
 
 #### Analiza
+
 Komponent zawiera masywny łańcuch if/else (linie 51-189, ~140 linii) do obsługi różnych stanów błędów. Każdy błąd ma podobną strukturę z `ErrorWrapper`, różniąc się tylko ikoną, tytułem, opisem i akcją.
 
 #### Potencjalne Kierunki Refaktoryzacji
 
 ##### a) **Wzorzec: Error Component Mapping** ⭐ PRIORYTET
+
 **Linie:** 51-189 (~140 linii)
 
 **Problem:** Duża ilość powtarzalnego kodu dla każdego typu błędu.
 
 **Rozwiązanie:**
+
 ```typescript
 // components/result/errors/ErrorWrapper.tsx
 export const ErrorWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -254,6 +269,7 @@ if (error) {
 ```
 
 **Struktura folderów:**
+
 ```
 src/components/result/errors/
 ├── ErrorWrapper.tsx
@@ -268,6 +284,7 @@ src/components/result/errors/
 ```
 
 **Korzyści:**
+
 - ✅ **Eliminacja ~130 linii** z głównego komponentu
 - ✅ Znacząca poprawa czytelności ResultView.tsx
 - ✅ Łatwiejsze testowanie każdego błędu osobno
@@ -280,6 +297,7 @@ src/components/result/errors/
 ##### b) **React 19: Error Boundary z fallback prop**
 
 **Rozwiązanie:**
+
 ```typescript
 // components/result/ResultErrorBoundary.tsx
 import { ErrorBoundary } from "react";
@@ -300,6 +318,7 @@ return (
 ```
 
 **Korzyści:**
+
 - ✅ Centralizacja obsługi nieoczekiwanych błędów
 - ✅ Catchowanie błędów renderowania
 - ✅ Czystszy kod głównego komponentu
@@ -309,19 +328,23 @@ return (
 ---
 
 ### **3. ResultReveal.tsx (235 linii)**
+
 **Lokalizacja:** `src/components/result/ResultReveal.tsx`
 
 #### Analiza
+
 Komponent z dużą ilością JSX dla animowanego prezentu (linie 142-205, ~60 linii). Logika animacji (linie 50-106) jest zmieszana z logiką biznesową (API call do śledzenia reveal). Dodatkowo logika konfetti jest rozproszona.
 
 #### Potencjalne Kierunki Refaktoryzacji
 
 ##### a) **Ekstrakcja: GiftBox Component** ⭐ PRIORYTET
+
 **Linie:** 172-205 (~60 linii JSX)
 
 **Problem:** Prezent zajmuje ~25% całego komponentu, utrudniając nawigację i utrzymanie.
 
 **Rozwiązanie:**
+
 ```typescript
 // components/result/GiftBox.tsx
 interface GiftBoxProps {
@@ -386,6 +409,7 @@ export const GiftBox = ({ isAnimating, onClick }: GiftBoxProps) => (
 ```
 
 **Korzyści:**
+
 - ✅ Redukcja ResultReveal.tsx o ~60 linii (25%)
 - ✅ Potencjalna reużywalność prezentu w innych miejscach
 - ✅ Łatwiejsze testowanie animacji prezentu osobno
@@ -394,11 +418,13 @@ export const GiftBox = ({ isAnimating, onClick }: GiftBoxProps) => (
 **Priorytet:** 🔴 **WYSOKI** (duży impact na czytelność)
 
 ##### b) **Custom Hook: useRevealAnimation**
+
 **Linie:** 46-106
 
 **Problem:** Logika animacji zmieszana z logiką komponentu.
 
 **Rozwiązanie:**
+
 ```typescript
 // hooks/useRevealAnimation.ts
 export const useRevealAnimation = ({
@@ -468,6 +494,7 @@ const { isAnimating, handleReveal, prefersReducedMotion } = useRevealAnimation({
 ```
 
 **Korzyści:**
+
 - ✅ Separacja logiki biznesowej od UI
 - ✅ Łatwiejsze testowanie logiki reveal osobno
 - ✅ Potencjalna reużywalność w innych miejscach
@@ -476,11 +503,13 @@ const { isAnimating, handleReveal, prefersReducedMotion } = useRevealAnimation({
 **Priorytet:** 🟡 Średni
 
 ##### c) **Custom Hook: useConfetti**
+
 **Linie:** 47-48, 99-104, 109-120
 
 **Problem:** Logika konfetti rozproszona po całym komponencie.
 
 **Rozwiązanie:**
+
 ```typescript
 // hooks/useConfetti.ts
 export const useConfetti = () => {
@@ -533,6 +562,7 @@ if (!prefersReducedMotion) {
 ```
 
 **Korzyści:**
+
 - ✅ Reużywalność konfetti w innych miejscach aplikacji
 - ✅ Czystszy kod głównego komponentu
 - ✅ Enkapsulacja logiki window resize
@@ -542,6 +572,7 @@ if (!prefersReducedMotion) {
 ##### d) **React 19: useTransition dla animacji**
 
 **Rozwiązanie:**
+
 ```typescript
 import { useTransition } from "react";
 
@@ -556,6 +587,7 @@ const handleReveal = () => {
 ```
 
 **Korzyści:**
+
 - ✅ Lepsze wsparcie dla concurrent features React 19
 - ✅ Automatyczne zarządzanie pending state
 - ✅ Unikanie race conditions
@@ -565,19 +597,23 @@ const handleReveal = () => {
 ---
 
 ### **4. ForgotPasswordForm.tsx (223 linie)**
+
 **Lokalizacja:** `src/components/auth/ForgotPasswordForm.tsx`
 
 #### Analiza
+
 Komponent z dwoma całkowicie różnymi renderami: formularz (linie 132-222, ~90 linii) i stan sukcesu (linie 78-128, ~50 linii). Dodatkowo zawiera dużo powtarzających się struktur (info boxy w liniach 93-117 i 143-166).
 
 #### Potencjalne Kierunki Refaktoryzacji
 
 ##### a) **Ekstrakcja: Success State Component**
+
 **Linie:** 78-128 (~50 linii)
 
 **Problem:** Dwa różne stany UI w jednym komponencie utrudniają nawigację.
 
 **Rozwiązanie:**
+
 ```typescript
 // components/auth/ForgotPasswordSuccess.tsx
 interface ForgotPasswordSuccessProps {
@@ -621,6 +657,7 @@ if (emailSent) {
 ```
 
 **Korzyści:**
+
 - ✅ Redukcja głównego komponentu o ~50 linii
 - ✅ Łatwiejsze testowanie każdego stanu osobno
 - ✅ Zgodność z Single Responsibility Principle
@@ -629,11 +666,13 @@ if (emailSent) {
 **Priorytet:** 🟡 Średni
 
 ##### b) **Wykorzystanie: InfoBox Component**
+
 **Linie:** 93-117, 143-166
 
 **Problem:** Powtarzalny kod dla info boxów, mimo że w projekcie już istnieje komponent `src/components/ui/info-box.tsx`.
 
 **Rozwiązanie:**
+
 ```typescript
 import { InfoBox } from "@/components/ui/info-box";
 
@@ -649,6 +688,7 @@ import { InfoBox } from "@/components/ui/info-box";
 ```
 
 **Korzyści:**
+
 - ✅ DRY principle
 - ✅ Konsystentny wygląd info boxów w całej aplikacji
 - ✅ Redukcja kodu o ~40 linii
@@ -659,6 +699,7 @@ import { InfoBox } from "@/components/ui/info-box";
 ##### c) **React 19: useFormStatus**
 
 **Rozwiązanie:**
+
 ```typescript
 import { useFormStatus } from "react-dom";
 
@@ -679,6 +720,7 @@ function SubmitButton() {
 ```
 
 **Korzyści:**
+
 - ✅ Uproszczenie zarządzania stanem formularza
 - ✅ Lepsze wsparcie dla Server Actions (React 19)
 - ✅ Automatyczne śledzenie pending state
@@ -688,19 +730,23 @@ function SubmitButton() {
 ---
 
 ### **5. GroupEditModal.tsx (221 linii)**
+
 **Lokalizacja:** `src/components/group/GroupEditModal.tsx`
 
 #### Analiza
+
 Modal z formularzem edycji grupy. Trzy pola formularza (name, budget, date) zajmują większość kodu (linie 133-206, ~70 linii). Szczególnie date picker (linie 166-206) to 40 linii powtarzalnego kodu.
 
 #### Potencjalne Kierunki Refaktoryzacji
 
 ##### a) **Ekstrakcja: Form Fields Components**
+
 **Linie:** 133-206 (~70 linii)
 
 **Problem:** Pola formularza powielane w wielu miejscach (CreateGroupForm, GroupEditModal).
 
 **Rozwiązanie:**
+
 ```typescript
 // components/forms/fields/GroupFormFields.tsx
 export const NameField = ({ control }: { control: Control<any> }) => (
@@ -769,6 +815,7 @@ import { NameField, BudgetField, EndDateField } from "@/components/forms/fields/
 ```
 
 **Korzyści:**
+
 - ✅ Redukcja o ~70 linii w modalu
 - ✅ Reużywalność w CreateGroupForm i innych formularzach
 - ✅ Łatwiejsze testowanie pól osobno
@@ -778,11 +825,13 @@ import { NameField, BudgetField, EndDateField } from "@/components/forms/fields/
 **Priorytet:** 🟡 Średni (głównie dla reużywalności)
 
 ##### b) **Ekstrakcja: DatePickerField Component**
+
 **Linie:** 166-206 (~40 linii)
 
 **Problem:** Date picker jest używany w wielu miejscach projektu z identyczną logiką.
 
 **Rozwiązanie:**
+
 ```typescript
 // components/forms/fields/DatePickerField.tsx
 interface DatePickerFieldProps {
@@ -836,6 +885,7 @@ export const DatePickerField = ({
 ```
 
 **Korzyści:**
+
 - ✅ Reużywalność date pickera w całej aplikacji
 - ✅ Spójność UX (jednolite formatowanie dat, locale)
 - ✅ Redukcja kodu o ~40 linii w każdym miejscu użycia
@@ -844,11 +894,13 @@ export const DatePickerField = ({
 **Priorytet:** 🟡 Średni (dobrze mieć dla konsystencji)
 
 ##### c) **Custom Hook: useGroupForm**
+
 **Linie:** 79-119
 
 **Problem:** Logika formularza zmieszana z logiką UI modalu.
 
 **Rozwiązanie:**
+
 ```typescript
 // hooks/useGroupForm.ts
 export const useGroupForm = (group: GroupViewModel, onSuccess: () => void) => {
@@ -904,6 +956,7 @@ const { form, onSubmit } = useGroupForm(group, () => {
 ```
 
 **Korzyści:**
+
 - ✅ Separacja logiki biznesowej od UI
 - ✅ Łatwiejsze testowanie logiki formularza
 - ✅ Potencjalna reużywalność w innych miejscach
@@ -917,40 +970,43 @@ const { form, onSubmit } = useGroupForm(group, () => {
 
 ### 🔴 **Najwyższy Priorytet** (największy impact na czytelność)
 
-| #   | Plik             | Refaktoryzacja                   | Redukcja LOC | Impact       |
-| --- | ---------------- | -------------------------------- | ------------ | ------------ |
-| 1   | ResultView.tsx   | Error Component Mapping          | ~130 linii   | ⭐⭐⭐ Ogromny |
-| 2   | ResultReveal.tsx | GiftBox Component Extraction     | ~60 linii    | ⭐⭐⭐ Duży    |
+| #   | Plik             | Refaktoryzacja               | Redukcja LOC | Impact         |
+| --- | ---------------- | ---------------------------- | ------------ | -------------- |
+| 1   | ResultView.tsx   | Error Component Mapping      | ~130 linii   | ⭐⭐⭐ Ogromny |
+| 2   | ResultReveal.tsx | GiftBox Component Extraction | ~60 linii    | ⭐⭐⭐ Duży    |
 
 **Uzasadnienie:**
+
 - **ResultView.tsx**: Eliminacja 130 linii powtarzalnego kodu if/else zapewni dramatyczną poprawę czytelności i maintainability
 - **ResultReveal.tsx**: Wydzielenie prezentu usunie 25% kodu, znacząco poprawiając strukturę komponentu
 
 ### 🟡 **Średni Priorytet** (poprawa maintainability i reużywalności)
 
-| #   | Plik                   | Refaktoryzacja                | Redukcja LOC | Impact      |
-| --- | ---------------------- | ----------------------------- | ------------ | ----------- |
-| 3   | GroupView.tsx          | useGroupViewHandlers hook     | ~90 linii    | ⭐⭐ Średni  |
-| 4   | ForgotPasswordForm.tsx | Success State Component       | ~50 linii    | ⭐⭐ Średni  |
-| 5   | ForgotPasswordForm.tsx | Wykorzystanie InfoBox         | ~40 linii    | ⭐ Mały     |
-| 6   | GroupEditModal.tsx     | Form Fields Components        | ~70 linii    | ⭐⭐ Średni  |
-| 7   | ResultReveal.tsx       | useRevealAnimation hook       | ~40 linii    | ⭐ Mały     |
+| #   | Plik                   | Refaktoryzacja            | Redukcja LOC | Impact      |
+| --- | ---------------------- | ------------------------- | ------------ | ----------- |
+| 3   | GroupView.tsx          | useGroupViewHandlers hook | ~90 linii    | ⭐⭐ Średni |
+| 4   | ForgotPasswordForm.tsx | Success State Component   | ~50 linii    | ⭐⭐ Średni |
+| 5   | ForgotPasswordForm.tsx | Wykorzystanie InfoBox     | ~40 linii    | ⭐ Mały     |
+| 6   | GroupEditModal.tsx     | Form Fields Components    | ~70 linii    | ⭐⭐ Średni |
+| 7   | ResultReveal.tsx       | useRevealAnimation hook   | ~40 linii    | ⭐ Mały     |
 
 **Uzasadnienie:**
+
 - Poprawia organizację kodu i testowanie
 - Zwiększa reużywalność komponentów
 - Zgodność z zasadą DRY
 
 ### 🟢 **Niski Priorytet** (nice to have, opcjonalne)
 
-| #   | Plik               | Refaktoryzacja          | Impact       |
-| --- | ------------------ | ----------------------- | ------------ |
-| 8   | GroupView.tsx      | Modal Registry Pattern  | ⭐ Mały      |
-| 9   | ResultReveal.tsx   | useConfetti hook        | ⭐ Mały      |
-| 10  | GroupEditModal.tsx | useGroupForm hook       | ⭐ Mały      |
-| 11  | Wszystkie          | React 19 features       | 🔮 Przyszłość |
+| #   | Plik               | Refaktoryzacja         | Impact        |
+| --- | ------------------ | ---------------------- | ------------- |
+| 8   | GroupView.tsx      | Modal Registry Pattern | ⭐ Mały       |
+| 9   | ResultReveal.tsx   | useConfetti hook       | ⭐ Mały       |
+| 10  | GroupEditModal.tsx | useGroupForm hook      | ⭐ Mały       |
+| 11  | Wszystkie          | React 19 features      | 🔮 Przyszłość |
 
 **Uzasadnienie:**
+
 - Głównie dla forward compatibility
 - Lepsze wykorzystanie nowych funkcji React 19
 - Mniejszy natychmiastowy impact
@@ -960,6 +1016,7 @@ const { form, onSubmit } = useGroupForm(group, () => {
 ## 4. Rekomendowana Kolejność Implementacji
 
 ### **Faza 1: Quick Wins (1-2 dni)**
+
 1. ✅ **ResultView.tsx** - Error Component Mapping
    - Największy impact vs effort ratio
    - Eliminacja 130 linii
@@ -969,6 +1026,7 @@ const { form, onSubmit } = useGroupForm(group, () => {
    - Szybka implementacja (~30 min)
 
 ### **Faza 2: Major Refactorings (3-5 dni)**
+
 3. ✅ **ResultReveal.tsx** - GiftBox Component + useRevealAnimation
    - Znacząca poprawa struktury
    - Redukcja ~100 linii łącznie
@@ -982,6 +1040,7 @@ const { form, onSubmit } = useGroupForm(group, () => {
    - Redukcja ~50 linii
 
 ### **Faza 3: Reusability (2-3 dni)**
+
 6. ✅ **GroupEditModal.tsx** - Form Fields Components
    - Reużywalność w CreateGroupForm
    - Redukcja ~70 linii
@@ -991,6 +1050,7 @@ const { form, onSubmit } = useGroupForm(group, () => {
    - Spójność UX
 
 ### **Faza 4: Polish & Future (opcjonalne)**
+
 8. 🔮 **React 19 Features** - useOptimistic, useTransition, useFormStatus
    - Forward compatibility
    - Lepsze wykorzystanie nowych API
@@ -1002,6 +1062,7 @@ const { form, onSubmit } = useGroupForm(group, () => {
 Wszystkie propozycje są zgodne z wytycznymi projektu:
 
 ### ✅ **REACT_CODING_STANDARDS**
+
 - Funkcjonalne komponenty z hooks ✓
 - React.memo() dla expensive components ✓
 - React.lazy() dla code-splitting (Confetti) ✓
@@ -1009,12 +1070,14 @@ Wszystkie propozycje są zgodne z wytycznymi projektu:
 - Custom hooks dla logiki biznesowej ✓
 
 ### ✅ **CODING_PRACTICES**
+
 - Clear variable names ✓
 - Defensive coding patterns ✓
 - Validation for user inputs ✓
 - Separacja odpowiedzialności (SRP) ✓
 
 ### ✅ **TESTING**
+
 - Łatwiejsze testowanie jednostkowe ✓
 - Izolacja logiki od UI ✓
 - Testowalne komponenty ✓
@@ -1035,12 +1098,12 @@ Po implementacji wszystkich refaktoryzacji:
 
 ## 7. Ryzyka i Mitygacje
 
-| Ryzyko                           | Prawdopodobieństwo | Impact | Mitygacja                                      |
-| -------------------------------- | ------------------ | ------ | ---------------------------------------------- |
-| Breaking existing functionality  | Średnie            | Wysoki | Testy E2E przed i po refaktoryzacji            |
-| Zwiększenie complexity           | Niskie             | Średni | Code review, dokumentacja                      |
-| Performance regression           | Bardzo niskie      | Niski  | React.memo(), performance monitoring           |
-| Merge conflicts                  | Średnie            | Niski  | Krótkie PR, częste merge z main branch         |
+| Ryzyko                          | Prawdopodobieństwo | Impact | Mitygacja                              |
+| ------------------------------- | ------------------ | ------ | -------------------------------------- |
+| Breaking existing functionality | Średnie            | Wysoki | Testy E2E przed i po refaktoryzacji    |
+| Zwiększenie complexity          | Niskie             | Średni | Code review, dokumentacja              |
+| Performance regression          | Bardzo niskie      | Niski  | React.memo(), performance monitoring   |
+| Merge conflicts                 | Średnie            | Niski  | Krótkie PR, częste merge z main branch |
 
 ---
 

@@ -1,0 +1,135 @@
+name: Pull Request
+
+on:
+  pull_request:
+    branches:
+      - master
+    types: [opened, synchronize, reopened]
+
+env:
+  NODE_VERSION: '22.14.0'
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v5
+        with:
+          file: ./coverage/coverage-final.json
+          flags: unit-tests
+          name: Unit Tests Coverage
+
+  # e2e-tests:
+  #   name: E2E Tests
+  #   runs-on: ubuntu-latest
+  #   environment: integration
+  #   env:
+  #     SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  #     SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+  #     OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     BASE_URL: ${{ secrets.BASE_URL || 'http://localhost:3000' }}
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v5
+
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v6
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #         cache: 'npm'
+
+  #     - name: Install dependencies
+  #       run: npm ci
+
+  #     - name: Install Playwright browsers
+  #       run: npx playwright install --with-deps chromium
+
+  #     - name: Build application
+  #       run: npm run build
+
+  #     - name: Run E2E tests with coverage
+  #       run: npm run test:e2e -- --reporter=html,json
+
+  #     - name: Upload Playwright report
+  #       uses: actions/upload-artifact@v4
+  #       if: always()
+  #       with:
+  #         name: playwright-report
+  #         path: playwright-report/
+  #         retention-days: 30
+
+  #     - name: Upload E2E coverage reports
+  #       uses: codecov/codecov-action@v5
+  #       if: success()
+  #       with:
+  #         file: ./coverage/e2e/coverage-final.json
+  #         flags: e2e-tests
+  #         name: E2E Tests Coverage
+
+  status-comment:
+    name: Status Comment
+    runs-on: ubuntu-latest
+    needs: [lint, unit-tests]
+    if: always() && (needs.lint.result == 'success' && needs.unit-tests.result == 'success')
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Create or update PR comment
+        uses: peter-evans/create-or-update-comment@v5
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## ✅ All Checks Passed
+
+            Great job! All automated checks have passed successfully:
+
+            - ✅ **Linting**: Code style and quality checks passed
+            - ✅ **Unit Tests**: All unit tests passed with coverage collected
+
+            Your pull request is ready for review and merge! 🎉
+
+            ### Coverage Reports
+            - [Unit Tests Coverage](https://app.codecov.io/github/${{ github.repository }}/pull/${{ github.event.pull_request.number }}/flags/unit-tests)
+
+            > **Note**: E2E tests are currently disabled for faster CI/CD pipeline
+          token: ${{ secrets.GITHUB_TOKEN }}

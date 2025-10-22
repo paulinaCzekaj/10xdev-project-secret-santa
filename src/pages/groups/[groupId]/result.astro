@@ -13,18 +13,14 @@ if (!user) {
 }
 
 // Walidacja groupId
-const groupIdNumber = parseInt(groupId || '0', 10);
+const groupIdNumber = parseInt(groupId || "0", 10);
 if (isNaN(groupIdNumber) || groupIdNumber <= 0) {
-  return Astro.redirect('/dashboard');
+  return Astro.redirect("/dashboard");
 }
 
 const pageTitle = "Wynik losowania Secret Santa";
 ---
 
 <Layout title={pageTitle}>
-  <ResultView
-    client:load
-    groupId={groupIdNumber}
-    isAuthenticated={true}
-  />
+  <ResultView client:load groupId={groupIdNumber} isAuthenticated={true} />
 </Layout>

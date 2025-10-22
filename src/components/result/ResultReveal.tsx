@@ -31,7 +31,9 @@ interface ResultRevealProps {
 export default function ResultReveal({
   assignedPerson,
   participantId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   groupId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   resultViewedAt,
   isRevealed,
   onReveal,

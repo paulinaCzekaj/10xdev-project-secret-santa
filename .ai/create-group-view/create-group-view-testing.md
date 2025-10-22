@@ -1,9 +1,11 @@
 # Scenariusze testowe dla widoku tworzenia grupy
 
 ## Przegląd
+
 Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
 
 ## Warunki wstępne
+
 - Użytkownik musi być zalogowany (lub używany jest DEFAULT_USER_ID w development)
 - Endpoint API `POST /api/groups` musi być dostępny
 
@@ -14,6 +16,7 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
 #### 1.1. Walidacja nazwy grupy
 
 **Test Case 1.1.1: Puste pole nazwy**
+
 - **Kroki:**
   1. Otwórz `/groups/new`
   2. Pozostaw pole "Nazwa grupy" puste
@@ -21,20 +24,23 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
 - **Oczekiwany rezultat:** Wyświetla się błąd "Nazwa grupy musi mieć co najmniej 3 znaki"
 
 **Test Case 1.1.2: Za krótka nazwa (< 3 znaki)**
+
 - **Kroki:**
   1. Wprowadź "AB" w pole "Nazwa grupy"
   2. Kliknij "Utwórz grupę"
 - **Oczekiwany rezultat:** Wyświetla się błąd "Nazwa grupy musi mieć co najmniej 3 znaki"
 
 **Test Case 1.1.3: Za długa nazwa (> 50 znaków)**
+
 - **Kroki:**
   1. Wprowadź 51 znaków w pole "Nazwa grupy"
   2. Przejdź do kolejnego pola (blur)
-- **Oczekiwany rezultat:** 
+- **Oczekiwany rezultat:**
   - Pole przyjmuje maksymalnie 50 znaków (atrybut maxLength)
   - Wyświetla się błąd "Nazwa grupy nie może przekraczać 50 znaków" (jeśli udało się wprowadzić więcej)
 
 **Test Case 1.1.4: Poprawna nazwa (3-50 znaków)**
+
 - **Kroki:**
   1. Wprowadź "Secret Santa 2025"
   2. Przejdź do kolejnego pola
@@ -43,30 +49,35 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
 #### 1.2. Walidacja budżetu
 
 **Test Case 1.2.1: Puste pole budżetu**
+
 - **Kroki:**
   1. Pozostaw pole "Budżet" puste
   2. Kliknij "Utwórz grupę"
 - **Oczekiwany rezultat:** Wyświetla się błąd "Budżet jest wymagany"
 
 **Test Case 1.2.2: Budżet = 0**
+
 - **Kroki:**
   1. Wprowadź 0 w pole "Budżet"
   2. Kliknij "Utwórz grupę"
 - **Oczekiwany rezultat:** Wyświetla się błąd "Budżet musi być większy od 0"
 
 **Test Case 1.2.3: Budżet ujemny**
+
 - **Kroki:**
   1. Wprowadź -50 w pole "Budżet"
   2. Kliknij "Utwórz grupę"
 - **Oczekiwany rezultat:** Wyświetla się błąd "Budżet musi być większy od 0"
 
 **Test Case 1.2.4: Budżet niecałkowity (z miejscami dziesiętnymi)**
+
 - **Kroki:**
   1. Wprowadź 50.5 w pole "Budżet"
   2. Kliknij "Utwórz grupę"
 - **Oczekiwany rezultat:** Wyświetla się błąd "Budżet musi być liczbą całkowitą"
 
 **Test Case 1.2.5: Poprawny budżet**
+
 - **Kroki:**
   1. Wprowadź 100 w pole "Budżet"
   2. Przejdź do kolejnego pola
@@ -75,28 +86,32 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
 #### 1.3. Walidacja daty zakończenia
 
 **Test Case 1.3.1: Brak wybranej daty**
+
 - **Kroki:**
   1. Nie wybieraj żadnej daty
   2. Kliknij "Utwórz grupę"
 - **Oczekiwany rezultat:** Wyświetla się błąd "Data zakończenia jest wymagana"
 
 **Test Case 1.3.2: Data w przeszłości**
+
 - **Kroki:**
   1. Otwórz kalendarz
   2. Spróbuj wybrać wczorajszą datę
 - **Oczekiwany rezultat:** Daty w przeszłości są wyłączone (disabled) w kalendarzu
 
 **Test Case 1.3.3: Dzisiejsza data**
+
 - **Kroki:**
   1. Otwórz kalendarz
   2. Spróbuj wybrać dzisiejszą datę
 - **Oczekiwany rezultat:** Dzisiejsza data jest wyłączona (disabled) w kalendarzu
 
 **Test Case 1.3.4: Poprawna data (jutro lub później)**
+
 - **Kroki:**
   1. Otwórz kalendarz klikając przycisk z ikoną kalendarza
   2. Wybierz datę jutrzejszą lub późniejszą
-- **Oczekiwany rezultat:** 
+- **Oczekiwany rezultat:**
   - Data zostaje wybrana
   - Wyświetla się w formacie dd.MM.yyyy
   - Brak błędu walidacji
@@ -106,6 +121,7 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
 #### 2.1. Pomyślne utworzenie grupy
 
 **Test Case 2.1.1: Poprawne dane**
+
 - **Kroki:**
   1. Wprowadź poprawną nazwę: "Secret Santa 2025"
   2. Wprowadź poprawny budżet: 100
@@ -122,6 +138,7 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
 #### 2.2. Obsługa błędów API
 
 **Test Case 2.2.1: Błąd sieciowy (brak połączenia)**
+
 - **Symulacja:** Wyłącz serwer API lub zablokuj połączenie
 - **Kroki:**
   1. Wypełnij formularz poprawnymi danymi
@@ -133,6 +150,7 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
   - Użytkownik może spróbować ponownie
 
 **Test Case 2.2.2: Błąd walidacji serwera (400)**
+
 - **Symulacja:** Wyślij dane, które przejdą walidację klienta ale nie serwera
 - **Kroki:**
   1. Wypełnij formularz
@@ -143,6 +161,7 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
   - Przycisk staje się ponownie aktywny
 
 **Test Case 2.2.3: Błąd serwera (500)**
+
 - **Symulacja:** Spowoduj błąd 500 na serwerze (np. problem z bazą danych)
 - **Kroki:**
   1. Wypełnij formularz poprawnymi danymi
@@ -157,6 +176,7 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
 #### 3.1. Responsywność widoku
 
 **Test Case 3.1.1: Widok mobilny (< 640px)**
+
 - **Kroki:**
   1. Zmień rozmiar okna przeglądarki na 375px szerokości
   2. Sprawdź widok
@@ -167,6 +187,7 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
   - Tekst jest czytelny
 
 **Test Case 3.1.2: Widok tablet (640px - 768px)**
+
 - **Kroki:**
   1. Zmień rozmiar okna na 768px
   2. Sprawdź widok
@@ -175,6 +196,7 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
   - Padding formularza zwiększa się (sm: breakpoint)
 
 **Test Case 3.1.3: Widok desktop (> 768px)**
+
 - **Kroki:**
   1. Zmień rozmiar okna na 1024px+
   2. Sprawdź widok
@@ -186,6 +208,7 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
 #### 3.2. Interaktywność
 
 **Test Case 3.2.1: Focus states**
+
 - **Kroki:**
   1. Użyj Tab do nawigacji między polami
 - **Oczekiwany rezultat:**
@@ -193,6 +216,7 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
   - Kolejność tabulacji jest logiczna: Nazwa → Budżet → Data → Przycisk
 
 **Test Case 3.2.2: Kalendarz - otwarcie/zamknięcie**
+
 - **Kroki:**
   1. Kliknij przycisk wyboru daty
   2. Kalendarz się otwiera
@@ -203,6 +227,7 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
   - Data wyświetla się w przycisku
 
 **Test Case 3.2.3: Disabled state podczas submit**
+
 - **Kroki:**
   1. Wypełnij formularz
   2. Kliknij "Utwórz grupę"
@@ -217,6 +242,7 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
 #### 4.1. Ochrona trasy
 
 **Test Case 4.1.1: Dostęp bez sesji (produkcja)**
+
 - **Warunek:** W środowisku produkcyjnym bez DEFAULT_USER_ID
 - **Kroki:**
   1. Wyloguj się
@@ -225,6 +251,7 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
   - Użytkownik jest przekierowywany do `/login`
 
 **Test Case 4.1.2: Token autoryzacyjny w żądaniu**
+
 - **Kroki:**
   1. Zaloguj się
   2. Wypełnij i wyślij formularz
@@ -238,6 +265,7 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
 #### 5.1. Format danych
 
 **Test Case 5.1.1: Format CreateGroupCommand**
+
 - **Kroki:**
   1. Wypełnij formularz:
      - Nazwa: "Test Group"
@@ -250,11 +278,12 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
     {
       "name": "Test Group",
       "budget": 50,
-      "end_date": "2025-12-25T00:00:00.000Z"  // ISO 8601 format
+      "end_date": "2025-12-25T00:00:00.000Z" // ISO 8601 format
     }
     ```
 
 **Test Case 5.1.2: Parsowanie odpowiedzi GroupDTO**
+
 - **Kroki:**
   1. Wyślij formularz
   2. Sprawdź odpowiedź w DevTools
@@ -265,22 +294,27 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
 ## Scenariusze brzegowe (Edge Cases)
 
 ### E1. Bardzo długa nazwa (testowanie maxLength)
+
 - Wprowadź 100 znaków w pole nazwy
 - **Rezultat:** Pole przyjmuje tylko 50 znaków
 
 ### E2. Specjalne znaki w nazwie
+
 - Wprowadź: "Group <script>alert('xss')</script>"
 - **Rezultat:** Nazwa jest akceptowana, ale powinna być escapowana przez API
 
 ### E3. Bardzo duża liczba w budżecie
+
 - Wprowadź: 999999999999
 - **Rezultat:** Walidacja powinna przejść (jeśli jest liczbą całkowitą dodatnią)
 
 ### E4. Szybkie wielokrotne kliknięcie submit
+
 - Kliknij "Utwórz grupę" wielokrotnie bardzo szybko
 - **Rezultat:** Tylko jedno żądanie jest wysyłane (przycisk jest disabled po pierwszym kliknięciu)
 
 ### E5. Nawigacja wstecz podczas wysyłania
+
 - Rozpocznij wysyłanie formularza
 - Kliknij wstecz w przeglądarce
 - **Rezultat:** Żądanie może zostać anulowane, ale nie powinno to spowodować błędów
@@ -303,11 +337,13 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
 ## Instrukcje uruchomienia testów manualnych
 
 1. Uruchom serwer deweloperski:
+
    ```bash
    npm run dev
    ```
 
 2. Otwórz przeglądarkę i przejdź do:
+
    ```
    http://localhost:4321/groups/new
    ```
@@ -329,4 +365,3 @@ Ten dokument zawiera szczegółowe scenariusze testowe dla widoku `/groups/new`.
 2. Toast notifications mogą wymagać konfiguracji dark mode theme
 3. Przekierowanie do `/groups/{id}` wymaga implementacji tego widoku
 4. Nieużywany import DayButton w calendar.tsx (ostrzeżenie podczas build)
-

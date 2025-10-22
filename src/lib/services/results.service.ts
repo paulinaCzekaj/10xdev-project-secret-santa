@@ -9,6 +9,23 @@ import type {
 } from "../../types";
 
 /**
+ * Type for participant data used in formatting
+ */
+interface ParticipantData {
+  id: number;
+  name: string;
+  result_viewed_at: string | null;
+}
+
+/**
+ * Type for assigned participant data used in formatting
+ */
+interface AssignedParticipantData {
+  id: number;
+  name: string;
+}
+
+/**
  * Service for managing Secret Santa draw results retrieval
  */
 export class ResultsService {
@@ -154,9 +171,9 @@ export class ResultsService {
     groupId?: number,
     userId?: UserId,
     token?: string
-  ): Promise<{ participant: any; group: any }> {
+  ): Promise<{ participant: ResultParticipantInfo; group: ResultGroupInfo }> {
     // Step 1: Check if draw is completed
-    const targetGroupId = groupId || (await this.getGroupIdFromToken(token!));
+    const targetGroupId = groupId || (await this.getGroupIdFromToken(token || ""));
 
     const { data: assignments, error: assignmentsError } = await this.supabase
       .from("assignments")
@@ -197,11 +214,14 @@ export class ResultsService {
     // Step 3: Get participant data based on access type
     let participant;
     if (accessType === "authenticated") {
+      if (!groupId || !userId) {
+        throw new Error("INVALID_ACCESS");
+      }
       const { data: participantData, error: participantError } = await this.supabase
         .from("participants")
         .select("id, group_id, user_id, name, email, result_viewed_at")
-        .eq("group_id", groupId!)
-        .eq("user_id", userId!)
+        .eq("group_id", groupId)
+        .eq("user_id", userId)
         .single();
 
       if (participantError || !participantData) {
@@ -214,10 +234,13 @@ export class ResultsService {
       }
       participant = participantData;
     } else {
+      if (!token) {
+        throw new Error("INVALID_ACCESS");
+      }
       const { data: participantData, error: participantError } = await this.supabase
         .from("participants")
         .select("id, group_id, user_id, name, email, result_viewed_at")
-        .eq("access_token", token!)
+        .eq("access_token", token)
         .single();
 
       if (participantError || !participantData) {
@@ -255,7 +278,7 @@ export class ResultsService {
   private async getAssignedParticipantData(
     groupId: number,
     giverParticipantId: number
-  ): Promise<{ assignedParticipant: any; assignedWishlist: string | null }> {
+  ): Promise<{ assignedParticipant: ResultAssignedParticipant; assignedWishlist: string | null }> {
     // Get assignment for this giver
     const { data: assignment, error: assignmentError } = await this.supabase
       .from("assignments")
@@ -355,7 +378,7 @@ export class ResultsService {
   /**
    * Formats group data for response
    */
-  private formatGroupInfo(group: any): ResultGroupInfo {
+  private formatGroupInfo(group: { id: number; name: string; budget: number; end_date: string }): ResultGroupInfo {
     return {
       id: group.id,
       name: group.name,
@@ -367,7 +390,7 @@ export class ResultsService {
   /**
    * Formats participant data for response
    */
-  private formatParticipantInfo(participant: any): ResultParticipantInfo {
+  private formatParticipantInfo(participant: ParticipantData): ResultParticipantInfo {
     return {
       id: participant.id,
       name: participant.name,
@@ -378,7 +401,10 @@ export class ResultsService {
   /**
    * Formats assigned participant data for response
    */
-  private formatAssignedParticipant(assignedParticipant: any, wishlist: string | null): ResultAssignedParticipant {
+  private formatAssignedParticipant(
+    assignedParticipant: AssignedParticipantData,
+    wishlist: string | null
+  ): ResultAssignedParticipant {
     return {
       id: assignedParticipant.id,
       name: assignedParticipant.name,

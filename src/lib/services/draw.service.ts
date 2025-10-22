@@ -169,11 +169,11 @@ export class DrawService {
       const blockerId = exclusion.blocker_participant_id;
       const blockedId = exclusion.blocked_participant_id;
 
+      const blockedList = exclusionMap.get(blockerId) || [];
       if (!exclusionMap.has(blockerId)) {
-        exclusionMap.set(blockerId, []);
+        exclusionMap.set(blockerId, blockedList);
       }
-
-      exclusionMap.get(blockerId)!.push(blockedId);
+      blockedList.push(blockedId);
     }
 
     return exclusionMap;

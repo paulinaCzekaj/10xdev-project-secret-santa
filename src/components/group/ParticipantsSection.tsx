@@ -4,7 +4,7 @@ import { AddParticipantForm } from "./AddParticipantForm";
 import { ParticipantsList } from "./ParticipantsList";
 import { ParticipantCard } from "./ParticipantCard";
 import { Users } from "lucide-react";
-import type { ParticipantViewModel, ParticipantWithTokenDTO } from "@/types";
+import type { ParticipantViewModel } from "@/types";
 
 interface ParticipantsSectionProps {
   groupId: number;
@@ -27,13 +27,15 @@ export function ParticipantsSection({
   isDrawn,
   isCreator,
   onParticipantAdded,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onParticipantUpdated,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onParticipantDeleted,
   onEditParticipant,
   onDeleteParticipant,
   onCopyParticipantToken,
 }: ParticipantsSectionProps) {
-  const handleParticipantAdded = (participant: ParticipantWithTokenDTO) => {
+  const handleParticipantAdded = () => {
     onParticipantAdded();
   };
 
@@ -57,12 +59,7 @@ export function ParticipantsSection({
 
         <CardContent className="space-y-6">
           {/* Formularz dodawania uczestnika - tylko przed losowaniem */}
-          {canEdit && !isDrawn && (
-            <AddParticipantForm
-              groupId={groupId}
-              onSuccess={handleParticipantAdded}
-            />
-          )}
+          {canEdit && !isDrawn && <AddParticipantForm groupId={groupId} onSuccess={handleParticipantAdded} />}
 
           {/* Lista uczestników */}
           {participants.length > 0 ? (
@@ -99,9 +96,7 @@ export function ParticipantsSection({
           ) : (
             <div className="text-center py-8">
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                Brak uczestników w grupie
-              </p>
+              <p className="text-muted-foreground">Brak uczestników w grupie</p>
               {canEdit && !isDrawn && (
                 <p className="text-sm text-muted-foreground mt-2">
                   Dodaj pierwszego uczestnika używając formularza powyżej

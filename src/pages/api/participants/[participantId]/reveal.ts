@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { ResultsService } from "../../../../lib/services/results.service";
 import { requireApiAuth } from "../../../../lib/utils/api-auth.utils";
-import type { ApiErrorResponse } from "../../../../types";
+// No additional types needed
 
 export const prerender = false;
 
@@ -32,7 +32,7 @@ const ParticipantIdParamSchema = z.object({
  *
  * @note Authentication required - user must be the participant or have access
  */
-export const POST: APIRoute = async ({ params, locals, request, url }) => {
+export const POST: APIRoute = async ({ params, locals, url }) => {
   console.log("[POST /api/participants/:participantId/reveal] Endpoint hit", {
     participantId: params.participantId,
   });
@@ -61,7 +61,7 @@ export const POST: APIRoute = async ({ params, locals, request, url }) => {
       }
     } else {
       // Check for regular authentication
-      const userIdOrResponse = requireApiAuth({ locals, request } as any);
+      const userIdOrResponse = requireApiAuth({ locals });
       if (typeof userIdOrResponse === "string") {
         isAuthenticated = true;
       }

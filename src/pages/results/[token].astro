@@ -7,17 +7,13 @@ import ResultView from "@/components/result/ResultView";
 const { token } = Astro.params;
 
 // Walidacja tokenu
-if (!token || typeof token !== 'string' || token.length === 0) {
-  return Astro.redirect('/');
+if (!token || typeof token !== "string" || token.length === 0) {
+  return Astro.redirect("/");
 }
 
 const pageTitle = "Twój wynik Secret Santa";
 ---
 
 <Layout title={pageTitle}>
-  <ResultView
-    client:load
-    token={token}
-    isAuthenticated={false}
-  />
+  <ResultView client:load token={token} isAuthenticated={false} />
 </Layout>

@@ -8,9 +8,7 @@ export function DrawNotCompletedError() {
       <div className="mb-6">
         <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto" />
       </div>
-      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-        Losowanie nie zostało przeprowadzone
-      </h3>
+      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Losowanie nie zostało przeprowadzone</h3>
       <p className="text-gray-600 dark:text-gray-400 mb-6">
         Losowanie dla tej grupy nie zostało jeszcze przeprowadzone. Skontaktuj się z organizatorem grupy.
       </p>
