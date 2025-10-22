@@ -60,14 +60,14 @@ export class LoginPage extends BasePage {
    * Fill email field
    */
   async fillEmail(email: string): Promise<void> {
-    await this.emailInput.fill(email);
+    await this.fillInputForReactHookForm(this.emailInput, email);
   }
 
   /**
    * Fill password field
    */
   async fillPassword(password: string): Promise<void> {
-    await this.passwordInput.fill(password);
+    await this.fillInputForReactHookForm(this.passwordInput, password);
   }
 
   /**

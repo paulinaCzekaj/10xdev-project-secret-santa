@@ -62,14 +62,20 @@ export class CreateGroupPage extends BasePage {
    * Fill group name
    */
   async fillName(name: string): Promise<void> {
-    await this.nameInput.fill(name);
+    console.log(`[CreateGroupPage] Filling name: ${name}`);
+    await this.nameInput.waitFor({ state: "visible", timeout: 10000 });
+    await this.fillInputForReactHookForm(this.nameInput, name);
+    console.log(`[CreateGroupPage] Name filled successfully`);
   }
 
   /**
    * Fill budget
    */
   async fillBudget(budget: number): Promise<void> {
-    await this.budgetInput.fill(budget.toString());
+    console.log(`[CreateGroupPage] Filling budget: ${budget}`);
+    await this.budgetInput.waitFor({ state: "visible", timeout: 10000 });
+    await this.fillInputForReactHookForm(this.budgetInput, budget.toString());
+    console.log(`[CreateGroupPage] Budget filled successfully`);
   }
 
   /**
@@ -77,10 +83,28 @@ export class CreateGroupPage extends BasePage {
    * @param date - Date in format YYYY-MM-DD or Date object
    */
   async selectDate(date: string | Date): Promise<void> {
+    console.log(`[CreateGroupPage] Selecting date: ${date}`);
+
+    // Ensure the date picker button is visible and stable before clicking
+    await this.datePicker.waitFor({ state: "visible", timeout: 5000 });
+    await this.page.waitForTimeout(500); // Wait for UI to stabilize
+
+    console.log(`[CreateGroupPage] Clicking date picker button`);
     await this.datePicker.click();
 
-    // Wait for calendar popover to open
-    await this.page.locator("[data-slot='popover-content']").waitFor({ state: "visible" });
+    // Wait for calendar popover to open with extended timeout
+    // Radix UI Portal renders outside normal DOM, so we need to wait for both rendering and animation
+    await this.page.waitForTimeout(1000); // Give time for portal to render
+
+    // Wait for popover content to be visible
+    console.log(`[CreateGroupPage] Waiting for calendar popover to open`);
+    await this.page.locator("[data-slot='popover-content']").waitFor({
+      state: "visible",
+      timeout: 15000,
+    });
+
+    // Additional wait for calendar to be fully interactive
+    await this.page.waitForTimeout(500);
 
     // Parse date
     let targetDate: Date;
@@ -90,10 +114,91 @@ export class CreateGroupPage extends BasePage {
       targetDate = date;
     }
 
-    // Click on the specific date button in the calendar
+    // Navigate to the correct month if needed
+    const targetMonth = targetDate.getMonth();
+    const targetYear = targetDate.getFullYear();
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    // Calculate months difference
+    const monthsDiff = (targetYear - currentYear) * 12 + (targetMonth - currentMonth);
+
+    if (monthsDiff !== 0) {
+      console.log(`[CreateGroupPage] Navigating ${monthsDiff} months`);
+      // Use next/previous month buttons
+      const isNext = monthsDiff > 0;
+      const buttonSelector = isNext
+        ? '[data-slot="popover-content"] button[class*="button_next"]'
+        : '[data-slot="popover-content"] button[class*="button_previous"]';
+
+      const navigationButton = this.page.locator(buttonSelector).first();
+
+      const clicks = Math.abs(monthsDiff);
+      for (let i = 0; i < clicks; i++) {
+        await navigationButton.click();
+        await this.page.waitForTimeout(300); // Wait for calendar to update
+      }
+    }
+
     const day = targetDate.getDate();
-    const dateButton = this.page.locator(`[data-slot='button'][data-day]`).filter({ hasText: day.toString() }).first();
+    const month = targetDate.getMonth();
+    const year = targetDate.getFullYear();
+
+    console.log(`[CreateGroupPage] Looking for date button: ${day}/${month + 1}/${year}`);
+
+    // Try multiple strategies to find the date button
+    let dateButton = null;
+
+    // Strategy 1: Use data-day attribute (format: "M/D/YYYY")
+    const dateString = `${month + 1}/${day}/${year}`;
+    const dataDayButton = this.page.locator(`button[data-day="${dateString}"]:not([disabled])`);
+
+    if (await dataDayButton.isVisible().catch(() => false)) {
+      console.log(`[CreateGroupPage] Found date button using data-day attribute`);
+      dateButton = dataDayButton;
+    } else {
+      // Strategy 2: Use role and name (day number)
+      const roleButton = this.page.getByRole("button", { name: day.toString(), exact: false });
+
+      // Filter to only enabled buttons in the calendar
+      const enabledRoleButton = roleButton.filter({
+        has: this.page.locator('[data-slot="popover-content"] button:not([disabled])'),
+      });
+
+      if (await enabledRoleButton.isVisible().catch(() => false)) {
+        console.log(`[CreateGroupPage] Found date button using role and name`);
+        dateButton = enabledRoleButton.first();
+      } else {
+        // Strategy 3: Find by text content and ensure it's in the calendar
+        const textButton = this.page.locator(`[data-slot="popover-content"] button:has-text("${day}"):not([disabled])`);
+        if (await textButton.isVisible().catch(() => false)) {
+          console.log(`[CreateGroupPage] Found date button using text content`);
+          dateButton = textButton.first();
+        }
+      }
+    }
+
+    if (!dateButton) {
+      throw new Error(`Could not find date button for ${day}/${month + 1}/${year}`);
+    }
+
+    // Wait for the button to be visible and enabled
+    await dateButton.waitFor({ state: "visible", timeout: 10000 });
+
+    // Ensure button is enabled before clicking
+    const isEnabled = await dateButton.isEnabled();
+    if (!isEnabled) {
+      throw new Error(`Date button for ${day}/${month + 1}/${year} is disabled`);
+    }
+
+    console.log(`[CreateGroupPage] Clicking date button`);
     await dateButton.click();
+
+    // Wait for the calendar to close and React Hook Form to process the date change
+    await this.page.waitForTimeout(1000);
+
+    console.log(`[CreateGroupPage] Date selected successfully`);
   }
 
   /**
