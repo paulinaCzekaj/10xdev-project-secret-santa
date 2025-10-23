@@ -276,6 +276,14 @@ export interface ResultMyWishlist {
 }
 
 /**
+ * Wishlist statistics for motivating participants
+ */
+export interface WishlistStats {
+  total_participants: number;
+  participants_with_wishlist: number;
+}
+
+/**
  * Complete draw result response for a participant
  * GET /api/groups/:groupId/result
  * GET /api/results/:token
@@ -285,6 +293,7 @@ export interface DrawResultResponseDTO {
   participant: ResultParticipantInfo;
   assigned_to: ResultAssignedParticipant;
   my_wishlist: ResultMyWishlist;
+  wishlist_stats: WishlistStats;
 }
 
 /**
@@ -431,6 +440,7 @@ export interface ParticipantViewModel extends Omit<ParticipantListItemDTO, "acce
 
   // Formatowane wartości
   displayEmail: string; // "j***@example.com" lub "john@example.com" lub "Brak"
+  rawEmail: string | null; // Oryginalny, nieformatowany email (null jeśli brak)
   displayName: string; // "John Doe" lub "John Doe (Ty)" dla current user
   initials: string; // "JD" dla avatara
 
@@ -524,6 +534,7 @@ export interface EditParticipantFormViewModel {
 export interface AddExclusionFormViewModel {
   blocker_participant_id: number;
   blocked_participant_id: number;
+  bidirectional: boolean;
 }
 
 // ============================================================================
@@ -566,6 +577,7 @@ export interface ResultViewModel {
   participant: ResultParticipantInfo;
   assigned_to: ResultAssignedParticipant;
   my_wishlist: ResultMyWishlist;
+  wishlist_stats: WishlistStats;
 
   // Formatowane wartości dla wyświetlania
   formattedBudget: string; // "150 PLN"

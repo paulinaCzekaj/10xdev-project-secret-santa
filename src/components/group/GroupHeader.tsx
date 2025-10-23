@@ -2,8 +2,8 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Edit, Trash2, Calendar, DollarSign } from "lucide-react";
-import { formatDate } from "@/lib/utils/formatters";
 import type { GroupViewModel } from "@/types";
 
 interface GroupHeaderProps {
@@ -22,22 +22,72 @@ export function GroupHeader({ group, isCreator, canEdit, isDrawn, onEditClick, o
       data-testid="group-header"
     >
       <CardHeader className="pb-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <CardTitle className="text-3xl font-bold text-red-500 dark:text-red-400" data-testid="group-name">
-                🎄 {group.name} 🎄
+        <div className="space-y-3">
+          {/* Tytuł, status i akcje */}
+          <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+              <CardTitle
+                className="text-2xl sm:text-3xl md:text-4xl font-bold text-red-500 dark:text-red-400"
+                data-testid="group-name"
+              >
+                🎄 {group.name}
               </CardTitle>
               <Badge
                 variant={group.statusBadge.variant}
-                className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 shrink-0 text-xs whitespace-nowrap"
                 data-testid="group-status-badge"
               >
                 {group.statusBadge.text}
               </Badge>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            {/* Przyciski akcji - ikony z tooltipami */}
+            <div className="flex gap-0 shrink-0">
+              {isCreator && canEdit && !isDrawn && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={onEditClick}
+                      className="h-8 w-8 hover:bg-red-100 dark:hover:bg-red-900"
+                      data-testid="group-edit-button"
+                      aria-label="Edytuj grupę"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Edytuj grupę</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
+              {isCreator && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={onDeleteClick}
+                      className="h-8 w-8 text-destructive hover:bg-red-100 hover:text-destructive dark:hover:bg-red-900"
+                      data-testid="group-delete-button"
+                      aria-label="Usuń grupę"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Usuń grupę</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </div>
+
+          {/* Budżet i data - pionowo na mobile, poziomo na większych ekranach */}
+          <div className="space-y-2">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1" data-testid="group-budget">
                 <DollarSign className="h-4 w-4" />
                 <span>{group.formattedBudget}</span>
@@ -47,41 +97,7 @@ export function GroupHeader({ group, isCreator, canEdit, isDrawn, onEditClick, o
                 <Calendar className="h-4 w-4" />
                 <span>{group.formattedEndDate}</span>
               </div>
-
-              {isDrawn && group.drawn_at && (
-                <div className="text-green-600 font-medium">Data losowania: {formatDate(group.drawn_at)}</div>
-              )}
             </div>
-          </div>
-
-          <div className="flex gap-2">
-            {/* Przycisk edycji grupy - tylko dla twórcy przed losowaniem */}
-            {isCreator && canEdit && !isDrawn && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onEditClick}
-                className="flex items-center gap-2"
-                data-testid="group-edit-button"
-              >
-                <Edit className="h-4 w-4" />
-                Edytuj grupę
-              </Button>
-            )}
-
-            {/* Przycisk usunięcia grupy - tylko dla twórcy */}
-            {isCreator && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={onDeleteClick}
-                className="flex items-center gap-2"
-                data-testid="group-delete-button"
-              >
-                <Trash2 className="h-4 w-4" />
-                Usuń grupę
-              </Button>
-            )}
           </div>
         </div>
       </CardHeader>

@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Ban, ArrowRight } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Ban, ArrowRight, ArrowLeftRight } from "lucide-react";
 import { toast } from "sonner";
 import { useExclusions } from "@/hooks/useExclusions";
 import type {
@@ -32,6 +33,7 @@ const addExclusionFormSchema = z
         invalid_type_error: "Wybierz osobę",
       })
       .positive("Wybierz osobę"),
+    bidirectional: z.boolean().default(false),
   })
   .refine((data) => data.blocker_participant_id !== data.blocked_participant_id, {
     message: "Osoba nie może wykluczyć samej siebie",
@@ -50,9 +52,11 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
 
   const form = useForm<AddExclusionFormViewModel>({
     resolver: zodResolver(addExclusionFormSchema),
+    mode: "onSubmit", // Walidacja tylko przy submit, nie na onChange
     defaultValues: {
-      blocker_participant_id: 0,
-      blocked_participant_id: 0,
+      blocker_participant_id: undefined,
+      blocked_participant_id: undefined,
+      bidirectional: false,
     },
   });
 
@@ -70,7 +74,14 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
       return;
     }
 
+    // Jeśli dwustronne, sprawdzamy też odwrotne wykluczenie
+    if (values.bidirectional && isExclusionDuplicate(values.blocked_participant_id, values.blocker_participant_id)) {
+      toast.error("Odwrotna reguła wykluczenia już istnieje");
+      return;
+    }
+
     try {
+      // Dodaj pierwsze wykluczenie
       const command: CreateExclusionRuleCommand = {
         blocker_participant_id: values.blocker_participant_id,
         blocked_participant_id: values.blocked_participant_id,
@@ -79,9 +90,23 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
       const result = await addExclusion(command);
 
       if (result.success && result.data) {
+        // Jeśli dwustronne, dodaj też odwrotne wykluczenie
+        if (values.bidirectional) {
+          const reverseCommand: CreateExclusionRuleCommand = {
+            blocker_participant_id: values.blocked_participant_id,
+            blocked_participant_id: values.blocker_participant_id,
+          };
+
+          const reverseResult = await addExclusion(reverseCommand);
+
+          if (!reverseResult.success) {
+            toast.warning("Pierwsze wykluczenie dodane, ale nie udało się dodać odwrotnego wykluczenia");
+          }
+        }
+
         form.reset();
         onSuccess(result.data);
-        toast.success("Wykluczenie zostało dodane");
+        toast.success(values.bidirectional ? "Dwustronne wykluczenie zostało dodane" : "Wykluczenie zostało dodane");
       } else {
         toast.error(result.error || "Nie udało się dodać wykluczenia. Spróbuj ponownie.");
       }
@@ -95,19 +120,19 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
       <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex flex-col md:flex-row items-stretch md:items-start gap-4">
               <FormField
                 control={form.control}
                 name="blocker_participant_id"
                 render={({ field }) => (
-                  <FormItem className="flex-1">
+                  <FormItem className="flex-1 w-full">
                     <FormLabel>Kto nie może wylosować</FormLabel>
                     <Select
                       onValueChange={(value) => field.onChange(Number(value))}
                       value={field.value?.toString() || ""}
                     >
                       <FormControl>
-                        <SelectTrigger className="min-w-[200px]">
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Wybierz osobę" />
                         </SelectTrigger>
                       </FormControl>
@@ -120,12 +145,12 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage className="min-h-[20px]" />
                   </FormItem>
                 )}
               />
 
-              <div className="flex items-center justify-center py-2">
+              <div className="hidden md:flex items-center justify-center pt-8">
                 <ArrowRight className="h-4 w-4 text-muted-foreground" />
               </div>
 
@@ -133,14 +158,14 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
                 control={form.control}
                 name="blocked_participant_id"
                 render={({ field }) => (
-                  <FormItem className="flex-1">
+                  <FormItem className="flex-1 w-full">
                     <FormLabel>Kogo</FormLabel>
                     <Select
                       onValueChange={(value) => field.onChange(Number(value))}
                       value={field.value?.toString() || ""}
                     >
                       <FormControl>
-                        <SelectTrigger className="min-w-[200px]">
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Wybierz osobę" />
                         </SelectTrigger>
                       </FormControl>
@@ -153,27 +178,43 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage className="min-h-[20px]" />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <FormField
+                control={form.control}
+                name="bidirectional"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="flex items-center gap-2 cursor-pointer">
+                        <ArrowLeftRight className="h-4 w-4" />
+                        Dwustronna blokada
+                      </FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Obie osoby nie będą mogły wylosować siebie nawzajem
+                      </p>
+                    </div>
                   </FormItem>
                 )}
               />
 
-              <div className="flex items-end">
-                <Button type="submit" disabled={form.formState.isSubmitting} className="flex items-center gap-2">
-                  <Ban className="h-4 w-4" />
-                  {form.formState.isSubmitting ? "Dodawanie..." : "Dodaj wykluczenie"}
-                </Button>
-              </div>
+              <Button
+                type="submit"
+                disabled={form.formState.isSubmitting}
+                className="flex items-center gap-2 w-full sm:w-auto shrink-0"
+              >
+                <Ban className="h-4 w-4" />
+                {form.formState.isSubmitting ? "Dodawanie..." : "Dodaj wykluczenie"}
+              </Button>
             </div>
-
-            <p className="text-sm text-muted-foreground">
-              Wykluczenia są jednokierunkowe. <span className="text-red-600 font-medium">Osoba A</span>{" "}
-              <span className="text-muted-foreground">nie może wylosować</span>{" "}
-              <span className="text-green-600 font-medium">osoby B</span>, ale{" "}
-              <span className="text-green-600 font-medium">osoba B</span>{" "}
-              <span className="text-muted-foreground">może wylosować</span>{" "}
-              <span className="text-red-600 font-medium">osobę A</span> (chyba że zostanie dodane odwrotne wykluczenie).
-            </p>
           </form>
         </Form>
       </CardContent>

@@ -81,7 +81,7 @@ export default function CreateGroupForm() {
             {/* End Date Field */}
             <DateFormField
               name="end_date"
-              label="Data losowania"
+              label="Data wydarzenia"
               placeholder="Wybierz datę"
               minDate={getMinimumFutureDate(1)}
               disabled={isLoading}

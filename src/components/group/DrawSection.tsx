@@ -120,7 +120,7 @@ export function DrawSection({ groupId, participantsCount, exclusionsCount, isCre
 
           {/* Przycisk rozpoczęcia losowania */}
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between p-6 bg-muted/50 rounded-lg">
-            <div>
+            <div className="order-2 sm:order-1">
               <h3 className="font-medium mb-1">Rozpocznij losowanie</h3>
               <p className="text-sm text-muted-foreground">
                 Po rozpoczęciu losowania nie będzie można dodawać/usunąć uczestników ani zmieniać wykluczeń.
@@ -131,7 +131,7 @@ export function DrawSection({ groupId, participantsCount, exclusionsCount, isCre
               onClick={onDrawClick}
               disabled={!isReady || isValidating}
               size="lg"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 w-full sm:w-auto shrink-0 order-1 sm:order-2"
             >
               <Shuffle className="h-5 w-5" />
               {isValidating ? "Sprawdzanie..." : "Rozpocznij losowanie"}

@@ -5,6 +5,7 @@ import type {
   ResultParticipantInfo,
   ResultAssignedParticipant,
   ResultMyWishlist,
+  WishlistStats,
   UserId,
 } from "../../types";
 
@@ -79,9 +80,12 @@ export class ResultsService {
     // Step 3: Get current participant's wishlist
     const myWishlist = await this.getParticipantWishlist(participant.id);
 
-    // Step 4: Note - result_viewed_at is now updated only when gift is revealed
+    // Step 4: Get wishlist statistics for the group
+    const wishlistStats = await this.getWishlistStats(groupId);
 
-    // Step 5: Format and return response
+    // Step 5: Note - result_viewed_at is now updated only when gift is revealed
+
+    // Step 6: Format and return response
     const now = new Date();
     const endDate = new Date(group.end_date);
     // Compare only dates (ignore time) - end date is inclusive
@@ -106,6 +110,7 @@ export class ResultsService {
       participant: this.formatParticipantInfo(participant),
       assigned_to: this.formatAssignedParticipant(assignedParticipant, assignedWishlist),
       my_wishlist: this.formatMyWishlist(myWishlist, !isExpired), // Can edit only if not expired
+      wishlist_stats: wishlistStats,
     };
 
     console.log("[ResultsService.getAuthenticatedUserResult] Successfully retrieved result", {
@@ -148,9 +153,12 @@ export class ResultsService {
     // Step 3: Get current participant's wishlist
     const myWishlist = await this.getParticipantWishlist(participant.id);
 
-    // Step 4: Note - result_viewed_at is now updated only when gift is revealed
+    // Step 4: Get wishlist statistics for the group
+    const wishlistStats = await this.getWishlistStats(participant.group_id);
 
-    // Step 5: Format and return response
+    // Step 5: Note - result_viewed_at is now updated only when gift is revealed
+
+    // Step 6: Format and return response
     const now = new Date();
     const endDate = new Date(group.end_date);
     // Compare only dates (ignore time) - end date is inclusive
@@ -175,6 +183,7 @@ export class ResultsService {
       participant: this.formatParticipantInfo(participant),
       assigned_to: this.formatAssignedParticipant(assignedParticipant, assignedWishlist),
       my_wishlist: this.formatMyWishlist(myWishlist, !isExpired), // Can edit only if not expired
+      wishlist_stats: wishlistStats,
     };
 
     console.log("[ResultsService.getTokenBasedResult] Successfully retrieved result", {
@@ -364,6 +373,44 @@ export class ResultsService {
     }
 
     return wishlist?.wishlist || null;
+  }
+
+  /**
+   * Retrieves wishlist statistics for a group
+   */
+  private async getWishlistStats(groupId: number): Promise<WishlistStats> {
+    // Get total participants count
+    const { data: participants, error: participantsError } = await this.supabase
+      .from("participants")
+      .select("id")
+      .eq("group_id", groupId);
+
+    if (participantsError) {
+      console.error("[ResultsService.getWishlistStats] Error fetching participants:", participantsError);
+      throw new Error("INTERNAL_ERROR");
+    }
+
+    const totalParticipants = participants?.length || 0;
+
+    // Get participants with wishlists (where wishlist is not null and not empty)
+    const { data: wishlistsData, error: wishlistsError } = await this.supabase
+      .from("wishes")
+      .select("participant_id")
+      .in("participant_id", participants?.map((p) => p.id) || [])
+      .not("wishlist", "is", null);
+
+    if (wishlistsError) {
+      console.error("[ResultsService.getWishlistStats] Error fetching wishlists:", wishlistsError);
+      throw new Error("INTERNAL_ERROR");
+    }
+
+    // Database query already filters nulls, empty strings are still valid wishlists
+    const participantsWithWishlist = wishlistsData?.length || 0;
+
+    return {
+      total_participants: totalParticipants,
+      participants_with_wishlist: participantsWithWishlist,
+    };
   }
 
   /**

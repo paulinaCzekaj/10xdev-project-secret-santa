@@ -2,19 +2,13 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { User, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { ResponsiveDialogFooter } from "@/components/ui/responsive-form";
 import type { ParticipantViewModel, EditParticipantFormViewModel, UpdateParticipantCommand } from "@/types";
 
 // Schema walidacji dla formularza edycji uczestnika
@@ -141,14 +135,14 @@ export function EditParticipantModal({
               )}
             />
 
-            <DialogFooter>
+            <ResponsiveDialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
                 Anuluj
               </Button>
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Zapisywanie..." : "Zapisz zmiany"}
               </Button>
-            </DialogFooter>
+            </ResponsiveDialogFooter>
           </form>
         </Form>
       </DialogContent>
