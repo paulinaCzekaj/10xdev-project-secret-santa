@@ -116,9 +116,11 @@ export function DrawConfirmationModal({
           </div>
         </div>
 
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isExecuting}>Anuluj</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirm} disabled={isExecuting}>
+        <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+          <AlertDialogCancel disabled={isExecuting} className="w-full sm:w-auto">
+            Anuluj
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={handleConfirm} disabled={isExecuting} className="w-full sm:w-auto">
             {isExecuting ? "Trwa losowanie..." : "Potwierdź i rozpocznij losowanie"}
           </AlertDialogAction>
         </AlertDialogFooter>

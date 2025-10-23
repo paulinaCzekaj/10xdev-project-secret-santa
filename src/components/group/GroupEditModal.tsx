@@ -2,14 +2,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,6 +14,7 @@ import { pl } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useGroupData } from "@/hooks/useGroupData";
+import { ResponsiveDialogFooter } from "@/components/ui/responsive-form";
 import type { GroupViewModel, EditGroupFormViewModel, UpdateGroupCommand } from "@/types";
 
 // Schema walidacji dla formularza edycji grupy
@@ -178,14 +172,14 @@ export function GroupEditModal({ group, isOpen, onClose, onSave }: GroupEditModa
               )}
             />
 
-            <DialogFooter>
+            <ResponsiveDialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
                 Anuluj
               </Button>
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Zapisywanie..." : "Zapisz zmiany"}
               </Button>
-            </DialogFooter>
+            </ResponsiveDialogFooter>
           </form>
         </Form>
       </DialogContent>

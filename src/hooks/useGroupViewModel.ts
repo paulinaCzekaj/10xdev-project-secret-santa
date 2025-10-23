@@ -12,7 +12,6 @@ import {
   formatDate,
   formatRelativeDate,
   getInitials,
-  formatParticipantEmail,
   formatParticipantName,
   calculateDaysUntilEnd,
   isDateExpired,
@@ -91,7 +90,9 @@ export function useGroupViewModel({ group, participants, exclusions, currentUser
         canDelete: !isCreator, // Twórca nie może być usunięty
 
         // Formatowane wartości
-        displayEmail: formatParticipantEmail(participant.email || undefined, isCurrentUser),
+        // W widoku grupy emaile zawsze są widoczne w pełnej formie (dostęp ma tylko twórca)
+        displayEmail: participant.email || "Brak",
+        rawEmail: participant.email || null, // Oryginalny email bez formatowania
         displayName: formatParticipantName(participant.name, isCurrentUser),
         initials: getInitials(participant.name),
 

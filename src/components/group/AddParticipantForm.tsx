@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { UserPlus, Mail, User } from "lucide-react";
 import { toast } from "sonner";
 import { useParticipants } from "@/hooks/useParticipants";
+import { FormFields, FormFooter } from "@/components/ui/responsive-form";
 import type { AddParticipantFormViewModel, ParticipantWithTokenDTO, CreateParticipantCommand } from "@/types";
 
 // Schema walidacji dla formularza dodawania uczestnika
@@ -73,7 +74,7 @@ export function AddParticipantForm({ groupId, onSuccess }: AddParticipantFormPro
     <Card data-testid="add-participant-form-card">
       <CardContent className="pt-6">
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="add-participant-form">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormFields columns={2}>
             <div className="space-y-2">
               <Label htmlFor="name" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
@@ -106,17 +107,14 @@ export function AddParticipantForm({ groupId, onSuccess }: AddParticipantFormPro
                 <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
               )}
             </div>
-          </div>
+          </FormFields>
 
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-muted-foreground">
-              Email jest opcjonalny. Uczestnicy bez konta otrzymają link dostępu.
-            </p>
+          <FormFooter description="Email jest opcjonalny. Uczestnicy bez konta otrzymają link dostępu.">
             <Button type="submit" disabled={form.formState.isSubmitting} className="flex items-center gap-2">
               <UserPlus className="h-4 w-4" />
               {form.formState.isSubmitting ? "Dodawanie..." : "Dodaj uczestnika"}
             </Button>
-          </div>
+          </FormFooter>
         </form>
       </CardContent>
     </Card>

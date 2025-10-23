@@ -118,6 +118,7 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
         participant: dto.participant,
         assigned_to: dto.assigned_to,
         my_wishlist: dto.my_wishlist,
+        wishlist_stats: dto.wishlist_stats,
 
         // Formatowane wartości
         formattedBudget: formatBudget(dto.group.budget),

@@ -63,10 +63,11 @@ export function getInitials(name: string): string {
  * @param isCurrentUser - Whether this is the current user's email
  * @returns Formatted email or "Brak" if no email
  */
-export function formatParticipantEmail(email?: string, isCurrentUser = false): string {
+export function formatParticipantEmail(email?: string, shouldShowFull = false): string {
   if (!email) return "Brak";
 
-  if (isCurrentUser) return email;
+  // Show full email if shouldShowFull is true (for group creator)
+  if (shouldShowFull) return email;
 
   // For other users, hide part of the email for privacy
   const [localPart, domain] = email.split("@");

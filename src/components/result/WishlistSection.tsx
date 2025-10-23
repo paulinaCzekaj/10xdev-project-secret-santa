@@ -1,6 +1,7 @@
 import { memo } from "react";
 import WishlistEditor from "./WishlistEditor";
 import WishlistDisplay from "./WishlistDisplay";
+import type { WishlistStats } from "@/types";
 
 interface WishlistSectionProps {
   myWishlist: {
@@ -15,6 +16,7 @@ interface WishlistSectionProps {
   participantId: number;
   groupEndDate: string;
   accessToken?: string; // dla niezalogowanych
+  wishlistStats?: WishlistStats;
 }
 
 /**
@@ -28,6 +30,7 @@ function WishlistSection({
   participantId,
   groupEndDate,
   accessToken,
+  wishlistStats,
 }: WishlistSectionProps) {
   return (
     <div className="space-y-6">
@@ -45,6 +48,7 @@ function WishlistSection({
         canEdit={myWishlist.can_edit}
         endDate={groupEndDate}
         accessToken={accessToken}
+        wishlistStats={wishlistStats}
       />
     </div>
   );
