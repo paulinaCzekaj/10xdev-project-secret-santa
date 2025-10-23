@@ -54,7 +54,11 @@ export class ResultsService {
    * @throws {Error} "FORBIDDEN" - If user is not a participant in the group
    * @throws {Error} "DRAW_NOT_COMPLETED" - If draw hasn't been completed yet
    */
-  async getAuthenticatedUserResult(groupId: number, userId: UserId, userEmail?: string): Promise<DrawResultResponseDTO> {
+  async getAuthenticatedUserResult(
+    groupId: number,
+    userId: UserId,
+    userEmail?: string
+  ): Promise<DrawResultResponseDTO> {
     console.log("[ResultsService.getAuthenticatedUserResult] Starting", {
       groupId,
       userId,

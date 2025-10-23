@@ -1,0 +1,17 @@
+# Build outputs
+dist/
+.astro/
+.vercel/
+node_modules/
+
+# Documentation with code snippets
+.ai/
+
+# Config files
+pnpm-lock.yaml
+package-lock.json
+
+# Test outputs
+coverage/
+playwright-report/
+test-results/
