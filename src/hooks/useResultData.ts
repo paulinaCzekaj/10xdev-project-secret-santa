@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { supabaseClient } from "@/db/supabase.client";
 import type { UseResultDataReturn, ResultViewModel, ApiError, DrawResultResponseDTO } from "../types";
 
 /**
@@ -159,13 +160,23 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
       setError(null);
 
       let url: string;
-      const headers: Record<string, string> = {};
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
 
       // Określenie endpointu na podstawie parametrów
       if (groupId && isAuthenticated) {
         // Dla zalogowanych użytkowników
         url = `/api/groups/${groupId}/result`;
-        // Headers będą dodane przez API middleware
+
+        // Pobieramy Bearer token z sesji Supabase
+        const {
+          data: { session },
+        } = await supabaseClient.auth.getSession();
+
+        if (session?.access_token) {
+          headers["Authorization"] = `Bearer ${session.access_token}`;
+        }
       } else if (token) {
         // Dla niezalogowanych użytkowników
         url = `/api/results/${token}`;
@@ -175,10 +186,7 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
 
       const response = await fetch(url, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...headers,
-        },
+        headers,
       });
 
       if (!response.ok) {

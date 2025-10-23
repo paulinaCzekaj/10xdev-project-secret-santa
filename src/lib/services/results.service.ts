@@ -48,19 +48,26 @@ export class ResultsService {
    *
    * @param groupId - The ID of the group
    * @param userId - The ID of the authenticated user (must be a participant)
+   * @param userEmail - The email of the authenticated user (for matching participants added by email)
    * @returns DrawResultResponseDTO with complete result information
    * @throws {Error} "GROUP_NOT_FOUND" - If group doesn't exist
    * @throws {Error} "FORBIDDEN" - If user is not a participant in the group
    * @throws {Error} "DRAW_NOT_COMPLETED" - If draw hasn't been completed yet
    */
-  async getAuthenticatedUserResult(groupId: number, userId: UserId): Promise<DrawResultResponseDTO> {
+  async getAuthenticatedUserResult(groupId: number, userId: UserId, userEmail?: string): Promise<DrawResultResponseDTO> {
     console.log("[ResultsService.getAuthenticatedUserResult] Starting", {
       groupId,
       userId,
+      userEmail,
     });
 
     // Step 1: Validate draw is completed and get basic data
-    const { participant, group } = await this.validateDrawCompletedAndGetParticipant("authenticated", groupId, userId);
+    const { participant, group } = await this.validateDrawCompletedAndGetParticipant(
+      "authenticated",
+      groupId,
+      userId,
+      userEmail
+    );
 
     // Step 2: Get assignment and assigned participant data
     const { assignedParticipant, assignedWishlist } = await this.getAssignedParticipantData(groupId, participant.id);
@@ -124,6 +131,7 @@ export class ResultsService {
       "token",
       undefined,
       undefined,
+      undefined,
       token
     );
 
@@ -182,6 +190,7 @@ export class ResultsService {
     accessType: "authenticated" | "token",
     groupId?: number,
     userId?: UserId,
+    userEmail?: string,
     token?: string
   ): Promise<{ participant: ParticipantDataFromDB; group: ResultGroupInfo }> {
     // Step 1: Check if draw is completed
@@ -229,17 +238,19 @@ export class ResultsService {
       if (!groupId || !userId) {
         throw new Error("INVALID_ACCESS");
       }
+      // Find participant by user_id OR email (for users added before account creation)
       const { data: participantData, error: participantError } = await this.supabase
         .from("participants")
         .select("id, group_id, user_id, name, email, result_viewed_at")
         .eq("group_id", groupId)
-        .eq("user_id", userId)
+        .or(`user_id.eq.${userId},email.eq.${userEmail || ""}`)
         .single();
 
       if (participantError || !participantData) {
         console.log("[ResultsService.validateDrawCompletedAndGetParticipant] Participant not found", {
           groupId,
           userId,
+          userEmail,
           error: participantError?.message,
         });
         throw new Error("FORBIDDEN");

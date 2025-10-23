@@ -1,16 +1,16 @@
 import { defineMiddleware } from "astro:middleware";
 
-import { supabaseClient, createSupabaseServerInstance } from "../db/supabase.client";
+import { createSupabaseServerInstance } from "../db/supabase.client";
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  // Add legacy supabaseClient to locals for backward compatibility
-  context.locals.supabase = supabaseClient;
-
   // Create server-side Supabase instance for authentication
   const supabase = createSupabaseServerInstance({
     cookies: context.cookies,
     headers: context.request.headers,
   });
+
+  // Use server-side client for all operations (not legacy client-side client)
+  context.locals.supabase = supabase;
 
   // Always get user session first before any other operations
   const {
