@@ -35,13 +35,15 @@ const UpdateParticipantSchema = z
  * PATCH /api/participants/:participantId
  * Updates an existing participant's information
  *
- * Only the group creator can update participants, and only before the draw.
+ * Only the group creator can update participants.
+ * Before draw: both name and email can be updated.
+ * After draw: only email can be updated (name changes are blocked).
  * Validates email uniqueness within the group if email is being updated.
  *
  * @param {number} participantId - Participant ID from URL parameter
  * @body UpdateParticipantCommand (optional fields: name, email)
  * @returns {ParticipantDTO} 200 - Updated participant details
- * @returns {ApiErrorResponse} 400 - Invalid input, email exists, or draw completed
+ * @returns {ApiErrorResponse} 400 - Invalid input, email exists, or name update after draw
  * @returns {ApiErrorResponse} 401 - Not authenticated
  * @returns {ApiErrorResponse} 403 - Not the group creator
  * @returns {ApiErrorResponse} 404 - Participant not found
@@ -111,12 +113,13 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Guard 7: Check if draw has been completed
+    // After draw, only email updates are allowed (not name changes)
     const drawCompleted = await participantService.checkDrawCompleted(participant.group_id);
-    if (drawCompleted) {
+    if (drawCompleted && validatedData.name !== undefined) {
       const errorResponse: ApiErrorResponse = {
         error: {
           code: "DRAW_COMPLETED",
-          message: "Cannot update participant after draw has been completed",
+          message: "Cannot update participant name after draw has been completed. Only email can be updated.",
         },
       };
       return new Response(JSON.stringify(errorResponse), {

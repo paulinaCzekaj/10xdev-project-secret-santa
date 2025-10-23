@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useDebouncedCallback } from "use-debounce";
+import { supabaseClient } from "@/db/supabase.client";
 import type { WishlistEditorState, UseWishlistEditorReturn, CreateOrUpdateWishlistCommand } from "../types";
 
 /**
@@ -84,7 +85,14 @@ export function useWishlistEditor(
           const separator = url.includes("?") ? "&" : "?";
           url += `${separator}token=${accessToken}`;
         } else {
-          // Dla zalogowanych użytkowników headers będą dodane przez middleware
+          // Dla zalogowanych użytkowników pobieramy Bearer token z sesji Supabase
+          const {
+            data: { session },
+          } = await supabaseClient.auth.getSession();
+
+          if (session?.access_token) {
+            headers["Authorization"] = `Bearer ${session.access_token}`;
+          }
         }
 
         const command: CreateOrUpdateWishlistCommand = {

@@ -53,7 +53,7 @@ export default function Dashboard({ user, createdGroups, joinedGroups }: Dashboa
                 }
               />
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                 {createdGroups.map((group) => (
                   <GroupCard key={group.id} group={group} isCreator={true} />
                 ))}
@@ -75,7 +75,7 @@ export default function Dashboard({ user, createdGroups, joinedGroups }: Dashboa
             {joinedGroups.length === 0 ? (
               <EmptyState title="Brak grup" description="Nie należysz jeszcze do żadnej grupy" action={null} />
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                 {joinedGroups.map((group) => (
                   <GroupCard key={group.id} group={group} isCreator={false} />
                 ))}
@@ -109,7 +109,7 @@ interface GroupCardProps {
   isCreator: boolean;
 }
 
-function GroupCard({ group }: GroupCardProps) {
+function GroupCard({ group, isCreator }: GroupCardProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pl-PL", {
       year: "numeric",
@@ -125,9 +125,14 @@ function GroupCard({ group }: GroupCardProps) {
     }).format(amount);
   };
 
+  // Route based on user role:
+  // - Creator: management view (/groups/:id)
+  // - Participant: result view (/groups/:id/result)
+  const groupUrl = isCreator ? `/groups/${group.id}` : `/groups/${group.id}/result`;
+
   return (
     <a
-      href={`/groups/${group.id}`}
+      href={groupUrl}
       className="block border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer"
       data-testid={`group-card-${group.id}`}
     >

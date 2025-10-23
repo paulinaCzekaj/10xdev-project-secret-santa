@@ -73,7 +73,9 @@ export const GET: APIRoute = async ({ params, locals }) => {
 
     // Call service to get group details
     const groupService = new GroupService(supabase);
-    const groupDetails = await groupService.getGroupById(groupId, userId);
+    const user = locals.user;
+    const userEmail = user?.email || "";
+    const groupDetails = await groupService.getGroupById(groupId, userId, userEmail);
 
     // Guard 3: Check if group exists and user has access
     if (!groupDetails) {
@@ -94,7 +96,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        "Cache-Control": "private, max-age=60",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
       },
     });
   } catch (error) {
