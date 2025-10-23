@@ -61,10 +61,7 @@ export default function ResetPasswordForm({ accessToken }: ResetPasswordFormProp
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Link nieprawidłowy</h2>
           <p className="text-sm text-gray-600 mb-6">{tokenError}</p>
 
-          <Button
-            onClick={() => (window.location.href = "/forgot-password")}
-            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
-          >
+          <Button onClick={() => (window.location.href = "/forgot-password")} className="w-full h-12 font-semibold">
             Wygeneruj nowy link
           </Button>
         </div>
@@ -136,11 +133,7 @@ export default function ResetPasswordForm({ accessToken }: ResetPasswordFormProp
           )}
 
           {/* Submit Button */}
-          <Button
-            type="submit"
-            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
-            disabled={!isFormValid}
-          >
+          <Button type="submit" className="w-full h-12 font-semibold" disabled={!isFormValid}>
             {isSubmitting && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
             {isSubmitting ? "Ustawianie hasła..." : "Ustaw nowe hasło"}
           </Button>

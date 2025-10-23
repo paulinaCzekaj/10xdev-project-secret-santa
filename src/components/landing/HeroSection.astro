@@ -2,24 +2,19 @@
 import { Button } from "@/components/ui/button";
 ---
 
-<section class="bg-[#FDEBE7] py-16 md:py-24">
-  <div class="mx-auto max-w-7xl px-6">
-    <div
-      class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-pink-100 to-orange-100 px-8 py-16 md:px-16 md:py-24"
-    >
-      {/* Santa illustration placeholder */}
-      <div class="absolute right-0 top-0 h-full w-1/2 opacity-20 pointer-events-none hidden md:block">
-        <div class="flex h-full items-center justify-center">
-          <div class="h-64 w-64 rounded-full bg-red-300/50"></div>
-        </div>
-      </div>
+<section class="relative bg-[#FDEBE7] py-16 md:py-24 overflow-hidden">
+  {/* Background image covering entire section */}
+  <div class="absolute inset-0 pointer-events-none">
+    <img src="/background.png" alt="Background" class="h-full w-full object-cover opacity-20" />
+  </div>
 
-      {/* Content */}
-      <div class="relative z-10 text-center max-w-3xl mx-auto">
-        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 drop-shadow-lg">
+  <div class="relative z-10 mx-auto max-w-7xl px-6">
+    <div class="px-8 py-16 md:px-16 md:py-24">
+      <div class="text-center max-w-3xl mx-auto">
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 drop-shadow-xl">
           Najwspanialszy Czas na Wymianę Prezentów!
         </h1>
-        <p class="text-lg md:text-xl text-white/90 mb-8 drop-shadow">
+        <p class="text-lg md:text-xl text-gray-800 mb-8 drop-shadow-lg">
           Stwórz własną świąteczną loterię i spraw, by te święta były niezapomniane.
         </p>
         <Button size="default" className="shadow-lg hover:shadow-xl transition-all hover:scale-105">

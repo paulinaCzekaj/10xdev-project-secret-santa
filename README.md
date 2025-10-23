@@ -108,11 +108,13 @@ In the project directory, you can run:
 The application is configured for automatic deployment to Cloudflare Pages via GitHub Actions.
 
 ### Quick Start:
+
 1. Set up required GitHub Secrets (see [Deployment Setup](.github/DEPLOYMENT-SETUP.md))
 2. Push to `master` branch
 3. GitHub Actions automatically builds and deploys to Cloudflare Pages
 
 For detailed deployment instructions, see:
+
 - [Deployment Setup Guide](.github/DEPLOYMENT-SETUP.md)
 - [Cloudflare Deployment Guide](CLOUDFLARE-DEPLOYMENT.md)
 

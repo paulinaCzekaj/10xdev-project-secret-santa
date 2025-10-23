@@ -47,11 +47,7 @@ export default function Dashboard({ user, createdGroups, joinedGroups }: Dashboa
                 title="Brak utworzonych grup"
                 description="Utwórz swoją pierwszą grupę Secret Santa"
                 action={
-                  <Button
-                    asChild
-                    className="bg-emerald-500 hover:bg-emerald-600"
-                    data-testid="create-group-empty-state-button"
-                  >
+                  <Button asChild data-testid="create-group-empty-state-button">
                     <a href="/groups/new">Utwórz nową grupę</a>
                   </Button>
                 }
@@ -96,12 +92,7 @@ export default function Dashboard({ user, createdGroups, joinedGroups }: Dashboa
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
             Utwórz nową grupę Secret Santa i zaproś swoich znajomych lub rodzinę.
           </p>
-          <Button
-            asChild
-            size="lg"
-            className="bg-emerald-500 hover:bg-emerald-600 text-white"
-            data-testid="create-group-cta-button"
-          >
+          <Button asChild size="lg" data-testid="create-group-cta-button">
             <a href="/groups/new">
               <span className="mr-2">🎅</span>
               Utwórz nową grupę Secret Santa

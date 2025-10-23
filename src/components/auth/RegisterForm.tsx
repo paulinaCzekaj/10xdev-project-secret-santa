@@ -163,11 +163,7 @@ export default function RegisterForm() {
           )}
 
           {/* Submit Button */}
-          <Button
-            type="submit"
-            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
-            disabled={!isFormValid}
-          >
+          <Button type="submit" className="w-full h-12 font-semibold" disabled={!isFormValid}>
             {isSubmitting && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
             {isSubmitting ? "Tworzenie konta..." : "Zarejestruj się"}
           </Button>

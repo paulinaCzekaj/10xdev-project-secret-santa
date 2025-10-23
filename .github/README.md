@@ -9,6 +9,7 @@ This CI/CD pipeline is designed for the Secret Santa application built with Astr
 The pipeline consists of 4 sequential jobs that run on Ubuntu latest with Node.js 20:
 
 ### 1. Lint & Type Check
+
 - **Purpose**: Ensures code quality and type safety
 - **Steps**:
   - Code checkout
@@ -18,6 +19,7 @@ The pipeline consists of 4 sequential jobs that run on Ubuntu latest with Node.j
   - TypeScript type checking
 
 ### 2. Unit Tests
+
 - **Purpose**: Validates business logic with Vitest
 - **Steps**:
   - Code checkout
@@ -27,6 +29,7 @@ The pipeline consists of 4 sequential jobs that run on Ubuntu latest with Node.j
   - Coverage report upload
 
 ### 3. E2E Tests
+
 - **Purpose**: Validates user flows with Playwright
 - **Steps**:
   - Code checkout
@@ -37,6 +40,7 @@ The pipeline consists of 4 sequential jobs that run on Ubuntu latest with Node.j
   - Test results upload
 
 ### 4. Build & Deploy
+
 - **Purpose**: Creates production build and Docker image
 - **Steps**:
   - Code checkout
@@ -50,6 +54,7 @@ The pipeline consists of 4 sequential jobs that run on Ubuntu latest with Node.j
 ## Triggers
 
 The pipeline runs automatically on:
+
 - **Push to master branch**
 - **Manual trigger** via GitHub Actions UI
 
@@ -58,18 +63,21 @@ The pipeline runs automatically on:
 Configure these secrets in your GitHub repository settings:
 
 ### For Supabase (Testing)
+
 ```
 PUBLIC_SUPABASE_URL=your_supabase_project_url
 PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 ### For Docker Hub (Optional)
+
 ```
 DOCKERHUB_USERNAME=your_dockerhub_username
 DOCKERHUB_TOKEN=your_dockerhub_access_token
 ```
 
 ### For DigitalOcean (Optional)
+
 ```
 DIGITALOCEAN_ACCESS_TOKEN=your_digitalocean_token
 ```
@@ -117,11 +125,13 @@ The pipeline includes automated Docker image testing:
 ## Monitoring & Debugging
 
 ### Test Results
+
 - Unit test coverage reports are uploaded as artifacts
 - E2E test results and screenshots are uploaded as artifacts
 - Playwright HTML reports are available for detailed test analysis
 
 ### Failure Handling
+
 - Tests are retried on CI (2 retries configured)
 - Failed tests capture screenshots and traces
 - All artifacts are preserved even on failures
@@ -129,12 +139,15 @@ The pipeline includes automated Docker image testing:
 ## Deployment Options
 
 ### Docker Hub
+
 When Docker Hub credentials are provided, the pipeline will:
+
 - Build and tag the image with commit SHA
 - Push to Docker Hub with `latest` tag
 - Use build caching for faster subsequent builds
 
 ### DigitalOcean
+
 When DigitalOcean token is provided, you can add deployment commands in the final step. Example:
 
 ```yaml

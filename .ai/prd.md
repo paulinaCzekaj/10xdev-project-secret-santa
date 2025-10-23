@@ -157,6 +157,7 @@ Aplikacja "Secret Santa" adresuje te problemy, oferując scentralizowaną, zauto
   1.  Przycisk "Rozpocznij losowanie" jest aktywny tylko, jeśli w grupie jest co najmniej 3 uczestników.
   2.  Przed uruchomieniem losowania system waliduje, czy da się je przeprowadzić z zadanymi regułami wykluczeń. Jeśli nie, wyświetla błąd.
   3.  Po kliknięciu przycisku i potwierdzeniu, proces losowania jest wykonywany.
+  
   4.  Po zakończeniu losowania, widok zarządzania grupą jest blokowany do edycji.
 
 - ID: US-009

@@ -131,7 +131,7 @@ export function DrawSection({ groupId, participantsCount, exclusionsCount, isCre
               onClick={onDrawClick}
               disabled={!isReady || isValidating}
               size="lg"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2"
+              className="flex items-center gap-2"
             >
               <Shuffle className="h-5 w-5" />
               {isValidating ? "Sprawdzanie..." : "Rozpocznij losowanie"}

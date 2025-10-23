@@ -5,11 +5,13 @@
 Projekt został w pełni przygotowany do deploymentu na Cloudflare Pages z automatycznym CI/CD przez GitHub Actions.
 
 ### Nowe pliki:
+
 - ✅ `.github/workflows/master.yml` - Workflow CI/CD dla deploymentu
 - ✅ `.github/DEPLOYMENT-SETUP.md` - Szczegółowa dokumentacja konfiguracji
 - ✅ `CHANGELOG-CLOUDFLARE.md` - Lista wszystkich wprowadzonych zmian
 
 ### Zaktualizowane pliki:
+
 - ✅ `.github/workflows/pull-request.yml` - Poprawiono parametr codecov
 - ✅ `wrangler.toml` - Zaktualizowano datę kompatybilności
 - ✅ `README.md` - Dodano sekcję Deployment
@@ -43,18 +45,20 @@ Projekt został w pełni przygotowany do deploymentu na Cloudflare Pages z autom
 3. Kliknij **New repository secret** i dodaj (łącznie 6 secrets):
 
 #### Wymagane Cloudflare Secrets:
-| Nazwa | Wartość |
-|-------|---------|
-| `CLOUDFLARE_API_TOKEN` | Token z Kroku 1 |
+
+| Nazwa                   | Wartość              |
+| ----------------------- | -------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Token z Kroku 1      |
 | `CLOUDFLARE_ACCOUNT_ID` | Account ID z Kroku 2 |
 
 #### Wymagane Supabase Secrets:
-| Nazwa | Wartość | Gdzie znaleźć |
-|-------|---------|---------------|
-| `SUPABASE_URL` | `https://xxx.supabase.co` | Supabase Dashboard → Settings → API |
-| `SUPABASE_KEY` | Anon/Public Key | Supabase Dashboard → Settings → API → anon public |
-| `PUBLIC_SUPABASE_URL` | To samo co `SUPABASE_URL` | - |
-| `PUBLIC_SUPABASE_ANON_KEY` | To samo co `SUPABASE_KEY` | - |
+
+| Nazwa                      | Wartość                   | Gdzie znaleźć                                     |
+| -------------------------- | ------------------------- | ------------------------------------------------- |
+| `SUPABASE_URL`             | `https://xxx.supabase.co` | Supabase Dashboard → Settings → API               |
+| `SUPABASE_KEY`             | Anon/Public Key           | Supabase Dashboard → Settings → API → anon public |
+| `PUBLIC_SUPABASE_URL`      | To samo co `SUPABASE_URL` | -                                                 |
+| `PUBLIC_SUPABASE_ANON_KEY` | To samo co `SUPABASE_KEY` | -                                                 |
 
 ### Krok 4: Utwórz Cloudflare Pages Project
 
@@ -86,6 +90,7 @@ Projekt został w pełni przygotowany do deploymentu na Cloudflare Pages z autom
 5. Powtórz proces dla środowiska **Preview** (jeśli planujesz używać preview deployments)
 
 **Gdzie znaleźć wartości Supabase?**
+
 - Zaloguj się do [Supabase Dashboard](https://supabase.com/dashboard)
 - Wybierz swój projekt
 - Przejdź do **Settings** → **API**
@@ -110,6 +115,7 @@ Projekt został w pełni przygotowany do deploymentu na Cloudflare Pages z autom
 ### Krok 7: Testuj Deployment
 
 1. Commit i push zmian do brancha `master`:
+
    ```bash
    git add .
    git commit -m "Configure Cloudflare Pages deployment"
@@ -133,7 +139,9 @@ Projekt został w pełni przygotowany do deploymentu na Cloudflare Pages z autom
 ## 🆘 Troubleshooting
 
 ### ❌ Błąd: "Supabase credentials missing" w runtime Cloudflare
+
 **Objaw:** Aplikacja buduje się poprawnie, ale w logach Cloudflare widzisz błąd:
+
 ```
 Error: Supabase credentials missing. Please check your .env file and ensure PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY are set.
 ```
@@ -141,24 +149,29 @@ Error: Supabase credentials missing. Please check your .env file and ensure PUBL
 **Przyczyna:** Zmienne środowiskowe z GitHub Secrets są dostępne tylko podczas build-time, nie w runtime.
 
 **Rozwiązanie:**
+
 1. Przejdź do Cloudflare Dashboard → Workers & Pages → secret-santa-app
 2. Zakładka **Settings** → **Environment variables**
 3. Dodaj `PUBLIC_SUPABASE_URL` i `PUBLIC_SUPABASE_ANON_KEY` (zobacz **Krok 5** powyżej)
 4. Po dodaniu zmiennych, wykonaj **redeploy** (przejdź do Deployments → kliknij "..." przy ostatnim deploymencie → Retry deployment)
 
 ### Deployment failuje z błędem 401/403
+
 - Sprawdź czy `CLOUDFLARE_API_TOKEN` ma poprawne uprawnienia (Cloudflare Pages - Edit)
 - Sprawdź czy `CLOUDFLARE_ACCOUNT_ID` jest poprawny
 
 ### Build failuje z "Missing environment variables"
+
 - Upewnij się, że wszystkie Supabase secrets są ustawione w GitHub
 - Sprawdź czy nazwy secrets są dokładnie takie jak w dokumentacji (case-sensitive!)
 
 ### "Project not found" podczas deploymentu
+
 - Upewnij się, że nazwa projektu w Cloudflare Pages to dokładnie `secret-santa-app`
 - Alternatywnie, zmień `--project-name` w pliku `.github/workflows/master.yml`
 
 ### KV binding error
+
 - Sprawdź czy KV namespace istnieje w Cloudflare Dashboard
 - Sprawdź czy ID w `wrangler.toml` jest poprawne (skopiowane z Cloudflare Dashboard)
 
@@ -167,10 +180,10 @@ Error: Supabase credentials missing. Please check your .env file and ensure PUBL
 ## 🎉 Gotowe!
 
 Po wykonaniu wszystkich kroków, każdy push do brancha `master` będzie automatycznie:
+
 1. Sprawdzał jakość kodu (lint)
 2. Uruchamiał testy jednostkowe
 3. Budował aplikację
 4. Deployował na Cloudflare Pages
 
 Twoja aplikacja będzie dostępna globalnie z wykorzystaniem Cloudflare CDN! 🚀
-
