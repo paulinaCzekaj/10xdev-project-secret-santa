@@ -9,6 +9,7 @@ Projekt jest skonfigurowany do automatycznego deploymentu na Cloudflare Pages pr
 Aby workflow działał poprawnie, musisz skonfigurować następujące secrets w repozytorium GitHub:
 
 ### Krok po kroku:
+
 1. Przejdź do swojego repozytorium na GitHub
 2. Kliknij **Settings** → **Secrets and variables** → **Actions**
 3. Kliknij **New repository secret** i dodaj każdy z poniższych secrets:
@@ -16,6 +17,7 @@ Aby workflow działał poprawnie, musisz skonfigurować następujące secrets w 
 ### Cloudflare Secrets
 
 #### `CLOUDFLARE_API_TOKEN`
+
 - **Jak uzyskać:**
   1. Zaloguj się do [Cloudflare Dashboard](https://dash.cloudflare.com/)
   2. Przejdź do **My Profile** → **API Tokens**
@@ -26,6 +28,7 @@ Aby workflow działał poprawnie, musisz skonfigurować następujące secrets w 
   5. Skopiuj wygenerowany token i dodaj jako secret
 
 #### `CLOUDFLARE_ACCOUNT_ID`
+
 - **Jak uzyskać:**
   1. Zaloguj się do [Cloudflare Dashboard](https://dash.cloudflare.com/)
   2. Wybierz swoją strefę (domenę)
@@ -35,25 +38,29 @@ Aby workflow działał poprawnie, musisz skonfigurować następujące secrets w 
 ### Supabase Secrets
 
 #### `SUPABASE_URL`
+
 - URL twojego projektu Supabase, np. `https://abcdefgh.supabase.co`
 - Znajdziesz w Supabase Dashboard → Project Settings → API
 
-#### `SUPABASE_KEY` 
+#### `SUPABASE_KEY`
+
 - Anon/Public Key z Supabase
 - Znajdziesz w Supabase Dashboard → Project Settings → API → Project API keys → `anon` `public`
 
 #### `PUBLIC_SUPABASE_URL`
+
 - To samo co `SUPABASE_URL`
 - Prefiks `PUBLIC_` oznacza, że może być dostępny w kodzie po stronie klienta
 
 #### `PUBLIC_SUPABASE_ANON_KEY`
+
 - To samo co `SUPABASE_KEY`
 - Prefiks `PUBLIC_` oznacza, że może być dostępny w kodzie po stronie klienta
-
 
 ### Opcjonalny Secret dla Codecov
 
 #### `CODECOV_TOKEN`
+
 - Token do uploadowania raportów coverage do Codecov
 - Jeśli nie używasz Codecov, możesz pominąć ten krok
 - Znajdziesz w [Codecov Dashboard](https://codecov.io/) → Settings
@@ -84,10 +91,10 @@ Przed pierwszym deploymentem musisz utworzyć projekt w Cloudflare Pages:
 3. Przejdź do zakładki **Settings** → **Environment variables**
 4. W sekcji **Production** dodaj następujące zmienne:
 
-   | Variable Name | Value | Gdzie znaleźć |
-   |---------------|-------|---------------|
-   | `PUBLIC_SUPABASE_URL` | `https://xxx.supabase.co` | Supabase Dashboard → Settings → API → Project URL |
-   | `PUBLIC_SUPABASE_ANON_KEY` | Twój anon/public key | Supabase Dashboard → Settings → API → anon public |
+   | Variable Name              | Value                     | Gdzie znaleźć                                     |
+   | -------------------------- | ------------------------- | ------------------------------------------------- |
+   | `PUBLIC_SUPABASE_URL`      | `https://xxx.supabase.co` | Supabase Dashboard → Settings → API → Project URL |
+   | `PUBLIC_SUPABASE_ANON_KEY` | Twój anon/public key      | Supabase Dashboard → Settings → API → anon public |
 
 5. Dla każdej zmiennej:
    - Kliknij **Add variable**
@@ -132,9 +139,11 @@ Workflow wykonuje następujące kroki:
 3. **Build & Deploy** - zbudowanie aplikacji i deployment na Cloudflare Pages
 
 ### Triggery:
+
 - Automatycznie przy każdym `push` do brancha `master`
 
 ### Jobs:
+
 - `lint` - sprawdzenie kodu ESLint
 - `unit-tests` - testy jednostkowe z Vitest
 - `build-and-deploy` - build aplikacji i wdrożenie przez Wrangler
@@ -153,7 +162,9 @@ Aby sprawdzić czy wszystko działa poprawnie:
 ## 7. Troubleshooting
 
 ### ❌ Runtime Error: "Supabase credentials missing"
+
 **Problem:** Aplikacja buduje się poprawnie w GitHub Actions, ale po wdrożeniu na Cloudflare widzisz błąd w logach:
+
 ```
 Error: Supabase credentials missing. Please check your .env file and ensure PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY are set.
 ```
@@ -161,6 +172,7 @@ Error: Supabase credentials missing. Please check your .env file and ensure PUBL
 **Przyczyna:** Zmienne środowiskowe z GitHub Secrets są dostępne tylko podczas build (npm run build), ale nie są dostępne w runtime gdy aplikacja obsługuje requesty.
 
 **Rozwiązanie:**
+
 1. Dodaj zmienne środowiskowe w Cloudflare Dashboard (zobacz **Sekcja 3**)
 2. Po dodaniu zmiennych:
    - Przejdź do **Deployments** w projekcie Cloudflare
@@ -169,20 +181,23 @@ Error: Supabase credentials missing. Please check your .env file and ensure PUBL
 3. Sprawdź logi - błąd powinien zniknąć
 
 ### Deployment fails z błędem 401/403
+
 - Sprawdź czy `CLOUDFLARE_API_TOKEN` jest poprawny i ma odpowiednie uprawnienia
 - Sprawdź czy `CLOUDFLARE_ACCOUNT_ID` jest poprawny
 
 ### Build fails z błędem "Missing environment variables"
+
 - Sprawdź czy wszystkie Supabase secrets są ustawione w GitHub Secrets
 - Upewnij się, że nazwy secrets są dokładnie takie jak w workflow (case-sensitive)
 - Pamiętaj: build-time secrets (GitHub) ≠ runtime variables (Cloudflare Dashboard)
 
 ### KV binding error
+
 - Sprawdź czy KV namespace istnieje w Cloudflare Dashboard
 - Sprawdź czy ID w `wrangler.toml` jest poprawne
 
 ### Więcej informacji
+
 - [Cloudflare Pages Docs](https://developers.cloudflare.com/pages/)
 - [Wrangler CLI Docs](https://developers.cloudflare.com/workers/wrangler/)
 - [GitHub Actions Docs](https://docs.github.com/en/actions)
-

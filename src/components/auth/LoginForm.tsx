@@ -176,7 +176,7 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+            className="w-full h-12 font-semibold"
             disabled={!isFormValid}
             data-testid="login-submit-button"
           >

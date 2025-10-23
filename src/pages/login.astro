@@ -48,11 +48,4 @@ if (user) {
 
 <AuthLayout title="Logowanie | Secret Santa">
   <LoginForm client:load redirectTo={redirectTo} message={message} />
-
-  <div slot="footer-links">
-    <p class="text-gray-600">
-      Nie masz konta?
-      <a href="/register" class="text-red-500 hover:text-red-600 font-medium ml-1">Zarejestruj się</a>
-    </p>
-  </div>
 </AuthLayout>

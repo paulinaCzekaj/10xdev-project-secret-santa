@@ -11,24 +11,30 @@ Rozszerzono dokumentację o krytyczne informacje dotyczące konfiguracji zmienny
 ### 1. Dokumentacja rozszerzona
 
 #### `SETUP-CLOUDFLARE.md`
+
 **Nowy Krok 5: Skonfiguruj zmienne środowiskowe w Cloudflare Pages**
+
 - Dodano szczegółowe instrukcje dodawania `PUBLIC_SUPABASE_URL` i `PUBLIC_SUPABASE_ANON_KEY` w Cloudflare Dashboard
 - Wyjaśniono różnicę między build-time (GitHub Secrets) a runtime (Cloudflare Dashboard)
 - Zaktualizowano numerację kroków (poprzedni Krok 5 → Krok 6, itd.)
 
 **Rozszerzona sekcja Troubleshooting:**
+
 - Dodano nowy punkt: "❌ Błąd: Supabase credentials missing w runtime Cloudflare"
 - Opisano objawy, przyczynę i krok po kroku rozwiązanie problemu
 - Dodano instrukcję jak wykonać redeploy po dodaniu zmiennych
 
 #### `.github/DEPLOYMENT-SETUP.md`
+
 **Nowa Sekcja 3: Konfiguracja zmiennych środowiskowych w Cloudflare Pages (Runtime)**
+
 - Wyjaśniono dlaczego GitHub Secrets nie wystarczają do działania aplikacji
 - Dodano tabelę z wymaganymi zmiennymi i ich źródłami
 - Szczegółowe kroki konfiguracji przez Cloudflare Dashboard
 - Zaktualizowano numerację sekcji (poprzednia Sekcja 3 → Sekcja 4, itd.)
 
 **Rozszerzona sekcja Troubleshooting (Sekcja 7):**
+
 - Dodano "❌ Runtime Error: Supabase credentials missing" jako pierwszy punkt
 - Wyjaśniono przyczynę i rozwiązanie z linkiem do Sekcji 3
 - Zaktualizowano punkt "Build fails" o rozróżnienie build-time vs runtime
@@ -38,6 +44,7 @@ Rozszerzono dokumentację o krytyczne informacje dotyczące konfiguracji zmienny
 ### 2. Kluczowe informacje dla użytkowników
 
 **Problem:** Aplikacja buduje się poprawnie, ale w runtime na Cloudflare widzisz błąd:
+
 ```
 Error: Supabase credentials missing. Please check your .env file and ensure PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY are set.
 ```
@@ -64,7 +71,7 @@ Utworzono nowy workflow CI/CD dla brancha `master` z następującymi funkcjami:
 
 - **Lint Job**: Sprawdzenie jakości kodu za pomocą ESLint
 - **Unit Tests Job**: Uruchomienie testów jednostkowych z coverage (Vitest)
-- **Build & Deploy Job**: 
+- **Build & Deploy Job**:
   - Build aplikacji Astro
   - Automatyczny deployment na Cloudflare Pages przez Wrangler Action
   - Wymaga secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
@@ -72,6 +79,7 @@ Utworzono nowy workflow CI/CD dla brancha `master` z następującymi funkcjami:
 - **Status Notification Job**: Informacja o statusie deploymentu
 
 **Wersje używanych akcji (zweryfikowane jako najnowsze):**
+
 - `actions/checkout@v5`
 - `actions/setup-node@v6`
 - `codecov/codecov-action@v5`
@@ -84,15 +92,18 @@ Utworzono nowy workflow CI/CD dla brancha `master` z następującymi funkcjami:
 ### `.github/workflows/pull-request.yml` (POPRAWIONY)
 
 **Zmiana:**
+
 - Poprawiono parametr w `codecov/codecov-action@v5` z `file:` na `files:` (zgodnie z najnowszą wersją API)
 
 **Przed:**
+
 ```yaml
 with:
   file: ./coverage/coverage-final.json
 ```
 
 **Po:**
+
 ```yaml
 with:
   files: ./coverage/coverage-final.json
@@ -101,14 +112,17 @@ with:
 ### `wrangler.toml` (ZAKTUALIZOWANY)
 
 **Zmiana:**
+
 - Zaktualizowano `compatibility_date` z `2024-10-22` na `2025-10-22`
 
 **Przed:**
+
 ```toml
 compatibility_date = "2024-10-22"
 ```
 
 **Po:**
+
 ```toml
 compatibility_date = "2025-10-22"
 ```
@@ -116,6 +130,7 @@ compatibility_date = "2025-10-22"
 ### `README.md` (ROZSZERZONY)
 
 **Dodano:**
+
 - Sekcję "Deployment" z linkami do dokumentacji
 - Rozszerzoną listę dostępnych skryptów npm (testy)
 - Aktualizację sekcji "CI/CD and Hosting" - zamieniono DigitalOcean na Cloudflare Pages
@@ -123,6 +138,7 @@ compatibility_date = "2025-10-22"
 ### `CLOUDFLARE-DEPLOYMENT.md` (ROZSZERZONY)
 
 **Dodano:**
+
 - Sekcję o GitHub Secrets z szczegółowymi instrukcjami
 - Instrukcje jak uzyskać Cloudflare API Token i Account ID
 - Sekcję o automatycznym deploymencie przez GitHub Actions
@@ -157,6 +173,7 @@ Szczegółowy przewodnik konfiguracji deploymentu zawierający:
 Zgodnie z najlepszymi praktykami, zweryfikowano wszystkie używane akcje:
 
 ### Sprawdzone akcje:
+
 1. **actions/checkout** - v5 (najnowsza major version)
 2. **actions/setup-node** - v6 (najnowsza major version)
 3. **codecov/codecov-action** - v5 (najnowsza major version)
@@ -164,6 +181,7 @@ Zgodnie z najlepszymi praktykami, zweryfikowano wszystkie używane akcje:
 5. **peter-evans/create-or-update-comment** - v5 (najnowsza major version)
 
 ### Status akcji:
+
 - ✅ Wszystkie akcje są aktywne (nie archived)
 - ✅ Wszystkie akcje używają najnowszych major versions
 - ✅ Wszystkie parametry są zgodne z aktualną dokumentacją
@@ -176,15 +194,18 @@ Zgodnie z najlepszymi praktykami, zweryfikowano wszystkie używane akcje:
 Aby uruchomić automatyczny deployment:
 
 ### 5.1 Konfiguracja GitHub Repository
+
 1. Przejdź do Settings → Secrets and variables → Actions
 2. Dodaj wszystkie wymagane secrets (lista w `.github/DEPLOYMENT-SETUP.md`)
 
 ### 5.2 Konfiguracja Cloudflare
+
 1. Utwórz projekt Cloudflare Pages o nazwie `secret-santa-app`
 2. Utwórz KV Namespace dla sesji
 3. Zaktualizuj ID namespace w `wrangler.toml`
 
 ### 5.3 Testowanie
+
 1. Push zmian do brancha `master`
 2. Sprawdź wykonanie workflow w zakładce Actions
 3. Zweryfikuj deployment na Cloudflare Pages
@@ -222,6 +243,7 @@ Production (Cloudflare CDN)
 ## 7. Zmienne środowiskowe
 
 ### Build Time (GitHub Actions)
+
 ```env
 SUPABASE_URL
 SUPABASE_KEY
@@ -230,6 +252,7 @@ PUBLIC_SUPABASE_ANON_KEY
 ```
 
 ### Runtime (Cloudflare Pages)
+
 - Zmienne z prefixem `PUBLIC_` są dostępne w kodzie klienta
 - Zmienne bez prefixu są dostępne tylko w server-side code
 - KV Namespace dla sesji (binding: `SESSION`)
@@ -248,10 +271,10 @@ PUBLIC_SUPABASE_ANON_KEY
 ## Uwagi końcowe
 
 Wszystkie zmiany zostały wprowadzone zgodnie z najlepszymi praktykami:
+
 - ✅ Używanie `npm ci` zamiast `npm install`
 - ✅ Zmienne środowiskowe na poziomie job, nie global
 - ✅ Najnowsze wersje akcji (major versions)
 - ✅ Weryfikacja czy akcje nie są deprecated
 - ✅ Poprawna konfiguracja Cloudflare adapter w Astro
 - ✅ Dokumentacja deployment procesu
-

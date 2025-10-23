@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import { Toaster } from "@/components/ui/sonner";
+import Navbar from "@/components/layout/Navbar";
 
 interface Props {
   title: string;
@@ -18,17 +19,20 @@ const { title } = Astro.props;
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <meta name="robots" content="noindex, nofollow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
   </head>
-  <body class="bg-gradient-to-br from-red-50 via-white to-green-50 min-h-screen">
-    <div class="container mx-auto px-4 py-8 md:py-16">
-      <div class="max-w-md mx-auto">
-        <!-- Logo -->
-        <div class="text-center mb-8">
-          <a href="/" class="cursor-pointer">
-            <h1 class="text-3xl font-bold text-red-500">🎅 Secret Santa</h1>
-          </a>
-        </div>
+  <body
+    class="font-['Poppins',sans-serif] antialiased bg-gradient-to-br from-red-50 via-white to-green-50 min-h-screen flex flex-col"
+  >
+    <Navbar client:load isLoggedIn={false} />
 
+    <div class="container mx-auto px-4 flex-1 flex items-center justify-center">
+      <div class="max-w-md w-full py-8">
         <!-- Content slot -->
         <slot />
 

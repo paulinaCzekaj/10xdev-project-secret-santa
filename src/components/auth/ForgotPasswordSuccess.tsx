@@ -39,10 +39,7 @@ export const ForgotPasswordSuccess = ({ email }: ForgotPasswordSuccessProps) => 
         />
 
         {/* Back to Login */}
-        <Button
-          onClick={() => (window.location.href = "/login")}
-          className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
-        >
+        <Button onClick={() => (window.location.href = "/login")} className="w-full h-12 font-semibold">
           Wróć do logowania
         </Button>
       </div>

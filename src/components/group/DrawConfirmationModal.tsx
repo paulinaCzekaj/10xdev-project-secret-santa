@@ -118,11 +118,7 @@ export function DrawConfirmationModal({
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isExecuting}>Anuluj</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleConfirm}
-            disabled={isExecuting}
-            className="bg-emerald-600 text-white hover:bg-emerald-700"
-          >
+          <AlertDialogAction onClick={handleConfirm} disabled={isExecuting}>
             {isExecuting ? "Trwa losowanie..." : "Potwierdź i rozpocznij losowanie"}
           </AlertDialogAction>
         </AlertDialogFooter>

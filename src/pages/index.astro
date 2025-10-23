@@ -1,5 +1,5 @@
 ---
-import Header from "../components/landing/Header.tsx";
+import Navbar from "../components/layout/Navbar";
 import HeroSection from "../components/landing/HeroSection.astro";
 import FeaturesSection from "../components/landing/FeaturesSection.astro";
 import TraditionsSection from "../components/landing/TraditionsSection.astro";
@@ -36,7 +36,7 @@ if (user) {
     />
   </head>
   <body class="font-['Poppins',sans-serif] antialiased">
-    <Header client:load />
+    <Navbar client:load isLoggedIn={false} />
     <main>
       <HeroSection />
       <FeaturesSection />
