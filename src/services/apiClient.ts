@@ -64,6 +64,7 @@ class ApiClient {
     const response = await fetch(`${this.baseUrl}${url}`, {
       method: "GET",
       headers,
+      cache: "no-store",
     });
     return this.handleResponse<T>(response);
   }
@@ -77,6 +78,7 @@ class ApiClient {
       method: "POST",
       headers,
       body: data ? JSON.stringify(data) : undefined,
+      cache: "no-store",
     });
     return this.handleResponse<T>(response);
   }
@@ -90,6 +92,7 @@ class ApiClient {
       method: "PATCH",
       headers,
       body: JSON.stringify(data),
+      cache: "no-store",
     });
     return this.handleResponse<T>(response);
   }
@@ -102,6 +105,7 @@ class ApiClient {
     const response = await fetch(`${this.baseUrl}${url}`, {
       method: "DELETE",
       headers,
+      cache: "no-store",
     });
     return this.handleResponse<T>(response);
   }

@@ -214,7 +214,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
   // Call service to fetch groups
   try {
     const groupService = new GroupService(supabase);
-    const result = await groupService.listGroups(userId, validatedQuery);
+    const user = locals.user;
+    const userEmail = user?.email || "";
+    const result = await groupService.listGroups(userId, userEmail, validatedQuery);
 
     return new Response(JSON.stringify(result), {
       status: 200,

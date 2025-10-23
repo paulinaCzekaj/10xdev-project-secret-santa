@@ -8,6 +8,12 @@ interface NavbarProps {
 }
 
 export default function Navbar({ isLoggedIn = false, userEmail }: NavbarProps) {
+  // Get user initial (first letter of email or name)
+  const getUserInitial = () => {
+    if (!userEmail) return "U";
+    return userEmail.charAt(0).toUpperCase();
+  };
+
   return (
     <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-sm shadow-sm">
       <div className="mx-auto max-w-7xl px-6 py-4">
@@ -24,7 +30,14 @@ export default function Navbar({ isLoggedIn = false, userEmail }: NavbarProps) {
           {/* Navigation - Logged In */}
           {isLoggedIn ? (
             <nav className="flex items-center gap-4">
-              {userEmail && <span className="hidden sm:inline text-sm text-gray-600 mr-2">{userEmail}</span>}
+              {userEmail && (
+                <div
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm"
+                  title={userEmail}
+                >
+                  {getUserInitial()}
+                </div>
+              )}
               <a href="/dashboard" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">
                 Pulpit
               </a>

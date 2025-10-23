@@ -99,23 +99,62 @@ export function ParticipantCard({
               </div>
             )}
 
-            {/* Menu akcji */}
+            {/* Przyciski akcji - widoczne na desktop/tablet */}
+            <div className="hidden sm:flex items-center gap-2">
+              {/* Przed losowaniem - opcje edycji i usuwania */}
+              {!isDrawn && canEdit && (
+                <>
+                  <Button variant="outline" size="sm" onClick={() => onEdit(participant)}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edytuj
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onDelete(participant)}
+                    disabled={participant.isCreator}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Usuń
+                  </Button>
+                </>
+              )}
+
+              {/* Po losowaniu - opcje dla twórcy */}
+              {isDrawn && isCreator && (
+                <>
+                  <Button variant="outline" size="sm" onClick={() => onEdit(participant)}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edytuj email
+                  </Button>
+                  {participant.resultLink && (
+                    <Button variant="outline" size="sm" onClick={handleCopyToken}>
+                      <Copy className="h-4 w-4 mr-2" />
+                      Kopiuj link
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Menu akcji - dropdown dla mobile */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 sm:hidden">
                   <MoreHorizontal className="h-4 w-4" />
                   <span className="sr-only">Otwórz menu akcji</span>
                 </Button>
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end">
+                {/* Przed losowaniem - opcje edycji i usuwania */}
                 {!isDrawn && canEdit && (
                   <>
                     <DropdownMenuItem onClick={() => onEdit(participant)}>
                       <Edit className="mr-2 h-4 w-4" />
                       Edytuj
                     </DropdownMenuItem>
-
                     <DropdownMenuItem
                       onClick={() => onDelete(participant)}
                       disabled={participant.isCreator}
@@ -127,11 +166,20 @@ export function ParticipantCard({
                   </>
                 )}
 
-                {isDrawn && isCreator && participant.resultLink && (
-                  <DropdownMenuItem onClick={handleCopyToken}>
-                    <Copy className="mr-2 h-4 w-4" />
-                    Kopiuj link
-                  </DropdownMenuItem>
+                {/* Po losowaniu - opcje dla twórcy */}
+                {isDrawn && isCreator && (
+                  <>
+                    <DropdownMenuItem onClick={() => onEdit(participant)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edytuj email
+                    </DropdownMenuItem>
+                    {participant.resultLink && (
+                      <DropdownMenuItem onClick={handleCopyToken}>
+                        <Copy className="mr-2 h-4 w-4" />
+                        Kopiuj link
+                      </DropdownMenuItem>
+                    )}
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>

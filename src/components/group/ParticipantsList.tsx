@@ -183,6 +183,19 @@ export function ParticipantsList({
                         </TooltipContent>
                       </Tooltip>
                     )}
+                    {isCreator && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="sm" onClick={() => onEdit(participant)} className="h-8 w-8 p-0">
+                            <Edit className="h-4 w-4" />
+                            <span className="sr-only">Edytuj uczestnika</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Edytuj uczestnika</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </TableCell>
                 </>
               )}

@@ -199,6 +199,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
       <EditParticipantModal
         participant={modals.selectedParticipant}
         isOpen={modals.isEditParticipantModalOpen}
+        isDrawn={isDrawn}
         onClose={modals.closeModal}
         onSave={handlers.handleParticipantUpdated}
         updateParticipant={updateParticipant}

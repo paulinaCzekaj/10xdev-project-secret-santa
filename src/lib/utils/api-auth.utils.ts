@@ -76,6 +76,7 @@ export async function requireGroupOwner(context: AuthContext, groupId: number): 
 
 /**
  * Sprawdza czy użytkownik ma dostęp do grupy (jako twórca lub uczestnik)
+ * Sprawdza uczestnictwo zarówno po user_id jak i po email (dla użytkowników dodanych przed założeniem konta)
  */
 export async function requireGroupAccess(context: AuthContext, groupId: number): Promise<true | Response> {
   const userIdOrResponse = requireApiAuth(context);
@@ -85,7 +86,8 @@ export async function requireGroupAccess(context: AuthContext, groupId: number):
   }
 
   const userId = userIdOrResponse;
-  const { supabase } = context.locals;
+  const { supabase, user } = context.locals;
+  const userEmail = user?.email || "";
 
   // Sprawdź czy użytkownik jest twórcą
   const { data: group } = await supabase.from("groups").select("creator_id").eq("id", groupId).single();
@@ -94,12 +96,12 @@ export async function requireGroupAccess(context: AuthContext, groupId: number):
     return true;
   }
 
-  // Sprawdź czy użytkownik jest uczestnikiem
+  // Sprawdź czy użytkownik jest uczestnikiem (po user_id LUB email)
   const { data: participant } = await supabase
     .from("participants")
     .select("id")
     .eq("group_id", groupId)
-    .eq("user_id", userId)
+    .or(`user_id.eq.${userId},email.eq.${userEmail}`)
     .single();
 
   if (participant) {

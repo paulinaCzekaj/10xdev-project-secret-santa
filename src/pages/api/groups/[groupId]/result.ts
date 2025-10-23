@@ -59,8 +59,12 @@ export const GET: APIRoute = async ({ params, locals }) => {
     const supabase = locals.supabase;
     const resultsService = new ResultsService(supabase);
 
+    // Get user email for participant matching
+    const user = locals.user;
+    const userEmail = user?.email || "";
+
     // Get draw result for authenticated user
-    const result = await resultsService.getAuthenticatedUserResult(groupId, userId);
+    const result = await resultsService.getAuthenticatedUserResult(groupId, userId, userEmail);
 
     console.log("[GET /api/groups/:groupId/result] Successfully retrieved draw result", {
       groupId,

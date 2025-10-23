@@ -97,10 +97,11 @@ export class GroupService {
    *
    * @param groupId - The ID of the group to retrieve
    * @param userId - The ID of the user requesting the group
+   * @param userEmail - The email of the user (for matching participants added by email)
    * @returns GroupDetailDTO if found and user has access, null otherwise
    * @throws {Error} If database operation fails
    */
-  async getGroupById(groupId: number, userId: UserId): Promise<GroupDetailDTO | null> {
+  async getGroupById(groupId: number, userId: UserId, userEmail?: string): Promise<GroupDetailDTO | null> {
     // Guard: Check if groupId and userId exist
     if (!groupId || !userId) {
       throw new Error("Group ID and User ID are required");
@@ -126,13 +127,16 @@ export class GroupService {
       // Check if user is the creator
       const isCreator = group.creator_id === userId;
 
-      // Check if user is a participant
-      const { data: participation } = await this.supabase
-        .from("participants")
-        .select("id")
-        .eq("group_id", groupId)
-        .eq("user_id", userId)
-        .maybeSingle();
+      // Check if user is a participant (by user_id OR email)
+      let participationQuery = this.supabase.from("participants").select("id").eq("group_id", groupId);
+
+      if (userEmail) {
+        participationQuery = participationQuery.or(`user_id.eq.${userId},email.eq.${userEmail}`);
+      } else {
+        participationQuery = participationQuery.eq("user_id", userId);
+      }
+
+      const { data: participation } = await participationQuery.maybeSingle();
 
       const isParticipant = participation !== null;
 
@@ -453,19 +457,20 @@ export class GroupService {
    * - "all": All groups (created + joined)
    *
    * @param userId - The ID of the authenticated user
+   * @param userEmail - The email of the authenticated user (for matching participants added by email)
    * @param query - Query parameters for filtering and pagination
    * @returns Paginated list of groups with metadata
    * @throws {Error} If database operation fails
    *
    * @example
-   * const result = await groupService.listGroups(userId, {
+   * const result = await groupService.listGroups(userId, userEmail, {
    *   filter: "all",
    *   page: 1,
    *   limit: 20
    * });
    * // Returns: { data: [...], pagination: { page: 1, limit: 20, total: 45, total_pages: 3 } }
    */
-  async listGroups(userId: UserId, query: GroupsListQuery): Promise<PaginatedGroupsDTO> {
+  async listGroups(userId: UserId, userEmail: string, query: GroupsListQuery): Promise<PaginatedGroupsDTO> {
     // Guard: Check if userId exists
     if (!userId) {
       throw new Error("User ID is required");
@@ -500,11 +505,11 @@ export class GroupService {
 
         case "joined": {
           // Only groups where user is participant but not creator
-          // This requires a subquery - we'll handle it differently
+          // Match by user_id OR email to find participants added by email before account creation
           const { data: joinedGroupIds } = await this.supabase
             .from("participants")
             .select("group_id")
-            .eq("user_id", userId);
+            .or(`user_id.eq.${userId},email.eq.${userEmail}`);
 
           if (!joinedGroupIds || joinedGroupIds.length === 0) {
             // User has no joined groups
@@ -528,10 +533,11 @@ export class GroupService {
         case "all":
         default: {
           // Groups where user is creator OR participant
+          // Match by user_id OR email to find participants added by email before account creation
           const { data: allParticipations } = await this.supabase
             .from("participants")
             .select("group_id")
-            .eq("user_id", userId);
+            .or(`user_id.eq.${userId},email.eq.${userEmail}`);
 
           const participantGroupIds = allParticipations?.map((p) => p.group_id) || [];
 

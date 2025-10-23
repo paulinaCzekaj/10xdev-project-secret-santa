@@ -26,6 +26,7 @@ const editParticipantFormSchema = z.object({
 interface EditParticipantModalProps {
   participant: ParticipantViewModel | null;
   isOpen: boolean;
+  isDrawn?: boolean; // Czy losowanie zostało wykonane
   onClose: () => void;
   onSave: () => void; // Zmiana - tylko callback bez parametrów
   updateParticipant: (
@@ -37,6 +38,7 @@ interface EditParticipantModalProps {
 export function EditParticipantModal({
   participant,
   isOpen,
+  isDrawn = false,
   onClose,
   onSave,
   updateParticipant,
@@ -63,10 +65,15 @@ export function EditParticipantModal({
     if (!participant) return;
 
     try {
-      const command: UpdateParticipantCommand = {
-        name: values.name,
-        email: values.email || undefined,
-      };
+      // Po losowaniu wysyłamy tylko email (nie name)
+      const command: UpdateParticipantCommand = isDrawn
+        ? {
+            email: values.email || undefined,
+          }
+        : {
+            name: values.name,
+            email: values.email || undefined,
+          };
 
       const result = await updateParticipant(participant.id, command);
 
@@ -90,7 +97,11 @@ export function EditParticipantModal({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edytuj uczestnika</DialogTitle>
-          <DialogDescription>Zmień dane uczestnika grupy Secret Santa.</DialogDescription>
+          <DialogDescription>
+            {isDrawn
+              ? "Po losowaniu można zmienić tylko adres email uczestnika."
+              : "Zmień dane uczestnika grupy Secret Santa."}
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -105,8 +116,9 @@ export function EditParticipantModal({
                     Imię i nazwisko
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="np. Jan Kowalski" {...field} />
+                    <Input placeholder="np. Jan Kowalski" {...field} disabled={isDrawn} />
                   </FormControl>
+                  {isDrawn && <p className="text-xs text-muted-foreground">Imienia nie można zmienić po losowaniu</p>}
                   <FormMessage />
                 </FormItem>
               )}

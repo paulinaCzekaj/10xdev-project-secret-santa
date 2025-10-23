@@ -4,9 +4,10 @@ import type { AstroCookies } from "astro";
 
 import type { Database } from "./database.types";
 
-// Use PUBLIC_ prefix for client-side access in Astro
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || import.meta.env.SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_KEY;
+// Use SUPABASE_URL for server-side, PUBLIC_SUPABASE_URL for client-side
+// Server-side should prioritize SUPABASE_URL (can be local), client-side uses PUBLIC_ vars
+const supabaseUrl = import.meta.env.SUPABASE_URL || import.meta.env.PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.SUPABASE_KEY || import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
