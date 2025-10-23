@@ -15,6 +15,7 @@ jobs:
   lint-and-type-check:
     name: "Lint & Type Check"
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
@@ -106,6 +107,7 @@ jobs:
   build-and-deploy:
     name: "Build & Deploy"
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: [lint-and-type-check]
     if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
 

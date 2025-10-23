@@ -13,6 +13,7 @@ jobs:
   lint:
     name: Lint Code
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -32,6 +33,7 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -105,6 +107,7 @@ jobs:
   status-comment:
     name: Status Comment
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [lint, unit-tests]
     if: always() && (needs.lint.result == 'success' && needs.unit-tests.result == 'success')
     permissions:
