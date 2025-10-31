@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shuffle, AlertTriangle, Users, Ban } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 import type { DrawResultDTO } from "@/types";
 
 interface DrawConfirmationModalProps {
@@ -39,15 +39,15 @@ export function DrawConfirmationModal({
       const result = await executeDraw();
 
       if (result.success && result.data) {
-        toast.success("Losowanie zostało pomyślnie wykonane!");
+        notify.success("DRAW.EXECUTE_SUCCESS");
         // Poczekaj na odświeżenie danych przed zamknięciem modala
         await onConfirm();
       } else {
-        toast.error(result.error || "Nie udało się wykonać losowania");
+        notify.error({ title: result.error || "Nie udało się wykonać losowania" });
         setIsExecuting(false);
       }
     } catch {
-      toast.error("Wystąpił błąd podczas wykonania losowania");
+      notify.error("DRAW.EXECUTE_ERROR_GENERAL");
       setIsExecuting(false);
     }
   };

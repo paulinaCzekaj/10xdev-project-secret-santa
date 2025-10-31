@@ -35,10 +35,6 @@ export function ParticipantsSection({
   onDeleteParticipant,
   onCopyParticipantToken,
 }: ParticipantsSectionProps) {
-  const handleParticipantAdded = () => {
-    onParticipantAdded();
-  };
-
   return (
     <section data-testid="participants-section">
       <Card>
@@ -59,7 +55,7 @@ export function ParticipantsSection({
 
         <CardContent className="space-y-6">
           {/* Formularz dodawania uczestnika - tylko przed losowaniem */}
-          {canEdit && !isDrawn && <AddParticipantForm groupId={groupId} onSuccess={handleParticipantAdded} />}
+          {canEdit && !isDrawn && <AddParticipantForm groupId={groupId} onSuccess={onParticipantAdded} />}
 
           {/* Lista uczestników */}
           {participants.length > 0 ? (

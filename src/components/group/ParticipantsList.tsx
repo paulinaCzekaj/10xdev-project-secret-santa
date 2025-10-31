@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 // Dropdown menu components will be imported as needed
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Edit, Trash2, Copy } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 import type { ParticipantViewModel } from "@/types";
 
 interface ParticipantsListProps {
@@ -32,10 +32,10 @@ export function ParticipantsList({
     if (participant.resultLink) {
       try {
         await navigator.clipboard.writeText(participant.resultLink);
-        toast.success("Link skopiowany do schowka");
+        notify.success("CLIPBOARD.COPY_SUCCESS");
         onCopyToken(participant);
       } catch (error) {
-        toast.error("Nie udało się skopiować linku");
+        notify.error("CLIPBOARD.COPY_LINK_ERROR");
         console.error("Failed to copy to clipboard:", error);
       }
     }

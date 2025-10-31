@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, Mail } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -56,19 +56,17 @@ export default function ForgotPasswordForm({ isLoggedIn }: ForgotPasswordFormPro
         // Handle API error
         const errorMessage = result.error?.message || "Wystąpił błąd podczas wysyłania emaila";
         setApiError(errorMessage);
-        toast.error("Błąd", { description: errorMessage });
+        notify.error("AUTH.PASSWORD_RESET_ERROR");
         return;
       }
 
       // Success
       setEmailSent(true);
-      toast.success("Email wysłany!", {
-        description: "Sprawdź swoją skrzynkę i kliknij w link resetujący.",
-      });
+      notify.success("AUTH.PASSWORD_RESET_EMAIL_SENT");
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Wystąpił błąd podczas wysyłania emaila";
       setApiError(errorMessage);
-      toast.error("Błąd", { description: errorMessage });
+      notify.error("AUTH.PASSWORD_RESET_ERROR");
     } finally {
       setIsSubmitting(false);
     }

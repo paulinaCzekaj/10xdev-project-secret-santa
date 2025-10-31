@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Edit, Trash2, MoreHorizontal, Check, X, Link2, Eye, EyeOff } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 import type { ParticipantViewModel } from "@/types";
 
 interface ParticipantCardProps {
@@ -45,10 +45,10 @@ export function ParticipantCard({
     if (participant.resultLink) {
       try {
         await navigator.clipboard.writeText(participant.resultLink);
-        toast.success("Link skopiowany do schowka");
+        notify.success("CLIPBOARD.COPY_SUCCESS");
         onCopyToken(participant);
       } catch (error) {
-        toast.error("Nie udało się skopiować linku");
+        notify.error("CLIPBOARD.COPY_LINK_ERROR");
         console.error("Failed to copy to clipboard:", error);
       }
     }

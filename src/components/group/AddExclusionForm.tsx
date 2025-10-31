@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Ban, ArrowRight, ArrowLeftRight } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 import { useExclusions } from "@/hooks/useExclusions";
 import type {
   AddExclusionFormViewModel,
@@ -70,13 +70,13 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
   const onSubmit = async (values: AddExclusionFormViewModel) => {
     // Sprawdzamy duplikaty przed wysłaniem
     if (isExclusionDuplicate(values.blocker_participant_id, values.blocked_participant_id)) {
-      toast.error("Ta reguła wykluczenia już istnieje");
+      notify.error("EXCLUSION.ADD_DUPLICATE");
       return;
     }
 
     // Jeśli dwustronne, sprawdzamy też odwrotne wykluczenie
     if (values.bidirectional && isExclusionDuplicate(values.blocked_participant_id, values.blocker_participant_id)) {
-      toast.error("Odwrotna reguła wykluczenia już istnieje");
+      notify.error("EXCLUSION.ADD_REVERSE_EXISTS");
       return;
     }
 
@@ -100,18 +100,18 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
           const reverseResult = await addExclusion(reverseCommand);
 
           if (!reverseResult.success) {
-            toast.warning("Pierwsze wykluczenie dodane, ale nie udało się dodać odwrotnego wykluczenia");
+            notify.warning("EXCLUSION.ADD_PARTIAL_SUCCESS");
           }
         }
 
         form.reset();
         onSuccess(result.data);
-        toast.success(values.bidirectional ? "Dwustronne wykluczenie zostało dodane" : "Wykluczenie zostało dodane");
+        notify.success(values.bidirectional ? "EXCLUSION.ADD_BIDIRECTIONAL_SUCCESS" : "EXCLUSION.ADD_SUCCESS");
       } else {
-        toast.error(result.error || "Nie udało się dodać wykluczenia. Spróbuj ponownie.");
+        notify.error({ title: result.error || "Nie udało się dodać wykluczenia. Spróbuj ponownie." });
       }
     } catch {
-      toast.error("Nie udało się dodać wykluczenia. Spróbuj ponownie.");
+      notify.error("EXCLUSION.ADD_ERROR_GENERAL");
     }
   };
 

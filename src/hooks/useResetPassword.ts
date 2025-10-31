@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 import { supabaseClient } from "@/db/supabase.client";
 import type { ResetPasswordFormData } from "@/schemas/auth.schemas";
 
@@ -40,12 +40,12 @@ export function useResetPassword(): UseResetPasswordResult {
       }
 
       // Success
-      toast.success("Hasło zmienione pomyślnie!");
+      notify.success("AUTH.PASSWORD_CHANGED_SUCCESS");
       window.location.href = "/login?message=password_reset_success";
     } catch (err) {
       const errorMessage = getAuthErrorMessage(err);
       setError(errorMessage);
-      toast.error("Błąd", { description: errorMessage });
+      notify.error({ title: "Błąd", description: errorMessage });
       throw err;
     } finally {
       setIsSubmitting(false);

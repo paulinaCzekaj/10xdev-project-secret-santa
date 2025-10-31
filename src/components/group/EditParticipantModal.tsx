@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { User, Mail } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 import { ResponsiveDialogFooter } from "@/components/ui/responsive-form";
 import type { ParticipantViewModel, EditParticipantFormViewModel, UpdateParticipantCommand } from "@/types";
 
@@ -72,15 +72,15 @@ export function EditParticipantModal({
       const result = await updateParticipant(participant.id, command);
 
       if (result.success) {
-        toast.success("Uczestnik został zaktualizowany");
+        notify.success("PARTICIPANT.UPDATE_SUCCESS");
         onSave();
         onClose();
       } else {
-        toast.error(result.error || "Nie udało się zaktualizować uczestnika");
+        notify.error({ title: result.error || "Nie udało się zaktualizować uczestnika" });
       }
     } catch (error) {
       console.error("Błąd podczas aktualizacji uczestnika:", error);
-      toast.error("Wystąpił błąd podczas aktualizacji uczestnika");
+      notify.error("PARTICIPANT.UPDATE_ERROR_GENERAL");
     }
   };
 

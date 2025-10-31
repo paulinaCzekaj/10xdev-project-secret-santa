@@ -34,7 +34,6 @@ export function useParticipants(groupId: number) {
     async (command: CreateParticipantCommand) => {
       try {
         const newParticipant = await participantsService.create(groupId, command);
-        await fetchParticipants(); // Odśwież listę
 
         return { success: true, data: newParticipant };
       } catch (err) {
@@ -44,7 +43,7 @@ export function useParticipants(groupId: number) {
         };
       }
     },
-    [groupId, fetchParticipants]
+    [groupId]
   );
 
   // Aktualizacja uczestnika
@@ -52,7 +51,6 @@ export function useParticipants(groupId: number) {
     async (participantId: number, command: UpdateParticipantCommand) => {
       try {
         const updated = await participantsService.update(participantId, command);
-        await fetchParticipants(); // Odśwież listę
 
         return { success: true, data: updated };
       } catch (err) {
@@ -62,7 +60,7 @@ export function useParticipants(groupId: number) {
         };
       }
     },
-    [fetchParticipants]
+    []
   );
 
   // Usuwanie uczestnika
@@ -70,7 +68,6 @@ export function useParticipants(groupId: number) {
     async (participantId: number) => {
       try {
         await participantsService.delete(participantId);
-        await fetchParticipants(); // Odśwież listę
 
         return { success: true };
       } catch (err) {
@@ -80,7 +77,7 @@ export function useParticipants(groupId: number) {
         };
       }
     },
-    [fetchParticipants]
+    []
   );
 
   // Pobierz dane przy montowaniu

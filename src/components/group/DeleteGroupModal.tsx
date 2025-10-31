@@ -10,7 +10,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AlertTriangle } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 
 interface DeleteGroupModalProps {
   isOpen: boolean;
@@ -26,13 +26,13 @@ export function DeleteGroupModal({ isOpen, groupName, onClose, onConfirm, delete
       const result = await deleteGroup();
 
       if (result.success) {
-        toast.success("Grupa została usunięta");
+        notify.success("GROUP.DELETE_SUCCESS");
         onConfirm();
       } else {
-        toast.error(result.error || "Nie udało się usunąć grupy");
+        notify.error({ title: result.error || "Nie udało się usunąć grupy" });
       }
     } catch {
-      toast.error("Wystąpił błąd podczas usuwania grupy");
+      notify.error("GROUP.DELETE_ERROR_GENERAL");
     }
   };
 
