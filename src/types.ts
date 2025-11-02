@@ -532,9 +532,9 @@ export interface EditParticipantFormViewModel {
  * ViewModel dla formularza dodawania wykluczenia
  */
 export interface AddExclusionFormViewModel {
-  blocker_participant_id: number;
-  blocked_participant_id: number;
-  bidirectional: boolean;
+  blocker_participant_id?: number;
+  blocked_participant_id?: number;
+  bidirectional?: boolean;
 }
 
 // ============================================================================
