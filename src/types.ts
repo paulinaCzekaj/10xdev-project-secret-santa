@@ -534,7 +534,7 @@ export interface EditParticipantFormViewModel {
 export interface AddExclusionFormViewModel {
   blocker_participant_id?: number;
   blocked_participant_id?: number;
-  bidirectional?: boolean;
+  bidirectional: boolean;
 }
 
 // ============================================================================
