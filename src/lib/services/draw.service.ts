@@ -77,6 +77,9 @@ export class DrawService {
    * - No one draws themselves
    * - All exclusion rules are respected
    *
+   * Note: This algorithm allows ANY valid graph structure (including cross-pairs).
+   * It does NOT enforce a single Hamiltonian cycle - true randomness is preserved.
+   *
    * @param participants - List of participants in the group
    * @param exclusions - List of exclusion rules
    * @returns Array of assignments if successful, null if impossible or timeout
@@ -90,9 +93,12 @@ export class DrawService {
     // Build internal representation
     const drawParticipants = this.buildDrawParticipants(participants, exclusions);
 
+    // Shuffle participants for randomness - different order = different results
+    const shuffledParticipants = this.shuffleArray(drawParticipants);
+
     // Execute backtracking with timeout
     const startTime = Date.now();
-    const result = this.backtrackAssignment(drawParticipants, [], new Set(), startTime);
+    const result = this.backtrackAssignment(shuffledParticipants, [], new Set(), startTime);
 
     if (!result) {
       return null;
@@ -153,6 +159,9 @@ export class DrawService {
         return false;
       }
     }
+
+    // Note: We do NOT enforce single Hamiltonian cycle
+    // Any valid structure (including cross-pairs) is allowed for true randomness
 
     return true;
   }
@@ -241,15 +250,12 @@ export class DrawService {
       return true;
     });
 
-    // Optimization: Sort by number of remaining options (most constrained first)
-    availableReceivers.sort((a, b) => {
-      const aOptions = this.countRemainingOptions(a, participants, usedReceivers, currentIndex + 1);
-      const bOptions = this.countRemainingOptions(b, participants, usedReceivers, currentIndex + 1);
-      return aOptions - bOptions;
-    });
+    // Shuffle for randomness instead of heuristic sorting
+    // This ensures true randomness in draw results
+    const shuffledReceivers = this.shuffleArray(availableReceivers);
 
-    // Try each available receiver
-    for (const receiver of availableReceivers) {
+    // Try each available receiver in random order
+    for (const receiver of shuffledReceivers) {
       // Make assignment
       const newAssignment: DrawAssignment = {
         giver_participant_id: giver.id,
@@ -272,6 +278,18 @@ export class DrawService {
 
     // No valid assignment found
     return null;
+  }
+
+  /**
+   * Shuffles array in place using Fisher-Yates algorithm
+   */
+  private shuffleArray<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
   }
 
   /**
