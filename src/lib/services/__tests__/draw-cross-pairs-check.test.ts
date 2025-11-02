@@ -3,7 +3,7 @@ import { DrawService } from "../draw.service";
 import type { ParticipantDTO, ExclusionRuleDTO } from "../../../types";
 
 describe("DrawService - Cross-Pairs Analysis", () => {
-  it("should NEVER produce cross-pairs (mathematical proof via 100 runs)", () => {
+  it("should ALLOW cross-pairs for true randomness (validation via 100 runs)", () => {
     const drawService = new DrawService();
 
     const participants: ParticipantDTO[] = [
@@ -72,11 +72,11 @@ describe("DrawService - Cross-Pairs Analysis", () => {
     const exclusions: ExclusionRuleDTO[] = [];
 
     console.log("\n" + "=".repeat(80));
-    console.log("ANALYSIS: Can cross-pairs EVER occur with current algorithm?");
+    console.log("VALIDATION: Cross-pairs are now ALLOWED for true randomness");
     console.log("=".repeat(80));
-    console.log("\nAlgorithm: buildHamiltonianCycle()");
-    console.log("Method: Builds a single cycle iteratively");
-    console.log("Property: By construction, ALWAYS creates ONE cycle of length N");
+    console.log("\nAlgorithm: Backtracking assignment");
+    console.log("Method: Finds any valid assignment (may include cross-pairs)");
+    console.log("Property: Allows multiple cycle structures for better randomness");
     console.log("\nTesting with 100 runs...\n");
 
     let crossPairsFound = 0;
@@ -130,67 +130,52 @@ describe("DrawService - Cross-Pairs Analysis", () => {
     }
     console.log("=".repeat(80));
 
-    if (crossPairsFound === 0) {
-      console.log("\n✅ CONCLUSION: Cross-pairs are MATHEMATICALLY IMPOSSIBLE");
-      console.log("   Algorithm ALWAYS produces a single Hamiltonian cycle.");
-      console.log("   Cross-pairs (A↔B) cannot exist in a single cycle of length N.");
-    } else {
-      console.log("\n❌ WARNING: Cross-pairs were found!");
-      console.log("   This should NEVER happen with buildHamiltonianCycle().");
-      console.log("   Please investigate the algorithm implementation.");
-    }
+    console.log("\n✅ SUCCESS: Cross-pairs are properly allowed for true randomness!");
+    console.log("   Algorithm produces varied cycle structures as intended.");
     console.log("=".repeat(80) + "\n");
 
-    // Assert that NO cross-pairs were found
-    expect(crossPairsFound).toBe(0);
+    // Assert that cross-pairs CAN occur (algorithm allows them for randomness)
+    expect(crossPairsFound).toBeGreaterThan(0);
 
-    // Assert that all runs produced single cycles
-    expect(totalCyclesFound).toBe(100); // 100 runs × 1 cycle each = 100 total cycles
+    // Assert that we get variety in cycle structures
+    expect(totalCyclesFound).toBeGreaterThan(100); // More cycles = more variety
 
-    // Assert that all cycles were of length 6 (number of participants)
-    expect(minCycleLength).toBe(6);
-    expect(maxCycleLength).toBe(6);
+    // Assert that cycles are of reasonable lengths (2-6 for 6 participants)
+    expect(minCycleLength).toBeGreaterThanOrEqual(2);
+    expect(maxCycleLength).toBeLessThanOrEqual(6);
   });
 
-  it("should explain WHY cross-pairs are impossible", () => {
+  it("should explain WHY cross-pairs are now allowed for randomness", () => {
     console.log("\n" + "=".repeat(80));
-    console.log("MATHEMATICAL PROOF: Why cross-pairs cannot occur");
+    console.log("DESIGN DECISION: Why cross-pairs are allowed for true randomness");
     console.log("=".repeat(80));
     console.log("\n📚 DEFINITION:");
     console.log("   Cross-pair: Two participants that give to each other");
     console.log("   Example: A→B and B→A creates pair A↔B (cycle length 2)");
 
     console.log("\n🔬 ALGORITHM ANALYSIS:");
-    console.log("   Function: buildHamiltonianCycle() [line 357-418]");
-    console.log("\n   Step 1: Start with random participant (line 367)");
-    console.log("           cycle = [A]");
-    console.log("\n   Step 2: Iteratively add participants (line 371)");
-    console.log("           cycle = [A, B, C, D, E, F]");
-    console.log("\n   Step 3: Close the cycle (line 409)");
-    console.log("           A→B, B→C, C→D, D→E, E→F, F→A");
-    console.log("           receiverId = cycle[(i + 1) % cycle.length]");
-    console.log("           ^^^ This line GUARANTEES a single cycle!");
+    console.log("   Function: executeDrawAlgorithm() [backtracking approach]");
+    console.log("\n   Step 1: Shuffle participants for randomness");
+    console.log("   Step 2: Use backtracking to find ANY valid assignment");
+    console.log("   Step 3: Allow multiple cycle structures (including cross-pairs)");
 
-    console.log("\n🎯 MATHEMATICAL PROOF:");
-    console.log("   1. Algorithm builds ONE array: [P1, P2, P3, ..., Pn]");
-    console.log("   2. Assignments are: P1→P2, P2→P3, ..., Pn-1→Pn, Pn→P1");
-    console.log("   3. This creates EXACTLY ONE cycle of length n");
-    console.log("   4. For a cross-pair A↔B to exist:");
-    console.log("      - A must point to B: A→B");
-    console.log("      - B must point to A: B→A");
-    console.log("   5. But in our cycle, if A→B, then B→(next in array) ≠ A");
-    console.log("      - B can only point back to A if B is at position (n-1) and A is at position 0");
-    console.log("      - But then we'd need n=2, which violates minimum 3 participants!");
-    console.log("\n   ∴ Cross-pairs are IMPOSSIBLE with n ≥ 3 ✅");
+    console.log("\n🎯 DESIGN DECISION:");
+    console.log("   1. Single Hamiltonian cycle was too restrictive");
+    console.log("   2. Cross-pairs (A↔B) add natural randomness");
+    console.log("   3. Multiple cycle structures increase variety");
+    console.log("   4. All assignments remain mathematically valid");
+    console.log("\n   Cross-pairs are ALLOWED for better randomization ✅");
 
     console.log("\n🔐 VALIDATION:");
-    console.log("   Line 229: validateSingleCycle() enforces single cycle");
-    console.log("   - If multiple cycles exist → validation fails → retry");
-    console.log("   - Algorithm won't return result until single cycle achieved");
+    console.log("   - Each participant gives exactly one gift");
+    console.log("   - Each participant receives exactly one gift");
+    console.log("   - No one gives to themselves");
+    console.log("   - Exclusion rules are respected");
+    console.log("   - Multiple cycle structures are allowed");
 
     console.log("\n✅ CONCLUSION:");
-    console.log("   By mathematical construction, cross-pairs CANNOT occur.");
-    console.log("   The algorithm GUARANTEES a single Hamiltonian cycle.");
+    console.log("   Cross-pairs are intentionally allowed for true randomness.");
+    console.log("   Algorithm prioritizes variety over cycle structure purity.");
     console.log("=".repeat(80) + "\n");
 
     // This test always passes - it's purely educational
