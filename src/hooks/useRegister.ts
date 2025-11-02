@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 import type { RegisterFormData } from "@/schemas/auth.schemas";
 
 interface UseRegisterResult {
@@ -33,17 +33,17 @@ export function useRegister(): UseRegisterResult {
       if (!response.ok) {
         const errorMessage = result.error?.message || "Wystąpił błąd podczas rejestracji";
         setError(errorMessage);
-        toast.error("Błąd rejestracji", { description: errorMessage });
+        notify.error("AUTH.REGISTER_ERROR");
         throw new Error(errorMessage);
       }
 
       // Success - auto-login enabled (no email confirmation for MVP)
-      toast.success("Konto utworzone pomyślnie!");
+      notify.success("AUTH.REGISTER_SUCCESS");
       window.location.href = "/dashboard";
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Wystąpił błąd podczas rejestracji";
       setError(errorMessage);
-      toast.error("Błąd rejestracji", { description: errorMessage });
+      notify.error("AUTH.REGISTER_ERROR");
       throw err;
     } finally {
       setIsSubmitting(false);

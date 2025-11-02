@@ -12,7 +12,7 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 import { useGroupData } from "@/hooks/useGroupData";
 import { ResponsiveDialogFooter } from "@/components/ui/responsive-form";
 import type { GroupViewModel, EditGroupFormViewModel, UpdateGroupCommand } from "@/types";
@@ -88,11 +88,11 @@ export function GroupEditModal({ group, isOpen, onClose, onSave }: GroupEditModa
         onSave();
         onClose();
       } else {
-        toast.error(result.error || "Nie udało się zaktualizować grupy");
+        notify.error({ title: result.error || "Nie udało się zaktualizować grupy" });
       }
     } catch (error) {
       console.error("Błąd podczas aktualizacji grupy:", error);
-      toast.error("Wystąpił błąd podczas aktualizacji grupy");
+      notify.error("GROUP.UPDATE_ERROR");
     }
   };
 

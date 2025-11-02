@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -45,11 +45,11 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
   React.useEffect(() => {
     if (message) {
       if (message.type === "success") {
-        toast.success(message.text);
+        notify.success({ title: message.text });
       } else if (message.type === "error") {
-        toast.error(message.text);
+        notify.error({ title: message.text });
       } else {
-        toast.info(message.text);
+        notify.info({ title: message.text });
       }
     }
   }, [message]);
@@ -76,17 +76,17 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
         // Handle API error
         const errorMessage = result.error?.message || "Wystąpił błąd podczas logowania";
         setApiError(errorMessage);
-        toast.error("Błąd logowania", { description: errorMessage });
+        notify.error("AUTH.LOGIN_ERROR");
         return;
       }
 
       // Success - redirect to dashboard
-      toast.success("Zalogowano pomyślnie!");
+      notify.success("AUTH.LOGIN_SUCCESS");
       window.location.href = redirectTo || "/dashboard";
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Wystąpił błąd podczas logowania";
       setApiError(errorMessage);
-      toast.error("Błąd logowania", { description: errorMessage });
+      notify.error("AUTH.LOGIN_ERROR");
     } finally {
       setIsSubmitting(false);
     }

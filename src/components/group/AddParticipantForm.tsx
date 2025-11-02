@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserPlus, Mail, User } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 import { useParticipants } from "@/hooks/useParticipants";
 import { FormFields, FormFooter } from "@/components/ui/responsive-form";
 import type { AddParticipantFormViewModel, ParticipantWithTokenDTO, CreateParticipantCommand } from "@/types";
@@ -51,22 +51,22 @@ export function AddParticipantForm({ groupId, onSuccess }: AddParticipantFormPro
           const link = `${window.location.origin}/results/${participant.access_token}`;
           try {
             await navigator.clipboard.writeText(link);
-            toast.success("Uczestnik dodany. Link dostępu skopiowany do schowka.");
+            notify.success("PARTICIPANT.ADD_SUCCESS_WITH_LINK");
           } catch (error) {
-            toast.success("Uczestnik dodany. Nie udało się skopiować linku.");
+            notify.success("PARTICIPANT.ADD_SUCCESS_LINK_COPY_FAILED");
             console.error("Failed to copy to clipboard:", error);
           }
         } else {
-          toast.success("Uczestnik dodany.");
+          notify.success("PARTICIPANT.ADD_SUCCESS");
         }
 
         form.reset();
         onSuccess(participant);
       } else {
-        toast.error(result.error || "Nie udało się dodać uczestnika. Spróbuj ponownie.");
+        notify.error({ title: result.error || "Nie udało się dodać uczestnika. Spróbuj ponownie." });
       }
     } catch {
-      toast.error("Nie udało się dodać uczestnika. Spróbuj ponownie.");
+      notify.error("PARTICIPANT.ADD_ERROR");
     }
   };
 

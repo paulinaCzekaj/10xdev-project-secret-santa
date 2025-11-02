@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 
 interface UseForgotPasswordReturn {
   requestPasswordReset: (email: string) => Promise<{
@@ -53,20 +53,18 @@ export const useForgotPassword = (): UseForgotPasswordReturn => {
         // Handle API error
         const errorMessage = result.error?.message || "Wystąpił błąd podczas wysyłania emaila";
         setApiError(errorMessage);
-        toast.error("Błąd", { description: errorMessage });
+        notify.error("AUTH.PASSWORD_RESET_ERROR");
         return { success: false, error: errorMessage };
       }
 
       // Success
       setEmailSent(true);
-      toast.success("Email wysłany!", {
-        description: "Sprawdź swoją skrzynkę i kliknij w link resetujący.",
-      });
+      notify.success("AUTH.PASSWORD_RESET_EMAIL_SENT");
       return { success: true };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Wystąpił błąd podczas wysyłania emaila";
       setApiError(errorMessage);
-      toast.error("Błąd", { description: errorMessage });
+      notify.error("AUTH.PASSWORD_RESET_ERROR");
       return { success: false, error: errorMessage };
     } finally {
       setIsSubmitting(false);

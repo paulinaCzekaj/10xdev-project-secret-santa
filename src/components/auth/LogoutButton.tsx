@@ -1,6 +1,6 @@
 import * as React from "react";
 import { LogOut } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 
 import { Button } from "@/components/ui/button";
 
@@ -22,11 +22,11 @@ export default function LogoutButton() {
         throw new Error("Logout failed");
       }
 
-      toast.success("Wylogowano pomyślnie");
+      notify.success("AUTH.LOGOUT_SUCCESS");
       window.location.href = "/";
     } catch (error) {
       console.error("Logout error:", error);
-      toast.error("Błąd podczas wylogowania");
+      notify.error("AUTH.LOGOUT_ERROR");
     } finally {
       setIsLoading(false);
     }

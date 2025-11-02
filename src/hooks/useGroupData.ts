@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 import { groupsService } from "@/services/groupsService";
 import type { GroupDetailDTO, UpdateGroupCommand, ApiError } from "@/types";
 
@@ -39,7 +39,7 @@ export function useGroupData(groupId: number) {
         // Odśwież pełne dane grupy
         await fetchGroup();
 
-        toast.success("Grupa została zaktualizowana");
+        notify.success("GROUP.UPDATE_SUCCESS");
         return { success: true, data: updatedGroup };
       } catch (err) {
         return {

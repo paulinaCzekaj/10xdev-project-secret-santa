@@ -2,7 +2,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -136,7 +136,7 @@ export default function RegisterForm() {
                     <button
                       type="button"
                       className="text-red-500 hover:text-red-600 underline bg-transparent border-none p-0 font-normal"
-                      onClick={() => toast.info("Regulamin będzie dostępny wkrótce")}
+                      onClick={() => notify.info("AUTH.TERMS_INFO")}
                     >
                       regulamin
                     </button>{" "}
@@ -144,7 +144,7 @@ export default function RegisterForm() {
                     <button
                       type="button"
                       className="text-red-500 hover:text-red-600 underline bg-transparent border-none p-0 font-normal"
-                      onClick={() => toast.info("Polityka prywatności będzie dostępna wkrótce")}
+                      onClick={() => notify.info("AUTH.PRIVACY_INFO")}
                     >
                       politykę prywatności
                     </button>

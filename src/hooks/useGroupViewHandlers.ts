@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 import type { ParticipantViewModel } from "@/types";
 import type { useModalState } from "./useModalState";
 
@@ -90,7 +90,7 @@ export const useGroupViewHandlers = ({
     // Jeśli błąd i nie ma optimistic, ręcznie odśwież
     if (!result.success && !setOptimisticParticipants) {
       refetchParticipants();
-      toast.error(result.error || "Nie udało się usunąć uczestnika");
+      notify.error({ title: result.error || "Nie udało się usunąć uczestnika" });
     }
 
     // Zamknij modal
@@ -101,10 +101,10 @@ export const useGroupViewHandlers = ({
     if (participant.resultLink) {
       try {
         await navigator.clipboard.writeText(participant.resultLink);
-        toast.success("Link skopiowany do schowka");
+        notify.success("CLIPBOARD.COPY_SUCCESS");
       } catch {
         // Fallback: show link in input field
-        toast.error("Nie udało się skopiować linku. Spróbuj ponownie.");
+        notify.error("CLIPBOARD.COPY_ERROR");
       }
     }
   }, []);
@@ -131,7 +131,7 @@ export const useGroupViewHandlers = ({
       // Jeśli błąd i nie ma optimistic, ręcznie odśwież
       if (!result.success && !setOptimisticExclusions) {
         refetchExclusions();
-        toast.error(result.error || "Nie udało się usunąć wykluczenia");
+        notify.error({ title: result.error || "Nie udało się usunąć wykluczenia" });
       }
     },
     [deleteExclusion, refetchExclusions, setOptimisticExclusions]

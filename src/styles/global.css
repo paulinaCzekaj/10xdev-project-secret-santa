@@ -117,4 +117,28 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Toast notification styles - fix vertical alignment */
+  [data-sonner-toast] {
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  [data-sonner-toast] [data-content] {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  [data-sonner-toast] [data-icon] {
+    flex-shrink: 0;
+    align-self: center;
+  }
+
+  [data-sonner-toast] [data-content] > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
 }

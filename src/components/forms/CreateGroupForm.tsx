@@ -2,7 +2,7 @@ import * as React from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications";
 
 import { Button } from "@/components/ui/button";
 import { InfoBox } from "@/components/ui/info-box";
@@ -32,7 +32,8 @@ export default function CreateGroupForm() {
       const result = await createGroup(data);
 
       // Show success notification
-      toast.success("Loteria została utworzona pomyślnie!", {
+      notify.success({
+        title: "Loteria została utworzona pomyślnie!",
         description: `Loteria "${result.name}" jest gotowa do użycia.`,
       });
 
@@ -41,7 +42,8 @@ export default function CreateGroupForm() {
       window.location.href = `/groups/${result.id}`;
     } catch {
       // Error is already handled by the hook
-      toast.error("Nie udało się utworzyć loterii", {
+      notify.error({
+        title: "Nie udało się utworzyć loterii",
         description: apiError || "Wystąpił nieoczekiwany błąd",
       });
     }

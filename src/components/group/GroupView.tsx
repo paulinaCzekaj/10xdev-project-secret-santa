@@ -1,5 +1,4 @@
 import { useState, useEffect, useOptimistic } from "react";
-import { Toaster } from "@/components/ui/sonner";
 import { GroupHeader } from "./GroupHeader";
 import { ParticipantsSection } from "./ParticipantsSection";
 import { ExclusionsSection } from "./ExclusionsSection";
@@ -113,8 +112,6 @@ export default function GroupView({ groupId }: GroupViewProps) {
 
   return (
     <>
-      <Toaster position="top-right" />
-
       <div className="max-w-7xl mx-auto space-y-6" data-testid="group-view-container">
         {/* Nagłówek grupy */}
         <GroupHeader
