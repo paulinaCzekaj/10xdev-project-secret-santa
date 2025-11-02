@@ -20,6 +20,7 @@ interface ResultRevealProps {
     name: string;
     initials: string;
   };
+  participantName: string;
   participantId: number;
   groupId: number;
   resultViewedAt?: string;
@@ -30,6 +31,7 @@ interface ResultRevealProps {
 
 export default function ResultReveal({
   assignedPerson,
+  participantName,
   participantId,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   groupId,
@@ -94,7 +96,9 @@ export default function ResultReveal({
           <div className="mb-4">
             <span className="text-4xl">🎄</span>
           </div>
-          <h2 className="text-2xl font-bold text-red-500 dark:text-red-400 mb-6">🎅 Twój los padł na... 🎅</h2>
+          <h2 className="text-2xl font-bold text-red-500 dark:text-red-400 mb-6">
+            🎅 {participantName}, Twój los padł na... 🎅
+          </h2>
 
           {/* Karta wylosowanej osoby */}
           <AssignedPersonCard person={assignedPerson} />
