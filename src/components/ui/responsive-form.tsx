@@ -80,10 +80,10 @@ export function FormFooter({ description, children, className }: FormFooterProps
       {description && <div className="text-sm text-muted-foreground order-2 sm:order-1">{description}</div>}
       <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto order-1 sm:order-2">
         {React.Children.map(children, (child) => {
-          if (React.isValidElement(child)) {
+          if (React.isValidElement<{ className?: string }>(child)) {
             return React.cloneElement(child, {
               className: cn("w-full sm:w-auto", child.props.className),
-            } as React.HTMLAttributes<HTMLElement>);
+            });
           }
           return child;
         })}
@@ -146,10 +146,10 @@ export function ResponsiveDialogFooter({ children, className }: ResponsiveDialog
   return (
     <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-6", className)}>
       {React.Children.map(children, (child) => {
-        if (React.isValidElement(child)) {
+        if (React.isValidElement<{ className?: string }>(child)) {
           return React.cloneElement(child, {
             className: cn("w-full sm:w-auto", child.props.className),
-          } as React.HTMLAttributes<HTMLElement>);
+          });
         }
         return child;
       })}

@@ -68,6 +68,11 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
   };
 
   const onSubmit = async (values: AddExclusionFormViewModel) => {
+    // Type guard - zod schema zapewnia, że te wartości są zdefiniowane
+    if (!values.blocker_participant_id || !values.blocked_participant_id) {
+      return;
+    }
+
     // Sprawdzamy duplikaty przed wysłaniem
     if (isExclusionDuplicate(values.blocker_participant_id, values.blocked_participant_id)) {
       notify.error("EXCLUSION.ADD_DUPLICATE");
