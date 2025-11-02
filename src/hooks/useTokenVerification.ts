@@ -7,16 +7,6 @@ interface TokenVerificationResult {
   error: string | null;
 }
 
-// Helper function to extract token from URL hash
-const extractTokenFromHash = (): string | null => {
-  const hash = window.location.hash;
-  if (hash.startsWith("#access_token=")) {
-    const params = new URLSearchParams(hash.substring(1));
-    return params.get("access_token");
-  }
-  return null;
-};
-
 // Function to get auth error message
 const getAuthErrorMessage = (error: unknown): string => {
   const errorMessages: Record<string, string> = {
@@ -30,7 +20,7 @@ const getAuthErrorMessage = (error: unknown): string => {
   return errorMessages[message] || "Wystąpił błąd podczas weryfikacji tokenu. Spróbuj ponownie.";
 };
 
-export function useTokenVerification(accessToken?: string): TokenVerificationResult {
+export function useTokenVerification(code?: string, accessToken?: string): TokenVerificationResult {
   const [isValid, setIsValid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,20 +30,8 @@ export function useTokenVerification(accessToken?: string): TokenVerificationRes
       setIsLoading(true);
       setError(null);
 
-      // Get token from props or from URL hash
-      const token = accessToken || extractTokenFromHash();
-
-      if (!token) {
-        setError("Brak tokenu resetowania hasła");
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        // Supabase automatically handles token verification through the URL
-        // The token in the URL hash will be processed by Supabase Auth
-        // We just need to check if we're in a valid session
-
+        // First, check if there's already a valid session
         const {
           data: { session },
           error: sessionError,
@@ -66,33 +44,68 @@ export function useTokenVerification(accessToken?: string): TokenVerificationRes
         // If we have a session, the token was valid
         if (session) {
           setIsValid(true);
-        } else {
-          // Check URL hash for tokens (Supabase puts them there)
-          const hash = window.location.hash;
-          if (hash.includes("access_token")) {
-            // Try to set session with tokens from URL
-            const urlParams = new URLSearchParams(hash.substring(1));
-            const urlAccessToken = urlParams.get("access_token");
-            const refreshToken = urlParams.get("refresh_token") || "";
-
-            if (urlAccessToken) {
-              const { error: setSessionError } = await supabaseClient.auth.setSession({
-                access_token: urlAccessToken,
-                refresh_token: refreshToken,
-              });
-
-              if (setSessionError) {
-                throw setSessionError;
-              }
-
-              setIsValid(true);
-            } else {
-              throw new Error("Token has expired or is invalid");
-            }
-          } else {
-            throw new Error("Token has expired or is invalid");
-          }
+          setIsLoading(false);
+          return;
         }
+
+        // No session yet - try to get token from URL
+        const hash = window.location.hash;
+        const urlParams = new URLSearchParams(window.location.search);
+        let urlAccessToken: string | null = null;
+        let refreshToken = "";
+        let pkceCode: string | null = null;
+
+        // Priority 1: Check for PKCE code parameter (most common in newer Supabase)
+        if (code) {
+          pkceCode = code;
+        } else if (urlParams.get("code")) {
+          pkceCode = urlParams.get("code");
+        }
+
+        // Priority 2: Check URL hash for tokens (older Supabase behavior)
+        if (!pkceCode && hash.includes("access_token")) {
+          const hashParams = new URLSearchParams(hash.substring(1));
+          urlAccessToken = hashParams.get("access_token");
+          refreshToken = hashParams.get("refresh_token") || "";
+        }
+
+        // Priority 3: Check query params for access_token
+        if (!pkceCode && !urlAccessToken && accessToken) {
+          urlAccessToken = accessToken;
+        }
+
+        // Handle PKCE flow (exchange code for session)
+        if (pkceCode) {
+          const { error: exchangeError } = await supabaseClient.auth.exchangeCodeForSession(pkceCode);
+
+          if (exchangeError) {
+            throw exchangeError;
+          }
+
+          setIsValid(true);
+          setIsLoading(false);
+          return;
+        }
+
+        // Handle implicit flow (set session with access token)
+        if (urlAccessToken) {
+          const { error: setSessionError } = await supabaseClient.auth.setSession({
+            access_token: urlAccessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (setSessionError) {
+            throw setSessionError;
+          }
+
+          setIsValid(true);
+          setIsLoading(false);
+          return;
+        }
+
+        // No token found
+        setError("Brak tokenu resetowania hasła");
+        setIsLoading(false);
       } catch (err) {
         const errorMessage = getAuthErrorMessage(err);
         setError(errorMessage);
@@ -102,7 +115,7 @@ export function useTokenVerification(accessToken?: string): TokenVerificationRes
     };
 
     verifyToken();
-  }, [accessToken]);
+  }, [code, accessToken]);
 
   return { isValid, isLoading, error };
 }

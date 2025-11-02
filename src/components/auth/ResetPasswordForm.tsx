@@ -12,12 +12,13 @@ import { useResetPassword } from "@/hooks/useResetPassword";
 import { PasswordRequirementsInfo } from "@/components/auth/PasswordRequirementsInfo";
 
 interface ResetPasswordFormProps {
-  accessToken?: string; // May be null - then retrieved client-side
+  code?: string; // PKCE flow code parameter
+  accessToken?: string; // Implicit flow access token
 }
 
-export default function ResetPasswordForm({ accessToken }: ResetPasswordFormProps) {
+export default function ResetPasswordForm({ code, accessToken }: ResetPasswordFormProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { isValid: tokenValid, isLoading: tokenLoading, error: tokenError } = useTokenVerification(accessToken);
+  const { isValid: tokenValid, isLoading: tokenLoading, error: tokenError } = useTokenVerification(code, accessToken);
   const { resetPassword, isSubmitting, error: apiError } = useResetPassword();
 
   const form = useForm<ResetPasswordFormData>({
