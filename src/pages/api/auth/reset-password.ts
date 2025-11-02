@@ -26,8 +26,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       headers: request.headers,
     });
 
+    const siteUrl = import.meta.env.PUBLIC_SITE_URL || new URL(request.url).origin;
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${new URL(request.url).origin}/reset-password`,
+      redirectTo: `${siteUrl}/reset-password`,
     });
 
     if (error) {
