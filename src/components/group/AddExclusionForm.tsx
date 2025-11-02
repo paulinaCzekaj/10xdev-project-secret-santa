@@ -26,19 +26,30 @@ const addExclusionFormSchema = z
         required_error: "Wybierz osobę",
         invalid_type_error: "Wybierz osobę",
       })
-      .positive("Wybierz osobę"),
+      .positive("Wybierz osobę")
+      .optional(),
     blocked_participant_id: z
       .number({
         required_error: "Wybierz osobę",
         invalid_type_error: "Wybierz osobę",
       })
-      .positive("Wybierz osobę"),
-    bidirectional: z.boolean().default(false),
+      .positive("Wybierz osobę")
+      .optional(),
+    bidirectional: z.boolean(),
   })
-  .refine((data) => data.blocker_participant_id !== data.blocked_participant_id, {
-    message: "Osoba nie może wykluczyć samej siebie",
-    path: ["blocked_participant_id"],
-  });
+  .refine(
+    (data) => {
+      // Only check if both values are provided
+      if (data.blocker_participant_id && data.blocked_participant_id) {
+        return data.blocker_participant_id !== data.blocked_participant_id;
+      }
+      return true; // Let required validation handle missing values
+    },
+    {
+      message: "Osoba nie może wykluczyć samej siebie",
+      path: ["blocked_participant_id"],
+    }
+  );
 
 interface AddExclusionFormProps {
   groupId: number;
@@ -54,8 +65,8 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
     resolver: zodResolver(addExclusionFormSchema),
     mode: "onSubmit", // Walidacja tylko przy submit, nie na onChange
     defaultValues: {
-      blocker_participant_id: undefined,
-      blocked_participant_id: undefined,
+      blocker_participant_id: 0, // Will be validated as invalid initially
+      blocked_participant_id: 0, // Will be validated as invalid initially
       bidirectional: false,
     },
   });
