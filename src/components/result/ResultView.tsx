@@ -94,6 +94,7 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
             name: result.assigned_to.name,
             initials: result.assignedPersonInitials,
           }}
+          participantName={result.participant.name}
           participantId={result.participant.id}
           groupId={result.group.id}
           resultViewedAt={result.participant.result_viewed_at}
