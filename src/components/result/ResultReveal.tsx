@@ -96,7 +96,9 @@ export default function ResultReveal({
           <div className="mb-4">
             <span className="text-4xl">🎄</span>
           </div>
-          <h2 className="text-2xl font-bold text-red-500 dark:text-red-400 mb-6">🎅 {participantName}, Twój los padł na... 🎅</h2>
+          <h2 className="text-2xl font-bold text-red-500 dark:text-red-400 mb-6">
+            🎅 {participantName}, Twój los padł na... 🎅
+          </h2>
 
           {/* Karta wylosowanej osoby */}
           <AssignedPersonCard person={assignedPerson} />
