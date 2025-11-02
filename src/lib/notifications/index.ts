@@ -12,11 +12,11 @@
  */
 
 // Główny service (najpopularniejszy export)
-export { notify, NotificationService } from './notificationService';
+export { notify, NotificationService } from "./notificationService";
 
 // Słownik komunikatów
-export { NOTIFICATION_MESSAGES, getMessage, isValidMessageKey } from './messages';
-export type { MessageKey } from './messages';
+export { NOTIFICATION_MESSAGES, getMessage, isValidMessageKey } from "./messages";
+export type { MessageKey } from "./messages";
 
 // Typy
 export type {
@@ -27,4 +27,4 @@ export type {
   INotificationService,
   MessageCategory,
   NotificationMessages,
-} from './types';
+} from "./types";

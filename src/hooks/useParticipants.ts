@@ -47,38 +47,32 @@ export function useParticipants(groupId: number) {
   );
 
   // Aktualizacja uczestnika
-  const updateParticipant = useCallback(
-    async (participantId: number, command: UpdateParticipantCommand) => {
-      try {
-        const updated = await participantsService.update(participantId, command);
+  const updateParticipant = useCallback(async (participantId: number, command: UpdateParticipantCommand) => {
+    try {
+      const updated = await participantsService.update(participantId, command);
 
-        return { success: true, data: updated };
-      } catch (err) {
-        return {
-          success: false,
-          error: err instanceof Error ? err.message : "Nieznany błąd",
-        };
-      }
-    },
-    []
-  );
+      return { success: true, data: updated };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : "Nieznany błąd",
+      };
+    }
+  }, []);
 
   // Usuwanie uczestnika
-  const deleteParticipant = useCallback(
-    async (participantId: number) => {
-      try {
-        await participantsService.delete(participantId);
+  const deleteParticipant = useCallback(async (participantId: number) => {
+    try {
+      await participantsService.delete(participantId);
 
-        return { success: true };
-      } catch (err) {
-        return {
-          success: false,
-          error: err instanceof Error ? err.message : "Nieznany błąd",
-        };
-      }
-    },
-    []
-  );
+      return { success: true };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : "Nieznany błąd",
+      };
+    }
+  }, []);
 
   // Pobierz dane przy montowaniu
   useEffect(() => {

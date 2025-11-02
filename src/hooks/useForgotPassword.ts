@@ -53,18 +53,18 @@ export const useForgotPassword = (): UseForgotPasswordReturn => {
         // Handle API error
         const errorMessage = result.error?.message || "Wystąpił błąd podczas wysyłania emaila";
         setApiError(errorMessage);
-        notify.error('AUTH.PASSWORD_RESET_ERROR');
+        notify.error("AUTH.PASSWORD_RESET_ERROR");
         return { success: false, error: errorMessage };
       }
 
       // Success
       setEmailSent(true);
-      notify.success('AUTH.PASSWORD_RESET_EMAIL_SENT');
+      notify.success("AUTH.PASSWORD_RESET_EMAIL_SENT");
       return { success: true };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Wystąpił błąd podczas wysyłania emaila";
       setApiError(errorMessage);
-      notify.error('AUTH.PASSWORD_RESET_ERROR');
+      notify.error("AUTH.PASSWORD_RESET_ERROR");
       return { success: false, error: errorMessage };
     } finally {
       setIsSubmitting(false);

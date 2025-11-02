@@ -1,12 +1,12 @@
-import { toast } from 'sonner';
+import { toast } from "sonner";
 import type {
   INotificationService,
   NotificationInput,
   NotificationMessage,
   NotificationOptions,
-  NotificationType
-} from './types';
-import { NOTIFICATION_MESSAGES, isValidMessageKey, type MessageKey } from './messages';
+  NotificationType,
+} from "./types";
+import { NOTIFICATION_MESSAGES, isValidMessageKey, type MessageKey } from "./messages";
 
 /**
  * Notification Service - główny punkt dostępu do systemu notyfikacji
@@ -36,14 +36,14 @@ class NotificationService implements INotificationService {
    */
   private resolveMessage(input: NotificationInput): NotificationMessage {
     // Jeśli input to string, traktuj jako klucz ze słownika
-    if (typeof input === 'string') {
+    if (typeof input === "string") {
       if (isValidMessageKey(input)) {
         return NOTIFICATION_MESSAGES[input];
       }
 
       // Fallback: jeśli klucz nie istnieje, zwróć jako tytuł
       console.warn(`[NotificationService] Unknown message key: "${input}". Using as title.`);
-      return { title: input, type: 'info' };
+      return { title: input, type: "info" };
     }
 
     // Jeśli input to obiekt NotificationMessage, użyj go bezpośrednio
@@ -54,25 +54,21 @@ class NotificationService implements INotificationService {
    * Wywołuje odpowiednią metodę Sonner toast
    * @private
    */
-  private displayToast(
-    type: NotificationType,
-    message: NotificationMessage,
-    options?: NotificationOptions
-  ): void {
+  private displayToast(type: NotificationType, message: NotificationMessage, options?: NotificationOptions): void {
     const { title, description } = message;
     const toastOptions = { description, ...options };
 
     switch (type) {
-      case 'success':
+      case "success":
         toast.success(title, toastOptions);
         break;
-      case 'error':
+      case "error":
         toast.error(title, toastOptions);
         break;
-      case 'warning':
+      case "warning":
         toast.warning(title, toastOptions);
         break;
-      case 'info':
+      case "info":
         toast.info(title, toastOptions);
         break;
       default:
@@ -86,7 +82,7 @@ class NotificationService implements INotificationService {
    */
   success(input: NotificationInput, options?: NotificationOptions): void {
     const message = this.resolveMessage(input);
-    this.displayToast('success', message, options);
+    this.displayToast("success", message, options);
   }
 
   /**
@@ -94,7 +90,7 @@ class NotificationService implements INotificationService {
    */
   error(input: NotificationInput, options?: NotificationOptions): void {
     const message = this.resolveMessage(input);
-    this.displayToast('error', message, options);
+    this.displayToast("error", message, options);
   }
 
   /**
@@ -102,7 +98,7 @@ class NotificationService implements INotificationService {
    */
   info(input: NotificationInput, options?: NotificationOptions): void {
     const message = this.resolveMessage(input);
-    this.displayToast('info', message, options);
+    this.displayToast("info", message, options);
   }
 
   /**
@@ -110,17 +106,13 @@ class NotificationService implements INotificationService {
    */
   warning(input: NotificationInput, options?: NotificationOptions): void {
     const message = this.resolveMessage(input);
-    this.displayToast('warning', message, options);
+    this.displayToast("warning", message, options);
   }
 
   /**
    * Uniwersalna metoda wyświetlania notyfikacji
    */
-  show(
-    type: NotificationType,
-    input: NotificationInput,
-    options?: NotificationOptions
-  ): void {
+  show(type: NotificationType, input: NotificationInput, options?: NotificationOptions): void {
     const message = this.resolveMessage(input);
     this.displayToast(type, message, options);
   }
