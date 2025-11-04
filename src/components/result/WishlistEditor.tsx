@@ -65,6 +65,7 @@ export default function WishlistEditor({
   // Modal states
   const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [aiStatusRefreshTrigger, setAiStatusRefreshTrigger] = useState(0);
 
   // Formatowanie daty zakończenia dla komunikatu
   const formatEndDate = (dateString: string) => {
@@ -100,6 +101,9 @@ export default function WishlistEditor({
 
     // Wywołanie acceptLetter (refetch status, toast)
     await acceptLetter();
+
+    // Trigger refresh of AI status in AIGenerateButton
+    setAiStatusRefreshTrigger((prev) => prev + 1);
 
     setIsPreviewModalOpen(false);
   };
@@ -198,8 +202,8 @@ export default function WishlistEditor({
               participantId={participantId}
               token={accessToken}
               onGenerateSuccess={() => setIsPromptModalOpen(true)}
-              onStatusUpdate={refetchStatus}
               disabled={!canEdit}
+              refreshTrigger={aiStatusRefreshTrigger}
             />
           </div>
 

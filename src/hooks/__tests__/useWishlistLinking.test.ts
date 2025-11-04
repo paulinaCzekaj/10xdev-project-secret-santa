@@ -63,57 +63,57 @@ describe("useWishlistLinking", () => {
     const input = 'Check [Site with "quotes"](https://example.com/path?param="value")';
     const output = result.current.convertToHtml(input);
 
-    expect(output).toContain('Site with &quot;quotes&quot;');
-    expect(output).toContain('https://example.com/path?param=&quot;value&quot;');
+    expect(output).toContain("Site with &quot;quotes&quot;");
+    expect(output).toContain("https://example.com/path?param=&quot;value&quot;");
   });
 
   it("should handle AI-generated markdown links without including closing parenthesis in link", () => {
     const { result } = renderHook(() => useWishlistLinking());
 
-    const input = 'Sprawdź [Allegro](https://allegro.pl) dla zakupów!';
+    const input = "Sprawdź [Allegro](https://allegro.pl) dla zakupów!";
     const output = result.current.convertToHtml(input);
 
     // The link should be properly formed
     expect(output).toContain('<a href="https://allegro.pl"');
-    expect(output).toContain('>Allegro</a>');
+    expect(output).toContain(">Allegro</a>");
 
     // The closing parenthesis should NOT be part of the link text
     // It should appear after the </a> tag
-    const linkTag = '<a href="https://allegro.pl" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline break-all">Allegro</a>';
-    expect(output).toContain(linkTag + ' dla zakupów!');
+    const linkTag =
+      '<a href="https://allegro.pl" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline break-all">Allegro</a>';
+    expect(output).toContain(linkTag + " dla zakupów!");
 
     // Make sure there's no extra parenthesis in the link
-    expect(output).not.toContain('Allegro)</a>');
+    expect(output).not.toContain("Allegro)</a>");
   });
 
   it("should handle URLs with parentheses in markdown links", () => {
     const { result } = renderHook(() => useWishlistLinking());
 
-    const input = 'Check [Example Site](https://example.com/path?param=(value)) for details!';
+    const input = "Check [Example Site](https://example.com/path?param=(value)) for details!";
     const output = result.current.convertToHtml(input);
 
     // The link should be properly formed and include the full URL with parentheses
     expect(output).toContain('<a href="https://example.com/path?param=(value)"');
-    expect(output).toContain('>Example Site</a>');
+    expect(output).toContain(">Example Site</a>");
 
     // The closing parenthesis should NOT be part of the link text
-    expect(output).toContain(' for details!');
-    expect(output).not.toContain('Example Site)</a>');
+    expect(output).toContain(" for details!");
+    expect(output).not.toContain("Example Site)</a>");
   });
 
   it("should handle nested parentheses in URLs", () => {
     const { result } = renderHook(() => useWishlistLinking());
 
-    const input = 'Visit [Complex URL](https://site.com/path(a)/more(b)) now!';
+    const input = "Visit [Complex URL](https://site.com/path(a)/more(b)) now!";
     const output = result.current.convertToHtml(input);
 
     // The link should be properly formed with the full nested URL
     expect(output).toContain('<a href="https://site.com/path(a)/more(b)"');
-    expect(output).toContain('>Complex URL</a>');
+    expect(output).toContain(">Complex URL</a>");
 
     // The closing parenthesis should NOT be part of the link text
-    expect(output).toContain(' now!');
-    expect(output).not.toContain('Complex URL)</a>');
+    expect(output).toContain(" now!");
+    expect(output).not.toContain("Complex URL)</a>");
   });
 });
-

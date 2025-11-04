@@ -71,7 +71,12 @@ export function AIPreviewModal({
           </Alert>
 
           {/* Podgląd wygenerowanej treści */}
-          <div className="rounded-lg border p-4 bg-muted/50">
+          <div className="rounded-lg border p-4 bg-muted/50 space-y-4">
+            {currentPrompt && (
+              <div className="text-xs text-muted-foreground">
+                <strong>Podpowiedź użyta do generowania:</strong> {currentPrompt}
+              </div>
+            )}
             <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{generatedContent}</pre>
           </div>
         </div>

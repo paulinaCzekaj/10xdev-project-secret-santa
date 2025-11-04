@@ -1,6 +1,5 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { OpenRouterService } from "@/lib/services/openrouter.service";
 import { WishlistService } from "@/lib/services/wishlist.service";
 import { requireApiAuth } from "@/lib/utils/api-auth.utils";
 import type { ApiErrorResponse } from "@/types";

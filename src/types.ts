@@ -705,7 +705,6 @@ export interface AIGenerateButtonProps {
   participantId: number;
   token?: string;
   onGenerateSuccess?: () => void;
-  onStatusUpdate?: () => void;
   disabled?: boolean;
   className?: string;
 }
@@ -777,4 +776,19 @@ export interface UseAIGenerationStatusReturn {
   isLoading: boolean;
   error: AIGenerationError | null;
   refetch: () => Promise<void>;
+}
+
+/**
+ * Props dla komponentu AIPreviewModal
+ */
+export interface AIPreviewModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  generatedContent: string;
+  onAccept: () => void;
+  onReject: () => void;
+  onRegenerate: () => void;
+  isRegenerating: boolean;
+  remainingGenerations: number;
+  currentPrompt: string;
 }

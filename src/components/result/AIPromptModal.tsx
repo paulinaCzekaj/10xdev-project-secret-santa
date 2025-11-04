@@ -69,8 +69,8 @@ export function AIPromptModal({ isOpen, onClose, onSubmit, isLoading, error }: A
           <DialogHeader>
             <DialogTitle>Wygeneruj list do Mikołaja z pomocą AI</DialogTitle>
             <DialogDescription>
-              Opisz swoje zainteresowania i preferencje, wymień konkretne prezenty oraz dodaj linki do produktów,
-              a AI stworzy dla Ciebie spersonalizowany list do świętego Mikołaja w ciepłym, świątecznym tonie.
+              Opisz swoje zainteresowania i preferencje, wymień konkretne prezenty oraz dodaj linki do produktów, a AI
+              stworzy dla Ciebie spersonalizowany list do świętego Mikołaja w ciepłym, świątecznym tonie.
             </DialogDescription>
           </DialogHeader>
 

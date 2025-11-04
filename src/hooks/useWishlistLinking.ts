@@ -19,11 +19,11 @@ export function useWishlistLinking(): UseWishlistLinkingReturn {
 
     while (i < text.length) {
       // Look for markdown links [text](url)
-      if (text[i] === '[') {
+      if (text[i] === "[") {
         const bracketStart = i;
-        const bracketEnd = text.indexOf(']', i);
+        const bracketEnd = text.indexOf("]", i);
 
-        if (bracketEnd !== -1 && bracketEnd + 1 < text.length && text[bracketEnd + 1] === '(') {
+        if (bracketEnd !== -1 && bracketEnd + 1 < text.length && text[bracketEnd + 1] === "(") {
           const parenStart = bracketEnd + 1;
           // Find the matching closing parenthesis for the URL
           // We need to handle nested parentheses in URLs
@@ -31,9 +31,9 @@ export function useWishlistLinking(): UseWishlistLinkingReturn {
           let parenEnd = parenStart + 1;
 
           while (parenEnd < text.length && parenCount > 0) {
-            if (text[parenEnd] === '(') {
+            if (text[parenEnd] === "(") {
               parenCount++;
-            } else if (text[parenEnd] === ')') {
+            } else if (text[parenEnd] === ")") {
               parenCount--;
             }
             parenEnd++;
@@ -52,10 +52,7 @@ export function useWishlistLinking(): UseWishlistLinkingReturn {
               .replace(/"/g, "&quot;")
               .replace(/'/g, "&#x27;");
 
-            const escapedUrl = url
-              .replace(/&/g, "&amp;")
-              .replace(/"/g, "&quot;")
-              .replace(/'/g, "&#x27;");
+            const escapedUrl = url.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
 
             result += `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline break-all">${escapedText}</a>`;
 
@@ -66,7 +63,7 @@ export function useWishlistLinking(): UseWishlistLinkingReturn {
       }
 
       // Look for plain URLs
-      if (text.startsWith('http://', i) || text.startsWith('https://', i)) {
+      if (text.startsWith("http://", i) || text.startsWith("https://", i)) {
         const urlStart = i;
         let urlEnd = i;
 
@@ -78,10 +75,7 @@ export function useWishlistLinking(): UseWishlistLinkingReturn {
         const url = text.slice(urlStart, urlEnd);
 
         // Escape the URL
-        const escapedUrl = url
-          .replace(/&/g, "&amp;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#x27;");
+        const escapedUrl = url.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
 
         result += `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline break-all">${url}</a>`;
 
@@ -91,18 +85,18 @@ export function useWishlistLinking(): UseWishlistLinkingReturn {
 
       // Regular character - escape it
       const char = text[i];
-      if (char === '&') {
-        result += '&amp;';
-      } else if (char === '<') {
-        result += '&lt;';
-      } else if (char === '>') {
-        result += '&gt;';
+      if (char === "&") {
+        result += "&amp;";
+      } else if (char === "<") {
+        result += "&lt;";
+      } else if (char === ">") {
+        result += "&gt;";
       } else if (char === '"') {
-        result += '&quot;';
+        result += "&quot;";
       } else if (char === "'") {
-        result += '&#x27;';
-      } else if (char === '\n') {
-        result += '<br>';
+        result += "&#x27;";
+      } else if (char === "\n") {
+        result += "<br>";
       } else {
         result += char;
       }
@@ -126,20 +120,19 @@ export function useWishlistLinking(): UseWishlistLinkingReturn {
 
     while (i < text.length) {
       // Look for markdown links [text](url)
-      if (text[i] === '[') {
-        const bracketStart = i;
-        const bracketEnd = text.indexOf(']', i);
+      if (text[i] === "[") {
+        const bracketEnd = text.indexOf("]", i);
 
-        if (bracketEnd !== -1 && bracketEnd + 1 < text.length && text[bracketEnd + 1] === '(') {
+        if (bracketEnd !== -1 && bracketEnd + 1 < text.length && text[bracketEnd + 1] === "(") {
           const parenStart = bracketEnd + 1;
           // Find the matching closing parenthesis for the URL
           let parenCount = 1;
           let parenEnd = parenStart + 1;
 
           while (parenEnd < text.length && parenCount > 0) {
-            if (text[parenEnd] === '(') {
+            if (text[parenEnd] === "(") {
               parenCount++;
-            } else if (text[parenEnd] === ')') {
+            } else if (text[parenEnd] === ")") {
               parenCount--;
             }
             parenEnd++;
@@ -156,7 +149,7 @@ export function useWishlistLinking(): UseWishlistLinkingReturn {
       }
 
       // Look for plain URLs
-      if (text.startsWith('http://', i) || text.startsWith('https://', i)) {
+      if (text.startsWith("http://", i) || text.startsWith("https://", i)) {
         const urlStart = i;
         let urlEnd = i;
 

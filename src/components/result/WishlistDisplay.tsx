@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { useWishlistLinking } from "@/hooks/useWishlistLinking";
-import { List, Star } from "lucide-react";
+import { List } from "lucide-react";
 
 interface WishlistDisplayProps {
   content?: string;
