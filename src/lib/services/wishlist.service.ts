@@ -14,10 +14,17 @@ import { AI_MAX_GENERATIONS_REGISTERED, AI_MAX_GENERATIONS_UNREGISTERED } from "
  * Service for managing Secret Santa participant wishlists
  */
 export class WishlistService {
-  private openRouterService: OpenRouterService;
+  private openRouterService: OpenRouterService | null = null;
 
   constructor(private supabase: SupabaseClient) {
-    this.openRouterService = new OpenRouterService(supabase);
+    // OpenRouterService will be created lazily when needed
+  }
+
+  private getOpenRouterService(): OpenRouterService {
+    if (!this.openRouterService) {
+      this.openRouterService = new OpenRouterService(this.supabase);
+    }
+    return this.openRouterService;
   }
 
   /**
@@ -474,7 +481,7 @@ export class WishlistService {
       // Step 8: Generate Santa letter using wishlist content as prompt
       let generatedLetter: SantaLetterResponse;
       try {
-        generatedLetter = await this.openRouterService.generateSantaLetter(wishlistContent, options);
+        generatedLetter = await this.getOpenRouterService().generateSantaLetter(wishlistContent, options);
         console.log("[WishlistService.generateSantaLetterFromWishlist] AI generation successful", {
           participantId,
           letterLength: generatedLetter.letterContent.length,
