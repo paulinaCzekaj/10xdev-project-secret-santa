@@ -56,9 +56,6 @@ function WishlistDisplay({ content, contentHtml, personName }: WishlistDisplayPr
     );
   }
 
-  // Split content into lines to show as list items
-  const lines = content?.split("\n").filter((line) => line.trim()) || [];
-
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-2 border-red-200 dark:border-red-700 p-6 relative overflow-hidden">
       {/* Świąteczne dekoracje w tle */}
@@ -83,25 +80,12 @@ function WishlistDisplay({ content, contentHtml, personName }: WishlistDisplayPr
           </p>
         </div>
 
-        {/* Wishlist items with Christmas stars */}
-        <div className="space-y-3">
-          {lines.map((line, index) => {
-            const itemHtml = convertToHtml(line);
-            return (
-              <div
-                key={index}
-                className="flex items-start gap-3 p-4 bg-gradient-to-r from-red-50 to-green-50 dark:from-red-950 dark:to-green-950 rounded-lg border border-red-100 dark:border-red-800 hover:shadow-md transition-shadow"
-              >
-                <div className="flex-shrink-0">
-                  <Star className="w-5 h-5 text-yellow-500 drop-shadow-sm" fill="currentColor" />
-                </div>
-                <div
-                  className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed flex-1"
-                  dangerouslySetInnerHTML={{ __html: itemHtml }}
-                />
-              </div>
-            );
-          })}
+        {/* Wishlist content as single element */}
+        <div className="bg-gradient-to-r from-red-50 to-green-50 dark:from-red-950 dark:to-green-950 rounded-lg border border-red-100 dark:border-red-800 p-4">
+          <div
+            className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap"
+            dangerouslySetInnerHTML={{ __html: htmlContent }}
+          />
         </div>
 
         {/* Świąteczna stopka */}

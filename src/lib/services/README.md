@@ -184,15 +184,15 @@ async generateSantaLetter(
 
 **Parametry:**
 
-- `userPreferences`: Preferencje użytkownika (10-1000 znaków)
+- `userPreferences`: Preferencje użytkownika (10-2000 znaków)
 - `options`: Opcjonalne parametry generowania
 
 **Zwraca:**
 
 ```typescript
 interface SantaLetterResponse {
-  letterContent: string; // Wygenerowany list (max 1000 znaków)
-  suggestedGifts: string[]; // Lista propozycji prezentów (3-5)
+  letterContent: string; // Wygenerowany list (max 2000 znaków)
+  suggestedGifts: string[]; // Lista pomysłów prezentów podanych przez użytkownika
   metadata: {
     model: string; // Użyty model
     tokensUsed: number; // Zużyte tokeny
@@ -330,7 +330,7 @@ Licznik jest przechowywany w tabeli `wishes` w kolumnie `ai_generation_count_per
 
 ### Walidacja danych wejściowych
 
-- ✅ Walidacja długości preferencji (10-1000 znaków)
+- ✅ Walidacja długości preferencji (10-2000 znaków)
 - ✅ Basic XSS protection (usuwanie tagów `<script>` i `<iframe>`)
 - ✅ Walidacja schematu odpowiedzi JSON
 

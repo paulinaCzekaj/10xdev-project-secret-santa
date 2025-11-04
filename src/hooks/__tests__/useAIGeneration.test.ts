@@ -1,13 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useAIGeneration } from "../useAIGeneration";
+import { toast } from "sonner";
 
 // Mock fetch globally
 const fetchMock = vi.fn();
 global.fetch = fetchMock;
 
+// Mock toast
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+  },
+}));
+
 describe("useAIGeneration", () => {
-  const participantId = "123";
+  const participantId = 123;
+  const onStatusChange = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -19,29 +30,22 @@ describe("useAIGeneration", () => {
 
   describe("initial state", () => {
     it("should return correct initial state", () => {
-      const { result } = renderHook(() => useAIGeneration(participantId));
+      const { result } = renderHook(() => useAIGeneration(participantId, undefined, onStatusChange));
 
       expect(result.current.isGenerating).toBe(false);
+      expect(result.current.isRegenerating).toBe(false);
       expect(result.current.error).toBe(null);
       expect(result.current.generatedContent).toBe(null);
-      expect(result.current.suggestedGifts).toEqual([]);
-      expect(result.current.remainingGenerations).toBe(null);
-      expect(result.current.canGenerateMore).toBe(true);
+      expect(result.current.currentPrompt).toBe(null);
     });
   });
 
-  describe("generate function", () => {
+  describe("generateLetter function", () => {
     it("should handle successful generation", async () => {
       const mockResponse = {
         generated_content: "Test letter content",
-        suggested_gifts: ["gift1", "gift2"],
         remaining_generations: 3,
         can_generate_more: true,
-        metadata: {
-          model: "gpt-4o-mini",
-          tokensUsed: 150,
-          generationTime: 2000,
-        },
       };
 
       fetchMock.mockResolvedValueOnce({
@@ -49,10 +53,10 @@ describe("useAIGeneration", () => {
         json: async () => mockResponse,
       });
 
-      const { result } = renderHook(() => useAIGeneration(participantId));
+      const { result } = renderHook(() => useAIGeneration(participantId, undefined, onStatusChange));
 
       act(() => {
-        result.current.generate("I love fantasy books and coffee");
+        result.current.generateLetter("I love fantasy books and coffee");
       });
 
       // Check loading state
@@ -65,10 +69,9 @@ describe("useAIGeneration", () => {
       });
 
       expect(result.current.generatedContent).toBe("Test letter content");
-      expect(result.current.suggestedGifts).toEqual(["gift1", "gift2"]);
-      expect(result.current.remainingGenerations).toBe(3);
-      expect(result.current.canGenerateMore).toBe(true);
+      expect(result.current.currentPrompt).toBe("I love fantasy books and coffee");
       expect(result.current.error).toBe(null);
+      expect(toast.success).toHaveBeenCalledWith("List został wygenerowany!");
     });
 
     it("should handle API errors with user-friendly messages", async () => {
@@ -77,189 +80,140 @@ describe("useAIGeneration", () => {
         status: 429,
         json: async () => ({
           error: {
-            code: "RATE_LIMIT_EXCEEDED",
-            message: "Rate limit exceeded",
+            code: "AI_GENERATION_LIMIT_REACHED",
+            message: "AI generation limit reached",
           },
         }),
       });
 
-      const { result } = renderHook(() => useAIGeneration(participantId));
+      const { result } = renderHook(() => useAIGeneration(participantId, undefined, onStatusChange));
 
       act(() => {
-        result.current.generate("I love fantasy books");
+        result.current.generateLetter("I love fantasy books");
       });
 
       await waitFor(() => {
         expect(result.current.isGenerating).toBe(false);
       });
 
-      expect(result.current.error).toBe("Wykorzystałeś wszystkie dostępne generowania AI.");
+      expect(result.current.error).toEqual({
+        code: "AI_GENERATION_LIMIT_REACHED",
+        message: "Wykorzystałeś wszystkie dostępne generowania AI.",
+      });
       expect(result.current.generatedContent).toBe(null);
-      expect(result.current.suggestedGifts).toEqual([]);
+      expect(toast.error).toHaveBeenCalledWith("Wykorzystałeś wszystkie dostępne generowania AI.");
     });
 
     it("should handle network errors", async () => {
       fetchMock.mockRejectedValueOnce(new Error("Network error"));
 
-      const { result } = renderHook(() => useAIGeneration(participantId));
+      const { result } = renderHook(() => useAIGeneration(participantId, undefined, onStatusChange));
 
       act(() => {
-        result.current.generate("I love fantasy books");
+        result.current.generateLetter("I love fantasy books");
       });
 
       await waitFor(() => {
         expect(result.current.isGenerating).toBe(false);
       });
 
-      expect(result.current.error).toBe("Wystąpił nieoczekiwany błąd podczas generowania listy");
+      expect(result.current.error).toEqual({
+        code: "AI_API_ERROR",
+        message: "Network error",
+      });
       expect(result.current.generatedContent).toBe(null);
+      expect(toast.error).toHaveBeenCalledWith("Network error");
     });
 
-    it("should validate empty prompt", async () => {
-      const { result } = renderHook(() => useAIGeneration(participantId));
+    it("should handle timeout errors", async () => {
+      fetchMock.mockRejectedValueOnce(new Error("GATEWAY_TIMEOUT"));
+
+      const { result } = renderHook(() => useAIGeneration(participantId, undefined, onStatusChange));
 
       act(() => {
-        result.current.generate("");
-      });
-
-      expect(result.current.error).toBe("Treść preferencji nie może być pusta");
-      expect(result.current.isGenerating).toBe(false);
-      expect(fetchMock).not.toHaveBeenCalled();
-    });
-
-    it("should validate short prompt", async () => {
-      const { result } = renderHook(() => useAIGeneration(participantId));
-
-      act(() => {
-        result.current.generate("short");
-      });
-
-      expect(result.current.error).toBe("Preferencje muszą mieć co najmniej 10 znaków");
-      expect(result.current.isGenerating).toBe(false);
-      expect(fetchMock).not.toHaveBeenCalled();
-    });
-
-    it("should trim prompt whitespace", async () => {
-      const mockResponse = {
-        generated_content: "Test letter",
-        suggested_gifts: ["gift1"],
-        remaining_generations: 4,
-        can_generate_more: true,
-        metadata: { model: "test", tokensUsed: 100, generationTime: 1000 },
-      };
-
-      fetchMock.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      });
-
-      const { result } = renderHook(() => useAIGeneration(participantId));
-
-      act(() => {
-        result.current.generate("  I love fantasy books  ");
+        result.current.generateLetter("I love fantasy books");
       });
 
       await waitFor(() => {
         expect(result.current.isGenerating).toBe(false);
       });
 
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/participants/123/wishlist/generate-ai",
-        expect.objectContaining({
-          body: JSON.stringify({
-            prompt: "I love fantasy books",
-            isRegistered: false,
-          }),
-        })
-      );
-    });
-
-    it("should use isRegistered parameter", async () => {
-      const mockResponse = {
-        generated_content: "Test letter",
-        suggested_gifts: ["gift1"],
-        remaining_generations: 2,
-        can_generate_more: true,
-        metadata: { model: "test", tokensUsed: 100, generationTime: 1000 },
-      };
-
-      fetchMock.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
+      expect(result.current.error).toEqual({
+        code: "GATEWAY_TIMEOUT",
+        message: "Generowanie trwa zbyt długo. Spróbuj ponownie.",
       });
-
-      const { result } = renderHook(() => useAIGeneration(participantId, true));
-
-      act(() => {
-        result.current.generate("I love fantasy books");
-      });
-
-      await waitFor(() => {
-        expect(result.current.isGenerating).toBe(false);
-      });
-
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/participants/123/wishlist/generate-ai",
-        expect.objectContaining({
-          body: JSON.stringify({
-            prompt: "I love fantasy books",
-            isRegistered: true,
-          }),
-        })
-      );
-    });
-
-    it("should handle retryable errors with suggestion", async () => {
-      fetchMock.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        json: async () => ({
-          error: {
-            code: "SERVER_ERROR",
-            message: "Server error",
-            isRetryable: true,
-          },
-        }),
-      });
-
-      const { result } = renderHook(() => useAIGeneration(participantId));
-
-      act(() => {
-        result.current.generate("I love fantasy books");
-      });
-
-      await waitFor(() => {
-        expect(result.current.isGenerating).toBe(false);
-      });
-
-      expect(result.current.error).toContain("Spróbuj ponownie za chwilę");
+      expect(toast.error).toHaveBeenCalledWith("Generowanie trwa zbyt długo. Spróbuj ponownie.");
     });
   });
 
-  describe("utility functions", () => {
-    it("should clear error", () => {
-      const { result } = renderHook(() => useAIGeneration(participantId));
+  describe("regenerateLetter function", () => {
+    it("should regenerate with existing prompt", async () => {
+      const mockResponse1 = {
+        generated_content: "First letter",
+        remaining_generations: 4,
+        can_generate_more: true,
+      };
 
-      act(() => {
-        result.current.generate("short");
-      });
-
-      expect(result.current.error).not.toBe(null);
-
-      act(() => {
-        result.current.clearError();
-      });
-
-      expect(result.current.error).toBe(null);
-    });
-
-    it("should reset all state", async () => {
-      const mockResponse = {
-        generated_content: "Test letter",
-        suggested_gifts: ["gift1", "gift2"],
+      const mockResponse2 = {
+        generated_content: "Second letter",
         remaining_generations: 3,
         can_generate_more: true,
-        metadata: { model: "test", tokensUsed: 100, generationTime: 1000 },
+      };
+
+      fetchMock
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockResponse1,
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockResponse2,
+        });
+
+      const { result } = renderHook(() => useAIGeneration(participantId, undefined, onStatusChange));
+
+      // First generation
+      act(() => {
+        result.current.generateLetter("Test prompt");
+      });
+
+      await waitFor(() => {
+        expect(result.current.generatedContent).toBe("First letter");
+      });
+
+      // Regenerate
+      act(() => {
+        result.current.regenerateLetter();
+      });
+
+      expect(result.current.isRegenerating).toBe(true);
+
+      await waitFor(() => {
+        expect(result.current.isRegenerating).toBe(false);
+      });
+
+      expect(result.current.generatedContent).toBe("Second letter");
+      expect(result.current.currentPrompt).toBe("Test prompt");
+      expect(toast.success).toHaveBeenCalledWith("List został zregenerowany!");
+    });
+
+    it("should not regenerate without current prompt", () => {
+      const { result } = renderHook(() => useAIGeneration(participantId, undefined, onStatusChange));
+
+      act(() => {
+        result.current.regenerateLetter();
+      });
+
+      expect(toast.error).toHaveBeenCalledWith("Brak zapisanego promptu do regeneracji");
+    });
+  });
+
+  describe("acceptLetter and rejectLetter functions", () => {
+    it("should accept letter and call status change", async () => {
+      const mockResponse = {
+        generated_content: "Test content",
+        remaining_generations: 4,
+        can_generate_more: true,
       };
 
       fetchMock.mockResolvedValueOnce({
@@ -267,87 +221,78 @@ describe("useAIGeneration", () => {
         json: async () => mockResponse,
       });
 
-      const { result } = renderHook(() => useAIGeneration(participantId));
+      const { result } = renderHook(() => useAIGeneration(participantId, undefined, onStatusChange));
 
+      // Generate first
       act(() => {
-        result.current.generate("I love fantasy books");
+        result.current.generateLetter("Test prompt");
       });
 
       await waitFor(() => {
-        expect(result.current.generatedContent).toBe("Test letter");
+        expect(result.current.generatedContent).toBe("Test content");
       });
 
+      // Then accept
+      await act(async () => {
+        await result.current.acceptLetter();
+      });
+
+      expect(result.current.generatedContent).toBe(null);
+      expect(result.current.currentPrompt).toBe(null);
+      expect(result.current.error).toBe(null);
+      expect(onStatusChange).toHaveBeenCalled();
+      expect(toast.success).toHaveBeenCalledWith("List został dodany do Twojej listy życzeń");
+    });
+
+    it("should reject letter and call status change", async () => {
+      const { result } = renderHook(() => useAIGeneration(participantId, undefined, onStatusChange));
+
+      await act(async () => {
+        await result.current.rejectLetter();
+      });
+
+      expect(result.current.generatedContent).toBe(null);
+      expect(result.current.currentPrompt).toBe(null);
+      expect(result.current.error).toBe(null);
+      expect(onStatusChange).toHaveBeenCalled();
+      expect(toast.info).toHaveBeenCalledWith("List został odrzucony. Wykorzystałeś 1 generowanie.");
+    });
+  });
+
+  describe("reset function", () => {
+    it("should reset all state", async () => {
+      const mockResponse = {
+        generated_content: "Test content",
+        remaining_generations: 4,
+        can_generate_more: true,
+      };
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const { result } = renderHook(() => useAIGeneration(participantId, undefined, onStatusChange));
+
+      // Set some state by generating
+      act(() => {
+        result.current.generateLetter("Test prompt");
+      });
+
+      await waitFor(() => {
+        expect(result.current.generatedContent).toBe("Test content");
+      });
+
+      // Reset
       act(() => {
         result.current.reset();
       });
 
       expect(result.current.isGenerating).toBe(false);
+      expect(result.current.isRegenerating).toBe(false);
       expect(result.current.error).toBe(null);
       expect(result.current.generatedContent).toBe(null);
-      expect(result.current.suggestedGifts).toEqual([]);
-      expect(result.current.remainingGenerations).toBe(null);
-      expect(result.current.canGenerateMore).toBe(true);
-    });
-  });
-
-  describe("canGenerateMore logic", () => {
-    it("should return true when remaining generations is null", () => {
-      const { result } = renderHook(() => useAIGeneration(participantId));
-      expect(result.current.canGenerateMore).toBe(true);
-    });
-
-    it("should return true when remaining generations > 0", async () => {
-      const mockResponse = {
-        generated_content: "Test letter",
-        suggested_gifts: ["gift1"],
-        remaining_generations: 2,
-        can_generate_more: true,
-        metadata: { model: "test", tokensUsed: 100, generationTime: 1000 },
-      };
-
-      fetchMock.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      });
-
-      const { result } = renderHook(() => useAIGeneration(participantId));
-
-      act(() => {
-        result.current.generate("I love fantasy books");
-      });
-
-      await waitFor(() => {
-        expect(result.current.remainingGenerations).toBe(2);
-      });
-
-      expect(result.current.canGenerateMore).toBe(true);
-    });
-
-    it("should return false when remaining generations is 0", async () => {
-      const mockResponse = {
-        generated_content: "Test letter",
-        suggested_gifts: ["gift1"],
-        remaining_generations: 0,
-        can_generate_more: false,
-        metadata: { model: "test", tokensUsed: 100, generationTime: 1000 },
-      };
-
-      fetchMock.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      });
-
-      const { result } = renderHook(() => useAIGeneration(participantId));
-
-      act(() => {
-        result.current.generate("I love fantasy books");
-      });
-
-      await waitFor(() => {
-        expect(result.current.remainingGenerations).toBe(0);
-      });
-
-      expect(result.current.canGenerateMore).toBe(false);
+      expect(result.current.currentPrompt).toBe(null);
     });
   });
 });

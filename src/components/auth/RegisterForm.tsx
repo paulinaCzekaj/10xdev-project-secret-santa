@@ -18,7 +18,7 @@ export default function RegisterForm() {
   const { register, isSubmitting, error: apiError } = useRegister();
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerFormSchema),
-    mode: "onChange",
+    mode: "onBlur",
     defaultValues: {
       email: "",
       password: "",

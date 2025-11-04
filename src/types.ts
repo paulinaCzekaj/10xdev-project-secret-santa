@@ -333,6 +333,23 @@ export interface WishlistWithHtmlDTO extends WishlistDTO {
   can_edit: boolean;
 }
 
+/**
+ * Response from generating Santa letter from existing wishlist content
+ * POST /api/participants/:participantId/wishlist/generate-from-wishlist
+ */
+export interface GenerateSantaLetterFromWishlistResponse {
+  generated_content: string; // The generated Santa letter content
+  suggested_gifts: string[]; // List of suggested gifts extracted from AI
+  remaining_generations: number; // Remaining AI generation quota
+  can_generate_more: boolean; // Whether user can generate more letters
+  is_registered: boolean; // Whether the participant is a registered user
+  metadata: {
+    model: string; // AI model used for generation
+    tokens_used: number; // Total tokens consumed
+    generation_time: number; // Time taken for generation in milliseconds
+  };
+}
+
 // ============================================================================
 // QUERY PARAMETER TYPES
 // ============================================================================
@@ -679,4 +696,85 @@ export interface UseWishlistEditorReturn {
 export interface UseWishlistLinkingReturn {
   convertToHtml: (text: string) => string;
   extractUrls: (text: string) => string[];
+}
+
+/**
+ * Props dla komponentu AIGenerateButton
+ */
+export interface AIGenerateButtonProps {
+  participantId: number;
+  token?: string;
+  onGenerateSuccess?: () => void;
+  onStatusUpdate?: () => void;
+  disabled?: boolean;
+  className?: string;
+}
+
+// ============================================================================
+// AI GENERATION TYPES
+// ============================================================================
+
+/**
+ * Request dla generowania AI listu do Mikołaja
+ * POST /api/participants/:participantId/wishlist/generate-ai
+ */
+export interface GenerateAIRequest {
+  prompt: string;
+}
+
+/**
+ * Response z generowania AI listu
+ */
+export interface GenerateAIResponse {
+  generated_content: string;
+  remaining_generations: number;
+  can_generate_more: boolean;
+}
+
+/**
+ * Status generowania AI
+ * GET /api/participants/:participantId/wishlist/ai-status
+ */
+export interface AIGenerationStatusResponse {
+  ai_generation_count: number;
+  remaining_generations: number;
+  max_generations: number;
+  can_generate: boolean;
+  is_registered: boolean;
+  last_generated_at: string | null;
+}
+
+/**
+ * Błąd generowania AI
+ */
+export interface AIGenerationError {
+  code: string;
+  message: string;
+}
+
+/**
+ * Zwracany typ z useAIGeneration hook
+ */
+export interface UseAIGenerationReturn {
+  isGenerating: boolean;
+  isRegenerating: boolean;
+  error: AIGenerationError | null;
+  generatedContent: string | null;
+  currentPrompt: string | null;
+  remainingGenerations: number | null;
+  generateLetter: (prompt: string) => Promise<void>;
+  regenerateLetter: () => Promise<void>;
+  acceptLetter: () => Promise<void>;
+  rejectLetter: () => Promise<void>;
+  reset: () => void;
+}
+
+/**
+ * Zwracany typ z useAIGenerationStatus hook
+ */
+export interface UseAIGenerationStatusReturn {
+  status: AIGenerationStatusResponse | null;
+  isLoading: boolean;
+  error: AIGenerationError | null;
+  refetch: () => Promise<void>;
 }

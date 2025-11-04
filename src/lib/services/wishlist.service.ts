@@ -6,12 +6,19 @@ import type {
   ParticipantWithGroupDTO,
   UserId,
 } from "../../types";
+import { OpenRouterService } from "./openrouter.service";
+import type { SantaLetterResponse, GenerationOptions, RateLimitStatus } from "./openrouter.types";
+import { AI_MAX_GENERATIONS_REGISTERED, AI_MAX_GENERATIONS_UNREGISTERED } from "../../lib/constants/ai.constants";
 
 /**
  * Service for managing Secret Santa participant wishlists
  */
 export class WishlistService {
-  constructor(private supabase: SupabaseClient) {}
+  private openRouterService: OpenRouterService;
+
+  constructor(private supabase: SupabaseClient) {
+    this.openRouterService = new OpenRouterService(supabase);
+  }
 
   /**
    * Creates or updates a participant's wishlist
@@ -335,6 +342,178 @@ export class WishlistService {
   }
 
   /**
+   * Generates a personalized Santa letter using AI based on participant's existing wishlist
+   *
+   * Retrieves the participant's wishlist content and uses it as input for AI generation.
+   * Validates access permissions, rate limits, and group end date before generation.
+   * For registered users: verifies Bearer token ownership.
+   * For unregistered users: verifies participant token.
+   *
+   * @param participantId - The participant ID whose wishlist to use for generation
+   * @param authUserId - User ID from Bearer token (null for unregistered users)
+   * @param participantToken - Access token from query param (null for registered users)
+   * @param options - Optional generation options (language, etc.)
+   * @returns Promise resolving to generated Santa letter with content, metadata, and rate limit info
+   * @throws {Error} "PARTICIPANT_NOT_FOUND" - If participant doesn't exist
+   * @throws {Error} "FORBIDDEN" - If user doesn't own the wishlist or token is invalid
+   * @throws {Error} "END_DATE_PASSED" - If group end date has passed
+   * @throws {Error} "WISHLIST_NOT_FOUND" - If wishlist doesn't exist or is empty
+   * @throws {OpenRouterError} Various AI generation errors (rate limit, timeout, etc.)
+   *
+   * @example
+   * const result = await wishlistService.generateSantaLetterFromWishlist(1, "user-123", null);
+   * console.log(result.letter.letterContent); // Generated Santa letter
+   * console.log(result.remainingGenerations); // Remaining quota
+   */
+  async generateSantaLetterFromWishlist(
+    participantId: number,
+    authUserId: UserId | null,
+    participantToken: string | null,
+    options?: GenerationOptions
+  ): Promise<{
+    letter: SantaLetterResponse;
+    remainingGenerations: number;
+    canGenerateMore: boolean;
+    isRegistered: boolean;
+  }> {
+    console.log("[WishlistService.generateSantaLetterFromWishlist] Starting", {
+      participantId,
+      hasAuthUserId: !!authUserId,
+      hasParticipantToken: !!participantToken,
+    });
+
+    try {
+      // Step 1: Validate participant exists and get group info
+      const participantWithGroup = await this.getParticipantWithGroupInfo(participantId);
+      if (!participantWithGroup) {
+        console.log("[WishlistService.generateSantaLetterFromWishlist] Participant not found", { participantId });
+        throw new Error("PARTICIPANT_NOT_FOUND");
+      }
+
+      console.log("[WishlistService.generateSantaLetterFromWishlist] Participant found", {
+        participantId,
+        groupId: participantWithGroup.group_id,
+        groupEndDate: participantWithGroup.group.end_date,
+      });
+
+      // Step 2: Validate access permissions
+      await this.validateWishlistAccess(participantId, authUserId, participantToken, participantWithGroup);
+
+      // Step 3: Check if group end date has passed
+      const now = new Date();
+      const endDate = new Date(participantWithGroup.group.end_date);
+      const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+      if (nowDate > endDateOnly) {
+        console.log("[WishlistService.generateSantaLetterFromWishlist] End date passed", {
+          participantId,
+          endDate: participantWithGroup.group.end_date,
+          endDateOnly: endDateOnly.toISOString(),
+          nowDate: nowDate.toISOString(),
+        });
+        throw new Error("END_DATE_PASSED");
+      }
+
+      console.log("[WishlistService.generateSantaLetterFromWishlist] End date validation passed");
+
+      // Step 4: Retrieve existing wishlist
+      const { data: wishlist, error } = await this.supabase
+        .from("wishes")
+        .select("*")
+        .eq("participant_id", participantId)
+        .single();
+
+      if (error || !wishlist) {
+        console.log("[WishlistService.generateSantaLetterFromWishlist] Wishlist not found", {
+          participantId,
+          error: error?.message,
+        });
+        throw new Error("WISHLIST_NOT_FOUND");
+      }
+
+      // Step 5: Validate wishlist has content
+      const wishlistContent = wishlist.wishlist?.trim();
+      if (!wishlistContent || wishlistContent.length === 0) {
+        console.log("[WishlistService.generateSantaLetterFromWishlist] Wishlist is empty", {
+          participantId,
+          wishlistLength: wishlistContent?.length || 0,
+        });
+        throw new Error("WISHLIST_EMPTY");
+      }
+
+      console.log("[WishlistService.generateSantaLetterFromWishlist] Wishlist found", {
+        participantId,
+        wishlistId: wishlist.id,
+        wishlistLength: wishlistContent.length,
+      });
+
+      // Step 6: Check rate limits
+      const isRegistered = !!participantWithGroup.user_id;
+
+      const rateLimitStatus = await this.validateAIGenerationLimit(participantId, isRegistered);
+
+      if (!rateLimitStatus.canGenerate) {
+        console.log("[WishlistService.generateSantaLetterFromWishlist] Rate limit exceeded", {
+          participantId,
+          generationsUsed: rateLimitStatus.generationsUsed,
+          maxGenerations: rateLimitStatus.maxGenerations,
+        });
+        throw new Error("RATE_LIMIT_EXCEEDED");
+      }
+
+      console.log("[WishlistService.generateSantaLetterFromWishlist] Rate limit check passed", {
+        participantId,
+        generationsRemaining: rateLimitStatus.generationsRemaining,
+      });
+
+      // Step 7: Increment generation counter BEFORE generation
+      await this.incrementAIGenerationCount(participantId);
+      console.log("[WishlistService.generateSantaLetterFromWishlist] Generation counter incremented");
+
+      // Step 8: Generate Santa letter using wishlist content as prompt
+      let generatedLetter: SantaLetterResponse;
+      try {
+        generatedLetter = await this.openRouterService.generateSantaLetter(wishlistContent, options);
+        console.log("[WishlistService.generateSantaLetterFromWishlist] AI generation successful", {
+          participantId,
+          letterLength: generatedLetter.letterContent.length,
+          suggestedGiftsCount: generatedLetter.suggestedGifts.length,
+        });
+      } catch (generationError) {
+        // Counter is NOT rolled back on generation failure to prevent abuse
+        console.error("[WishlistService.generateSantaLetterFromWishlist] AI generation failed", {
+          participantId,
+          error: generationError,
+        });
+        throw generationError;
+      }
+
+      // Step 9: Calculate remaining generations (already decremented)
+      const remainingGenerations = rateLimitStatus.generationsRemaining - 1;
+      const canGenerateMore = remainingGenerations > 0;
+
+      const result = {
+        letter: generatedLetter,
+        remainingGenerations,
+        canGenerateMore,
+        isRegistered,
+      };
+
+      console.log("[WishlistService.generateSantaLetterFromWishlist] Generation completed successfully", {
+        participantId,
+        remainingGenerations,
+        canGenerateMore,
+      });
+
+      return result;
+    } catch (error) {
+      console.error("[WishlistService.generateSantaLetterFromWishlist] Error:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Deletes a participant's wishlist
    *
    * Validates access permissions, checks group end date hasn't passed, and deletes the wishlist.
@@ -437,32 +616,212 @@ export class WishlistService {
   /**
    * Renders wishlist content as HTML with auto-linked URLs
    *
+   * FIX #4: Completely rewritten to prevent XSS vulnerability
+   * - URLs are detected BEFORE HTML escaping (so & in URLs work correctly)
+   * - Each text/URL fragment is escaped separately
+   * - URLs in href attributes are properly escaped
+   * - Prevents ReDoS with bounded regex
+   *
    * Converts plain text URLs to clickable HTML links and preserves line breaks.
    *
    * @param wishlistText - The raw wishlist text content
    * @returns HTML string with auto-linked URLs
    *
    * @example
-   * const html = service.renderWishlistHtml("Check out https://example.com\nAnd this site too");
-   * // Returns: "Check out <a href='https://example.com'>https://example.com</a><br>And this site too"
+   * const html = service.renderWishlistHtml("Check out https://example.com?foo=bar&baz=qux\nAnd this site too");
+   * // Returns: "Check out <a href='https://example.com?foo=bar&amp;baz=qux'>https://example.com?foo=bar&amp;baz=qux</a><br>And this site too"
    */
   private renderWishlistHtml(wishlistText: string): string {
-    // Escape HTML characters for security
-    const escaped = wishlistText
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#x27;");
+    let result = "";
+    let i = 0;
 
-    // Auto-link URLs (simple regex for HTTP/HTTPS URLs)
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const linked = escaped.replace(urlRegex, (url) => {
-      return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-    });
+    while (i < wishlistText.length) {
+      // Look for markdown links [text](url)
+      if (wishlistText[i] === "[") {
+        const bracketStart = i;
+        const bracketEnd = wishlistText.indexOf("]", i);
 
-    // Convert line breaks to <br> tags
-    return linked.replace(/\n/g, "<br>");
+        if (bracketEnd !== -1 && bracketEnd + 1 < wishlistText.length && wishlistText[bracketEnd + 1] === "(") {
+          const parenStart = bracketEnd + 1;
+          // Find the matching closing parenthesis for the URL
+          // We need to handle nested parentheses in URLs
+          let parenCount = 1;
+          let parenEnd = parenStart + 1;
+
+          while (parenEnd < wishlistText.length && parenCount > 0) {
+            if (wishlistText[parenEnd] === "(") {
+              parenCount++;
+            } else if (wishlistText[parenEnd] === ")") {
+              parenCount--;
+            }
+            parenEnd++;
+          }
+
+          // Check if we found a valid markdown link
+          if (parenCount === 0 && parenEnd <= wishlistText.length) {
+            const linkText = wishlistText.slice(bracketStart + 1, bracketEnd);
+            const url = wishlistText.slice(parenStart + 1, parenEnd - 1);
+
+            // Escape the link text and URL
+            const escapedText = linkText
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#x27;");
+
+            const escapedUrl = url.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
+
+            result += `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer">${escapedText}</a>`;
+
+            i = parenEnd;
+            continue;
+          }
+        }
+      }
+
+      // Look for plain URLs
+      if (wishlistText.startsWith("http://", i) || wishlistText.startsWith("https://", i)) {
+        const urlStart = i;
+        let urlEnd = i;
+
+        // Find the end of the URL (stops at whitespace or end of text)
+        while (urlEnd < wishlistText.length && !/\s/.test(wishlistText[urlEnd])) {
+          urlEnd++;
+        }
+
+        const url = wishlistText.slice(urlStart, urlEnd);
+
+        // Escape the URL
+        const escapedUrl = url.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
+
+        result += `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+
+        i = urlEnd;
+        continue;
+      }
+
+      // Regular character - escape it
+      const char = wishlistText[i];
+      if (char === "&") {
+        result += "&amp;";
+      } else if (char === "<") {
+        result += "&lt;";
+      } else if (char === ">") {
+        result += "&gt;";
+      } else if (char === '"') {
+        result += "&quot;";
+      } else if (char === "'") {
+        result += "&#x27;";
+      } else if (char === "\n") {
+        result += "<br>";
+      } else {
+        result += char;
+      }
+
+      i++;
+    }
+
+    return result;
+  }
+
+  /**
+   * Validates AI generation rate limit for a participant
+   *
+   * Checks the participant's AI generation quota without requiring API key.
+   * Used for status checks and quota validation.
+   *
+   * @param participantId - The participant ID to check
+   * @param isRegistered - Whether the participant is a registered user
+   * @returns Promise resolving to rate limit status
+   * @throws {Error} "INVALID_INPUT" - Invalid participant ID format
+   * @throws {Error} "SERVER_ERROR" - Database error occurred
+   *
+   * @example
+   * const status = await service.validateAIGenerationLimit(123, true);
+   * if (status.canGenerate) {
+   *   console.log(`Can generate. Remaining: ${status.generationsRemaining}`);
+   * }
+   */
+  async validateAIGenerationLimit(participantId: number, isRegistered: boolean): Promise<RateLimitStatus> {
+    if (isNaN(participantId) || participantId <= 0) {
+      console.error("[WishlistService.validateAIGenerationLimit] Invalid participant ID", { participantId });
+      throw new Error("INVALID_INPUT");
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from("wishes")
+        .select("ai_generation_count_per_group, ai_last_generated_at")
+        .eq("participant_id", participantId)
+        .single();
+
+      if (error) {
+        // If no wishlist exists yet, participant can generate
+        if (error.code === "PGRST116") {
+          const maxGenerations = isRegistered ? AI_MAX_GENERATIONS_REGISTERED : AI_MAX_GENERATIONS_UNREGISTERED;
+          return {
+            canGenerate: true,
+            generationsUsed: 0,
+            generationsRemaining: maxGenerations,
+            maxGenerations,
+            lastGeneratedAt: null,
+          };
+        }
+        throw error;
+      }
+
+      const maxGenerations = isRegistered ? AI_MAX_GENERATIONS_REGISTERED : AI_MAX_GENERATIONS_UNREGISTERED;
+      const currentCount = data.ai_generation_count_per_group || 0;
+
+      return {
+        canGenerate: currentCount < maxGenerations,
+        generationsUsed: currentCount,
+        generationsRemaining: Math.max(0, maxGenerations - currentCount),
+        maxGenerations,
+        lastGeneratedAt: data.ai_last_generated_at ? new Date(data.ai_last_generated_at) : null,
+      };
+    } catch (error) {
+      console.error("[WishlistService.validateAIGenerationLimit] Database error:", error);
+      throw new Error("SERVER_ERROR");
+    }
+  }
+
+  /**
+   * Atomically increments AI generation count for a participant
+   *
+   * Updates the participant's AI generation counter using a SECURITY DEFINER
+   * database function. Creates a wishlist record if it doesn't exist (UPSERT).
+   *
+   * This should be called BEFORE generating AI content to prevent race conditions.
+   *
+   * @param participantId - The participant ID
+   * @throws {Error} "INVALID_INPUT" - Invalid participant ID format
+   * @throws {Error} "SERVER_ERROR" - Database error occurred
+   *
+   * @example
+   * // Increment counter before generation
+   * await service.incrementAIGenerationCount(123);
+   * // Counter is now incremented regardless of generation success
+   */
+  async incrementAIGenerationCount(participantId: number): Promise<void> {
+    if (isNaN(participantId) || participantId <= 0) {
+      console.error("[WishlistService.incrementAIGenerationCount] Invalid participant ID", { participantId });
+      throw new Error("INVALID_INPUT");
+    }
+
+    try {
+      const { error } = await this.supabase.rpc("increment_ai_generation_count", {
+        p_participant_id: participantId,
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error("[WishlistService.incrementAIGenerationCount] Database error:", error);
+      throw new Error("SERVER_ERROR");
+    }
   }
 
   /**

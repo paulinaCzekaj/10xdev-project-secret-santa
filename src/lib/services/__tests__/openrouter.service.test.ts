@@ -166,7 +166,7 @@ describe("OpenRouterService", () => {
       const requestBody = JSON.parse(fetchCall[1].body);
       const userMessage = requestBody.messages.find((m: { role: string; content: string }) => m.role === "user");
 
-      expect(userMessage?.content.length).toBeLessThanOrEqual(1000);
+      expect(userMessage?.content.length).toBeLessThanOrEqual(2000);
     });
 
     it("should handle API errors", async () => {
@@ -498,10 +498,10 @@ describe("OpenRouterService", () => {
 
       const result = await service.generateSantaLetter("test preferences");
 
-      expect(result.letterContent.length).toBe(1000);
+      expect(result.letterContent.length).toBe(2000);
     });
 
-    it("should limit suggested gifts to 5", async () => {
+    it("should not limit suggested gifts", async () => {
       const manyGifts = Array.from({ length: 10 }, (_, i) => `gift${i}`);
 
       fetchMock.mockResolvedValueOnce({
@@ -523,7 +523,7 @@ describe("OpenRouterService", () => {
 
       const result = await service.generateSantaLetter("test preferences");
 
-      expect(result.suggestedGifts.length).toBe(5);
+      expect(result.suggestedGifts.length).toBe(10);
     });
   });
 });

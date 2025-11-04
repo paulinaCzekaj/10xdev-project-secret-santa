@@ -1,160 +1,263 @@
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
+import type { GenerateAIRequest, GenerateAIResponse, AIGenerationError, UseAIGenerationReturn } from "@/types";
 
-interface UseAIGenerationResult {
-  generate: (prompt: string) => Promise<void>;
-  isGenerating: boolean;
-  error: string | null;
-  generatedContent: string | null;
-  suggestedGifts: string[];
-  remainingGenerations: number | null;
-  canGenerateMore: boolean;
-  clearError: () => void;
-  reset: () => void;
+// Mapowanie kodów błędów na user-friendly komunikaty
+const ERROR_MESSAGES: Record<string, string> = {
+  END_DATE_PASSED: "Data zakończenia wydarzenia minęła. Nie możesz już generować listy życzeń.",
+  INVALID_PROMPT: "Prompt musi mieć od 10 do 2000 znaków.",
+  UNAUTHORIZED: "Wymagana autoryzacja. Zaloguj się ponownie.",
+  FORBIDDEN: "Nie masz uprawnień do generowania listy dla tego uczestnika.",
+  NOT_FOUND: "Nie znaleziono uczestnika. Odśwież stronę.",
+  AI_GENERATION_LIMIT_REACHED: "Wykorzystałeś wszystkie dostępne generowania AI.",
+  AI_API_ERROR: "Wystąpił błąd podczas generowania. Spróbuj ponownie później.",
+  GATEWAY_TIMEOUT: "Generowanie trwa zbyt długo. Spróbuj ponownie.",
+  NETWORK_ERROR: "Błąd połączenia. Sprawdź swoje połączenie internetowe.",
+};
+
+// Timeout dla pojedynczego requesta (15 sekund)
+const REQUEST_TIMEOUT = 15000;
+
+/**
+ * Helper: fetch z timeoutem
+ */
+async function fetchWithTimeout(url: string, options: RequestInit, timeout: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === "AbortError") {
+      throw new Error("GATEWAY_TIMEOUT");
+    }
+    throw error;
+  }
 }
 
-interface GenerationResponse {
-  generated_content: string;
-  suggested_gifts: string[];
-  remaining_generations: number;
-  can_generate_more: boolean;
-  metadata: {
-    model: string;
-    tokensUsed: number;
-    generationTime: number;
-  };
-}
+/**
+ * Helper: sleep dla retry backoff
+ */
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-interface ApiErrorResponse {
-  error: {
-    code: string;
-    message: string;
-    isRetryable?: boolean;
-  };
-}
-
-export function useAIGeneration(participantId: string | number, isRegistered = false): UseAIGenerationResult {
+/**
+ * Hook do zarządzania procesem AI-generowania listu do Mikołaja
+ *
+ * @param participantId - ID uczestnika
+ * @param token - Token dostępu (dla niezarejestrowanych)
+ * @param onStatusChange - Callback wywoływany po zmianach (dla refetch status)
+ * @returns Stan generowania, funkcje akcji
+ */
+export function useAIGeneration(
+  participantId: number,
+  token?: string,
+  onStatusChange?: () => void
+): UseAIGenerationReturn {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [error, setError] = useState<AIGenerationError | null>(null);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
-  const [suggestedGifts, setSuggestedGifts] = useState<string[]>([]);
+  const [currentPrompt, setCurrentPrompt] = useState<string | null>(null);
   const [remainingGenerations, setRemainingGenerations] = useState<number | null>(null);
 
-  const generate = useCallback(
+  /**
+   * Wywołanie API z retry logic
+   */
+  const callGenerateAPI = useCallback(
+    async (prompt: string, retries = 2): Promise<GenerateAIResponse> => {
+      const url = new URL(`/api/participants/${participantId}/wishlist/generate-ai`, window.location.origin);
+
+      if (token) {
+        url.searchParams.append("token", token);
+      }
+
+      const requestBody: GenerateAIRequest = { prompt };
+
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const response = await fetchWithTimeout(
+            url.toString(),
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(token ? {} : { Authorization: `Bearer ${localStorage.getItem("access_token")}` }),
+              },
+              body: JSON.stringify(requestBody),
+            },
+            REQUEST_TIMEOUT
+          );
+
+          if (response.ok) {
+            return await response.json();
+          }
+
+          // Retry dla 5xx i 504
+          if (attempt < retries && [500, 502, 503, 504].includes(response.status)) {
+            const backoff = Math.pow(2, attempt) * 1000;
+            await sleep(backoff);
+            continue;
+          }
+
+          // Błąd nie nadający się do retry
+          const errorData = await response.json();
+          const errorCode = errorData.error.code || "AI_API_ERROR";
+          const errorMessage = ERROR_MESSAGES[errorCode] || errorData.error.message;
+
+          throw {
+            code: errorCode,
+            message: errorMessage,
+          } as AIGenerationError;
+        } catch (err) {
+          // Retry dla network errors
+          if (attempt < retries && err instanceof TypeError) {
+            const backoff = Math.pow(2, attempt) * 1000;
+            await sleep(backoff);
+            continue;
+          }
+
+          // Błąd timeout
+          if (err.message === "GATEWAY_TIMEOUT") {
+            throw {
+              code: "GATEWAY_TIMEOUT",
+              message: ERROR_MESSAGES.GATEWAY_TIMEOUT,
+            } as AIGenerationError;
+          }
+
+          // Inne błędy - mapuj na AIGenerationError jeśli to nie jest już taki błąd
+          if (err.code && err.message) {
+            throw err; // już jest AIGenerationError
+          }
+          throw {
+            code: "AI_API_ERROR",
+            message: err.message || "Wystąpił nieoczekiwany błąd",
+          } as AIGenerationError;
+        }
+      }
+
+      // Max retries exceeded
+      throw {
+        code: "AI_API_ERROR",
+        message: "Przekroczono maksymalną liczbę prób. Spróbuj ponownie później.",
+      } as AIGenerationError;
+    },
+    [participantId, token]
+  );
+
+  /**
+   * Generowanie nowego listu
+   */
+  const generateLetter = useCallback(
     async (prompt: string) => {
-      if (!prompt.trim()) {
-        setError("Treść preferencji nie może być pusta");
-        return;
-      }
-
-      if (prompt.trim().length < 10) {
-        setError("Preferencje muszą mieć co najmniej 10 znaków");
-        return;
-      }
-
       setIsGenerating(true);
       setError(null);
+      setCurrentPrompt(prompt);
 
       try {
-        const response = await fetch(`/api/participants/${participantId}/wishlist/generate-ai`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            prompt: prompt.trim(),
-            isRegistered,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          const errorData = data as ApiErrorResponse;
-
-          // Map common error codes to user-friendly messages
-          const errorMessages: Record<string, string> = {
-            INVALID_INPUT: "Wprowadzone dane są nieprawidłowe. Spróbuj ponownie.",
-            UNAUTHORIZED: "Problem z konfiguracją systemu. Skontaktuj się z administratorem.",
-            FORBIDDEN: "Brak dostępu do tej funkcji.",
-            NOT_FOUND: "Uczestnik nie został znaleziony.",
-            RATE_LIMIT_EXCEEDED: "Wykorzystałeś wszystkie dostępne generowania AI.",
-            GENERATION_LIMIT_EXCEEDED: "Wykorzystałeś wszystkie dostępne generowania AI.",
-            SERVER_ERROR: "Problem z serwerem AI. Spróbuj ponownie za chwilę.",
-            BAD_GATEWAY: "Problem z połączeniem. Spróbuj ponownie.",
-            SERVICE_UNAVAILABLE: "Serwis AI jest tymczasowo niedostępny.",
-            GATEWAY_TIMEOUT: "Generowanie trwa dłużej niż zwykle. Spróbuj ponownie.",
-            TIMEOUT: "Generowanie trwa dłużej niż zwykle. Spróbuj ponownie.",
-            NETWORK_ERROR: "Problem z połączeniem sieciowym.",
-            INVALID_RESPONSE: "Otrzymano nieprawidłową odpowiedź z serwera.",
-            INVALID_JSON: "Błąd przetwarzania odpowiedzi.",
-          };
-
-          const userMessage =
-            errorMessages[errorData.error.code] || errorData.error.message || "Wystąpił nieoczekiwany błąd";
-
-          // Add retry suggestion for retryable errors
-          if (errorData.error.isRetryable) {
-            throw new Error(`${userMessage} Spróbuj ponownie za chwilę.`);
-          }
-
-          throw new Error(userMessage);
-        }
-
-        const result = data as GenerationResponse;
-
-        setGeneratedContent(result.generated_content);
-        setSuggestedGifts(result.suggested_gifts);
-        setRemainingGenerations(result.remaining_generations);
+        const response = await callGenerateAPI(prompt);
+        setGeneratedContent(response.generated_content);
+        setRemainingGenerations(response.remaining_generations);
+        toast.success("List został wygenerowany!");
       } catch (err) {
-        // For network errors or unexpected errors, use a generic message
-        let errorMessage = "Wystąpił nieoczekiwany błąd podczas generowania listy";
-
-        if (err instanceof Error) {
-          // If it's an API error (has response), it was already handled above
-          // For network errors or other unexpected errors, use generic message
-          if (
-            !err.message.includes("Spróbuj ponownie") &&
-            !err.message.includes("Wykorzystałeś") &&
-            !err.message.includes("Problem z")
-          ) {
-            errorMessage = "Wystąpił nieoczekiwany błąd podczas generowania listy";
-          } else {
-            errorMessage = err.message;
-          }
-        }
-
-        setError(errorMessage);
-        console.error("[useAIGeneration] Error:", err);
+        const error = err as AIGenerationError;
+        setError(error);
+        toast.error(error.message);
+        console.error("[useAIGeneration] generateLetter error:", err);
       } finally {
         setIsGenerating(false);
       }
     },
-    [participantId, isRegistered]
+    [callGenerateAPI]
   );
 
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
+  /**
+   * Regeneracja z tym samym promptem
+   */
+  const regenerateLetter = useCallback(async () => {
+    if (!currentPrompt) {
+      toast.error("Brak zapisanego promptu do regeneracji");
+      return;
+    }
 
+    setIsRegenerating(true);
+    setError(null);
+
+    try {
+      const response = await callGenerateAPI(currentPrompt);
+      setGeneratedContent(response.generated_content);
+      setRemainingGenerations(response.remaining_generations);
+      toast.success("List został zregenerowany!");
+    } catch (err) {
+      const error = err as AIGenerationError;
+      setError(error);
+      toast.error(error.message);
+      console.error("[useAIGeneration] regenerateLetter error:", err);
+    } finally {
+      setIsRegenerating(false);
+    }
+  }, [currentPrompt, callGenerateAPI]);
+
+  /**
+   * Akceptacja wygenerowanego listu
+   */
+  const acceptLetter = useCallback(async () => {
+    if (!generatedContent) return;
+
+    // Callback dla parent component (wstawienie do textarea)
+    // Reset stanu
+    setGeneratedContent(null);
+    setCurrentPrompt(null);
+    setError(null);
+
+    // Refetch AI status
+    await onStatusChange?.();
+
+    toast.success("List został dodany do Twojej listy życzeń");
+  }, [generatedContent, onStatusChange]);
+
+  /**
+   * Odrzucenie wygenerowanego listu
+   */
+  const rejectLetter = useCallback(async () => {
+    setGeneratedContent(null);
+    setCurrentPrompt(null);
+    setError(null);
+
+    // Refetch AI status (licznik został zmniejszony)
+    await onStatusChange?.();
+
+    toast.info("List został odrzucony. Wykorzystałeś 1 generowanie.");
+  }, [onStatusChange]);
+
+  /**
+   * Reset stanu (np. przy unmount)
+   */
   const reset = useCallback(() => {
     setIsGenerating(false);
+    setIsRegenerating(false);
     setError(null);
     setGeneratedContent(null);
-    setSuggestedGifts([]);
+    setCurrentPrompt(null);
     setRemainingGenerations(null);
   }, []);
 
-  const canGenerateMore = remainingGenerations === null || remainingGenerations > 0;
-
   return {
-    generate,
     isGenerating,
+    isRegenerating,
     error,
     generatedContent,
-    suggestedGifts,
+    currentPrompt,
     remainingGenerations,
-    canGenerateMore,
-    clearError,
+    generateLetter,
+    regenerateLetter,
+    acceptLetter,
+    rejectLetter,
     reset,
   };
 }

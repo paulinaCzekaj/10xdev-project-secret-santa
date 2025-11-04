@@ -32,14 +32,14 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginFormSchema),
-    mode: "onChange",
+    mode: "onBlur",
     defaultValues: {
       email: "",
       password: "",
     },
   });
 
-  const isFormValid = form.formState.isValid && !isSubmitting;
+  const isFormValid = form.formState.isDirty && !isSubmitting;
 
   // Display message from props if provided
   React.useEffect(() => {

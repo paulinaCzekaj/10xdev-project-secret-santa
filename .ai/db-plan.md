@@ -75,13 +75,20 @@ _Constraints:_
 - **id**: BIGSERIAL PRIMARY KEY
 - **participant_id**: BIGINT NOT NULL
   _Foreign key referencing `participants(id)` with ON DELETE CASCADE_
-- **wishlist**: TEXT NOT NULL  
+- **wishlist**: TEXT NOT NULL
   _Contains the wish list data; auto-linking for URLs can be handled at the application level._
 - **updated_at**: TIMESTAMPTZ NOT NULL DEFAULT NOW()
+- **ai_generated**: BOOLEAN DEFAULT FALSE
+  _Indicates whether the wishlist was generated using AI assistance_
+- **ai_generation_count**: INTEGER DEFAULT 0
+  _Tracks the number of AI generations used by this participant (per-group limit: 3 for unregistered, 5 for registered users)_
+- **ai_last_generated_at**: TIMESTAMPTZ NULL
+  _Timestamp of the last AI generation request_
 
 _Constraints:_
 
 - This table holds the wish list information for each participant. Typically, each participant will have one wish list.
+- The `ai_generation_count` field enforces usage limits for AI-generated content (3 for unregistered participants, 5 for registered users).
 
 ---
 
@@ -110,6 +117,8 @@ _Constraints:_
 - Index on `groups.end_date` for queries filtering on upcoming or past groups.
 - Index on `participants.group_id` for fast lookup of participants within a group.
 - Index on `exclusion_rules.group_id` to speed up exclusion rule queries per group.
+- Index on `wishes.participant_id` for fast lookup of wishlists by participant (already exists).
+- Index on `wishes.ai_generation_count` for queries checking AI generation limits.
 
 _Additional Recommendation:_
 
@@ -154,6 +163,35 @@ _Deletion Rules:_
 
 - **Supabase Integration**:  
   The `users` table is designed to integrate naturally with Supabase Auth, with additional application-level checks enforced via RLS.
+
+---
+
+## 6. Database Migrations for Version 1.1 (AI Features)
+
+To support the AI-generated wishlist functionality, the following migration should be applied to the existing `wishes` table:
+
+```sql
+-- Add AI-related columns to wishes table
+ALTER TABLE wishes
+  ADD COLUMN IF NOT EXISTS ai_generated BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS ai_generation_count INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS ai_last_generated_at TIMESTAMPTZ NULL;
+
+-- Add index for AI generation count queries
+CREATE INDEX IF NOT EXISTS wishes_ai_generation_count_idx ON wishes(ai_generation_count);
+
+-- Add comment for documentation
+COMMENT ON COLUMN wishes.ai_generated IS 'Indicates whether the wishlist was generated using AI assistance';
+COMMENT ON COLUMN wishes.ai_generation_count IS 'Tracks the number of AI generations used by this participant (per-group limit: 3 for unregistered, 5 for registered users)';
+COMMENT ON COLUMN wishes.ai_last_generated_at IS 'Timestamp of the last AI generation request';
+```
+
+**Migration Notes:**
+
+- The migration is safe to run on existing data as all new columns have default values.
+- Existing wishlists will have `ai_generated = FALSE` and `ai_generation_count = 0` by default.
+- The `ai_last_generated_at` column will be `NULL` for existing records until the user generates content using AI.
+- No data loss will occur during this migration.
 
 ---
 

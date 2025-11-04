@@ -1,8 +1,13 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Check, AlertCircle, Lock } from "lucide-react";
 import { useWishlistEditor } from "@/hooks/useWishlistEditor";
+import { AIGenerateButton } from "./AIGenerateButton";
+import { AIPromptModal } from "./AIPromptModal";
+import { AIPreviewModal } from "./AIPreviewModal";
+import { useAIGeneration } from "@/hooks/useAIGeneration";
+import { useAIGenerationStatus } from "@/hooks/useAIGenerationStatus";
 
 interface WishlistEditorProps {
   initialContent: string;
@@ -42,6 +47,25 @@ export default function WishlistEditor({
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // AI generation hooks
+  const { status, refetch: refetchStatus } = useAIGenerationStatus(participantId, accessToken);
+  const {
+    isGenerating,
+    isRegenerating,
+    error: aiError,
+    generatedContent,
+    currentPrompt,
+    remainingGenerations: aiRemainingGenerations,
+    generateLetter,
+    regenerateLetter,
+    acceptLetter,
+    rejectLetter,
+  } = useAIGeneration(participantId, accessToken, refetchStatus);
+
+  // Modal states
+  const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+
   // Formatowanie daty zakończenia dla komunikatu
   const formatEndDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -57,6 +81,37 @@ export default function WishlistEditor({
     if (hasChanges && !isSaving) {
       save();
     }
+  };
+
+  // AI generation handlers
+  const handlePromptSubmit = async (prompt: string) => {
+    await generateLetter(prompt);
+    // Refresh status after generation to get updated counter
+    await refetchStatus();
+    setIsPromptModalOpen(false);
+    setIsPreviewModalOpen(true);
+  };
+
+  const handleAccept = async () => {
+    if (!generatedContent) return;
+
+    // Wstawienie treści do textarea
+    setContent(generatedContent);
+
+    // Wywołanie acceptLetter (refetch status, toast)
+    await acceptLetter();
+
+    setIsPreviewModalOpen(false);
+  };
+
+  const handleReject = async () => {
+    await rejectLetter();
+    setIsPreviewModalOpen(false);
+  };
+
+  const handleRegenerate = async () => {
+    await regenerateLetter();
+    // Preview modal pozostaje otwarty z nową treścią
   };
 
   // Jeśli edycja jest zablokowana, wyświetlamy komunikat
@@ -135,6 +190,17 @@ export default function WishlistEditor({
               ✨ <strong>Magia Świąt Bożego Narodzenia!</strong> To Twoja szansa, aby podzielić się swoimi marzeniami.
               Napisz, co sprawia Ci radość i pomoż swojemu tajemniczemu dobroczyńcy wybrać idealny prezent! 🎄
             </p>
+          </div>
+
+          {/* AI Generate Button */}
+          <div className="mb-4">
+            <AIGenerateButton
+              participantId={participantId}
+              token={accessToken}
+              onGenerateSuccess={() => setIsPromptModalOpen(true)}
+              onStatusUpdate={refetchStatus}
+              disabled={!canEdit}
+            />
           </div>
 
           {/* Pole tekstowe */}
@@ -240,6 +306,27 @@ export default function WishlistEditor({
           </AlertDescription>
         </Alert>
       )}
+
+      {/* AI Modals */}
+      <AIPromptModal
+        isOpen={isPromptModalOpen}
+        onClose={() => setIsPromptModalOpen(false)}
+        onSubmit={handlePromptSubmit}
+        isLoading={isGenerating}
+        error={aiError}
+      />
+
+      <AIPreviewModal
+        isOpen={isPreviewModalOpen}
+        onClose={() => setIsPreviewModalOpen(false)}
+        generatedContent={generatedContent || ""}
+        onAccept={handleAccept}
+        onReject={handleReject}
+        onRegenerate={handleRegenerate}
+        isRegenerating={isRegenerating}
+        remainingGenerations={aiRemainingGenerations ?? status?.remaining_generations ?? 0}
+        currentPrompt={currentPrompt || ""}
+      />
     </div>
   );
 }
