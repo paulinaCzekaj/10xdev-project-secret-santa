@@ -108,6 +108,13 @@ export const GET: APIRoute = async ({ params, locals, url }) => {
     }
 
     // Guard 5: Validate access permissions
+    console.log("[GET /api/participants/:participantId/wishlist/ai-status] About to validate access", {
+      participantId,
+      hasAuthUserId: !!authUserId,
+      hasParticipantToken: !!participantToken,
+      participantUserId: participantWithGroup.user_id,
+      participantTokenPrefix: participantWithGroup.access_token?.substring(0, 8) + "...",
+    });
     await wishlistService.validateWishlistAccess(participantId, authUserId, participantToken, participantWithGroup);
 
     console.log("[GET /api/participants/:participantId/wishlist/ai-status] Access validation passed");

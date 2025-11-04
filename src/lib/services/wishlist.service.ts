@@ -184,12 +184,16 @@ export class WishlistService {
 
     // Case 2: Unregistered user (participant token)
     if (participantToken) {
-      if (participantWithGroup.access_token !== participantToken) {
-        console.log("[WishlistService.validateWishlistAccess] Participant token access denied", {
-          participantId,
-          providedToken: participantToken.substring(0, 8) + "...",
-          storedToken: participantWithGroup.access_token?.substring(0, 8) + "...",
-        });
+      const tokenMatches = participantWithGroup.access_token === participantToken;
+      console.log("[WishlistService.validateWishlistAccess] Checking participant token", {
+        participantId,
+        tokenMatches,
+        providedToken: participantToken.substring(0, 8) + "...",
+        storedToken: participantWithGroup.access_token?.substring(0, 8) + "..." || "null",
+      });
+
+      if (!tokenMatches) {
+        console.log("[WishlistService.validateWishlistAccess] Participant token access denied");
         throw new Error("FORBIDDEN");
       }
 

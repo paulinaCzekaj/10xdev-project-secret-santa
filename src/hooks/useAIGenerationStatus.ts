@@ -31,11 +31,21 @@ export function useAIGenerationStatus(
         url.searchParams.append("token", token);
       }
 
+      const accessToken = localStorage.getItem("access_token");
+      console.log("[useAIGenerationStatus] Fetching status", {
+        participantId,
+        hasToken: !!token,
+        tokenPrefix: token?.substring(0, 8) + "...",
+        hasAccessToken: !!accessToken,
+        accessTokenPrefix: accessToken?.substring(0, 8) + "...",
+        finalUrl: url.toString(),
+      });
+
       const response = await fetch(url.toString(), {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? {} : { Authorization: `Bearer ${localStorage.getItem("access_token")}` }),
+          ...(token ? {} : { Authorization: `Bearer ${accessToken}` }),
         },
       });
 
