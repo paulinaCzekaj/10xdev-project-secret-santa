@@ -12,6 +12,7 @@ Tradycyjna, manualna organizacja wymiany prezentów "Secret Santa" jest procesem
 - Logistyka: Zbieranie uczestników, ustalanie reguł (np. kto nie powinien kogo losować) i przekazywanie wyników jest trudne do skoordynowania, szczególnie zdalnie.
 - Ryzyko błędu: Istnieje ryzyko, że ktoś wylosuje samego siebie lub losowanie będzie niezgodne z ustalonymi wcześniej wykluczeniami.
 - Brak centralnego miejsca na informacje: Listy życzeń są często rozproszone w różnych kanałach komunikacji, co utrudnia zakup trafionego prezentu.
+- Trudność w tworzeniu list życzeń: Wiele osób ma problem z wymyśleniem treści listu do świętego Mikołaja, co prowadzi do ogólnych wskazówek, bez świątecznej atmosfery.
 
 Aplikacja "Secret Santa" adresuje te problemy, oferując scentralizowaną, zautomatyzowaną i gwarantującą poufność platformę do organizacji wymiany prezentów.
 
@@ -53,6 +54,23 @@ Aplikacja "Secret Santa" adresuje te problemy, oferując scentralizowaną, zauto
 - Edycja listy życzeń jest możliwa do upłynięcia zdefiniowanej przez Twórcę "daty zakończenia wydarzenia". Po tej dacie pole staje się tylko do odczytu.
 - Na ekranie wyniku losowania użytkownik widzi: imię wylosowanej osoby, jej listę życzeń, nazwę grupy, ustalony budżet oraz własną listę życzeń z możliwością jej edycji.
 
+#### 3.4.1. AI-generowanie listu do Mikołaja (Wersja 1.1)
+
+- Obok pola tekstowego listy życzeń znajduje się przycisk "Wygeneruj list do Mikołaja z pomocą AI".
+- Po kliknięciu przycisku wyświetla się modal z polem do wpisania preferencji/zainteresowań użytkownika.
+- System wykorzystuje API OpenRouter (model openai/gpt-4o-mini) do wygenerowania spersonalizowanego listu do świętego Mikołaja zawierającego listę życzeń w tematyce świątecznej.
+- Wygenerowany list ma formę narracyjną (nie suchej listy punktów), zawiera emoji świąteczne, ciepły świąteczny ton komunikacji oraz odpowiednie formatowanie.
+- Użytkownik widzi podgląd wygenerowanej treści z opcjami: "Akceptuj", "Odrzuć" lub "Generuj ponownie".
+- Po zaakceptowaniu treść jest automatycznie wstawiana do pola edycji listy życzeń.
+- Użytkownik ma pełną możliwość edycji wygenerowanej treści po jej zaakceptowaniu.
+- Liczba generowań jest limitowana per-grupa:
+  - Niezarejestrowani użytkownicy: 3 generowania
+  - Zarejestrowani użytkownicy: 5 generowań
+- Każde wygenerowanie (nawet odrzucone) zmniejsza licznik dostępnych użyć.
+- Regeneracja z tym samym promptem jest możliwa bez dodatkowych ograniczeń (w ramach dostępnych limitów).
+- Licznik pozostałych generowań jest widoczny przy przycisku AI.
+- Po wykorzystaniu wszystkich generowań przycisk staje się nieaktywny z odpowiednim komunikatem.
+
 ### 3.5. Wymagania Niefunkcjonalne
 
 - Aplikacja musi być w pełni responsywna (RWD) i poprawnie wyświetlać się na urządzeniach mobilnych oraz desktopowych.
@@ -79,6 +97,13 @@ Aplikacja "Secret Santa" adresuje te problemy, oferując scentralizowaną, zauto
 - Zaawansowane role użytkowników (np. współorganizator).
 - Obsługa wielu walut (domyślną i jedyną walutą jest PLN).
 - Dostęp do wyniku losowania poprzez podanie samego imienia (zrezygnowano na rzecz bezpieczniejszej metody unikalnych linków).
+- AI-generowanie listu do Mikołaja (przesunięte do wersji 1.1).
+
+### 4.3. Funkcjonalności planowane na wersję 1.1
+
+- **AI-generowanie listu do Mikołaja**: Inteligentny asystent pomagający użytkownikom w tworzeniu spersonalizowanych listów do świętego Mikołaja zawierających listę życzeń. Funkcjonalność wykorzystuje model AI (openai/gpt-4o-mini via OpenRouter) do generowania listu w ciepłym, świątecznym tonie narracyjnym.
+- Rozszerzenie mechanizmu śledzenia: Szczegółowe statystyki dotyczące korzystania z AI-generatora (liczba użyć, akceptacje vs odrzucenia).
+- Optymalizacja UX: Udoskonalenia interfejsu na podstawie feedbacku z MVP.
 
 ## 5. Historyjki użytkowników
 
@@ -216,16 +241,190 @@ Aplikacja "Secret Santa" adresuje te problemy, oferując scentralizowaną, zauto
   - Użytkownik może szybko sprawdzić wyniki losowania (US-012)
   - Funkcjonalność opisania w tym US nie jest dostępna bez logowania się do systemu (US-002).
 
+- ID: US-015
+- Tytuł: AI-generowanie listu do Mikołaja (Wersja 1.1)
+- Opis: Jako uczestnik losowania (zarejestrowany lub niezarejestrowany), chcę móc wygenerować swój list do świętego Mikołaja z pomocą AI, aby łatwiej stworzyć atrakcyjną i konkretną listę życzeń w ciepłym, świątecznym tonie.
+- Kryteria akceptacji:
+  1.  Na stronie wyniku losowania, obok pola edycji listy życzeń, znajduje się przycisk "Wygeneruj list do Mikołaja z pomocą AI" z ikoną sparkles.
+  2.  Przycisk wyświetla licznik pozostałych generowań (3 dla niezarejestrowanych, 5 dla zalogowanych, per-grupa).
+  3.  Po kliknięciu przycisku wyświetla się modal z prostym formularzem zawierającym jedno pole tekstowe na prompt (preferencje/zainteresowania).
+  4.  Po wpisaniu promptu i kliknięciu "Generuj" wyświetla się loading state z animacją.
+  5.  System wysyła request do OpenRouter API (model openai/gpt-4o-mini) z promptem użytkownika i kontekstem świątecznym.
+  6.  Po otrzymaniu odpowiedzi wyświetla się modal z podglądem wygenerowanego listu do Mikołaja zawierającego: emoji świąteczne, ciepły narracyjny ton komunikacji (nie sucha lista punktów), sformatowaną treść z listą życzeń.
+  7.  W modalu podglądu dostępne są trzy opcje: "Akceptuj", "Odrzuć", "Generuj ponownie".
+  8.  Po kliknięciu "Akceptuj" wygenerowana treść jest wstawiana do pola edycji listy życzeń i licznik generowań zmniejsza się o 1.
+  9.  Po kliknięciu "Odrzuć" modal zamyka się, licznik generowań zmniejsza się o 1, pole listy życzeń pozostaje niezmienione.
+  10. Po kliknięciu "Generuj ponownie" proces generowania powtarza się z tym samym promptem, licznik zmniejsza się o kolejną 1.
+  11. Użytkownik może edytować wygenerowaną treść po jej zaakceptowaniu jak zwykły tekst.
+  12. Po wykorzystaniu wszystkich generowań przycisk staje się nieaktywny z komunikatem "Wykorzystałeś wszystkie generowania AI".
+  13. System zapisuje w bazie danych licznik użyć AI per-participant-per-grupa.
+  14. Wygenerowany list zawiera maksymalnie 1000 znaków i jest zgodny z limitami pola listy życzeń (10000 znaków).
+
 ## 6. Metryki sukcesu
 
 ### 6.1. Metryki Biznesowe / Produktowe
 
+**MVP:**
 - Kluczowy wskaźnik sukcesu (KPI): 100% wyświetleń wyników przez uczestników w każdym zakończonym losowaniu. Mierzone poprzez śledzenie otwarć unikalnych linków oraz dostępów do strony wyniku przez zalogowanych użytkowników.
 - Wskaźnik aktywacji użytkowników: Osiągnięcie 50% aktywacji, gdzie "aktywny użytkownik" jest zdefiniowany jako osoba zarejestrowana, która wzięła udział w co najmniej jednym losowaniu (jako twórca lub uczestnik).
 
+**Wersja 1.1 (AI-generowanie listu do Mikołaja):**
+- Wskaźnik adopcji AI: Odsetek uczestników korzystających z funkcji AI-generowania listu do Mikołaja (cel: 30% użytkowników w ciągu pierwszego miesiąca).
+- Współczynnik akceptacji: Procent wygenerowanych listów, które zostały zaakceptowane przez użytkowników (cel: min. 60%).
+- Średni czas tworzenia listy życzeń: Porównanie czasu między metodą manualną a AI-generowaniem (oczekiwana redukcja o 50%).
+- Średnia liczba generowań na użytkownika: Monitorowanie, czy użytkownicy wykorzystują dostępne limity (3/5 generowań per-grupa).
+- Wskaźnik wypełnienia list życzeń: Procent uczestników, którzy mają wypełnioną listę życzeń po wprowadzeniu AI (oczekiwany wzrost z bazowego poziomu MVP).
+
 ### 6.2. Metryki Techniczne / Projektowe
 
+**MVP:**
 - Pozytywne zaliczenie projektu akademickiego.
 - W 100% działający główny scenariusz użytkownika: od rejestracji, przez stworzenie grupy, dodanie członków, zdefiniowanie wykluczeń, uruchomienie losowania, aż po poprawne wyświetlenie wyniku każdemu uczestnikowi.
 - Logika losowania w pełni pokryta testami jednostkowymi, które potwierdzają jej poprawność (uwzględnienie wykluczeń, brak wylosowania siebie).
 - Skonfigurowany i działający pipeline CI/CD (np. GitHub Actions), który automatycznie uruchamia testy po każdym pushu do repozytorium.
+
+**Wersja 1.1:**
+- Pokrycie testami funkcjonalności AI-generowania: Testy jednostkowe dla serwisu AI, testy integracyjne dla API endpoints, testy E2E dla przepływu użytkownika.
+- Czas odpowiedzi API AI: Maksymalnie 10 sekund na wygenerowanie listu do Mikołaja (95 percentyl).
+- Obsługa błędów: Graceful degradation w przypadku niedostępności API OpenRouter - wyświetlenie komunikatu i możliwość powrotu do manualnej edycji.
+
+## 7. Wymagania Techniczne (Wersja 1.1)
+
+### 7.1. Integracja z OpenRouter API
+
+**API Provider:** OpenRouter (https://openrouter.ai)
+- Model: `openai/gpt-4o-mini`
+- Parametry generowania:
+  - Max tokens: 1000
+  - Temperature: 0.7
+  - Top P: 1.0
+
+**Zmienne środowiskowe:**
+```env
+OPENROUTER_API_KEY=<api_key>
+AI_MODEL=aopenai/gpt-4o-mini
+AI_MAX_TOKENS=1000
+AI_TEMPERATURE=0.7
+```
+
+**Rate limiting:**
+- Timeout na request: 15 sekund
+- Retry policy: 2 próby w przypadku timeout lub 5xx errors
+- Backoff: Exponential backoff (1s, 2s)
+
+### 7.2. Baza danych
+
+**Rozszerzenie tabeli `wishes`:**
+```sql
+ALTER TABLE wishes ADD COLUMN ai_generated BOOLEAN DEFAULT FALSE;
+ALTER TABLE wishes ADD COLUMN ai_generation_count_per_group INTEGER DEFAULT 0;
+ALTER TABLE wishes ADD COLUMN ai_last_generated_at TIMESTAMPTZ NULL;
+```
+
+**Indeksy:**
+- `wishes_participant_id_idx` (już istnieje)
+- Nowy: `wishes_ai_generation_count_idx` (dla query limitów)
+
+### 7.3. API Endpoints
+
+**POST /api/participants/:participantId/wishlist/generate-ai**
+- Autentykacja: Bearer token (zalogowani) lub participant access token (niezarejestrowani)
+- Body: `{ prompt: string }`
+- Response: `{ generated_content: string, remaining_generations: number, can_generate_more: boolean }`
+- Kody błędów:
+  - 400: END_DATE_PASSED, INVALID_PROMPT
+  - 403: FORBIDDEN
+  - 429: AI_GENERATION_LIMIT_REACHED
+  - 500: AI_API_ERROR
+
+**GET /api/participants/:participantId/wishlist/ai-status**
+- Response: `{ ai_generation_count: number, remaining_generations: number, can_generate: boolean, last_generated_at: string | null }`
+
+### 7.4. Frontend Components
+
+**Nowe komponenty React:**
+- `AIGenerateButton.tsx` - Przycisk z licznikiem
+- `AIGenerateModal.tsx` - Modal z promptem
+- `AIPreviewModal.tsx` - Podgląd wygenerowanej treści
+- `AIGenerationLimit.tsx` - Komponent licznika
+- `AIGeneratingSpinner.tsx` - Loading state
+
+**Nowe hooki:**
+- `useAIGeneration.ts` - Obsługa generowania
+- `useAIGenerationStatus.ts` - Status limitów
+
+### 7.5. System Prompt dla AI
+
+```
+Jesteś asystentem pomagającym tworzyć listy do świętego Mikołaja na Gwiazdkę (Secret Santa).
+
+Zadanie:
+Na podstawie preferencji użytkownika wygeneruj ciepły, narracyjny list do Mikołaja zawierający listę życzeń.
+
+Wytyczne:
+1. Użyj formy listu (np. "Drogi Mikołaju,..." lub "Hej Mikołaju!")
+2. Ton ma być ciepły, personalny i świąteczny (nie oficjalny czy suchy)
+3. Zawrzyj pomysły na prezenty wysłane przez użytkownika w narracji listu
+4. Dodaj emoji świąteczne (🎁, 🎄, ⭐, 🎅, ❄️, 🔔)
+5. Maksymalnie 1000 znaków
+6. Odpowiadaj TYLKO po polsku
+7. Zakończ list w ciepły, świąteczny sposób
+
+Przykład:
+Cześć Mikołaju! 🎅
+
+W tym roku byłam/em grzeczna/y i marze o kilku rzeczach pod choinkę 🎄. Mega chciałabym/bym dostać "Wiedźmin: Ostatnie życzenie" Sapkowskiego 📚, bo fantasy to moja ulubiona bajka! Poza tym uwielbiam dobrą kawę ☕ - jakiś ciekawy zestaw z różnych zakątków świata byłby super. I jeszcze ciepły, kolorowy szalik 🧣, bo zima idzie!
+
+Dzięki i wesołych Świąt! ⭐
+```
+
+## 8. Bezpieczeństwo i Prywatność
+
+### 8.1. Ochrona danych osobowych (RODO)
+
+**Dane przekazywane do API AI:**
+- System przekazuje do OpenRouter API **wyłącznie** treść promptu wprowadzonego przez użytkownika (preferencje/zainteresowania).
+- **NIE** są przekazywane żadne dane identyfikujące: imiona, nazwiska, adresy e-mail, tokeny dostępu.
+- Kontekst budżetu jest przekazywany jako liczba bez powiązania z konkretną grupą.
+
+**Informowanie użytkowników:**
+- Przed pierwszym użyciem funkcji AI wyświetlany jest disclaimer o wykorzystaniu zewnętrznego API.
+- W polityce prywatności dodany punkt o OpenRouter i Anthropic jako podmiotach przetwarzających.
+- Użytkownik ma możliwość opt-out - może korzystać wyłącznie z manualnej edycji.
+
+**Przechowywanie danych:**
+- W bazie danych przechowywane są tylko liczniki użyć i timestamp ostatniego generowania.
+- Prompt użytkownika i wygenerowana treść **nie są** logowane w systemie (za wyjątkiem celów debugowania w środowisku dev).
+
+### 8.2. Content Moderation
+
+**Walidacja promptów:**
+- Minimalna długość: 10 znaków
+- Maksymalna długość: 1000 znaków
+- Filtrowanie potencjalnie obraźliwych treści na poziomie klienta (podstawowa walidacja)
+
+**Walidacja wygenerowanej treści:**
+- Sprawdzanie długości (max 1000 znaków z API)
+- Sanityzacja HTML przed wyświetleniem (XSS protection)
+- Automatyczne linkowanie URLs z escapowaniem
+
+**Fallback:**
+- W przypadku wygenerowania nieodpowiednich treści użytkownik może odrzucić wynik
+- Możliwość zgłoszenia problematycznej treści (przyszła funkcjonalność)
+
+### 8.3. Rate Limiting i zabezpieczenia
+
+**Limity API:**
+- Per-participant-per-grupa: 3 generowania (niezarejestrowani) / 5 generowań (zarejestrowani)
+- Timeout na pojedyncze żądanie: 15 sekund
+- Brak możliwości obejścia limitów przez zmianę tokenu
+
+**Koszty:**
+- Monitoring kosztów API w czasie rzeczywistym
+- Alert przy przekroczeniu miesięcznego budżetu
+- Możliwość wyłączenia funkcji AI w przypadku nadmiernych kosztów
+
+**Bezpieczeństwo kluczy API:**
+- `OPENROUTER_API_KEY` przechowywany wyłącznie w zmiennych środowiskowych (nie w kodzie)
+- Klucz nie jest nigdy wysyłany do klienta (frontend)
+- Rotacja kluczy co 90 dni (zalecane)

@@ -1,7 +1,8 @@
 import type { ParticipantDTO, ExclusionRuleDTO } from "../../types";
 
 /**
- * Internal type for draw participant with exclusions
+ * Internal representation of participant with exclusion rules
+ * @internal
  */
 interface DrawParticipant {
   id: number;
@@ -10,7 +11,8 @@ interface DrawParticipant {
 }
 
 /**
- * Internal type for draw assignment result
+ * Represents a single gift assignment (giver -> receiver)
+ * @internal
  */
 interface DrawAssignment {
   giver_participant_id: number;
@@ -18,18 +20,19 @@ interface DrawAssignment {
 }
 
 /**
- * Service for executing Secret Santa draw algorithm
+ * Service for executing Secret Santa draw algorithm using backtracking.
+ * Ensures each participant gives to and receives from exactly one person,
+ * respecting all exclusion rules and preventing self-assignments.
  */
 export class DrawService {
-  private readonly MAX_ALGORITHM_TIME = 15000; // 15 seconds timeout
+  /** Maximum algorithm execution time (15 seconds) */
+  private readonly MAX_ALGORITHM_TIME = 15000;
 
   /**
-   * Checks if a draw is possible with current participants and exclusion rules
+   * Checks if a draw is possible with current participants and exclusion rules.
+   * Validates that each participant has at least one valid receiver option.
    *
-   * Performs quick validation to detect impossible configurations before
-   * running the expensive backtracking algorithm.
-   *
-   * @param participants - List of participants in the group
+   * @param participants - List of participants (minimum 3 required)
    * @param exclusions - List of exclusion rules
    * @returns true if draw is possible, false otherwise
    */
@@ -69,16 +72,7 @@ export class DrawService {
   }
 
   /**
-   * Executes the Secret Santa draw algorithm using backtracking
-   *
-   * Finds a valid assignment where:
-   * - Each participant gives to exactly one other participant
-   * - Each participant receives from exactly one other participant
-   * - No one draws themselves
-   * - All exclusion rules are respected
-   *
-   * Note: This algorithm allows ANY valid graph structure (including cross-pairs).
-   * It does NOT enforce a single Hamiltonian cycle - true randomness is preserved.
+   * Executes the Secret Santa draw algorithm using backtracking with randomization.
    *
    * @param participants - List of participants in the group
    * @param exclusions - List of exclusion rules
@@ -113,7 +107,7 @@ export class DrawService {
   }
 
   /**
-   * Validates that assignments are correct and follow all rules
+   * Validates that assignments are correct and follow all rules.
    *
    * @param assignments - Generated assignments to validate
    * @param participants - List of participants
@@ -167,7 +161,7 @@ export class DrawService {
   }
 
   /**
-   * Builds exclusion map for quick lookup
+   * Builds exclusion map for quick lookup.
    * Map key: participant ID who cannot draw
    * Map value: array of participant IDs they cannot draw
    */
@@ -189,7 +183,7 @@ export class DrawService {
   }
 
   /**
-   * Builds internal DrawParticipant representation with exclusions
+   * Builds internal DrawParticipant representation with exclusions.
    */
   private buildDrawParticipants(participants: ParticipantDTO[], exclusions: ExclusionRuleDTO[]): DrawParticipant[] {
     const exclusionMap = this.buildExclusionMap(exclusions);
@@ -202,7 +196,7 @@ export class DrawService {
   }
 
   /**
-   * Backtracking algorithm to find valid assignment
+   * Backtracking algorithm to find valid assignment.
    *
    * @param participants - All participants with their exclusions
    * @param currentAssignments - Assignments made so far
@@ -281,7 +275,7 @@ export class DrawService {
   }
 
   /**
-   * Shuffles array in place using Fisher-Yates algorithm
+   * Shuffles array using Fisher-Yates algorithm.
    */
   private shuffleArray<T>(array: T[]): T[] {
     const shuffled = [...array];
@@ -293,8 +287,10 @@ export class DrawService {
   }
 
   /**
-   * Counts remaining options for a potential receiver
-   * Used for heuristic optimization (most constrained first)
+   * Counts remaining options for a potential receiver.
+   * Used for heuristic optimization (most constrained first).
+   *
+   * @deprecated Currently unused - kept for potential future optimization
    */
   private countRemainingOptions(
     potentialReceiver: DrawParticipant,
