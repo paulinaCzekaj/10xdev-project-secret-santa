@@ -108,12 +108,66 @@ export const GET: APIRoute = async ({ params, locals, url }) => {
     }
 
     // Guard 5: Validate access permissions
-    await wishlistService.validateWishlistAccess(participantId, authUserId, participantToken, participantWithGroup);
+    // For AI status checking, allow participants to check their own status
+    if (!authUserId && !participantToken) {
+      throw new Error("FORBIDDEN");
+    }
+
+    // If using participant token, validate it
+    if (participantToken) {
+      if (participantWithGroup.access_token !== participantToken) {
+        throw new Error("FORBIDDEN");
+      }
+    }
+    // If using Bearer token, check if user can access this participant
+    else if (authUserId) {
+      // Allow access if user owns this participant OR if this participant belongs to the user
+      // (participant may have user_id set, or may be linked by email)
+      const isOwner = participantWithGroup.user_id === authUserId;
+
+      if (!isOwner) {
+        // For result viewing context, check if this participant could belong to the authenticated user
+        // This happens when participant was added by email and user later registered
+        const { data: userProfile } = await supabase.auth.getUser();
+        const userEmail = userProfile?.user?.email;
+
+        if (userEmail && participantWithGroup.email === userEmail) {
+          // Participant belongs to this user via email matching
+          console.log("[GET /api/participants/:participantId/wishlist/ai-status] Access granted via email match");
+        } else {
+          // Check if user has any participant in this group (for result viewing context)
+          const { data: userParticipants, error } = await supabase
+            .from("participants")
+            .select("id")
+            .eq("group_id", participantWithGroup.group.id)
+            .or(`user_id.eq.${authUserId},email.eq.${userEmail || ""}`);
+
+          if (error || !userParticipants || userParticipants.length === 0) {
+            console.log(
+              "[GET /api/participants/:participantId/wishlist/ai-status] Access denied - user has no participants in this group",
+              {
+                authUserId,
+                userEmail,
+                groupId: participantWithGroup.group.id,
+                participantId,
+              }
+            );
+            throw new Error("FORBIDDEN");
+          }
+
+          console.log("[GET /api/participants/:participantId/wishlist/ai-status] Access granted via group membership");
+        }
+      } else {
+        console.log("[GET /api/participants/:participantId/wishlist/ai-status] Access granted via direct ownership");
+      }
+    }
 
     console.log("[GET /api/participants/:participantId/wishlist/ai-status] Access validation passed");
 
-    // Determine isRegistered from database
-    const isRegistered = !!participantWithGroup.user_id;
+    // Determine isRegistered based on authentication method
+    // If user is authenticated with Bearer token, they are registered
+    // If using participant token, check if participant has user_id set
+    const isRegistered = authUserId ? true : !!participantWithGroup.user_id;
 
     // Get AI generation status
     const rateLimitStatus = await wishlistService.validateAIGenerationLimit(participantId, isRegistered);

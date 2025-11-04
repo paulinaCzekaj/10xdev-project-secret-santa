@@ -81,7 +81,56 @@ export class WishlistService {
       });
 
       // Step 2: Validate access permissions
-      await this.validateWishlistAccess(participantId, authUserId, participantToken, participantWithGroup);
+      // For wishlist editing, allow participants to edit their own wishlist
+      if (!authUserId && !participantToken) {
+        throw new Error("FORBIDDEN");
+      }
+
+      // If using participant token, validate it
+      if (participantToken) {
+        if (participantWithGroup.access_token !== participantToken) {
+          throw new Error("FORBIDDEN");
+        }
+      }
+      // If using Bearer token, check if user can access this participant
+      else if (authUserId) {
+        // Allow access if user owns this participant OR if this participant belongs to the user
+        // (participant may have user_id set, or may be linked by email)
+        const isOwner = participantWithGroup.user_id === authUserId;
+
+        if (!isOwner) {
+          // Check if this specific participant belongs to the user
+          // This covers cases where participant was added by email and user later registered
+          const { data: userProfile, error: userError } = await this.supabase.auth.getUser();
+          if (userError) {
+            console.log("[WishlistService.createOrUpdateWishlist] Failed to get user profile", { error: userError.message });
+            throw new Error("FORBIDDEN");
+          }
+
+          const userEmail = userProfile?.user?.email;
+
+          // Check if participant belongs to user via email (participant added by email before registration)
+          const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
+
+          if (!belongsViaEmail) {
+            console.log(
+              "[WishlistService.createOrUpdateWishlist] Access denied - participant does not belong to user",
+              {
+                authUserId,
+                userEmail,
+                participantId,
+                participantUserId: participantWithGroup.user_id,
+                participantEmail: participantWithGroup.email,
+              }
+            );
+            throw new Error("FORBIDDEN");
+          }
+
+          console.log("[WishlistService.createOrUpdateWishlist] Access granted via email matching");
+        } else {
+          console.log("[WishlistService.createOrUpdateWishlist] Access granted via direct ownership");
+        }
+      }
 
       // Step 3: Check if group end date has passed (compare only dates, ignore time)
       const now = new Date();
@@ -301,7 +350,56 @@ export class WishlistService {
       });
 
       // Step 2: Validate access permissions
-      await this.validateWishlistAccess(participantId, authUserId, participantToken, participantWithGroup);
+      // For wishlist reading, allow participants to read their own wishlist
+      if (!authUserId && !participantToken) {
+        throw new Error("FORBIDDEN");
+      }
+
+      // If using participant token, validate it
+      if (participantToken) {
+        if (participantWithGroup.access_token !== participantToken) {
+          throw new Error("FORBIDDEN");
+        }
+      }
+      // If using Bearer token, check if user can access this participant
+      else if (authUserId) {
+        // Allow access if user owns this participant OR if this participant belongs to the user
+        // (participant may have user_id set, or may be linked by email)
+        const isOwner = participantWithGroup.user_id === authUserId;
+
+        if (!isOwner) {
+          // Check if this specific participant belongs to the user
+          // This covers cases where participant was added by email and user later registered
+          const { data: userProfile, error: userError } = await this.supabase.auth.getUser();
+          if (userError) {
+            console.log("[WishlistService.getWishlist] Failed to get user profile", { error: userError.message });
+            throw new Error("FORBIDDEN");
+          }
+
+          const userEmail = userProfile?.user?.email;
+
+          // Check if participant belongs to user via email (participant added by email before registration)
+          const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
+
+          if (!belongsViaEmail) {
+            console.log(
+              "[WishlistService.getWishlist] Access denied - participant does not belong to user",
+              {
+                authUserId,
+                userEmail,
+                participantId,
+                participantUserId: participantWithGroup.user_id,
+                participantEmail: participantWithGroup.email,
+              }
+            );
+            throw new Error("FORBIDDEN");
+          }
+
+          console.log("[WishlistService.getWishlist] Access granted via email matching");
+        } else {
+          console.log("[WishlistService.getWishlist] Access granted via direct ownership");
+        }
+      }
 
       // Step 3: Retrieve wishlist
       const { data: wishlist, error } = await this.supabase
@@ -404,7 +502,56 @@ export class WishlistService {
       });
 
       // Step 2: Validate access permissions
-      await this.validateWishlistAccess(participantId, authUserId, participantToken, participantWithGroup);
+      // For AI generation, allow participants to generate for their own status
+      if (!authUserId && !participantToken) {
+        throw new Error("FORBIDDEN");
+      }
+
+      // If using participant token, validate it
+      if (participantToken) {
+        if (participantWithGroup.access_token !== participantToken) {
+          throw new Error("FORBIDDEN");
+        }
+      }
+      // If using Bearer token, check if user can access this participant
+      else if (authUserId) {
+        // Allow access if user owns this participant OR if this participant belongs to the user
+        // (participant may have user_id set, or may be linked by email)
+        const isOwner = participantWithGroup.user_id === authUserId;
+
+        if (!isOwner) {
+          // Check if this specific participant belongs to the user
+          // This covers cases where participant was added by email and user later registered
+          const { data: userProfile, error: userError } = await this.supabase.auth.getUser();
+          if (userError) {
+            console.log("[WishlistService.generateSantaLetterFromWishlist] Failed to get user profile", { error: userError.message });
+            throw new Error("FORBIDDEN");
+          }
+
+          const userEmail = userProfile?.user?.email;
+
+          // Check if participant belongs to user via email (participant added by email before registration)
+          const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
+
+          if (!belongsViaEmail) {
+            console.log(
+              "[WishlistService.generateSantaLetterFromWishlist] Access denied - participant does not belong to user",
+              {
+                authUserId,
+                userEmail,
+                participantId,
+                participantUserId: participantWithGroup.user_id,
+                participantEmail: participantWithGroup.email,
+              }
+            );
+            throw new Error("FORBIDDEN");
+          }
+
+          console.log("[WishlistService.generateSantaLetterFromWishlist] Access granted via email matching");
+        } else {
+          console.log("[WishlistService.generateSantaLetterFromWishlist] Access granted via direct ownership");
+        }
+      }
 
       // Step 3: Check if group end date has passed
       const now = new Date();
@@ -456,7 +603,10 @@ export class WishlistService {
       });
 
       // Step 6: Check rate limits
-      const isRegistered = !!participantWithGroup.user_id;
+      // Determine isRegistered based on authentication method
+      // If user is authenticated with Bearer token, they are registered
+      // If using participant token, check if participant has user_id set
+      const isRegistered = authUserId ? true : !!participantWithGroup.user_id;
 
       const rateLimitStatus = await this.validateAIGenerationLimit(participantId, isRegistered);
 
@@ -566,7 +716,56 @@ export class WishlistService {
       });
 
       // Step 2: Validate access permissions
-      await this.validateWishlistAccess(participantId, authUserId, participantToken, participantWithGroup);
+      // For wishlist deletion, allow participants to delete their own wishlist
+      if (!authUserId && !participantToken) {
+        throw new Error("FORBIDDEN");
+      }
+
+      // If using participant token, validate it
+      if (participantToken) {
+        if (participantWithGroup.access_token !== participantToken) {
+          throw new Error("FORBIDDEN");
+        }
+      }
+      // If using Bearer token, check if user can access this participant
+      else if (authUserId) {
+        // Allow access if user owns this participant OR if this participant belongs to the user
+        // (participant may have user_id set, or may be linked by email)
+        const isOwner = participantWithGroup.user_id === authUserId;
+
+        if (!isOwner) {
+          // Check if this specific participant belongs to the user
+          // This covers cases where participant was added by email and user later registered
+          const { data: userProfile, error: userError } = await this.supabase.auth.getUser();
+          if (userError) {
+            console.log("[WishlistService.deleteWishlist] Failed to get user profile", { error: userError.message });
+            throw new Error("FORBIDDEN");
+          }
+
+          const userEmail = userProfile?.user?.email;
+
+          // Check if participant belongs to user via email (participant added by email before registration)
+          const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
+
+          if (!belongsViaEmail) {
+            console.log(
+              "[WishlistService.deleteWishlist] Access denied - participant does not belong to user",
+              {
+                authUserId,
+                userEmail,
+                participantId,
+                participantUserId: participantWithGroup.user_id,
+                participantEmail: participantWithGroup.email,
+              }
+            );
+            throw new Error("FORBIDDEN");
+          }
+
+          console.log("[WishlistService.deleteWishlist] Access granted via email matching");
+        } else {
+          console.log("[WishlistService.deleteWishlist] Access granted via direct ownership");
+        }
+      }
 
       // Step 3: Check if group end date has passed (DELETE is blocked after end_date)
       const now = new Date();

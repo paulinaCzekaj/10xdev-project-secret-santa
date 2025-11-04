@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { AIGenerateButton } from "../AIGenerateButton";
 import { AIPromptModal } from "../AIPromptModal";
 import { AIPreviewModal } from "../AIPreviewModal";
@@ -23,13 +23,17 @@ export function WishlistEditorAIGenerator() {
     remainingGenerations,
     setContent,
     canEdit,
+    refetchStatus,
   } = useWishlistEditorContext();
 
   const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const refreshTriggerRef = useRef(0);
 
   const handlePromptSubmit = async (prompt: string) => {
     await generateLetter(prompt);
+    // Refresh the button counter after generation
+    refreshTriggerRef.current += 1;
     setIsPromptModalOpen(false);
     setIsPreviewModalOpen(true);
   };
@@ -43,16 +47,22 @@ export function WishlistEditorAIGenerator() {
     // Wywołanie acceptLetter (refetch status, toast)
     await acceptLetter();
 
+    // Refresh the button counter after acceptance
+    refreshTriggerRef.current += 1;
     setIsPreviewModalOpen(false);
   };
 
   const handleReject = async () => {
     await rejectLetter();
+    // Refresh the button counter after rejection
+    refreshTriggerRef.current += 1;
     setIsPreviewModalOpen(false);
   };
 
   const handleRegenerate = async () => {
     await regenerateLetter();
+    // Refresh the button counter after regeneration
+    refreshTriggerRef.current += 1;
     // Preview modal pozostaje otwarty z nową treścią
   };
 
@@ -65,6 +75,7 @@ export function WishlistEditorAIGenerator() {
           token={accessToken}
           onGenerateSuccess={() => setIsPromptModalOpen(true)}
           disabled={!canEdit}
+          refreshTrigger={refreshTriggerRef.current}
         />
       </div>
 
