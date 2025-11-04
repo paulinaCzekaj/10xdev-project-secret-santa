@@ -38,14 +38,6 @@ export function useAIGenerationStatus(
       } = await supabaseClient.auth.getSession();
 
       const accessToken = session?.access_token;
-      console.log("[useAIGenerationStatus] Fetching status", {
-        participantId,
-        hasToken: !!token,
-        tokenPrefix: token?.substring(0, 8) + "...",
-        hasAccessToken: !!accessToken,
-        accessTokenPrefix: accessToken?.substring(0, 8) + "...",
-        finalUrl: url.toString(),
-      });
 
       const response = await fetch(url.toString(), {
         method: "GET",
