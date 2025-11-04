@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
+import { supabaseClient } from "@/db/supabase.client";
 import type { GenerateAIRequest, GenerateAIResponse, AIGenerationError, UseAIGenerationReturn } from "@/types";
 
 // Mapowanie kodów błędów na user-friendly komunikaty
@@ -77,6 +78,11 @@ export function useAIGeneration(
         url.searchParams.append("token", token);
       }
 
+      // Pobieramy Bearer token z sesji Supabase
+      const {
+        data: { session },
+      } = await supabaseClient.auth.getSession();
+
       const requestBody: GenerateAIRequest = { prompt };
 
       for (let attempt = 0; attempt <= retries; attempt++) {
@@ -87,7 +93,7 @@ export function useAIGeneration(
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                ...(token ? {} : { Authorization: `Bearer ${localStorage.getItem("access_token")}` }),
+                ...(token ? {} : session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
               },
               body: JSON.stringify(requestBody),
             },

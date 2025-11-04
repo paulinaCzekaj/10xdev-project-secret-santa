@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { supabaseClient } from "@/db/supabase.client";
 import type { AIGenerationStatusResponse, AIGenerationError, UseAIGenerationStatusReturn } from "@/types";
 
 /**
@@ -31,7 +32,12 @@ export function useAIGenerationStatus(
         url.searchParams.append("token", token);
       }
 
-      const accessToken = localStorage.getItem("access_token");
+      // Pobieramy Bearer token z sesji Supabase zamiast localStorage
+      const {
+        data: { session },
+      } = await supabaseClient.auth.getSession();
+
+      const accessToken = session?.access_token;
       console.log("[useAIGenerationStatus] Fetching status", {
         participantId,
         hasToken: !!token,
@@ -45,7 +51,7 @@ export function useAIGenerationStatus(
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? {} : { Authorization: `Bearer ${accessToken}` }),
+          ...(token ? {} : accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
       });
 
