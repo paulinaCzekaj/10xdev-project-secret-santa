@@ -10,5 +10,6 @@ preview_id = "your-preview-kv-namespace-id"
 [env.production]
 vars = { ENVIRONMENT = "production" }
 
+
 [env.preview]
 vars = { ENVIRONMENT = "preview" }

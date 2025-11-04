@@ -1,5 +1,3 @@
-import { useWishlistEditorContext } from "./WishlistEditorProvider";
-
 interface WishlistEditorStatsProps {
   stats?: {
     total_participants: number;
@@ -11,8 +9,6 @@ interface WishlistEditorStatsProps {
  * Komponent wyświetlający statystyki listy życzeń i postęp grupy
  */
 export function WishlistEditorStats({ stats }: WishlistEditorStatsProps) {
-  const { characterCount } = useWishlistEditorContext();
-
   const getStatsDisplay = () => {
     if (!stats) return null;
 
@@ -45,14 +41,6 @@ export function WishlistEditorStats({ stats }: WishlistEditorStatsProps) {
 
   return (
     <>
-      {/* Licznik znaków */}
-      <div className="mt-3 text-center">
-        <div className={`text-sm ${characterCount > 9500 ? "text-orange-500" : "text-gray-500 dark:text-gray-400"}`}>
-          {characterCount}/10000
-          {characterCount > 9500 && <span className="ml-2 text-orange-500">Limit!</span>}
-        </div>
-      </div>
-
       {/* Statystyki grupy */}
       {getStatsDisplay()}
     </>

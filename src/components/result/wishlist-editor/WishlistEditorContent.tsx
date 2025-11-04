@@ -6,7 +6,7 @@ import { useWishlistEditorContext } from "./WishlistEditorProvider";
  * Główna zawartość edytora - textarea i intro text
  */
 export function WishlistEditorContent() {
-  const { content, setContent, save, isSaving, hasChanges } = useWishlistEditorContext();
+  const { content, setContent, save, isSaving, hasChanges, characterCount } = useWishlistEditorContext();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleBlur = () => {
@@ -36,6 +36,14 @@ export function WishlistEditorContent() {
         className="min-h-[150px] resize-vertical border-2 border-green-200 dark:border-green-700 focus:border-green-400 focus:ring-green-300 rounded-lg"
         maxLength={10000}
       />
+
+      {/* Licznik znaków */}
+      <div className="mt-2 text-right">
+        <div className={`text-sm ${characterCount > 9500 ? "text-orange-500" : "text-gray-500 dark:text-gray-400"}`}>
+          {characterCount}/10000
+          {characterCount > 9500 && <span className="ml-2 text-orange-500">Limit!</span>}
+        </div>
+      </div>
 
       {/* Wskazówka */}
       <div className="mt-4 pt-4 border-t border-green-200 dark:border-green-800">

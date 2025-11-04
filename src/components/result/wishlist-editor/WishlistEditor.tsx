@@ -46,8 +46,8 @@ export default function WishlistEditor({
 
             <div className="relative z-10">
               <WishlistEditorHeader />
-              <WishlistEditorContent />
               <WishlistEditorAIGenerator />
+              <WishlistEditorContent />
               <WishlistEditorStats stats={wishlistStats} />
               <WishlistEditorSaveIndicator />
             </div>
