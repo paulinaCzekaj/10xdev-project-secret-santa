@@ -131,10 +131,35 @@ export const POST: APIRoute = async ({ params, request, locals, url }) => {
     const supabase = locals.supabase;
     const wishlistService = new WishlistService(supabase);
 
+    // Get OpenRouter API key from runtime environment (Cloudflare Pages)
+    const openRouterApiKey = locals.runtime?.env?.OPENROUTER_API_KEY || import.meta.env.OPENROUTER_API_KEY;
+
+    if (!openRouterApiKey) {
+      console.error(
+        "[POST /api/participants/:participantId/wishlist/generate-from-wishlist] OPENROUTER_API_KEY not found in environment"
+      );
+      const errorResponse: ApiErrorResponse = {
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "AI service configuration error",
+        },
+      };
+      return new Response(JSON.stringify(errorResponse), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // Happy path: Generate Santa letter from wishlist
-    const result = await wishlistService.generateSantaLetterFromWishlist(participantId, authUserId, participantToken, {
-      language,
-    });
+    const result = await wishlistService.generateSantaLetterFromWishlist(
+      participantId,
+      authUserId,
+      participantToken,
+      {
+        language,
+      },
+      openRouterApiKey
+    );
 
     console.log("[POST /api/participants/:participantId/wishlist/generate-from-wishlist] Generation successful", {
       participantId,

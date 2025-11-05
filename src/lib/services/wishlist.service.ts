@@ -20,9 +20,9 @@ export class WishlistService {
     // OpenRouterService will be created lazily when needed
   }
 
-  private getOpenRouterService(): OpenRouterService {
+  private getOpenRouterService(apiKey?: string): OpenRouterService {
     if (!this.openRouterService) {
-      this.openRouterService = new OpenRouterService(this.supabase);
+      this.openRouterService = new OpenRouterService(this.supabase, apiKey ? { apiKey } : undefined);
     }
     return this.openRouterService;
   }
@@ -103,7 +103,9 @@ export class WishlistService {
           // This covers cases where participant was added by email and user later registered
           const { data: userProfile, error: userError } = await this.supabase.auth.getUser();
           if (userError) {
-            console.log("[WishlistService.createOrUpdateWishlist] Failed to get user profile", { error: userError.message });
+            console.log("[WishlistService.createOrUpdateWishlist] Failed to get user profile", {
+              error: userError.message,
+            });
             throw new Error("FORBIDDEN");
           }
 
@@ -382,16 +384,13 @@ export class WishlistService {
           const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
 
           if (!belongsViaEmail) {
-            console.log(
-              "[WishlistService.getWishlist] Access denied - participant does not belong to user",
-              {
-                authUserId,
-                userEmail,
-                participantId,
-                participantUserId: participantWithGroup.user_id,
-                participantEmail: participantWithGroup.email,
-              }
-            );
+            console.log("[WishlistService.getWishlist] Access denied - participant does not belong to user", {
+              authUserId,
+              userEmail,
+              participantId,
+              participantUserId: participantWithGroup.user_id,
+              participantEmail: participantWithGroup.email,
+            });
             throw new Error("FORBIDDEN");
           }
 
@@ -474,7 +473,8 @@ export class WishlistService {
     participantId: number,
     authUserId: UserId | null,
     participantToken: string | null,
-    options?: GenerationOptions
+    options?: GenerationOptions,
+    openRouterApiKey?: string
   ): Promise<{
     letter: SantaLetterResponse;
     remainingGenerations: number;
@@ -524,7 +524,9 @@ export class WishlistService {
           // This covers cases where participant was added by email and user later registered
           const { data: userProfile, error: userError } = await this.supabase.auth.getUser();
           if (userError) {
-            console.log("[WishlistService.generateSantaLetterFromWishlist] Failed to get user profile", { error: userError.message });
+            console.log("[WishlistService.generateSantaLetterFromWishlist] Failed to get user profile", {
+              error: userError.message,
+            });
             throw new Error("FORBIDDEN");
           }
 
@@ -631,7 +633,10 @@ export class WishlistService {
       // Step 8: Generate Santa letter using wishlist content as prompt
       let generatedLetter: SantaLetterResponse;
       try {
-        generatedLetter = await this.getOpenRouterService().generateSantaLetter(wishlistContent, options);
+        generatedLetter = await this.getOpenRouterService(openRouterApiKey).generateSantaLetter(
+          wishlistContent,
+          options
+        );
         console.log("[WishlistService.generateSantaLetterFromWishlist] AI generation successful", {
           participantId,
           letterLength: generatedLetter.letterContent.length,
@@ -748,16 +753,13 @@ export class WishlistService {
           const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
 
           if (!belongsViaEmail) {
-            console.log(
-              "[WishlistService.deleteWishlist] Access denied - participant does not belong to user",
-              {
-                authUserId,
-                userEmail,
-                participantId,
-                participantUserId: participantWithGroup.user_id,
-                participantEmail: participantWithGroup.email,
-              }
-            );
+            console.log("[WishlistService.deleteWishlist] Access denied - participant does not belong to user", {
+              authUserId,
+              userEmail,
+              participantId,
+              participantUserId: participantWithGroup.user_id,
+              participantEmail: participantWithGroup.email,
+            });
             throw new Error("FORBIDDEN");
           }
 

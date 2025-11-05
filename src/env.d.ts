@@ -9,6 +9,16 @@ declare global {
     interface Locals {
       supabase: SupabaseClient<Database>;
       user: User | null;
+      runtime: {
+        env: {
+          OPENROUTER_API_KEY: string;
+          SUPABASE_URL: string;
+          SUPABASE_KEY: string;
+          AI_MODEL?: string;
+          AI_MAX_TOKENS?: string;
+          AI_TEMPERATURE?: string;
+        };
+      };
     }
   }
 }

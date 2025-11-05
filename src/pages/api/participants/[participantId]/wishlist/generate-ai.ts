@@ -136,7 +136,27 @@ export const POST: APIRoute = async ({ params, request, locals, url }) => {
 
     // Initialize services
     const supabase = locals.supabase;
-    const openRouterService = new OpenRouterService(supabase);
+
+    // Get OpenRouter API key from runtime environment (Cloudflare Pages)
+    const openRouterApiKey = locals.runtime?.env?.OPENROUTER_API_KEY || import.meta.env.OPENROUTER_API_KEY;
+
+    if (!openRouterApiKey) {
+      console.error(
+        "[POST /api/participants/:participantId/wishlist/generate-ai] OPENROUTER_API_KEY not found in environment"
+      );
+      const errorResponse: ApiErrorResponse = {
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "AI service configuration error",
+        },
+      };
+      return new Response(JSON.stringify(errorResponse), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const openRouterService = new OpenRouterService(supabase, { apiKey: openRouterApiKey });
     const wishlistService = new WishlistService(supabase);
 
     // Guard 6: Validate participant exists and get group info
@@ -203,7 +223,9 @@ export const POST: APIRoute = async ({ params, request, locals, url }) => {
             throw new Error("FORBIDDEN");
           }
 
-          console.log("[POST /api/participants/:participantId/wishlist/generate-ai] Access granted via group membership");
+          console.log(
+            "[POST /api/participants/:participantId/wishlist/generate-ai] Access granted via group membership"
+          );
         }
       } else {
         console.log("[POST /api/participants/:participantId/wishlist/generate-ai] Access granted via direct ownership");
