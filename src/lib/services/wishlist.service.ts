@@ -903,7 +903,7 @@ export class WishlistService {
         // Escape the URL
         const escapedUrl = url.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
 
-        result += `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+        result += `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer">${escapedUrl}</a>`;
 
         i = urlEnd;
         continue;

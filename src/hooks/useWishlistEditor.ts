@@ -200,14 +200,14 @@ export function useWishlistEditor(
     } catch {
       // Error already handled in performSave
     }
-  }, 2000); // 2 sekundy debounce
+  }, 2000); // 2 seconds debounce
 
   /**
    * Effect calling debounced save on each content change
    * Note: debouncedSave is stable from useDebouncedCallback and safe to include in deps
    */
   useEffect(() => {
-    // Skip first render Ato avoid unnecessary save
+    // Skip first render as it is not a real change to avoid unnecessary save
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;

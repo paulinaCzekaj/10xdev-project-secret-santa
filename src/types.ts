@@ -421,23 +421,23 @@ export type UserId = string;
 export type ParticipantToken = string;
 
 // ============================================================================
-// VIEW MODELS (Rozszerzone typy dla frontendu)
+// VIEW MODELS (Extended types for the frontend)
 // ============================================================================
 
 /**
- * Rozszerzony model grupy z dodatkowymi polami formatującymi dla widoku
+ * Extended group model with additional formatting fields for the view
  */
 export interface GroupViewModel extends GroupDetailDTO {
-  // Formatowane wartości dla wyświetlania
+  // Formatted values for display
   formattedBudget: string; // np. "150 PLN"
-  formattedEndDate: string; // np. "25 grudnia 2025, 23:59"
-  formattedCreatedAt: string; // np. "10 października 2025"
+  formattedEndDate: string; // "25 grudnia 2025, 23:59"
+  formattedCreatedAt: string; // "10 października 2025"
 
-  // Pola obliczeniowe
-  isExpired: boolean; // czy data zakończenia minęła
-  daysUntilEnd: number; // ile dni do końca (-1 jeśli przeszła)
-  participantsCount: number; // liczba uczestników
-  exclusionsCount: number; // liczba wykluczeń
+  // Computed fields
+  isExpired: boolean; // whether the end date has passed
+  daysUntilEnd: number; // number of days until the end (-1 if passed)
+  participantsCount: number; // number of participants
+  exclusionsCount: number; // number of exclusions
 
   // Status
   statusBadge: {
@@ -447,81 +447,81 @@ export interface GroupViewModel extends GroupDetailDTO {
 }
 
 /**
- * Rozszerzony model uczestnika z dodatkowymi polami dla widoku
+ * Extended participant model with additional fields for the view
  */
 export interface ParticipantViewModel extends Omit<ParticipantListItemDTO, "access_token"> {
-  // Flagi
-  isCreator: boolean; // czy uczestnik jest twórcą grupy
-  isCurrentUser: boolean; // czy to zalogowany użytkownik
-  canDelete: boolean; // czy można usunąć (false dla twórcy)
+  // Flags
+  isCreator: boolean; // whether the participant is the creator of the group
+  isCurrentUser: boolean; // whether the participant is the current user
+  canDelete: boolean; // whether the participant can be deleted (false for the creator)
 
-  // Formatowane wartości
-  displayEmail: string; // "j***@example.com" lub "john@example.com" lub "Brak"
-  rawEmail: string | null; // Oryginalny, nieformatowany email (null jeśli brak)
-  displayName: string; // "John Doe" lub "John Doe (Ty)" dla current user
-  initials: string; // "JD" dla avatara
+  // Formatted values
+  displayEmail: string; // "j***@example.com" or "john@example.com" or "Brak"
+  rawEmail: string | null; // Original, unformatted email (null if missing)
+  displayName: string; // "John Doe" or "John Doe (You)" for the current user
+  initials: string; // "JD" for the avatar
 
-  // Status (po losowaniu)
+  // Status (after drawing)
   wishlistStatus?: {
     hasWishlist: boolean;
-    text: string; // "Dodana" | "Brak"
+    text: string; // "Added" | "Missing"
     variant: "default" | "destructive";
     icon: React.ComponentType<{ className?: string }>;
   };
 
   resultStatus?: {
-    // tylko po losowaniu
+    // only after drawing
     viewed: boolean;
-    text: string; // "Zobaczył" | "Nie zobaczył"
+    text: string; // "Viewed" | "Not viewed"
     variant: "default" | "outline";
     icon: React.ComponentType<{ className?: string }>;
   };
 
-  // Token (dla niezarejestrowanych)
-  resultLink?: string; // pełny URL: /results/:token
+  // Token (for unregistered users)
+  resultLink?: string; // full URL: /results/:token
 }
 
 /**
- * Rozszerzony model wykluczenia z formatowaniem dla widoku
+ * Extended exclusion model with formatting for the view
  */
 export interface ExclusionViewModel extends ExclusionRuleListItemDTO {
-  // Formatowane wartości
-  displayText: string; // "Jan Kowalski nie może wylosować Anny Nowak"
-  shortDisplayText: string; // "Jan → Anna" (dla mobile)
+  // Formatted values
+  displayText: string; // "Jan Kowalski cannot draw Anna Nowak"
+  shortDisplayText: string; // "Jan → Anna" (for mobile)
 
-  // Flagi
-  canDelete: boolean; // czy można usunąć (false po losowaniu)
+  // Flags
+  canDelete: boolean; // whether it can be deleted (false after drawing)
 }
 
 /**
- * Model statusu możliwości przeprowadzenia losowania
+ * Model status of the possibility of conducting a drawing
  */
 export interface DrawStatusViewModel {
-  // Walidacja
-  canDraw: boolean; // czy można rozpocząć losowanie
-  isValid: boolean; // czy wykluczenia pozwalają na losowanie
+  // Validation
+  canDraw: boolean; // whether it can be started
+  isValid: boolean; // whether the exclusions allow for drawing
 
-  // Przyczyna (jeśli !canDraw)
-  reason?: string; // np. "Minimum 3 uczestników wymagane"
-  validationMessage: string; // wiadomość z walidacji
-  validationDetails?: string; // szczegóły błędu walidacji
+  // Reason (if !canDraw)
+  reason?: string; // "Minimum 3 participants required"
+  validationMessage: string; // validation message
+  validationDetails?: string; // validation error details
 
-  // Statystyki
+  // Statistics
   participantsCount: number;
   exclusionsCount: number;
 
   // UI
-  buttonText: string; // tekst na przycisku
+  buttonText: string; // text on the button
   buttonDisabled: boolean;
   alertVariant: "default" | "warning" | "destructive";
 }
 
 // ============================================================================
-// FORM VIEW MODELS (dla React Hook Form)
+// FORM VIEW MODELS (for React Hook Form)
 // ============================================================================
 
 /**
- * ViewModel dla formularza edycji grupy
+ * ViewModel for the group edit form
  */
 export interface EditGroupFormViewModel {
   name: string;
@@ -530,7 +530,7 @@ export interface EditGroupFormViewModel {
 }
 
 /**
- * ViewModel dla formularza dodawania uczestnika
+ * ViewModel for the participant add form
  */
 export interface AddParticipantFormViewModel {
   name: string;
@@ -538,7 +538,7 @@ export interface AddParticipantFormViewModel {
 }
 
 /**
- * ViewModel dla formularza edycji uczestnika
+ * ViewModel for the participant edit form
  */
 export interface EditParticipantFormViewModel {
   name: string;
@@ -546,7 +546,7 @@ export interface EditParticipantFormViewModel {
 }
 
 /**
- * ViewModel dla formularza dodawania wykluczenia
+ * ViewModel for the exclusion add form
  */
 export interface AddExclusionFormViewModel {
   blocker_participant_id?: number;
@@ -555,16 +555,16 @@ export interface AddExclusionFormViewModel {
 }
 
 // ============================================================================
-// HELPER TYPES (rozszerzone)
+// HELPER TYPES (extended)
 // ============================================================================
 
 /**
- * Status odpowiedzi API
+ * Status of the API response
  */
 export type ApiStatus = "idle" | "loading" | "success" | "error";
 
 /**
- * Standardowy error z API
+ * Standard error from the API
  */
 export interface ApiError {
   code: string;
@@ -573,7 +573,7 @@ export interface ApiError {
 }
 
 /**
- * Typ dla akcji kopiowania
+ * Type for the copy action
  */
 export interface CopyToClipboardResult {
   success: boolean;
@@ -581,82 +581,77 @@ export interface CopyToClipboardResult {
 }
 
 // ============================================================================
-// RESULT VIEW MODELS (rozszerzone typy dla widoku wyniku)
+// RESULT VIEW MODELS (extended types for the result view)
 // ============================================================================
 
 /**
- * ViewModel dla widoku wyniku losowania
- * Rozszerza DTO o formatowane i obliczone pola dla frontendu
+ * ViewModel for the result view
+ * Extends DTO with formatted and computed fields for the frontend
  */
 export interface ResultViewModel {
-  // Dane z API
+  // Data from the API
   group: ResultGroupInfo;
   participant: ResultParticipantInfo;
   assigned_to: ResultAssignedParticipant;
   my_wishlist: ResultMyWishlist;
   wishlist_stats: WishlistStats;
 
-  // Formatowane wartości dla wyświetlania
+  // Formatted values for display
   formattedBudget: string; // "150 PLN"
   formattedEndDate: string; // "25 grudnia 2025"
   formattedShortEndDate: string; // "25.12.2025"
 
-  // Obliczone wartości
-  isExpired: boolean; // czy data zakończenia minęła
-  daysUntilEnd: number; // ile dni do końca (-1 jeśli przeszła)
+  // Computed values
+  isExpired: boolean; // whether the end date has passed
+  daysUntilEnd: number; // number of days until the end (-1 if passed)
 
-  // Dane wylosowanej osoby (rozszerzone)
-  assignedPersonInitials: string; // "JK" - inicjały dla avatara
-  assignedPersonWishlistHtml?: string; // HTML z auto-linkowanymi URL-ami
-
-  // Flagi dostępu i kontekstu
-  isAuthenticated: boolean; // czy użytkownik zalogowany
-  accessToken?: string; // token dla niezalogowanych
-  resultViewedAt?: string; // kiedy wynik został odkryty
+  // Data of the assigned person (extended)
+  assignedPersonInitials: string; // "JK" - initials for the avatar
+  assignedPersonWishlistHtml?: string; // HTML with auto-linked URLs
 }
 
 /**
- * Stan edytora listy życzeń
- * Używany w useWishlistEditor hook
+ * State of the wishlist editor
+ * Used in useWishlistEditor hook
  */
 export interface WishlistEditorState {
-  content: string; // aktualna treść
-  originalContent: string; // oryginalna treść (z API)
-  isSaving: boolean; // czy trwa zapisywanie
-  hasChanges: boolean; // czy są niezapisane zmiany
-  lastSaved: Date | null; // kiedy ostatnio zapisano
-  saveError: string | null; // komunikat błędu zapisu
-  characterCount: number; // liczba znaków
-  canEdit: boolean; // czy można edytować
+  content: string; // current content
+  originalContent: string; // original content (from API)
+  isSaving: boolean; // whether it is saving
+  hasChanges: boolean; // whether there are unsaved changes
+  lastSaved: Date | null; // when last saved
+  saveError: string | null; // save error message
+  characterCount: number; // number of characters
+  canEdit: boolean; // whether it can be edited
 }
 
 /**
- * Stan odkrycia wyniku (localStorage)
- * Przechowywany w localStorage z kluczem:
+ * State of the result discovery (localStorage)
+ * Stored in localStorage with the key:
  * result_revealed_${groupId}_${participantId}
  */
 export interface ResultRevealState {
   groupId: number;
   participantId: number;
-  revealed: boolean; // czy wynik odkryty
-  revealedAt: number; // timestamp odkrycia (Date.now())
+  revealed: boolean; // whether the result is revealed
+  revealedAt: number; // timestamp of the discovery (Date.now())
 }
 
 /**
- * Stan konfetti (dla animacji)
+ * State of the confetti (for animation)
  */
 export interface ConfettiState {
-  isActive: boolean; // czy animacja aktywna
-  numberOfPieces: number; // liczba elementów konfetti (200-400)
-  recycle: boolean; // czy recyklować (false = jedno odtworzenie)
+  isActive: boolean; // whether the animation is active
+  numberOfPieces: number; // number of confetti elements (200-400)
+  recycle: boolean; // whether to recycle (false = one reuse)
 }
 
 // ============================================================================
-// RESULT HOOK TYPES (typy dla custom hooks)
+// RESULT HOOK TYPES (types for custom hooks)
 // ============================================================================
 
 /**
- * Zwracany typ z useResultData hook
+ * Return type from useResultData hook
  */
 export interface UseResultDataReturn {
   result: ResultViewModel | null;
@@ -666,7 +661,7 @@ export interface UseResultDataReturn {
 }
 
 /**
- * Zwracany typ z useRevealState hook
+ * Return type from useRevealState hook
  */
 export interface UseRevealStateReturn {
   isRevealed: boolean;
@@ -746,7 +741,7 @@ export interface AIGenerationStatusResponse {
 }
 
 /**
- * Error generating AI
+ * AI generation error
  */
 export interface AIGenerationError {
   code: string;
