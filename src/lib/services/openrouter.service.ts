@@ -35,7 +35,6 @@ const ConfigSchema = z.object({
 
 export class OpenRouterService {
   private readonly config: Required<OpenRouterConfig>;
-  private readonly httpClient: typeof fetch;
   private readonly apiEndpoint = "https://openrouter.ai/api/v1/chat/completions";
 
   constructor(
@@ -54,7 +53,6 @@ export class OpenRouterService {
     };
 
     this.config = ConfigSchema.parse(mergedConfig);
-    this.httpClient = fetch;
   }
 
   // === PUBLIC METHODS ===
@@ -340,7 +338,7 @@ Guidelines:
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
-        const response = await this.httpClient(this.apiEndpoint, {
+        const response = await fetch(this.apiEndpoint, {
           method: "POST",
           headers,
           body: JSON.stringify(requestBody),
