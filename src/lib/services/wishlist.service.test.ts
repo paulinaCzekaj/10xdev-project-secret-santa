@@ -251,7 +251,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
 
       const mockParticipant = createMockParticipant({
         user_id: "user-123", // Owned by different user
-        email: "different@example.com" // Different email
+        email: "different@example.com", // Different email
       });
 
       // Mock participants query
@@ -263,7 +263,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
           user: {
             id: authUserId,
             email: "wrong@example.com", // Different email than participant
-          }
+          },
         },
         error: null,
       });

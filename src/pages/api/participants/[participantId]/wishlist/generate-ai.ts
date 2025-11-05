@@ -60,7 +60,7 @@ const GenerateAISchema = z.object({
  * @returns {ApiErrorResponse} 500 - Internal server error
  * @returns {ApiErrorResponse} 504 - Gateway timeout (AI took too long)
  */
-export const POST: APIRoute = async ({ params, request, locals, url }) => {
+export const POST: APIRoute = async ({ params, request, locals, url, ...context }) => {
   console.log("[POST /api/participants/:participantId/wishlist/generate-ai] Endpoint hit", {
     participantId: params.participantId,
     method: request.method,
@@ -138,11 +138,29 @@ export const POST: APIRoute = async ({ params, request, locals, url }) => {
     const supabase = locals.supabase;
 
     // Get OpenRouter API key from runtime environment (Cloudflare Pages)
-    const openRouterApiKey = locals.runtime?.env?.OPENROUTER_API_KEY || import.meta.env.OPENROUTER_API_KEY;
+    console.log("[POST /api/participants/:participantId/wishlist/generate-ai] Checking for API key", {
+      hasRuntime: !!locals.runtime,
+      hasRuntimeEnv: !!locals.runtime?.env,
+      hasRuntimeKey: !!locals.runtime?.env?.OPENROUTER_API_KEY,
+      hasImportMetaKey: !!import.meta.env.OPENROUTER_API_KEY,
+      contextKeys: Object.keys(context),
+      localsKeys: Object.keys(locals),
+    });
+
+    // Try multiple ways to access environment variables in Cloudflare Pages
+    const openRouterApiKey =
+      locals.runtime?.env?.OPENROUTER_API_KEY || // platformProxy local dev
+      (context as any).env?.OPENROUTER_API_KEY || // Cloudflare Workers runtime
+      import.meta.env.OPENROUTER_API_KEY; // Build-time fallback
 
     if (!openRouterApiKey) {
       console.error(
-        "[POST /api/participants/:participantId/wishlist/generate-ai] OPENROUTER_API_KEY not found in environment"
+        "[POST /api/participants/:participantId/wishlist/generate-ai] OPENROUTER_API_KEY not found in environment",
+        {
+          localsKeys: Object.keys(locals),
+          runtimeKeys: locals.runtime ? Object.keys(locals.runtime) : null,
+          envKeys: locals.runtime?.env ? Object.keys(locals.runtime.env) : null,
+        }
       );
       const errorResponse: ApiErrorResponse = {
         error: {
@@ -450,6 +468,12 @@ export const POST: APIRoute = async ({ params, request, locals, url }) => {
     }
 
     // Handle unexpected errors
+    console.error("[POST /api/participants/:participantId/wishlist/generate-ai] Unexpected error details:", {
+      errorType: error?.constructor?.name,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
+
     const errorResponse: ApiErrorResponse = {
       error: {
         code: "INTERNAL_ERROR",
