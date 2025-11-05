@@ -47,7 +47,7 @@ export function AIGenerateButton({
         <TooltipTrigger asChild>
           <Button variant="outline" size="default" onClick={handleClick} disabled={isDisabled} className={className}>
             <Sparkles className="mr-2 h-4 w-4 animate-pulse" />
-            Wygeneruj list do Mikołaja z pomocą AI
+            Generuj list z AI 🎅
             <Badge variant={remainingGenerations > 0 ? "default" : "destructive"} className="ml-2">
               {isLoading ? "..." : `${remainingGenerations} pozostałych`}
             </Badge>

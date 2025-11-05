@@ -39,7 +39,7 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
     },
   });
 
-  const isFormValid = form.formState.isDirty && !isSubmitting;
+  const isFormValid = form.formState.isValid && !isSubmitting;
 
   // Display message from props if provided
   React.useEffect(() => {

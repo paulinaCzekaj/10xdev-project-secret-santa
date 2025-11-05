@@ -58,7 +58,7 @@ Aplikacja "Secret Santa" adresuje te problemy, oferując scentralizowaną, zauto
 
 #### 3.4.1. AI-generowanie listu do Mikołaja (Wersja 1.1)
 
-- Obok pola tekstowego listy życzeń znajduje się przycisk "Wygeneruj list do Mikołaja z pomocą AI".
+- Obok pola tekstowego listy życzeń znajduje się przycisk "Generuj list z AI 🎅".
 - Po kliknięciu przycisku wyświetla się modal z polem do wpisania preferencji/zainteresowań użytkownika.
 - System wykorzystuje API OpenRouter (model openai/gpt-4o-mini) do wygenerowania spersonalizowanego listu do świętego Mikołaja zawierającego listę życzeń w tematyce świątecznej.
 - Wygenerowany list ma formę narracyjną (nie suchej listy punktów), zawiera emoji świąteczne, ciepły świąteczny ton komunikacji oraz odpowiednie formatowanie.
@@ -231,7 +231,7 @@ Aplikacja "Secret Santa" adresuje te problemy, oferując scentralizowaną, zauto
 - Tytuł: AI-generowanie listu do Mikołaja (Wersja 1.1)
 - Opis: Jako uczestnik losowania (zarejestrowany lub niezarejestrowany), chcę móc wygenerować swój list do świętego Mikołaja z pomocą AI, aby łatwiej stworzyć atrakcyjną i konkretną listę życzeń w ciepłym, świątecznym tonie.
 - Kryteria akceptacji:
-  1.  Na stronie wyniku losowania, obok pola edycji listy życzeń, znajduje się przycisk "Wygeneruj list do Mikołaja z pomocą AI" z ikoną sparkles.
+  1.  Na stronie wyniku losowania, obok pola edycji listy życzeń, znajduje się przycisk "Generuj list z AI 🎅" z ikoną sparkles.
   2.  Przycisk wyświetla licznik pozostałych generowań (3 dla niezarejestrowanych, 5 dla zalogowanych, per-grupa).
   3.  Po kliknięciu przycisku wyświetla się modal z prostym formularzem zawierającym jedno pole tekstowe na prompt (preferencje/zainteresowania).
   4.  Po wpisaniu promptu i kliknięciu "Generuj" wyświetla się loading state z animacją.

@@ -2,14 +2,14 @@ import { useCallback } from "react";
 import type { UseWishlistLinkingReturn } from "../types";
 
 /**
- * Custom hook do konwersji URL-i i linków Markdown w tekście na klikalne linki HTML
- * Wykrywa URL-e i linki w formacie [tekst](url), zamieniając je na znaczniki <a> z odpowiednimi atrybutami
+ * Custom hook do konwersji URL-i i Markdown links in text to clickable HTML links
+ * Wykrywa URL-e i Markdown links in format [text](url), replacing them with <a> tags with appropriate attributes
  */
 export function useWishlistLinking(): UseWishlistLinkingReturn {
   /**
-   * Konwertuje tekst zawierający URL-e i linki Markdown na HTML z klikalnymi linkami
-   * @param text - tekst do przetworzenia
-   * @returns HTML string z linkami
+   * Converts text containing URLs and Markdown links to HTML with clickable links
+   * @param text - text to process
+   * @returns HTML string with links
    */
   const convertToHtml = useCallback((text: string): string => {
     if (!text) return "";
@@ -77,7 +77,15 @@ export function useWishlistLinking(): UseWishlistLinkingReturn {
         // Escape the URL
         const escapedUrl = url.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
 
-        result += `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline break-all">${url}</a>`;
+        // Escape the plain URL for safe display as link text
+        const escapedLinkText = url
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#x27;");
+
+        result += `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline break-all">${escapedLinkText}</a>`;
 
         i = urlEnd;
         continue;
@@ -108,9 +116,9 @@ export function useWishlistLinking(): UseWishlistLinkingReturn {
   }, []);
 
   /**
-   * Wyciąga wszystkie URL-e z tekstu (w tym z linków Markdown)
-   * @param text - tekst do przeszukania
-   * @returns tablica znalezionych URL-i
+   * Extracts all URLs from text (including Markdown links)
+   * @param text - text to search
+   * @returns array of found URLs
    */
   const extractUrls = useCallback((text: string): string[] => {
     if (!text) return [];

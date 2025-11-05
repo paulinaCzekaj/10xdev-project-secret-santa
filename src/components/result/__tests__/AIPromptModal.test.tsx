@@ -23,14 +23,14 @@ describe("AIPromptModal", () => {
   it("should render modal when isOpen is true", () => {
     render(<AIPromptModal {...defaultProps} />);
 
-    expect(screen.getByText("Wygeneruj list do Mikołaja z pomocą AI")).toBeInTheDocument();
+    expect(screen.getByText("Generuj list z AI 🎅")).toBeInTheDocument();
     expect(screen.getByText(/Opisz swoje zainteresowania/)).toBeInTheDocument();
   });
 
   it("should not render modal when isOpen is false", () => {
     render(<AIPromptModal {...defaultProps} isOpen={false} />);
 
-    expect(screen.queryByText("Wygeneruj list do Mikołaja z pomocą AI")).not.toBeInTheDocument();
+    expect(screen.queryByText("Generuj list z AI 🎅")).not.toBeInTheDocument();
   });
 
   it("should validate prompt length", async () => {

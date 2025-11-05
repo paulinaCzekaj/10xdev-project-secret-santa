@@ -783,7 +783,7 @@ interface DashboardProps {
 - Sekcja: "Grupy, które stworzyłem" z kartami grup
 - Sekcja: "Grupy, do których należę" z kartami grup
 - Empty state dla pustych list
-- Przycisk CTA: "Utwórz nową grupę Secret Santa"
+- Przycisk CTA: "Utwórz nową grupę"
 
 **Komponenty pomocnicze**:
 
