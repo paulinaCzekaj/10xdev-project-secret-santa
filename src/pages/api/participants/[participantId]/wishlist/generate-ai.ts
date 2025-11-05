@@ -310,12 +310,7 @@ export const POST: APIRoute = async ({ params, request, locals, url, ...context 
       generationsRemaining: rateLimitStatus.generationsRemaining,
     });
 
-    // FIX #3: INCREMENT COUNTER FIRST (BEFORE generation) to prevent race condition
-    // This ensures that concurrent requests can't bypass the quota limit
-    await openRouterService.incrementGenerationCount(participantId.toString());
-    console.log("[POST /api/participants/:participantId/wishlist/generate-ai] Generation counter incremented");
-
-    // Happy path: Generate Santa letter (after incrementing counter)
+    // Happy path: Generate Santa letter FIRST
     let result;
     try {
       result = await openRouterService.generateSantaLetter(prompt, { language: "pl" });
@@ -324,11 +319,14 @@ export const POST: APIRoute = async ({ params, request, locals, url, ...context 
         letterLength: result.letterContent.length,
         suggestedGiftsCount: result.suggestedGifts.length,
       });
+
+      // INCREMENT COUNTER AFTER SUCCESSFUL generation to prevent users losing generations on errors
+      await openRouterService.incrementGenerationCount(participantId.toString());
+      console.log("[POST /api/participants/:participantId/wishlist/generate-ai] Generation counter incremented");
     } catch (error) {
-      // NOTE: Counter is NOT rolled back on generation failure
-      // This prevents abuse through repeated failed attempts
+      // Generation failed - counter is NOT incremented, user doesn't lose a generation
       console.error(
-        "[POST /api/participants/:participantId/wishlist/generate-ai] AI generation failed (counter already incremented)",
+        "[POST /api/participants/:participantId/wishlist/generate-ai] AI generation failed (counter not incremented)",
         {
           participantId,
           error,
@@ -341,7 +339,7 @@ export const POST: APIRoute = async ({ params, request, locals, url, ...context 
     // FIX #10: Response structure matches API spec (no extra metadata/suggested_gifts)
     const responseData = {
       generated_content: result.letterContent,
-      remaining_generations: rateLimitStatus.generationsRemaining - 1, // Already decremented
+      remaining_generations: rateLimitStatus.generationsRemaining - 1, // Now decremented after success
       can_generate_more: rateLimitStatus.generationsRemaining - 1 > 0,
     };
 

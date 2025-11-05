@@ -64,9 +64,9 @@ export function AIPromptModal({ isOpen, onClose, onSubmit, isLoading, error }: A
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Wygeneruj list do Mikołaja z pomocą AI</DialogTitle>
             <DialogDescription>
               Opisz swoje zainteresowania i preferencje, wymień konkretne prezenty oraz dodaj linki do produktów, a AI
@@ -74,7 +74,8 @@ export function AIPromptModal({ isOpen, onClose, onSubmit, isLoading, error }: A
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="flex-1 overflow-y-auto py-4">
+            <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="prompt">Twoje zainteresowania i preferencje</Label>
               <Textarea
@@ -100,9 +101,10 @@ export function AIPromptModal({ isOpen, onClose, onSubmit, isLoading, error }: A
             </div>
 
             {error && <p className="text-sm text-destructive">{error.message}</p>}
+            </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0">
             <Button type="button" variant="ghost" onClick={onClose} disabled={isLoading}>
               Anuluj
             </Button>

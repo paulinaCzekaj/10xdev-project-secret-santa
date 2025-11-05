@@ -675,7 +675,7 @@ export interface UseRevealStateReturn {
 }
 
 /**
- * Zwracany typ z useWishlistEditor hook
+ * Return type from useWishlistEditor hook
  */
 export interface UseWishlistEditorReturn {
   state: WishlistEditorState;
@@ -691,7 +691,7 @@ export interface UseWishlistEditorReturn {
 }
 
 /**
- * Zwracany typ z useWishlistLinking hook
+ * Return type from useWishlistLinking hook
  */
 export interface UseWishlistLinkingReturn {
   convertToHtml: (text: string) => string;
@@ -699,7 +699,7 @@ export interface UseWishlistLinkingReturn {
 }
 
 /**
- * Props dla komponentu AIGenerateButton
+ * Props for AIGenerateButton component
  */
 export interface AIGenerateButtonProps {
   participantId: number;
@@ -707,6 +707,8 @@ export interface AIGenerateButtonProps {
   onGenerateSuccess?: () => void;
   disabled?: boolean;
   className?: string;
+  status?: AIGenerationStatusResponse | null;
+  isLoading?: boolean;
 }
 
 // ============================================================================
@@ -714,7 +716,7 @@ export interface AIGenerateButtonProps {
 // ============================================================================
 
 /**
- * Request dla generowania AI listu do Mikołaja
+ * Request for generating AI letter to Santa
  * POST /api/participants/:participantId/wishlist/generate-ai
  */
 export interface GenerateAIRequest {
@@ -722,7 +724,7 @@ export interface GenerateAIRequest {
 }
 
 /**
- * Response z generowania AI listu
+ * Response for generating AI letter to Santa
  */
 export interface GenerateAIResponse {
   generated_content: string;
@@ -731,7 +733,7 @@ export interface GenerateAIResponse {
 }
 
 /**
- * Status generowania AI
+ * Status generating AI
  * GET /api/participants/:participantId/wishlist/ai-status
  */
 export interface AIGenerationStatusResponse {
@@ -744,7 +746,7 @@ export interface AIGenerationStatusResponse {
 }
 
 /**
- * Błąd generowania AI
+ * Error generating AI
  */
 export interface AIGenerationError {
   code: string;
@@ -752,7 +754,7 @@ export interface AIGenerationError {
 }
 
 /**
- * Zwracany typ z useAIGeneration hook
+ * Return type from useAIGeneration hook
  */
 export interface UseAIGenerationReturn {
   isGenerating: boolean;
@@ -769,7 +771,7 @@ export interface UseAIGenerationReturn {
 }
 
 /**
- * Zwracany typ z useAIGenerationStatus hook
+ * Return type from useAIGenerationStatus hook
  */
 export interface UseAIGenerationStatusReturn {
   status: AIGenerationStatusResponse | null;
@@ -779,7 +781,7 @@ export interface UseAIGenerationStatusReturn {
 }
 
 /**
- * Props dla komponentu AIPreviewModal
+ * Props for AIPreviewModal component
  */
 export interface AIPreviewModalProps {
   isOpen: boolean;

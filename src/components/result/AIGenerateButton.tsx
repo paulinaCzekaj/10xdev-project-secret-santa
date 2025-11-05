@@ -1,9 +1,8 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useAIGenerationStatus } from "@/hooks/useAIGenerationStatus";
 import type { AIGenerateButtonProps } from "@/types";
 
 /**
@@ -16,9 +15,9 @@ export function AIGenerateButton({
   onGenerateSuccess,
   disabled = false,
   className,
-  refreshTrigger,
-}: AIGenerateButtonProps & { refreshTrigger?: number }) {
-  const { status, isLoading, refetch } = useAIGenerationStatus(participantId, token);
+  status,
+  isLoading = false,
+}: AIGenerateButtonProps) {
 
   // Warunki dostępności
   const canGenerate = status?.can_generate ?? false;
@@ -41,13 +40,6 @@ export function AIGenerateButton({
     if (isDisabled) return;
     onGenerateSuccess?.();
   };
-
-  // Refresh status when refreshTrigger changes
-  useEffect(() => {
-    if (refreshTrigger !== undefined) {
-      refetch();
-    }
-  }, [refreshTrigger, refetch]);
 
   return (
     <TooltipProvider>

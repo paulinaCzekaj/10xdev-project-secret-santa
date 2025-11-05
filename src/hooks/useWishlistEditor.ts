@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { supabaseClient } from "@/db/supabase.client";
 import type { WishlistEditorState, UseWishlistEditorReturn, CreateOrUpdateWishlistCommand } from "../types";
@@ -13,12 +13,14 @@ export function useWishlistEditor(
   canEdit: boolean,
   accessToken?: string
 ): UseWishlistEditorReturn {
-  console.log("[useWishlistEditor] Initialized", {
-    participantId,
-    initialContent: initialContent.substring(0, 50) + (initialContent.length > 50 ? "..." : ""),
-    canEdit,
-    hasAccessToken: !!accessToken,
-  });
+  if (import.meta.env.DEV) {
+    console.log("[useWishlistEditor] Initialized", {
+      participantId,
+      initialContent: initialContent.substring(0, 50) + (initialContent.length > 50 ? "..." : ""),
+      canEdit,
+      hasAccessToken: !!accessToken,
+    });
+  }
 
   // Stan edytora
   const [content, setContent] = useState(initialContent);
@@ -32,13 +34,15 @@ export function useWishlistEditor(
 
   /**
    * Oblicza liczbę znaków w treści
+   * Memoized to avoid recalculation on every render
    */
-  const characterCount = content.length;
+  const characterCount = useMemo(() => content.length, [content]);
 
   /**
    * Sprawdza czy są niezapisane zmiany
+   * Memoized to avoid recalculation on every render
    */
-  const hasChanges = content !== originalContent;
+  const hasChanges = useMemo(() => content !== originalContent, [content, originalContent]);
 
   /**
    * Aktualizuje treść i czyści błąd
@@ -58,15 +62,19 @@ export function useWishlistEditor(
    */
   const performSave = useCallback(
     async (contentToSave: string): Promise<void> => {
-      console.log("[useWishlistEditor.performSave] Called", {
-        participantId,
-        contentToSave: contentToSave.substring(0, 50) + (contentToSave.length > 50 ? "..." : ""),
-        canEdit,
-        hasAccessToken: !!accessToken,
-      });
+      if (import.meta.env.DEV) {
+        console.log("[useWishlistEditor.performSave] Called", {
+          participantId,
+          contentToSave: contentToSave.substring(0, 50) + (contentToSave.length > 50 ? "..." : ""),
+          canEdit,
+          hasAccessToken: !!accessToken,
+        });
+      }
 
       if (!canEdit) {
-        console.log("[useWishlistEditor.performSave] Cannot edit - returning early");
+        if (import.meta.env.DEV) {
+          console.log("[useWishlistEditor.performSave] Cannot edit - returning early");
+        }
         return; // Nie zapisuje jeśli edycja jest zablokowana
       }
 
@@ -127,7 +135,9 @@ export function useWishlistEditor(
         setOriginalContent(contentToSave);
         setLastSaved(new Date());
       } catch (error) {
-        console.error("Error saving wishlist:", error);
+        if (import.meta.env.DEV) {
+          console.error("Error saving wishlist:", error);
+        }
 
         let errorMessage: string;
         if (error instanceof Error) {
@@ -195,6 +205,7 @@ export function useWishlistEditor(
 
   /**
    * Efekt wywołujący debounced save przy każdej zmianie treści
+   * Note: debouncedSave is stable from useDebouncedCallback and safe to include in deps
    */
   useEffect(() => {
     // Pomijamy pierwsze renderowanie aby uniknąć niepotrzebnego zapisu
@@ -230,17 +241,21 @@ export function useWishlistEditor(
 
   /**
    * Stan edytora dla komponentu
+   * Memoized to prevent unnecessary re-renders in consuming components
    */
-  const state: WishlistEditorState = {
-    content,
-    originalContent,
-    isSaving,
-    hasChanges,
-    lastSaved,
-    saveError,
-    characterCount,
-    canEdit,
-  };
+  const state: WishlistEditorState = useMemo(
+    () => ({
+      content,
+      originalContent,
+      isSaving,
+      hasChanges,
+      lastSaved,
+      saveError,
+      characterCount,
+      canEdit,
+    }),
+    [content, originalContent, isSaving, hasChanges, lastSaved, saveError, characterCount, canEdit]
+  );
 
   return {
     state,

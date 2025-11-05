@@ -626,11 +626,7 @@ export class WishlistService {
         generationsRemaining: rateLimitStatus.generationsRemaining,
       });
 
-      // Step 7: Increment generation counter BEFORE generation
-      await this.incrementAIGenerationCount(participantId);
-      console.log("[WishlistService.generateSantaLetterFromWishlist] Generation counter incremented");
-
-      // Step 8: Generate Santa letter using wishlist content as prompt
+      // Step 7: Generate Santa letter using wishlist content as prompt FIRST
       let generatedLetter: SantaLetterResponse;
       try {
         generatedLetter = await this.getOpenRouterService(openRouterApiKey).generateSantaLetter(
@@ -642,8 +638,12 @@ export class WishlistService {
           letterLength: generatedLetter.letterContent.length,
           suggestedGiftsCount: generatedLetter.suggestedGifts.length,
         });
+
+        // Step 8: Increment generation counter AFTER successful generation
+        await this.incrementAIGenerationCount(participantId);
+        console.log("[WishlistService.generateSantaLetterFromWishlist] Generation counter incremented");
       } catch (generationError) {
-        // Counter is NOT rolled back on generation failure to prevent abuse
+        // Generation failed - counter is NOT incremented, user doesn't lose a generation
         console.error("[WishlistService.generateSantaLetterFromWishlist] AI generation failed", {
           participantId,
           error: generationError,
@@ -651,7 +651,7 @@ export class WishlistService {
         throw generationError;
       }
 
-      // Step 9: Calculate remaining generations (already decremented)
+      // Step 9: Calculate remaining generations (now decremented after success)
       const remainingGenerations = rateLimitStatus.generationsRemaining - 1;
       const canGenerateMore = remainingGenerations > 0;
 

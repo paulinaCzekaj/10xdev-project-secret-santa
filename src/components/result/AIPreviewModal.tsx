@@ -38,13 +38,13 @@ export function AIPreviewModal({
     onClose();
   };
 
-  const isLastGeneration = remainingGenerations === 1;
+  const isLastGeneration = remainingGenerations === 0;
   const buttonsDisabled = isRegenerating;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
             <DialogTitle>Twój list do Mikołaja</DialogTitle>
             <Badge variant={remainingGenerations > 0 ? "default" : "destructive"}>
@@ -54,7 +54,8 @@ export function AIPreviewModal({
           <DialogDescription>Sprawdź wygenerowany list i zdecyduj, czy chcesz go zaakceptować.</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="flex-1 overflow-y-auto py-4">
+          <div className="space-y-4">
           {/* Alert o ostatnim generowaniu */}
           {isLastGeneration && (
             <Alert variant="warning">
@@ -79,9 +80,10 @@ export function AIPreviewModal({
             )}
             <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{generatedContent}</pre>
           </div>
+          </div>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
+        <DialogFooter className="flex-shrink-0 flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={handleReject} disabled={buttonsDisabled}>
             Odrzuć
           </Button>
