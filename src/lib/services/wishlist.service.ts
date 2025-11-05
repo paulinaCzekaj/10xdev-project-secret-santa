@@ -1001,16 +1001,19 @@ export class WishlistService {
    * Updates the participant's AI generation counter using a SECURITY DEFINER
    * database function. Creates a wishlist record if it doesn't exist (UPSERT).
    *
-   * This should be called BEFORE generating AI content to prevent race conditions.
+   * This should be called AFTER successful AI generation to prevent users from
+   * losing quota on failed generations. The counter is only incremented when
+   * generation succeeds.
    *
    * @param participantId - The participant ID
    * @throws {Error} "INVALID_INPUT" - Invalid participant ID format
    * @throws {Error} "SERVER_ERROR" - Database error occurred
    *
    * @example
-   * // Increment counter before generation
+   * // Generate AI content first
+   * const result = await generateAIContent(prompt);
+   * // Increment counter only after successful generation
    * await service.incrementAIGenerationCount(123);
-   * // Counter is now incremented regardless of generation success
    */
   async incrementAIGenerationCount(participantId: number): Promise<void> {
     if (isNaN(participantId) || participantId <= 0) {

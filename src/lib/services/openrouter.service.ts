@@ -1,4 +1,5 @@
 import { z } from "zod";
+import DOMPurify from "dompurify";
 import type { SupabaseClient } from "@/db/supabase.client";
 import { OpenRouterError } from "./openrouter.error";
 import {
@@ -7,7 +8,6 @@ import {
   AI_PROMPT_MIN_LENGTH,
   AI_PROMPT_MAX_LENGTH,
   AI_LETTER_MAX_LENGTH,
-  AI_MAX_SUGGESTED_GIFTS,
   AI_PROMPT_COST_PER_1K,
   AI_COMPLETION_COST_PER_1K,
 } from "@/lib/constants/ai.constants";
@@ -445,7 +445,12 @@ Guidelines:
       );
     }
 
-    sanitized = sanitized.replace(/<script[^>]*>.*?<\/script>/gi, "").replace(/<iframe[^>]*>.*?<\/iframe>/gi, "");
+    // Use DOMPurify to sanitize HTML and prevent XSS attacks
+    // Configure to strip all HTML tags since this goes to an AI prompt
+    sanitized = DOMPurify.sanitize(sanitized, {
+      ALLOWED_TAGS: [], // Strip all HTML tags
+      ALLOWED_ATTR: [], // Strip all attributes
+    });
 
     return sanitized;
   }
@@ -470,7 +475,7 @@ Guidelines:
 
       return {
         letterContent: parsed.letter_content,
-        suggestedGifts: parsed.suggested_gifts.slice(0, AI_MAX_SUGGESTED_GIFTS),
+        suggestedGifts: parsed.suggested_gifts,
         metadata: {
           model: apiResponse.model,
           tokensUsed: apiResponse.usage?.total_tokens || 0,

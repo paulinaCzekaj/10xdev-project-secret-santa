@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import type { UseWishlistLinkingReturn } from "../types";
+import { escapeHtmlText, escapeHtmlAttribute, escapeHtmlChar } from "../lib/utils/html.utils";
 
 /**
  * Custom hook do konwersji URL-i i Markdown links in text to clickable HTML links
@@ -45,14 +46,8 @@ export function useWishlistLinking(): UseWishlistLinkingReturn {
             const url = text.slice(parenStart + 1, parenEnd - 1);
 
             // Escape the link text and URL
-            const escapedText = linkText
-              .replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")
-              .replace(/"/g, "&quot;")
-              .replace(/'/g, "&#x27;");
-
-            const escapedUrl = url.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
+            const escapedText = escapeHtmlText(linkText);
+            const escapedUrl = escapeHtmlAttribute(url);
 
             result += `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline break-all">${escapedText}</a>`;
 
@@ -74,16 +69,9 @@ export function useWishlistLinking(): UseWishlistLinkingReturn {
 
         const url = text.slice(urlStart, urlEnd);
 
-        // Escape the URL
-        const escapedUrl = url.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
-
-        // Escape the plain URL for safe display as link text
-        const escapedLinkText = url
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#x27;");
+        // Escape the URL and link text
+        const escapedUrl = escapeHtmlAttribute(url);
+        const escapedLinkText = escapeHtmlText(url);
 
         result += `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline break-all">${escapedLinkText}</a>`;
 
@@ -92,22 +80,7 @@ export function useWishlistLinking(): UseWishlistLinkingReturn {
       }
 
       // Regular character - escape it
-      const char = text[i];
-      if (char === "&") {
-        result += "&amp;";
-      } else if (char === "<") {
-        result += "&lt;";
-      } else if (char === ">") {
-        result += "&gt;";
-      } else if (char === '"') {
-        result += "&quot;";
-      } else if (char === "'") {
-        result += "&#x27;";
-      } else if (char === "\n") {
-        result += "<br>";
-      } else {
-        result += char;
-      }
+      result += escapeHtmlChar(text[i]);
 
       i++;
     }

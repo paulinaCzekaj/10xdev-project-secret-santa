@@ -5,7 +5,7 @@ import { AIPreviewModal } from "../AIPreviewModal";
 import { useWishlistEditorContext } from "./WishlistEditorProvider";
 
 /**
- * Komponent obsługujący generowanie listu do Mikołaja przez AI
+ * Component handling the generation of the letter for Santa by AI
  */
 export function WishlistEditorAIGenerator() {
   const {
@@ -23,7 +23,6 @@ export function WishlistEditorAIGenerator() {
     remainingGenerations,
     setContent,
     canEdit,
-    refetchStatus,
     aiStatus,
   } = useWishlistEditorContext();
 
@@ -39,10 +38,10 @@ export function WishlistEditorAIGenerator() {
   const handleAccept = async () => {
     if (!generatedContent) return;
 
-    // Wstawienie treści do textarea
+    // Insert the content into the textarea
     setContent(generatedContent);
 
-    // Wywołanie acceptLetter (refetch status, toast)
+    // Call acceptLetter (refetch status, toast)
     await acceptLetter();
 
     setIsPreviewModalOpen(false);
@@ -55,7 +54,7 @@ export function WishlistEditorAIGenerator() {
 
   const handleRegenerate = async () => {
     await regenerateLetter();
-    // Preview modal pozostaje otwarty z nową treścią
+    // Preview modal remains open with the new content
   };
 
   return (

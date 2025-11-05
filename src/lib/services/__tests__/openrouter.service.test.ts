@@ -476,6 +476,69 @@ describe("OpenRouterService", () => {
       expect(userMessage?.content).not.toContain('alert("xss")');
     });
 
+    it("should sanitize various XSS attack vectors", async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          model: "test",
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  letter_content: "Test",
+                  suggested_gifts: [],
+                }),
+              },
+            },
+          ],
+        }),
+      });
+
+      // Test various XSS bypass techniques
+      const xssPayloads = [
+        '<script src="http://evil.com/xss.js"></script>', // External script without closing tag
+        '<iframe src="javascript:alert(1)"></iframe>', // Iframe with JS URL
+        '<img src=x onerror=alert(1)>', // Event handler
+        '<a href="javascript:alert(1)">click me</a>', // JS in href
+        '<div onmouseover="alert(1)">hover me</div>', // Event handler
+        '&lt;script&gt;alert(1)&lt;/script&gt;', // HTML entities
+        '<SCRIPT>alert(1)</SCRIPT>', // Case variation
+        '<script\n>alert(1)</script>', // Script split across lines
+      ];
+
+      for (const payload of xssPayloads) {
+        fetchMock.mockClear();
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            model: "test",
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    letter_content: "Test",
+                    suggested_gifts: [],
+                  }),
+                },
+              },
+            ],
+          }),
+        });
+
+        await service.generateSantaLetter(`test ${payload} preferences`);
+
+        const fetchCall = fetchMock.mock.calls[0];
+        const requestBody = JSON.parse(fetchCall[1].body);
+        const userMessage = requestBody.messages.find((m: { role: string; content: string }) => m.role === "user");
+
+        // All HTML should be stripped, leaving only plain text
+        expect(userMessage?.content).not.toContain("<");
+        expect(userMessage?.content).not.toContain(">");
+        expect(userMessage?.content).toContain("test");
+        expect(userMessage?.content).toContain("preferences");
+      }
+    });
+
     it("should limit response letter length", async () => {
       const longLetter = "a".repeat(2000);
 
