@@ -86,7 +86,7 @@ export function AIPromptModal({ isOpen, onClose, onSubmit, isLoading, error }: A
                 rows={6}
                 maxLength={MAX_PROMPT_LENGTH}
                 disabled={isLoading}
-                className="resize-none"
+                className="resize-none placeholder:text-xs"
               />
               <div className="flex justify-between items-center">
                 <p className="text-sm text-muted-foreground">

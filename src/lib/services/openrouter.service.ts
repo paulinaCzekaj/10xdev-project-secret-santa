@@ -1,5 +1,5 @@
 import { z } from "zod";
-import DOMPurify from "dompurify";
+import striptags from "striptags";
 import type { SupabaseClient } from "@/db/supabase.client";
 import { OpenRouterError } from "./openrouter.error";
 import {
@@ -26,8 +26,10 @@ const ConfigSchema = z.object({
   apiKey: z.string().min(1, "API key is required"),
   model: z.string().default("openai/gpt-4o-mini"),
   maxTokens: z.number().int().min(1).max(4096).default(1000),
-  temperature: z.number().min(0).max(2).default(0.7),
+  temperature: z.number().min(0).max(2).default(0.85),
   topP: z.number().min(0).max(1).default(1.0),
+  frequencyPenalty: z.number().min(-2).max(2).default(0.3),
+  presencePenalty: z.number().min(-2).max(2).default(0.2),
   timeout: z.number().int().min(1000).max(60000).default(15000),
   maxRetries: z.number().int().min(0).max(5).default(2),
   baseDelay: z.number().int().min(500).max(5000).default(1000),
@@ -45,8 +47,10 @@ export class OpenRouterService {
       apiKey: config?.apiKey || import.meta.env.OPENROUTER_API_KEY,
       model: config?.model || import.meta.env.AI_MODEL || "openai/gpt-4o-mini",
       maxTokens: config?.maxTokens || parseInt(import.meta.env.AI_MAX_TOKENS || "1000"),
-      temperature: config?.temperature || parseFloat(import.meta.env.AI_TEMPERATURE || "0.7"),
+      temperature: config?.temperature || parseFloat(import.meta.env.AI_TEMPERATURE || "0.85"),
       topP: config?.topP || 1.0,
+      frequencyPenalty: config?.frequencyPenalty || parseFloat(import.meta.env.AI_FREQUENCY_PENALTY || "0.3"),
+      presencePenalty: config?.presencePenalty || parseFloat(import.meta.env.AI_PRESENCE_PENALTY || "0.2"),
       timeout: config?.timeout || 15000,
       maxRetries: config?.maxRetries || 2,
       baseDelay: config?.baseDelay || 1000,
@@ -68,7 +72,7 @@ export class OpenRouterService {
    * Counter should be incremented BEFORE calling this to prevent race conditions.
    *
    * @param userPreferences - User's gift preferences and interests (10-2000 characters)
-   * @param options - Optional generation options (language, etc.)
+   * @param options - Optional generation options (participantName for gender detection)
    * @returns Promise resolving to Santa letter with content, suggested gifts, and metadata
    * @throws {OpenRouterError} INVALID_INPUT - User preferences too short/long
    * @throws {OpenRouterError} GATEWAY_TIMEOUT - Generation took longer than 15 seconds
@@ -78,7 +82,7 @@ export class OpenRouterService {
    * @example
    * const letter = await service.generateSantaLetter(
    *   "Lubię książki fantasy, dobrą kawę i ciepłe szaliki",
-   *   { language: "pl" }
+   *   { participantName: "Anna" }
    * );
    * console.log(letter.letterContent); // "Cześć Mikołaju! 🎅\n..."
    * console.log(`Tokens used: ${letter.metadata.tokensUsed}`);
@@ -86,9 +90,9 @@ export class OpenRouterService {
   async generateSantaLetter(userPreferences: string, options?: GenerationOptions): Promise<SantaLetterResponse> {
     const startTime = Date.now();
 
-    const systemPrompt = this.buildSystemPrompt(options?.language || "pl");
+    const systemPrompt = this.buildSystemPrompt();
 
-    const messages = this.buildMessages(systemPrompt, userPreferences);
+    const messages = this.buildMessages(systemPrompt, userPreferences, options?.participantName);
     const responseFormat = this.buildResponseFormat();
 
     const apiResponse = await this.makeRequest(messages, responseFormat);
@@ -233,49 +237,55 @@ export class OpenRouterService {
 
   // === PRIVATE METHODS ===
 
-  private buildSystemPrompt(language = "pl"): string {
-    const prompts = {
-      pl: `Jesteś asystentem pomagającym tworzyć listy do świętego Mikołaja na Gwiazdkę (Secret Santa).
+  private buildSystemPrompt(): string {
+    return `You are an assistant helping users create personalized Christmas letters to Santa for Secret Santa gift exchanges.
 
-Zadanie:
-Na podstawie preferencji użytkownika wygeneruj ciepły, narracyjny list do Mikołaja zawierający listę życzeń.
+CRITICAL INSTRUCTIONS:
 
-Wytyczne:
-1. Użyj formy listu (np. "Drogi Mikołaju,..." lub "Hej Mikołaju!")
-2. Ton ma być ciepły, personalny i świąteczny (nie oficjalny czy suchy)
-3. WYPISZ TYLKO prezenty podane przez użytkownika - NIE wymyślaj własnych pomysłów
-4. Zawrzyj pomysły na prezenty wysłane przez użytkownika w narracji listu (zachowaj linki jeśli zostały podane)
-5. Dodaj emoji świąteczne (🎁, 🎄, ⭐, 🎅, ❄️, 🔔)
-6. Maksymalnie 2000 znaków
-7. Odpowiadaj TYLKO po polsku
-8. Zakończ list w ciepły, świąteczny sposób
+1. **LANGUAGE DETECTION - MOST IMPORTANT**:
+   - Detect the language from the user's input text
+   - Respond in THE EXACT SAME LANGUAGE as the user's input
+   - If user writes in English -> write letter in English
+   - If user writes in Polish -> write letter in Polish
+   - If user writes in German/French/Spanish/etc -> write in that language
+   - DO NOT default to any language - ALWAYS match the user's input language
 
-Przykład:
-Cześć Mikołaju! 🎅
+   Examples:
+   - Input: "books and socks" → Letter in ENGLISH: "Dear Santa..."
+   - Input: "książki i skarpetki" → Letter in POLISH: "Drogi Mikołaju..."
+   - Input: "Bücher und Socken" → Letter in GERMAN: "Lieber Weihnachtsmann..."
 
-W tym roku byłam/em grzeczna/y i marzę o kilku rzeczach pod choinkę 🎄. Mega chciałabym/bym dostać "Wiedźmin: Ostatnie życzenie" Sapkowskiego 📚, bo fantasy to moja ulubiona bajka! Poza tym uwielbiam dobrą kawę ☕ - jakiś ciekawy zestaw z różnych zakątków świata byłby super. I jeszcze ciepły, kolorowy szalik 🧣, bo zima idzie!
+2. **Gender Detection**: If the user provides their name, analyze it to determine likely gender and use appropriate gendered language forms (e.g., in Polish: "byłam" vs "byłem", "grzeczna" vs "grzeczny"). If gender cannot be determined, use neutral forms.
 
-Dzięki i wesołych Świąt! ⭐`,
-      en: `You are an assistant helping to create Christmas wishlists for Secret Santa.
+3. **Letter Format**: Write a warm, narrative letter to Santa. The tone should be personal, festive, and heartfelt - NOT formal or dry.
 
-Task:
-Based on user preferences, generate a warm, narrative letter to Santa with ideas from user's wishlist.
+4. **STRICT GIFT REQUIREMENT - DO NOT INVENT**:
+   - ONLY mention gifts, items, or products that are EXPLICITLY stated in the user's input
+   - DO NOT add, suggest, or invent any additional gift ideas that were not mentioned by the user
+   - DO NOT be creative with gift suggestions - stick EXACTLY to what the user listed
+   - If the user mentions specific products with links, preserve those links in the letter
 
-Guidelines:
-1. Use letter format (e.g., "Dear Santa,..." or "Hey Santa!")
-2. Tone should be warm, personal, and festive (not formal or dry)
-3. LIST ONLY gifts mentioned by user - DO NOT invent your own gift ideas
-4. Include ideas from user's wishlist woven into the narrative (preserve links if provided)
-5. Add Christmas emoji (🎁, 🎄, ⭐, 🎅, ❄️, 🔔)
-6. Maximum 2000 characters
-7. Respond ONLY in English
-8. End with warm, festive wishes`,
-    };
+5. **Christmas Atmosphere**: Add Christmas emoji naturally throughout the text (🎁, 🎄, ⭐, 🎅, ❄️, 🔔, 🎀, ✨).
 
-    return prompts[language as keyof typeof prompts] || prompts.pl;
+6. **Length**: Maximum 2000 characters.
+
+7. **Narrative Style**: Weave the gift ideas into a flowing narrative, not a dry bullet-point list. Make it sound like an actual letter someone would write.
+
+8. **Closing**: End with warm, festive wishes appropriate to the detected language.
+
+9. **Variety**: Use diverse greetings, structures, and closings. Avoid formulaic patterns. Every letter should feel unique. Vary sentence structures, paragraph lengths, and connecting words. Match the tone to the user's input (playful, formal, enthusiastic, warm, etc.).
+
+Remember: NEVER add gifts not mentioned by the user. Your job is to make THEIR wishes sound festive, not to suggest new ones.`;
   }
 
-  private buildMessages(systemPrompt: string, userPrompt: string): Message[] {
+  private buildMessages(systemPrompt: string, userPrompt: string, participantName?: string): Message[] {
+    const sanitizedPrompt = this.sanitizeUserInput(userPrompt);
+
+    // If participant name is provided, prepend it to the prompt for gender detection
+    const userContent = participantName
+      ? `My name is: ${participantName}\n\n${sanitizedPrompt}`
+      : sanitizedPrompt;
+
     return [
       {
         role: "system",
@@ -283,7 +293,7 @@ Guidelines:
       },
       {
         role: "user",
-        content: this.sanitizeUserInput(userPrompt),
+        content: userContent,
       },
     ];
   }
@@ -322,6 +332,8 @@ Guidelines:
       max_tokens: this.config.maxTokens,
       temperature: this.config.temperature,
       top_p: this.config.topP,
+      frequency_penalty: this.config.frequencyPenalty,
+      presence_penalty: this.config.presencePenalty,
     };
 
     const headers = {
@@ -445,12 +457,9 @@ Guidelines:
       );
     }
 
-    // Use DOMPurify to sanitize HTML and prevent XSS attacks
-    // Configure to strip all HTML tags since this goes to an AI prompt
-    sanitized = DOMPurify.sanitize(sanitized, {
-      ALLOWED_TAGS: [], // Strip all HTML tags
-      ALLOWED_ATTR: [], // Strip all attributes
-    });
+    // Use striptags to remove all HTML tags and prevent XSS attacks
+    // This is a lightweight alternative that works in both Node.js and browser
+    sanitized = striptags(sanitized);
 
     return sanitized;
   }

@@ -5,6 +5,8 @@ export interface OpenRouterConfig {
   maxTokens?: number;
   temperature?: number;
   topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
   timeout?: number;
   maxRetries?: number;
   baseDelay?: number;
@@ -58,7 +60,7 @@ export interface OpenRouterAPIResponse {
 export interface GenerationOptions {
   temperature?: number;
   maxTokens?: number;
-  language?: "pl" | "en";
+  participantName?: string;
 }
 
 export interface SantaLetterResponse {

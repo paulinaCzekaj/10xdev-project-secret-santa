@@ -143,6 +143,7 @@ export const POST: APIRoute = async ({ params, request, locals, url, ...context 
       hasRuntimeEnv: !!locals.runtime?.env,
       hasRuntimeKey: !!locals.runtime?.env?.OPENROUTER_API_KEY,
       hasImportMetaKey: !!import.meta.env.OPENROUTER_API_KEY,
+      hasProcessEnvKey: !!process.env.OPENROUTER_API_KEY,
       contextKeys: Object.keys(context),
       localsKeys: Object.keys(locals),
     });
@@ -151,7 +152,8 @@ export const POST: APIRoute = async ({ params, request, locals, url, ...context 
     const openRouterApiKey =
       locals.runtime?.env?.OPENROUTER_API_KEY || // platformProxy local dev
       (context as any).env?.OPENROUTER_API_KEY || // Cloudflare Workers runtime
-      import.meta.env.OPENROUTER_API_KEY; // Build-time fallback
+      import.meta.env.OPENROUTER_API_KEY || // Build-time fallback
+      process.env.OPENROUTER_API_KEY; // Node.js dev mode fallback
 
     if (!openRouterApiKey) {
       console.error(
@@ -313,9 +315,12 @@ export const POST: APIRoute = async ({ params, request, locals, url, ...context 
     // Happy path: Generate Santa letter FIRST
     let result;
     try {
-      result = await openRouterService.generateSantaLetter(prompt, { language: "pl" });
+      result = await openRouterService.generateSantaLetter(prompt, {
+        participantName: participantWithGroup.name
+      });
       console.log("[POST /api/participants/:participantId/wishlist/generate-ai] AI generation successful", {
         participantId,
+        participantName: participantWithGroup.name,
         letterLength: result.letterContent.length,
         suggestedGiftsCount: result.suggestedGifts.length,
       });
