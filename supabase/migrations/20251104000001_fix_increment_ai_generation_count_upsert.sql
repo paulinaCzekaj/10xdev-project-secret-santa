@@ -1,0 +1,68 @@
+-- Migration: Fix increment_ai_generation_count to use UPSERT instead of UPDATE
+-- FIX #7: Prevents silent failure when wishlist record doesn't exist yet
+-- Description: Replaces UPDATE with INSERT ... ON CONFLICT to ensure record is created if needed
+-- This fixes a critical bug where generation counter wouldn't increment for new wishlists
+
+-- Drop existing function
+DROP FUNCTION IF EXISTS increment_ai_generation_count(BIGINT);
+
+-- Recreate function with UPSERT logic and limit validation
+-- FIX #7: Now uses INSERT ... ON CONFLICT instead of UPDATE
+-- This ensures a wishes record is created if it doesn't exist, preventing silent failures
+-- FIX: Added limit validation to prevent race condition abuse
+CREATE OR REPLACE FUNCTION increment_ai_generation_count(p_participant_id BIGINT)
+RETURNS void AS $$
+DECLARE
+  current_count INTEGER;
+  participant_user_id UUID;
+  max_generations INTEGER;
+BEGIN
+  -- Get current generation count and participant info
+  SELECT
+    COALESCE(w.ai_generation_count_per_group, 0) as current_count,
+    p.user_id as participant_user_id
+  INTO current_count, participant_user_id
+  FROM public.participants p
+  LEFT JOIN public.wishes w ON w.participant_id = p.id
+  WHERE p.id = p_participant_id;
+
+  -- Determine max generations based on registration status
+  -- Registered users (have user_id) get 5 generations, unregistered get 3
+  max_generations := CASE WHEN participant_user_id IS NOT NULL THEN 5 ELSE 3 END;
+
+  -- Check if limit would be exceeded
+  IF current_count >= max_generations THEN
+    RAISE EXCEPTION 'AI_GENERATION_LIMIT_EXCEEDED: Cannot exceed % generations (current: %)', max_generations, current_count;
+  END IF;
+
+  -- Use UPSERT: Insert new record if doesn't exist, otherwise update
+  INSERT INTO public.wishes (
+    participant_id,
+    wishlist,
+    ai_generation_count_per_group,
+    ai_last_generated_at,
+    ai_generated,
+    updated_at
+  )
+  VALUES (
+    p_participant_id,
+    '', -- Empty wishlist initially (user can fill it later)
+    1,  -- First generation
+    NOW(),
+    TRUE,
+    NOW()
+  )
+  ON CONFLICT (participant_id)
+  DO UPDATE SET
+    ai_generation_count_per_group = public.wishes.ai_generation_count_per_group + 1,
+    ai_last_generated_at = NOW(),
+    ai_generated = TRUE,
+    updated_at = NOW();
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Grant execute permission to authenticated and anonymous users
+GRANT EXECUTE ON FUNCTION increment_ai_generation_count TO authenticated, anon;
+
+-- Update comment to reflect new behavior
+COMMENT ON FUNCTION increment_ai_generation_count IS 'Atomically increments the AI generation count for a participant. Creates wishes record if it doesn''t exist (UPSERT). Prevents silent failures. Validates generation limits to prevent race condition abuse.';

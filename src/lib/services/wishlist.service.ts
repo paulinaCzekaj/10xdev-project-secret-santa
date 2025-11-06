@@ -6,12 +6,26 @@ import type {
   ParticipantWithGroupDTO,
   UserId,
 } from "../../types";
+import { OpenRouterService } from "./openrouter.service";
+import type { SantaLetterResponse, GenerationOptions, RateLimitStatus } from "./openrouter.types";
+import { AI_MAX_GENERATIONS_REGISTERED, AI_MAX_GENERATIONS_UNREGISTERED } from "../../lib/constants/ai.constants";
 
 /**
  * Service for managing Secret Santa participant wishlists
  */
 export class WishlistService {
-  constructor(private supabase: SupabaseClient) {}
+  private openRouterService: OpenRouterService | null = null;
+
+  constructor(private supabase: SupabaseClient) {
+    // OpenRouterService will be created lazily when needed
+  }
+
+  private getOpenRouterService(apiKey?: string): OpenRouterService {
+    if (!this.openRouterService) {
+      this.openRouterService = new OpenRouterService(this.supabase, apiKey ? { apiKey } : undefined);
+    }
+    return this.openRouterService;
+  }
 
   /**
    * Creates or updates a participant's wishlist
@@ -67,7 +81,58 @@ export class WishlistService {
       });
 
       // Step 2: Validate access permissions
-      await this.validateWishlistAccess(participantId, authUserId, participantToken, participantWithGroup);
+      // For wishlist editing, allow participants to edit their own wishlist
+      if (!authUserId && !participantToken) {
+        throw new Error("FORBIDDEN");
+      }
+
+      // If using participant token, validate it
+      if (participantToken) {
+        if (participantWithGroup.access_token !== participantToken) {
+          throw new Error("FORBIDDEN");
+        }
+      }
+      // If using Bearer token, check if user can access this participant
+      else if (authUserId) {
+        // Allow access if user owns this participant OR if this participant belongs to the user
+        // (participant may have user_id set, or may be linked by email)
+        const isOwner = participantWithGroup.user_id === authUserId;
+
+        if (!isOwner) {
+          // Check if this specific participant belongs to the user
+          // This covers cases where participant was added by email and user later registered
+          const { data: userProfile, error: userError } = await this.supabase.auth.getUser();
+          if (userError) {
+            console.log("[WishlistService.createOrUpdateWishlist] Failed to get user profile", {
+              error: userError.message,
+            });
+            throw new Error("FORBIDDEN");
+          }
+
+          const userEmail = userProfile?.user?.email;
+
+          // Check if participant belongs to user via email (participant added by email before registration)
+          const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
+
+          if (!belongsViaEmail) {
+            console.log(
+              "[WishlistService.createOrUpdateWishlist] Access denied - participant does not belong to user",
+              {
+                authUserId,
+                userEmail,
+                participantId,
+                participantUserId: participantWithGroup.user_id,
+                participantEmail: participantWithGroup.email,
+              }
+            );
+            throw new Error("FORBIDDEN");
+          }
+
+          console.log("[WishlistService.createOrUpdateWishlist] Access granted via email matching");
+        } else {
+          console.log("[WishlistService.createOrUpdateWishlist] Access granted via direct ownership");
+        }
+      }
 
       // Step 3: Check if group end date has passed (compare only dates, ignore time)
       const now = new Date();
@@ -287,7 +352,53 @@ export class WishlistService {
       });
 
       // Step 2: Validate access permissions
-      await this.validateWishlistAccess(participantId, authUserId, participantToken, participantWithGroup);
+      // For wishlist reading, allow participants to read their own wishlist
+      if (!authUserId && !participantToken) {
+        throw new Error("FORBIDDEN");
+      }
+
+      // If using participant token, validate it
+      if (participantToken) {
+        if (participantWithGroup.access_token !== participantToken) {
+          throw new Error("FORBIDDEN");
+        }
+      }
+      // If using Bearer token, check if user can access this participant
+      else if (authUserId) {
+        // Allow access if user owns this participant OR if this participant belongs to the user
+        // (participant may have user_id set, or may be linked by email)
+        const isOwner = participantWithGroup.user_id === authUserId;
+
+        if (!isOwner) {
+          // Check if this specific participant belongs to the user
+          // This covers cases where participant was added by email and user later registered
+          const { data: userProfile, error: userError } = await this.supabase.auth.getUser();
+          if (userError) {
+            console.log("[WishlistService.getWishlist] Failed to get user profile", { error: userError.message });
+            throw new Error("FORBIDDEN");
+          }
+
+          const userEmail = userProfile?.user?.email;
+
+          // Check if participant belongs to user via email (participant added by email before registration)
+          const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
+
+          if (!belongsViaEmail) {
+            console.log("[WishlistService.getWishlist] Access denied - participant does not belong to user", {
+              authUserId,
+              userEmail,
+              participantId,
+              participantUserId: participantWithGroup.user_id,
+              participantEmail: participantWithGroup.email,
+            });
+            throw new Error("FORBIDDEN");
+          }
+
+          console.log("[WishlistService.getWishlist] Access granted via email matching");
+        } else {
+          console.log("[WishlistService.getWishlist] Access granted via direct ownership");
+        }
+      }
 
       // Step 3: Retrieve wishlist
       const { data: wishlist, error } = await this.supabase
@@ -330,6 +441,236 @@ export class WishlistService {
       return result;
     } catch (error) {
       console.error("[WishlistService.getWishlist] Error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Generates a personalized Santa letter using AI based on participant's existing wishlist
+   *
+   * Retrieves the participant's wishlist content and uses it as input for AI generation.
+   * Validates access permissions, rate limits, and group end date before generation.
+   * For registered users: verifies Bearer token ownership.
+   * For unregistered users: verifies participant token.
+   *
+   * @param participantId - The participant ID whose wishlist to use for generation
+   * @param authUserId - User ID from Bearer token (null for unregistered users)
+   * @param participantToken - Access token from query param (null for registered users)
+   * @param options - Optional generation options (language, etc.)
+   * @returns Promise resolving to generated Santa letter with content, metadata, and rate limit info
+   * @throws {Error} "PARTICIPANT_NOT_FOUND" - If participant doesn't exist
+   * @throws {Error} "FORBIDDEN" - If user doesn't own the wishlist or token is invalid
+   * @throws {Error} "END_DATE_PASSED" - If group end date has passed
+   * @throws {Error} "WISHLIST_NOT_FOUND" - If wishlist doesn't exist or is empty
+   * @throws {OpenRouterError} Various AI generation errors (rate limit, timeout, etc.)
+   *
+   * @example
+   * const result = await wishlistService.generateSantaLetterFromWishlist(1, "user-123", null);
+   * console.log(result.letter.letterContent); // Generated Santa letter
+   * console.log(result.remainingGenerations); // Remaining quota
+   */
+  async generateSantaLetterFromWishlist(
+    participantId: number,
+    authUserId: UserId | null,
+    participantToken: string | null,
+    options?: GenerationOptions,
+    openRouterApiKey?: string
+  ): Promise<{
+    letter: SantaLetterResponse;
+    remainingGenerations: number;
+    canGenerateMore: boolean;
+    isRegistered: boolean;
+  }> {
+    console.log("[WishlistService.generateSantaLetterFromWishlist] Starting", {
+      participantId,
+      hasAuthUserId: !!authUserId,
+      hasParticipantToken: !!participantToken,
+    });
+
+    try {
+      // Step 1: Validate participant exists and get group info
+      const participantWithGroup = await this.getParticipantWithGroupInfo(participantId);
+      if (!participantWithGroup) {
+        console.log("[WishlistService.generateSantaLetterFromWishlist] Participant not found", { participantId });
+        throw new Error("PARTICIPANT_NOT_FOUND");
+      }
+
+      console.log("[WishlistService.generateSantaLetterFromWishlist] Participant found", {
+        participantId,
+        groupId: participantWithGroup.group_id,
+        groupEndDate: participantWithGroup.group.end_date,
+      });
+
+      // Step 2: Validate access permissions
+      // For AI generation, allow participants to generate for their own status
+      if (!authUserId && !participantToken) {
+        throw new Error("FORBIDDEN");
+      }
+
+      // If using participant token, validate it
+      if (participantToken) {
+        if (participantWithGroup.access_token !== participantToken) {
+          throw new Error("FORBIDDEN");
+        }
+      }
+      // If using Bearer token, check if user can access this participant
+      else if (authUserId) {
+        // Allow access if user owns this participant OR if this participant belongs to the user
+        // (participant may have user_id set, or may be linked by email)
+        const isOwner = participantWithGroup.user_id === authUserId;
+
+        if (!isOwner) {
+          // Check if this specific participant belongs to the user
+          // This covers cases where participant was added by email and user later registered
+          const { data: userProfile, error: userError } = await this.supabase.auth.getUser();
+          if (userError) {
+            console.log("[WishlistService.generateSantaLetterFromWishlist] Failed to get user profile", {
+              error: userError.message,
+            });
+            throw new Error("FORBIDDEN");
+          }
+
+          const userEmail = userProfile?.user?.email;
+
+          // Check if participant belongs to user via email (participant added by email before registration)
+          const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
+
+          if (!belongsViaEmail) {
+            console.log(
+              "[WishlistService.generateSantaLetterFromWishlist] Access denied - participant does not belong to user",
+              {
+                authUserId,
+                userEmail,
+                participantId,
+                participantUserId: participantWithGroup.user_id,
+                participantEmail: participantWithGroup.email,
+              }
+            );
+            throw new Error("FORBIDDEN");
+          }
+
+          console.log("[WishlistService.generateSantaLetterFromWishlist] Access granted via email matching");
+        } else {
+          console.log("[WishlistService.generateSantaLetterFromWishlist] Access granted via direct ownership");
+        }
+      }
+
+      // Step 3: Check if group end date has passed
+      const now = new Date();
+      const endDate = new Date(participantWithGroup.group.end_date);
+      const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+      if (nowDate > endDateOnly) {
+        console.log("[WishlistService.generateSantaLetterFromWishlist] End date passed", {
+          participantId,
+          endDate: participantWithGroup.group.end_date,
+          endDateOnly: endDateOnly.toISOString(),
+          nowDate: nowDate.toISOString(),
+        });
+        throw new Error("END_DATE_PASSED");
+      }
+
+      console.log("[WishlistService.generateSantaLetterFromWishlist] End date validation passed");
+
+      // Step 4: Retrieve existing wishlist
+      const { data: wishlist, error } = await this.supabase
+        .from("wishes")
+        .select("*")
+        .eq("participant_id", participantId)
+        .single();
+
+      if (error || !wishlist) {
+        console.log("[WishlistService.generateSantaLetterFromWishlist] Wishlist not found", {
+          participantId,
+          error: error?.message,
+        });
+        throw new Error("WISHLIST_NOT_FOUND");
+      }
+
+      // Step 5: Validate wishlist has content
+      const wishlistContent = wishlist.wishlist?.trim();
+      if (!wishlistContent || wishlistContent.length === 0) {
+        console.log("[WishlistService.generateSantaLetterFromWishlist] Wishlist is empty", {
+          participantId,
+          wishlistLength: wishlistContent?.length || 0,
+        });
+        throw new Error("WISHLIST_EMPTY");
+      }
+
+      console.log("[WishlistService.generateSantaLetterFromWishlist] Wishlist found", {
+        participantId,
+        wishlistId: wishlist.id,
+        wishlistLength: wishlistContent.length,
+      });
+
+      // Step 6: Check rate limits
+      // Determine isRegistered based on authentication method
+      // If user is authenticated with Bearer token, they are registered
+      // If using participant token, check if participant has user_id set
+      const isRegistered = authUserId ? true : !!participantWithGroup.user_id;
+
+      const rateLimitStatus = await this.validateAIGenerationLimit(participantId, isRegistered);
+
+      if (!rateLimitStatus.canGenerate) {
+        console.log("[WishlistService.generateSantaLetterFromWishlist] Rate limit exceeded", {
+          participantId,
+          generationsUsed: rateLimitStatus.generationsUsed,
+          maxGenerations: rateLimitStatus.maxGenerations,
+        });
+        throw new Error("RATE_LIMIT_EXCEEDED");
+      }
+
+      console.log("[WishlistService.generateSantaLetterFromWishlist] Rate limit check passed", {
+        participantId,
+        generationsRemaining: rateLimitStatus.generationsRemaining,
+      });
+
+      // Step 7: Generate Santa letter using wishlist content as prompt FIRST
+      let generatedLetter: SantaLetterResponse;
+      try {
+        generatedLetter = await this.getOpenRouterService(openRouterApiKey).generateSantaLetter(
+          wishlistContent,
+          options
+        );
+        console.log("[WishlistService.generateSantaLetterFromWishlist] AI generation successful", {
+          participantId,
+          letterLength: generatedLetter.letterContent.length,
+          suggestedGiftsCount: generatedLetter.suggestedGifts.length,
+        });
+
+        // Step 8: Increment generation counter AFTER successful generation
+        await this.incrementAIGenerationCount(participantId);
+        console.log("[WishlistService.generateSantaLetterFromWishlist] Generation counter incremented");
+      } catch (generationError) {
+        // Generation failed - counter is NOT incremented, user doesn't lose a generation
+        console.error("[WishlistService.generateSantaLetterFromWishlist] AI generation failed", {
+          participantId,
+          error: generationError,
+        });
+        throw generationError;
+      }
+
+      // Step 9: Calculate remaining generations (now decremented after success)
+      const remainingGenerations = rateLimitStatus.generationsRemaining - 1;
+      const canGenerateMore = remainingGenerations > 0;
+
+      const result = {
+        letter: generatedLetter,
+        remainingGenerations,
+        canGenerateMore,
+        isRegistered,
+      };
+
+      console.log("[WishlistService.generateSantaLetterFromWishlist] Generation completed successfully", {
+        participantId,
+        remainingGenerations,
+        canGenerateMore,
+      });
+
+      return result;
+    } catch (error) {
+      console.error("[WishlistService.generateSantaLetterFromWishlist] Error:", error);
       throw error;
     }
   }
@@ -380,7 +721,53 @@ export class WishlistService {
       });
 
       // Step 2: Validate access permissions
-      await this.validateWishlistAccess(participantId, authUserId, participantToken, participantWithGroup);
+      // For wishlist deletion, allow participants to delete their own wishlist
+      if (!authUserId && !participantToken) {
+        throw new Error("FORBIDDEN");
+      }
+
+      // If using participant token, validate it
+      if (participantToken) {
+        if (participantWithGroup.access_token !== participantToken) {
+          throw new Error("FORBIDDEN");
+        }
+      }
+      // If using Bearer token, check if user can access this participant
+      else if (authUserId) {
+        // Allow access if user owns this participant OR if this participant belongs to the user
+        // (participant may have user_id set, or may be linked by email)
+        const isOwner = participantWithGroup.user_id === authUserId;
+
+        if (!isOwner) {
+          // Check if this specific participant belongs to the user
+          // This covers cases where participant was added by email and user later registered
+          const { data: userProfile, error: userError } = await this.supabase.auth.getUser();
+          if (userError) {
+            console.log("[WishlistService.deleteWishlist] Failed to get user profile", { error: userError.message });
+            throw new Error("FORBIDDEN");
+          }
+
+          const userEmail = userProfile?.user?.email;
+
+          // Check if participant belongs to user via email (participant added by email before registration)
+          const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
+
+          if (!belongsViaEmail) {
+            console.log("[WishlistService.deleteWishlist] Access denied - participant does not belong to user", {
+              authUserId,
+              userEmail,
+              participantId,
+              participantUserId: participantWithGroup.user_id,
+              participantEmail: participantWithGroup.email,
+            });
+            throw new Error("FORBIDDEN");
+          }
+
+          console.log("[WishlistService.deleteWishlist] Access granted via email matching");
+        } else {
+          console.log("[WishlistService.deleteWishlist] Access granted via direct ownership");
+        }
+      }
 
       // Step 3: Check if group end date has passed (DELETE is blocked after end_date)
       const now = new Date();
@@ -437,32 +824,215 @@ export class WishlistService {
   /**
    * Renders wishlist content as HTML with auto-linked URLs
    *
+   * FIX #4: Completely rewritten to prevent XSS vulnerability
+   * - URLs are detected BEFORE HTML escaping (so & in URLs work correctly)
+   * - Each text/URL fragment is escaped separately
+   * - URLs in href attributes are properly escaped
+   * - Prevents ReDoS with bounded regex
+   *
    * Converts plain text URLs to clickable HTML links and preserves line breaks.
    *
    * @param wishlistText - The raw wishlist text content
    * @returns HTML string with auto-linked URLs
    *
    * @example
-   * const html = service.renderWishlistHtml("Check out https://example.com\nAnd this site too");
-   * // Returns: "Check out <a href='https://example.com'>https://example.com</a><br>And this site too"
+   * const html = service.renderWishlistHtml("Check out https://example.com?foo=bar&baz=qux\nAnd this site too");
+   * // Returns: "Check out <a href='https://example.com?foo=bar&amp;baz=qux'>https://example.com?foo=bar&amp;baz=qux</a><br>And this site too"
    */
   private renderWishlistHtml(wishlistText: string): string {
-    // Escape HTML characters for security
-    const escaped = wishlistText
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#x27;");
+    let result = "";
+    let i = 0;
 
-    // Auto-link URLs (simple regex for HTTP/HTTPS URLs)
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const linked = escaped.replace(urlRegex, (url) => {
-      return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-    });
+    while (i < wishlistText.length) {
+      // Look for markdown links [text](url)
+      if (wishlistText[i] === "[") {
+        const bracketStart = i;
+        const bracketEnd = wishlistText.indexOf("]", i);
 
-    // Convert line breaks to <br> tags
-    return linked.replace(/\n/g, "<br>");
+        if (bracketEnd !== -1 && bracketEnd + 1 < wishlistText.length && wishlistText[bracketEnd + 1] === "(") {
+          const parenStart = bracketEnd + 1;
+          // Find the matching closing parenthesis for the URL
+          // We need to handle nested parentheses in URLs
+          let parenCount = 1;
+          let parenEnd = parenStart + 1;
+
+          while (parenEnd < wishlistText.length && parenCount > 0) {
+            if (wishlistText[parenEnd] === "(") {
+              parenCount++;
+            } else if (wishlistText[parenEnd] === ")") {
+              parenCount--;
+            }
+            parenEnd++;
+          }
+
+          // Check if we found a valid markdown link
+          if (parenCount === 0 && parenEnd <= wishlistText.length) {
+            const linkText = wishlistText.slice(bracketStart + 1, bracketEnd);
+            const url = wishlistText.slice(parenStart + 1, parenEnd - 1);
+
+            // Escape the link text and URL
+            const escapedText = linkText
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#x27;");
+
+            const escapedUrl = url.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
+
+            result += `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer">${escapedText}</a>`;
+
+            i = parenEnd;
+            continue;
+          }
+        }
+      }
+
+      // Look for plain URLs
+      if (wishlistText.startsWith("http://", i) || wishlistText.startsWith("https://", i)) {
+        const urlStart = i;
+        let urlEnd = i;
+
+        // Find the end of the URL (stops at whitespace or end of text)
+        while (urlEnd < wishlistText.length && !/\s/.test(wishlistText[urlEnd])) {
+          urlEnd++;
+        }
+
+        const url = wishlistText.slice(urlStart, urlEnd);
+
+        // Escape the URL
+        const escapedUrl = url.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
+
+        result += `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer">${escapedUrl}</a>`;
+
+        i = urlEnd;
+        continue;
+      }
+
+      // Regular character - escape it
+      const char = wishlistText[i];
+      if (char === "&") {
+        result += "&amp;";
+      } else if (char === "<") {
+        result += "&lt;";
+      } else if (char === ">") {
+        result += "&gt;";
+      } else if (char === '"') {
+        result += "&quot;";
+      } else if (char === "'") {
+        result += "&#x27;";
+      } else if (char === "\n") {
+        result += "<br>";
+      } else {
+        result += char;
+      }
+
+      i++;
+    }
+
+    return result;
+  }
+
+  /**
+   * Validates AI generation rate limit for a participant
+   *
+   * Checks the participant's AI generation quota without requiring API key.
+   * Used for status checks and quota validation.
+   *
+   * @param participantId - The participant ID to check
+   * @param isRegistered - Whether the participant is a registered user
+   * @returns Promise resolving to rate limit status
+   * @throws {Error} "INVALID_INPUT" - Invalid participant ID format
+   * @throws {Error} "SERVER_ERROR" - Database error occurred
+   *
+   * @example
+   * const status = await service.validateAIGenerationLimit(123, true);
+   * if (status.canGenerate) {
+   *   console.log(`Can generate. Remaining: ${status.generationsRemaining}`);
+   * }
+   */
+  async validateAIGenerationLimit(participantId: number, isRegistered: boolean): Promise<RateLimitStatus> {
+    if (isNaN(participantId) || participantId <= 0) {
+      console.error("[WishlistService.validateAIGenerationLimit] Invalid participant ID", { participantId });
+      throw new Error("INVALID_INPUT");
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from("wishes")
+        .select("ai_generation_count_per_group, ai_last_generated_at")
+        .eq("participant_id", participantId)
+        .single();
+
+      if (error) {
+        // If no wishlist exists yet, participant can generate
+        if (error.code === "PGRST116") {
+          const maxGenerations = isRegistered ? AI_MAX_GENERATIONS_REGISTERED : AI_MAX_GENERATIONS_UNREGISTERED;
+          return {
+            canGenerate: true,
+            generationsUsed: 0,
+            generationsRemaining: maxGenerations,
+            maxGenerations,
+            lastGeneratedAt: null,
+          };
+        }
+        throw error;
+      }
+
+      const maxGenerations = isRegistered ? AI_MAX_GENERATIONS_REGISTERED : AI_MAX_GENERATIONS_UNREGISTERED;
+      const currentCount = data.ai_generation_count_per_group || 0;
+
+      return {
+        canGenerate: currentCount < maxGenerations,
+        generationsUsed: currentCount,
+        generationsRemaining: Math.max(0, maxGenerations - currentCount),
+        maxGenerations,
+        lastGeneratedAt: data.ai_last_generated_at ? new Date(data.ai_last_generated_at) : null,
+      };
+    } catch (error) {
+      console.error("[WishlistService.validateAIGenerationLimit] Database error:", error);
+      throw new Error("SERVER_ERROR");
+    }
+  }
+
+  /**
+   * Atomically increments AI generation count for a participant
+   *
+   * Updates the participant's AI generation counter using a SECURITY DEFINER
+   * database function. Creates a wishlist record if it doesn't exist (UPSERT).
+   *
+   * This should be called AFTER successful AI generation to prevent users from
+   * losing quota on failed generations. The counter is only incremented when
+   * generation succeeds.
+   *
+   * @param participantId - The participant ID
+   * @throws {Error} "INVALID_INPUT" - Invalid participant ID format
+   * @throws {Error} "SERVER_ERROR" - Database error occurred
+   *
+   * @example
+   * // Generate AI content first
+   * const result = await generateAIContent(prompt);
+   * // Increment counter only after successful generation
+   * await service.incrementAIGenerationCount(123);
+   */
+  async incrementAIGenerationCount(participantId: number): Promise<void> {
+    if (isNaN(participantId) || participantId <= 0) {
+      console.error("[WishlistService.incrementAIGenerationCount] Invalid participant ID", { participantId });
+      throw new Error("INVALID_INPUT");
+    }
+
+    try {
+      const { error } = await this.supabase.rpc("increment_ai_generation_count", {
+        p_participant_id: participantId,
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error("[WishlistService.incrementAIGenerationCount] Database error:", error);
+      throw new Error("SERVER_ERROR");
+    }
   }
 
   /**

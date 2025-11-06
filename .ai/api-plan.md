@@ -9,7 +9,12 @@ The API is built around the following primary resources, each corresponding to d
 - **Participants** - Group members (`participants` table)
 - **Exclusions** - Draw exclusion rules (`exclusion_rules` table)
 - **Wishlists** - Participant wish lists (`wishes` table)
+  - Includes AI-generated content support (Version 1.1)
+  - AI generation quota tracking per participant
 - **Results** - Draw results and access tokens (derived from participants and assignments)
+- **AI Generation** - AI-powered wishlist generation (Version 1.1)
+  - OpenRouter API integration for personalized Santa letters
+  - Usage limits: 3 generations (unregistered) / 5 generations (registered)
 
 ---
 
@@ -582,6 +587,75 @@ The API is built around the following primary resources, each corresponding to d
 
 ---
 
+### 2.8. AI Wishlist Generation
+
+#### Generate AI Wishlist
+
+- **Method**: `POST`
+- **Path**: `/api/participants/:participantId/wishlist/generate-ai`
+- **Description**: Generate a personalized Santa letter using AI based on user preferences
+- **Headers**:
+  - `Authorization: Bearer {access_token}` (for registered users)
+  - OR access via participant token in query: `?token={participant_token}` (for unregistered)
+- **Request Body**:
+
+```json
+{
+  "prompt": "Lubię książki fantasy, dobrą kawę i ciepłe szaliki"
+}
+```
+
+- **Success Response** (200):
+
+```json
+{
+  "generated_content": "Cześć Mikołaju! 🎅\n\nW tym roku byłam/em grzeczna/y i marzę o kilku rzeczach pod choinkę 🎄. Mega chciałabym/bym dostać \"Wiedźmin: Ostatnie życzenie\" Sapkowskiego 📚, bo fantasy to moja ulubiona bajka! Poza tym uwielbiam dobrą kawę ☕ - jakiś ciekawy zestaw z różnych zakątków świata byłby super. I jeszcze ciepły, kolorowy szalik 🧣, bo zima idzie!\n\nDzięki i wesołych Świąt! ⭐",
+  "remaining_generations": 4,
+  "can_generate_more": true
+}
+```
+
+- **Error Responses**:
+  - 400:
+    - `END_DATE_PASSED`: Event end date has passed, wishlist is locked
+    - `INVALID_PROMPT`: Prompt is too short (min 10 chars) or too long (max 1000 chars)
+  - 401: Unauthorized
+  - 403: Forbidden (can only generate for own wishlist)
+  - 404: Participant not found
+  - 429:
+    - `AI_GENERATION_LIMIT_REACHED`: User has exhausted their AI generation quota
+  - 500:
+    - `AI_API_ERROR`: OpenRouter API is unavailable or returned an error
+  - 504: Gateway Timeout (AI generation took longer than 15 seconds)
+
+#### Get AI Generation Status
+
+- **Method**: `GET`
+- **Path**: `/api/participants/:participantId/wishlist/ai-status`
+- **Description**: Get current AI generation usage status for a participant
+- **Headers**:
+  - `Authorization: Bearer {access_token}` (for registered users)
+  - OR access via participant token in query: `?token={participant_token}` (for unregistered)
+- **Success Response** (200):
+
+```json
+{
+  "ai_generation_count": 2,
+  "remaining_generations": 3,
+  "max_generations": 5,
+  "can_generate": true,
+  "is_registered": true,
+  "last_generated_at": "2025-11-04T14:30:00Z"
+}
+```
+
+- **Error Responses**:
+  - 401: Unauthorized
+  - 403: Forbidden
+  - 404: Participant not found
+
+---
+
 ## 3. Authentication and Authorization
 
 ### 3.1. Authentication Mechanism
@@ -706,6 +780,24 @@ For unregistered participants (those without user_id):
   - Required (can be empty string to clear)
   - String, max length: 10,000 characters
   - URLs are auto-detected and converted to clickable links in rendering
+- **ai_generated**:
+  - Boolean, default: false
+  - Indicates if wishlist was generated using AI
+- **ai_generation_count**:
+  - Integer, default: 0
+  - Tracks number of AI generations per participant
+  - Max: 3 for unregistered users, 5 for registered users
+- **ai_last_generated_at**:
+  - Timestamp, nullable
+  - Records last AI generation attempt
+
+#### AI Generation Prompts
+
+- **prompt**:
+  - Required for AI generation
+  - String, min length: 10 characters, max length: 1000 characters
+  - Must not be empty or only whitespace
+  - Basic content moderation for offensive language (client-side)
 
 ### 4.2. Business Logic Implementation
 
@@ -807,7 +899,50 @@ For unregistered participants (those without user_id):
    - After end_date, wishlist becomes read-only
    - Always readable by assigned participant after draw
 
-#### 4.2.7. Data Integrity and Transactions
+#### 4.2.7. AI Wishlist Generation
+
+1. **Pre-generation validation**:
+   - Verify participant ownership (via user_id OR access token)
+   - Check event end_date hasn't passed
+   - Validate prompt length (10-1000 characters)
+   - Check AI generation quota (3 for unregistered, 5 for registered)
+   - Return 429 error if quota exceeded
+
+2. **OpenRouter API integration**:
+   - Model: `openai/gpt-4o-mini`
+   - System prompt includes context about Secret Santa and Polish language requirement
+   - User prompt combines participant preferences with Santa letter format instructions
+   - Request timeout: 15 seconds
+   - Retry policy: 2 attempts with exponential backoff (1s, 2s)
+   - Temperature: 0.7 for creative but consistent output
+   - Max tokens: 1000
+
+3. **Response processing**:
+   - Validate generated content length (max 1000 chars from API, fits within 10,000 char wishlist limit)
+   - Sanitize HTML to prevent XSS attacks
+   - Return generated content with remaining quota information
+   - DO NOT automatically save to wishlist - user must explicitly accept
+
+4. **Quota management**:
+   - Increment `ai_generation_count` on each request (even if rejected)
+   - Update `ai_last_generated_at` timestamp
+   - Calculate remaining generations: `max_limit - ai_generation_count`
+   - For registered users: check if participant has `user_id` to determine max limit
+
+5. **Error handling**:
+   - OpenRouter API timeout: Return 504 with user-friendly message
+   - OpenRouter API error: Return 500 with fallback to manual editing
+   - Rate limiting: Return 429 when quota exhausted
+   - Invalid prompt: Return 400 with specific validation message
+   - Log errors for monitoring but do not expose API keys or sensitive details
+
+6. **Security considerations**:
+   - Never send participant PII (names, emails) to OpenRouter
+   - Only send user-provided prompt text
+   - API key stored in environment variables only
+   - No logging of prompts or generated content (except for debugging in dev environment)
+
+#### 4.2.8. Data Integrity and Transactions
 
 All multi-step operations use database transactions:
 
@@ -815,6 +950,7 @@ All multi-step operations use database transactions:
 2. **Draw execution**: Validate + create all assignments + update group.is_drawn
 3. **Group deletion**: Cascading delete handled by database foreign keys
 4. **Participant deletion**: Remove participant + cascade to exclusions and wishlist
+5. **AI generation**: Increment counter + update timestamp (atomic operation)
 
 ### 4.3. Error Handling Strategy
 
@@ -842,6 +978,10 @@ All multi-step operations use database transactions:
 - `CONFLICT`: Resource conflict (e.g., duplicate email)
 - `DRAW_ERROR`: Draw-specific errors (already drawn, impossible, etc.)
 - `LOCKED_ERROR`: Resource locked for editing (after draw or after end_date)
+- `AI_GENERATION_LIMIT_REACHED`: AI generation quota exhausted
+- `AI_API_ERROR`: OpenRouter API error or unavailable
+- `INVALID_PROMPT`: AI prompt validation failed (too short/long, inappropriate content)
+- `END_DATE_PASSED`: Event end date has passed, resource is locked
 - `INTERNAL_ERROR`: Unexpected server error
 
 #### HTTP Status Code Usage
@@ -892,8 +1032,50 @@ All list endpoints support pagination:
 - Security tests for authorization rules
 - Load tests for draw algorithm with large participant counts
 
-### 5.6. Future Enhancements (Out of MVP Scope)
+### 5.6. OpenRouter API Integration (Version 1.1)
 
+**Configuration:**
+- Provider: OpenRouter (https://openrouter.ai)
+- Model: `openai/gpt-4o-mini`
+- API Key: Stored in `OPENROUTER_API_KEY` environment variable
+- Base URL: `https://openrouter.ai/api/v1`
+
+**Request Parameters:**
+- `max_tokens`: 1000
+- `temperature`: 0.7
+- `top_p`: 1.0
+- `timeout`: 15 seconds
+
+**Rate Limiting:**
+- Per-participant limits: 3 generations (unregistered) / 5 generations (registered)
+- Tracked in database via `wishes.ai_generation_count`
+- No global rate limiting on OpenRouter side (handled by their infrastructure)
+
+**Cost Monitoring:**
+- Track API usage in application logs
+- Alert mechanism for monthly budget threshold
+- Ability to disable AI feature if costs exceed budget
+
+**System Prompt Template:**
+```
+Jesteś asystentem pomagającym tworzyć listy do świętego Mikołaja na Gwiazdkę (Secret Santa).
+
+Zadanie:
+Na podstawie preferencji użytkownika wygeneruj ciepły, narracyjny list do Mikołaja zawierający listę życzeń.
+
+Wytyczne:
+1. Użyj formy listu (np. "Drogi Mikołaju,..." lub "Hej Mikołaju!")
+2. Ton ma być ciepły, personalny i świąteczny (nie oficjalny czy suchy)
+3. Zawrzyj pomysły na prezenty wysłane przez użytkownika w narracji listu
+4. Dodaj emoji świąteczne (🎁, 🎄, ⭐, 🎅, ❄️, 🔔)
+5. Maksymalnie 1000 znaków
+6. Odpowiadaj TYLKO po polsku
+7. Zakończ list w ciepły, świąteczny sposób
+```
+
+### 5.7. Future Enhancements (Out of Scope)
+
+**Beyond Version 1.1:**
 - Email notifications (signup confirmations, draw completion, reminders)
 - Webhook support for group events
 - Bulk participant import via CSV
@@ -903,3 +1085,6 @@ All list endpoints support pagination:
 - File attachments for wishlists
 - Group invitation system via unique codes
 - Multiple co-organizers per group
+- AI-generated content analytics and statistics (acceptance rate, regeneration patterns)
+- AI model selection (allow users to choose from multiple AI models)
+- AI prompt templates and suggestions

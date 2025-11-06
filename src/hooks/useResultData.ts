@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabaseClient } from "@/db/supabase.client";
+import { useWishlistLinking } from "./useWishlistLinking";
 import type { UseResultDataReturn, ResultViewModel, ApiError, DrawResultResponseDTO } from "../types";
 
 /**
@@ -32,6 +33,9 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
   const [result, setResult] = useState<ResultViewModel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<ApiError | null>(null);
+
+  // Use the proper wishlist linking hook for markdown link support
+  const { convertToHtml } = useWishlistLinking();
 
   /**
    * Formatuje budżet do czytelnej postaci
@@ -94,18 +98,7 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
       .slice(0, 2);
   }, []);
 
-  /**
-   * Konwertuje URL-e w tekście na HTML linki
-   * Prosta implementacja - można przenieść do useWishlistLinking hook
-   */
-  const convertUrlsToLinks = useCallback((text: string): string => {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.replace(
-      urlRegex,
-      (url) =>
-        `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${url}</a>`
-    );
-  }, []);
+  // Note: convertToHtml from useWishlistLinking handles both plain URLs and markdown links
 
   /**
    * Transformuje DTO z API na ViewModel
@@ -131,7 +124,7 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
 
         // Dane wylosowanej osoby
         assignedPersonInitials: getInitials(dto.assigned_to.name),
-        assignedPersonWishlistHtml: dto.assigned_to.wishlist ? convertUrlsToLinks(dto.assigned_to.wishlist) : undefined,
+        assignedPersonWishlistHtml: dto.assigned_to.wishlist ? convertToHtml(dto.assigned_to.wishlist) : undefined,
 
         // Flagi dostępu
         isAuthenticated: !!isAuthenticated,
@@ -148,7 +141,7 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
       getInitials,
       isAuthenticated,
       token,
-      convertUrlsToLinks,
+      convertToHtml,
     ]
   );
 

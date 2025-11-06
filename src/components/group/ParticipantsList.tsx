@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 // Dropdown menu components will be imported as needed
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Edit, Trash2, Copy } from "lucide-react";
+import { Edit, Trash2, Link2 } from "lucide-react";
 import { notify } from "@/lib/notifications";
 import type { ParticipantViewModel } from "@/types";
 
@@ -85,7 +85,7 @@ export function ParticipantsList({
               <TableCell className="text-muted-foreground">{participant.displayEmail}</TableCell>
 
               {!isDrawn ? (
-                // Kolumna akcji przed losowaniem
+                // Action column before drawing
                 <TableCell>
                   <div className="flex items-center gap-1">
                     {canEdit && (
@@ -124,7 +124,7 @@ export function ParticipantsList({
                   </div>
                 </TableCell>
               ) : (
-                // Kolumny statusu po losowaniu
+                // Status columns after drawing
                 <>
                   <TableCell>
                     <Tooltip>
@@ -174,7 +174,7 @@ export function ParticipantsList({
                             onClick={() => handleCopyToken(participant)}
                             className="h-8 w-8 p-0"
                           >
-                            <Copy className="h-4 w-4" />
+                            <Link2 className="h-4 w-4" />
                             <span className="sr-only">Kopiuj link dostępu</span>
                           </Button>
                         </TooltipTrigger>
