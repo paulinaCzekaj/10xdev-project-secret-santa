@@ -14,11 +14,11 @@ interface ForgotPasswordFormProps {
 }
 
 // Zod schema for forgot password form validation
-const forgotPasswordFormSchema = z.object({
+export const forgotPasswordFormSchema = z.object({
   email: z.string().min(1, "Email jest wymagany").email("Nieprawidłowy format email"),
 });
 
-type ForgotPasswordFormData = z.infer<typeof forgotPasswordFormSchema>;
+export type ForgotPasswordFormData = z.infer<typeof forgotPasswordFormSchema>;
 
 export default function ForgotPasswordForm({ isLoggedIn }: ForgotPasswordFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
