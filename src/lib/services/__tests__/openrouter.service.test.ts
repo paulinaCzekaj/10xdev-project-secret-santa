@@ -498,12 +498,12 @@ describe("OpenRouterService", () => {
       const xssPayloads = [
         '<script src="http://evil.com/xss.js"></script>', // External script without closing tag
         '<iframe src="javascript:alert(1)"></iframe>', // Iframe with JS URL
-        '<img src=x onerror=alert(1)>', // Event handler
+        "<img src=x onerror=alert(1)>", // Event handler
         '<a href="javascript:alert(1)">click me</a>', // JS in href
         '<div onmouseover="alert(1)">hover me</div>', // Event handler
-        '&lt;script&gt;alert(1)&lt;/script&gt;', // HTML entities
-        '<SCRIPT>alert(1)</SCRIPT>', // Case variation
-        '<script\n>alert(1)</script>', // Script split across lines
+        "&lt;script&gt;alert(1)&lt;/script&gt;", // HTML entities
+        "<SCRIPT>alert(1)</SCRIPT>", // Case variation
+        "<script\n>alert(1)</script>", // Script split across lines
       ];
 
       for (const payload of xssPayloads) {

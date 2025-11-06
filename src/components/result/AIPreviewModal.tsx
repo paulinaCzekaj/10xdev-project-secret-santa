@@ -56,30 +56,32 @@ export function AIPreviewModal({
 
         <div className="flex-1 overflow-y-auto py-4">
           <div className="space-y-4">
-          {/* Alert o ostatnim generowaniu */}
-          {isLastGeneration && (
-            <Alert variant="warning">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>⚠️ To Twoje ostatnie generowanie! Upewnij się, że treść Ci odpowiada.</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Alert o zmniejszeniu licznika */}
-          <Alert>
-            <AlertDescription>
-              Każda akcja (akceptacja, odrzucenie lub regeneracja) zmniejszy licznik dostępnych generowań o 1.
-            </AlertDescription>
-          </Alert>
-
-          {/* Podgląd wygenerowanej treści */}
-          <div className="rounded-lg border p-4 bg-muted/50 space-y-4">
-            {currentPrompt && (
-              <div className="text-xs text-muted-foreground">
-                <strong>Podpowiedź użyta do generowania:</strong> {currentPrompt}
-              </div>
+            {/* Alert o ostatnim generowaniu */}
+            {isLastGeneration && (
+              <Alert variant="warning">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  ⚠️ To Twoje ostatnie generowanie! Upewnij się, że treść Ci odpowiada.
+                </AlertDescription>
+              </Alert>
             )}
-            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{generatedContent}</pre>
-          </div>
+
+            {/* Alert o zmniejszeniu licznika */}
+            <Alert>
+              <AlertDescription>
+                Każda akcja (akceptacja, odrzucenie lub regeneracja) zmniejszy licznik dostępnych generowań o 1.
+              </AlertDescription>
+            </Alert>
+
+            {/* Podgląd wygenerowanej treści */}
+            <div className="rounded-lg border p-4 bg-muted/50 space-y-4">
+              {currentPrompt && (
+                <div className="text-xs text-muted-foreground">
+                  <strong>Podpowiedź użyta do generowania:</strong> {currentPrompt}
+                </div>
+              )}
+              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{generatedContent}</pre>
+            </div>
           </div>
         </div>
 

@@ -10,15 +10,12 @@ import type { AIGenerateButtonProps } from "@/types";
  * Wyświetla licznik pozostałych generowań oraz obsługuje stan disabled
  */
 export function AIGenerateButton({
-  participantId,
-  token,
   onGenerateSuccess,
   disabled = false,
   className,
   status,
   isLoading = false,
 }: AIGenerateButtonProps) {
-
   // Warunki dostępności
   const canGenerate = status?.can_generate ?? false;
   const remainingGenerations = status?.remaining_generations ?? 0;

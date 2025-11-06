@@ -76,31 +76,31 @@ export function AIPromptModal({ isOpen, onClose, onSubmit, isLoading, error }: A
 
           <div className="flex-1 overflow-y-auto py-4">
             <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="prompt">Twoje zainteresowania i preferencje</Label>
-              <Textarea
-                id="prompt"
-                placeholder={`Np. Lubię książki fantasy i dobrą kawę. Chcę dostać "Wiedźmin: Ostatnie życzenie" - link: https://example.com/ksiazka, ciepły szalik - link: https://example.com/szalik, oraz zestaw do kawy - link: https://example.com/kawa`}
-                value={prompt}
-                onChange={handleChange}
-                rows={6}
-                maxLength={MAX_PROMPT_LENGTH}
-                disabled={isLoading}
-                className="resize-none placeholder:text-xs"
-              />
-              <div className="flex justify-between items-center">
-                <p className="text-sm text-muted-foreground">
-                  {trimmedLength < MIN_PROMPT_LENGTH && (
-                    <span className="text-destructive">Minimum {MIN_PROMPT_LENGTH} znaków</span>
-                  )}
-                </p>
-                <p className={`text-sm ${getCharCountColor()}`}>
-                  {charCount} / {MAX_PROMPT_LENGTH}
-                </p>
+              <div className="space-y-2">
+                <Label htmlFor="prompt">Twoje zainteresowania i preferencje</Label>
+                <Textarea
+                  id="prompt"
+                  placeholder={`Np. Lubię książki fantasy i dobrą kawę. Chcę dostać "Wiedźmin: Ostatnie życzenie" - link: https://example.com/ksiazka, ciepły szalik - link: https://example.com/szalik, oraz zestaw do kawy - link: https://example.com/kawa`}
+                  value={prompt}
+                  onChange={handleChange}
+                  rows={6}
+                  maxLength={MAX_PROMPT_LENGTH}
+                  disabled={isLoading}
+                  className="resize-none placeholder:text-xs"
+                />
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-muted-foreground">
+                    {trimmedLength < MIN_PROMPT_LENGTH && (
+                      <span className="text-destructive">Minimum {MIN_PROMPT_LENGTH} znaków</span>
+                    )}
+                  </p>
+                  <p className={`text-sm ${getCharCountColor()}`}>
+                    {charCount} / {MAX_PROMPT_LENGTH}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {error && <p className="text-sm text-destructive">{error.message}</p>}
+              {error && <p className="text-sm text-destructive">{error.message}</p>}
             </div>
           </div>
 

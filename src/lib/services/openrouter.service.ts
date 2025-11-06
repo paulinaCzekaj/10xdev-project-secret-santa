@@ -282,9 +282,7 @@ Remember: NEVER add gifts not mentioned by the user. Your job is to make THEIR w
     const sanitizedPrompt = this.sanitizeUserInput(userPrompt);
 
     // If participant name is provided, prepend it to the prompt for gender detection
-    const userContent = participantName
-      ? `My name is: ${participantName}\n\n${sanitizedPrompt}`
-      : sanitizedPrompt;
+    const userContent = participantName ? `My name is: ${participantName}\n\n${sanitizedPrompt}` : sanitizedPrompt;
 
     return [
       {

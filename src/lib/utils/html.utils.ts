@@ -22,10 +22,7 @@ export function escapeHtmlText(text: string): string {
  * Note: Does not escape < > as URLs shouldn't contain them
  */
 export function escapeHtmlAttribute(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;");
+  return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
 }
 
 /**

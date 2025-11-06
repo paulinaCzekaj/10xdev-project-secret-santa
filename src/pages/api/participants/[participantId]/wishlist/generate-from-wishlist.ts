@@ -134,7 +134,7 @@ export const POST: APIRoute = async ({ params, request, locals, url }) => {
     // Get OpenRouter API key from runtime environment (Cloudflare Pages)
     const openRouterApiKey =
       locals.runtime?.env?.OPENROUTER_API_KEY || // platformProxy local dev
-      (context as any).env?.OPENROUTER_API_KEY || // Cloudflare Workers runtime
+      (context as Record<string, unknown>).env?.OPENROUTER_API_KEY || // Cloudflare Workers runtime
       import.meta.env.OPENROUTER_API_KEY || // Build-time fallback
       process.env.OPENROUTER_API_KEY; // Node.js dev mode fallback
 

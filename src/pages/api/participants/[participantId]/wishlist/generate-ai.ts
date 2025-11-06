@@ -151,7 +151,7 @@ export const POST: APIRoute = async ({ params, request, locals, url, ...context 
     // Try multiple ways to access environment variables in Cloudflare Pages
     const openRouterApiKey =
       locals.runtime?.env?.OPENROUTER_API_KEY || // platformProxy local dev
-      (context as any).env?.OPENROUTER_API_KEY || // Cloudflare Workers runtime
+      (context as Record<string, unknown>).env?.OPENROUTER_API_KEY || // Cloudflare Workers runtime
       import.meta.env.OPENROUTER_API_KEY || // Build-time fallback
       process.env.OPENROUTER_API_KEY; // Node.js dev mode fallback
 
@@ -316,7 +316,7 @@ export const POST: APIRoute = async ({ params, request, locals, url, ...context 
     let result;
     try {
       result = await openRouterService.generateSantaLetter(prompt, {
-        participantName: participantWithGroup.name
+        participantName: participantWithGroup.name,
       });
       console.log("[POST /api/participants/:participantId/wishlist/generate-ai] AI generation successful", {
         participantId,
