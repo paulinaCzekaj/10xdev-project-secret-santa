@@ -32,7 +32,7 @@ export default function LoginForm({ redirectTo, message }: LoginFormProps) {
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginFormSchema),
-    mode: "onBlur",
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",

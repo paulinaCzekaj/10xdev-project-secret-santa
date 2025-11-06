@@ -16,7 +16,7 @@ export default function CreateGroupForm() {
 
   const form = useForm<CreateGroupFormViewModel>({
     resolver: zodResolver(createGroupFormSchema),
-    mode: "onBlur", // Enable validation on blur for better SSR compatibility
+    mode: "onChange",
     defaultValues: {
       name: "",
       budget: undefined,
