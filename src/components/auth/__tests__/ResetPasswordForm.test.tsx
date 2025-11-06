@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ResetPasswordForm from "../ResetPasswordForm";
-import { notify } from "@/lib/notifications";
 
 // =============================================================================
 // MOCKS
@@ -17,8 +16,8 @@ vi.mock("@/lib/notifications", () => ({
 }));
 
 // Mock window.location.href
-delete (window as any).location;
-window.location = { href: "" } as any;
+delete (window as Window & typeof globalThis).location;
+window.location = { href: "" } as Location & { href: string };
 
 // Mock hooks
 let mockTokenVerification: {
