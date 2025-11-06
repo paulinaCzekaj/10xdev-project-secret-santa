@@ -6,6 +6,9 @@ import type { CreateOrUpdateWishlistCommand, ParticipantWithGroupDTO, WishlistDT
 // Mock Supabase client
 const mockSupabase = {
   from: vi.fn(),
+  auth: {
+    getUser: vi.fn(),
+  },
 } as unknown as SupabaseClient;
 
 describe("WishlistService.createOrUpdateWishlist", () => {
@@ -238,7 +241,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       );
     });
 
-    it("should throw FORBIDDEN when registered user does not own participant", async () => {
+    it("should throw FORBIDDEN when registered user does not own participant and has different email", async () => {
       // Arrange
       const participantId = 1;
       const command: CreateOrUpdateWishlistCommand = {
@@ -246,10 +249,24 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       };
       const authUserId = "wrong-user-456"; // Different user ID
 
-      const mockParticipant = createMockParticipant({ user_id: "user-123" }); // Owned by different user
+      const mockParticipant = createMockParticipant({
+        user_id: "user-123", // Owned by different user
+        email: "different@example.com", // Different email
+      });
 
       // Mock participants query
       mockParticipantsQuery({ data: mockParticipant, error: null });
+
+      // Mock auth.getUser to return different email
+      vi.mocked(mockSupabase.auth.getUser).mockResolvedValue({
+        data: {
+          user: {
+            id: authUserId,
+            email: "wrong@example.com", // Different email than participant
+          },
+        },
+        error: null,
+      });
 
       // Act & Assert
       await expect(service.createOrUpdateWishlist(participantId, command, authUserId, null)).rejects.toThrow(

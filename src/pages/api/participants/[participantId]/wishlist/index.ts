@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { WishlistService } from "../../../../../lib/services/wishlist.service";
 import { requireApiAuth } from "../../../../../lib/utils/api-auth.utils";
+import { WISHLIST_MIN_LENGTH, WISHLIST_MAX_LENGTH } from "../../../../../lib/constants/ai.constants";
 import type { ApiErrorResponse, CreateOrUpdateWishlistCommand, WishlistWithHtmlDTO } from "../../../../../types";
 
 export const prerender = false;
@@ -29,7 +30,10 @@ const ParticipantTokenQuerySchema = z.object({
  * Wishlist content must be provided and not empty.
  */
 const CreateOrUpdateWishlistSchema = z.object({
-  wishlist: z.string().min(1, "Wishlist content cannot be empty").max(10000, "Wishlist content is too long"),
+  wishlist: z
+    .string()
+    .min(WISHLIST_MIN_LENGTH, "Wishlist content cannot be empty")
+    .max(WISHLIST_MAX_LENGTH, `Wishlist content is too long (max ${WISHLIST_MAX_LENGTH} characters)`),
 });
 
 /**

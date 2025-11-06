@@ -23,6 +23,12 @@ PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
+### AI/OpenRouter Secrets:
+
+```
+OPENROUTER_API_KEY=your-openrouter-api-key
+```
+
 ### Jak uzyskać Cloudflare API Token:
 
 1. Zaloguj się do Cloudflare Dashboard

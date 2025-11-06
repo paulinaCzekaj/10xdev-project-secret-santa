@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { supabaseClient } from "@/db/supabase.client";
 import type { WishlistEditorState, UseWishlistEditorReturn, CreateOrUpdateWishlistCommand } from "../types";
 
 /**
- * Custom hook do zarządzania edycją listy życzeń z funkcją autosave
- * Obsługuje debounced save, walidację i obsługę błędów
+ * Custom hook to manage the wishlist editing with autosave functionality
+ * Handles debounced save, validation and error handling
  */
 export function useWishlistEditor(
   participantId: number,
@@ -13,79 +13,86 @@ export function useWishlistEditor(
   canEdit: boolean,
   accessToken?: string
 ): UseWishlistEditorReturn {
-  console.log("[useWishlistEditor] Initialized", {
-    participantId,
-    initialContent: initialContent.substring(0, 50) + (initialContent.length > 50 ? "..." : ""),
-    canEdit,
-    hasAccessToken: !!accessToken,
-  });
+  if (import.meta.env.DEV) {
+    console.log("[useWishlistEditor] Initialized", {
+      participantId,
+      initialContent: initialContent.substring(0, 50) + (initialContent.length > 50 ? "..." : ""),
+      canEdit,
+      hasAccessToken: !!accessToken,
+    });
+  }
 
-  // Stan edytora
+  // Editor state
   const [content, setContent] = useState(initialContent);
   const [originalContent, setOriginalContent] = useState(initialContent);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  // Ref do śledzenia czy to pierwsze renderowanie
+  // Ref to track if this is the first render
   const isFirstRender = useRef(true);
 
   /**
-   * Oblicza liczbę znaków w treści
+   * Calculates the number of characters in the content
    */
   const characterCount = content.length;
 
   /**
-   * Sprawdza czy są niezapisane zmiany
+   * Checks if there are unsaved changes
+   * Memoized to avoid recalculation on every render
    */
-  const hasChanges = content !== originalContent;
+  const hasChanges = useMemo(() => content !== originalContent, [content, originalContent]);
 
   /**
-   * Aktualizuje treść i czyści błąd
+   * Updates the content and clears the error
    */
   const updateContent = useCallback((newContent: string) => {
-    // Walidacja długości
+    // Validation of length
     if (newContent.length > 10000) {
-      return; // Blokuje input jeśli przekroczono limit
+      return; // Blocks the input if the limit is exceeded
     }
 
     setContent(newContent);
-    setSaveError(null); // Czyści błąd przy każdej zmianie
+    setSaveError(null); // Clears the error on each change
   }, []);
 
   /**
-   * Wysyła żądanie zapisu do API
+   * Sends the save request to the API
    */
   const performSave = useCallback(
     async (contentToSave: string): Promise<void> => {
-      console.log("[useWishlistEditor.performSave] Called", {
-        participantId,
-        contentToSave: contentToSave.substring(0, 50) + (contentToSave.length > 50 ? "..." : ""),
-        canEdit,
-        hasAccessToken: !!accessToken,
-      });
+      if (import.meta.env.DEV) {
+        console.log("[useWishlistEditor.performSave] Called", {
+          participantId,
+          contentToSave: contentToSave.substring(0, 50) + (contentToSave.length > 50 ? "..." : ""),
+          canEdit,
+          hasAccessToken: !!accessToken,
+        });
+      }
 
       if (!canEdit) {
-        console.log("[useWishlistEditor.performSave] Cannot edit - returning early");
-        return; // Nie zapisuje jeśli edycja jest zablokowana
+        if (import.meta.env.DEV) {
+          console.log("[useWishlistEditor.performSave] Cannot edit - returning early");
+        }
+        return; // Does not save if editing is blocked
       }
 
       setIsSaving(true);
       setSaveError(null);
 
       try {
-        // Przygotowanie URL i headers
+        // Preparation of URL and headers
         let url = `/api/participants/${participantId}/wishlist`;
         const headers: Record<string, string> = {
           "Content-Type": "application/json",
         };
 
-        // Dodanie tokenu dla niezalogowanych użytkowników
+        // Adding token for unauthenticated users
         if (accessToken) {
           const separator = url.includes("?") ? "&" : "?";
           url += `${separator}token=${accessToken}`;
         } else {
-          // Dla zalogowanych użytkowników pobieramy Bearer token z sesji Supabase
+          // For authenticated users we get the Bearer token from the Supabase session
           const {
             data: { session },
           } = await supabaseClient.auth.getSession();
@@ -109,7 +116,7 @@ export function useWishlistEditor(
           const errorData = await response.json();
           const errorMessage = errorData.error?.message || "Wystąpił błąd podczas zapisywania";
 
-          // Specjalne obsługa błędów
+          // Special error handling
           if (errorMessage.includes("end date has passed")) {
             throw new Error("END_DATE_PASSED");
           } else if (errorMessage.includes("too long")) {
@@ -123,11 +130,13 @@ export function useWishlistEditor(
           }
         }
 
-        // Aktualizacja stanu po sukcesie
+        // Update state after success
         setOriginalContent(contentToSave);
         setLastSaved(new Date());
       } catch (error) {
-        console.error("Error saving wishlist:", error);
+        if (import.meta.env.DEV) {
+          console.error("Error saving wishlist:", error);
+        }
 
         let errorMessage: string;
         if (error instanceof Error) {
@@ -155,7 +164,7 @@ export function useWishlistEditor(
         }
 
         setSaveError(errorMessage);
-        throw error; // Re-throw dla obsługi w komponencie
+        throw error; // Re-throw for handling in the component
       } finally {
         setIsSaving(false);
       }
@@ -164,62 +173,63 @@ export function useWishlistEditor(
   );
 
   /**
-   * Natychmiastowy zapis (np. przy blur)
+   * Instant save (e.g. on blur)
    */
   const save = useCallback(async (): Promise<void> => {
     if (!hasChanges || isSaving) {
-      return; // Nie zapisuje jeśli nie ma zmian lub już trwa zapisywanie
+      return; // Does not save if there are no changes or if saving is already in progress
     }
 
     try {
       await performSave(content);
     } catch {
-      // Błąd już obsłużony w performSave
+      // Error already handled in performSave
     }
   }, [hasChanges, isSaving, content, performSave]);
 
   /**
-   * Debounced save - automatyczny zapis po 2 sekundach bezczynności
+   * Debounced save - automatic save after 2 seconds of inactivity
    */
   const debouncedSave = useDebouncedCallback(async (contentToSave: string) => {
     if (!hasChanges) {
-      return; // Nie zapisuje jeśli nie ma zmian
+      return; // Does not save if there are no changes
     }
 
     try {
       await performSave(contentToSave);
     } catch {
-      // Błąd już obsłużony w performSave
+      // Error already handled in performSave
     }
-  }, 2000); // 2 sekundy debounce
+  }, 2000); // 2 seconds debounce
 
   /**
-   * Efekt wywołujący debounced save przy każdej zmianie treści
+   * Effect calling debounced save on each content change
+   * Note: debouncedSave is stable from useDebouncedCallback and safe to include in deps
    */
   useEffect(() => {
-    // Pomijamy pierwsze renderowanie aby uniknąć niepotrzebnego zapisu
+    // Skip first render as it is not a real change to avoid unnecessary save
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
 
-    // Wywołujemy debounced save tylko jeśli są zmiany i nie ma błędu
-    // Ważne: jeśli jest błąd, nie próbujemy ponownie zapisywać automatycznie
+    // We call debounced save only if there are changes and there is no error
+    // Important: if there is an error, we do not try to save automatically again
     if (hasChanges && !isSaving && !saveError) {
       debouncedSave(content);
     } else if (saveError) {
-      // Jeśli wystąpił błąd, anuluj wszelkie oczekujące debounced saves
+      // If there is an error, cancel all pending debounced saves
       debouncedSave.cancel();
     }
 
-    // Cleanup debounced callback przy odmontowaniu
+    // Cleanup debounced callback on unmount
     return () => {
       debouncedSave.cancel();
     };
   }, [content, hasChanges, isSaving, saveError, debouncedSave]);
 
   /**
-   * Aktualizacja stanu gdy zmieniają się propsy
+   * Update of state when props change
    */
   useEffect(() => {
     setContent(initialContent);
@@ -229,18 +239,22 @@ export function useWishlistEditor(
   }, [initialContent]);
 
   /**
-   * Stan edytora dla komponentu
+   * Editor state for the component
+   * Memoized to avoid unnecessary re-renders in consuming components
    */
-  const state: WishlistEditorState = {
-    content,
-    originalContent,
-    isSaving,
-    hasChanges,
-    lastSaved,
-    saveError,
-    characterCount,
-    canEdit,
-  };
+  const state: WishlistEditorState = useMemo(
+    () => ({
+      content,
+      originalContent,
+      isSaving,
+      hasChanges,
+      lastSaved,
+      saveError,
+      characterCount,
+      canEdit,
+    }),
+    [content, originalContent, isSaving, hasChanges, lastSaved, saveError, characterCount, canEdit]
+  );
 
   return {
     state,

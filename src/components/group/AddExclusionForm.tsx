@@ -1,55 +1,15 @@
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Ban, ArrowRight, ArrowLeftRight } from "lucide-react";
-import { notify } from "@/lib/notifications";
-import { useExclusions } from "@/hooks/useExclusions";
-import type {
-  AddExclusionFormViewModel,
-  ExclusionRuleDTO,
-  ParticipantViewModel,
-  ExclusionViewModel,
-  CreateExclusionRuleCommand,
-} from "@/types";
-
-// Schema walidacji dla formularza dodawania wykluczenia
-const addExclusionFormSchema = z
-  .object({
-    blocker_participant_id: z
-      .number({
-        required_error: "Wybierz osobę",
-        invalid_type_error: "Wybierz osobę",
-      })
-      .positive("Wybierz osobę")
-      .optional(),
-    blocked_participant_id: z
-      .number({
-        required_error: "Wybierz osobę",
-        invalid_type_error: "Wybierz osobę",
-      })
-      .positive("Wybierz osobę")
-      .optional(),
-    bidirectional: z.boolean(),
-  })
-  .refine(
-    (data) => {
-      // Only check if both values are provided
-      if (data.blocker_participant_id && data.blocked_participant_id) {
-        return data.blocker_participant_id !== data.blocked_participant_id;
-      }
-      return true; // Let required validation handle missing values
-    },
-    {
-      message: "Osoba nie może wykluczyć samej siebie",
-      path: ["blocked_participant_id"],
-    }
-  );
+import { useAddExclusion } from "@/hooks/useAddExclusion";
+import { addExclusionSchema, type AddExclusionFormData } from "@/schemas/exclusion.schemas";
+import type { ExclusionRuleDTO, ParticipantViewModel, ExclusionViewModel } from "@/types";
 
 interface AddExclusionFormProps {
   groupId: number;
@@ -59,75 +19,29 @@ interface AddExclusionFormProps {
 }
 
 export function AddExclusionForm({ groupId, participants, existingExclusions, onSuccess }: AddExclusionFormProps) {
-  const { addExclusion } = useExclusions(groupId);
+  const { submitExclusion, isSubmitting } = useAddExclusion(groupId);
 
-  const form = useForm<AddExclusionFormViewModel>({
-    resolver: zodResolver(addExclusionFormSchema),
+  const form = useForm<AddExclusionFormData>({
+    resolver: zodResolver(addExclusionSchema),
     mode: "onSubmit", // Walidacja tylko przy submit, nie na onChange
     defaultValues: {
-      blocker_participant_id: 0, // Will be validated as invalid initially
-      blocked_participant_id: 0, // Will be validated as invalid initially
+      blocker_participant_id: undefined, // Will be validated as invalid initially
+      blocked_participant_id: undefined, // Will be validated as invalid initially
       bidirectional: false,
     },
   });
 
-  // Sprawdzamy czy wykluczenie już istnieje
-  const isExclusionDuplicate = (blockerId: number, blockedId: number): boolean => {
-    return existingExclusions.some(
-      (exclusion) => exclusion.blocker_participant_id === blockerId && exclusion.blocked_participant_id === blockedId
-    );
-  };
-
-  const onSubmit = async (values: AddExclusionFormViewModel) => {
-    // Type guard - zod schema zapewnia, że te wartości są zdefiniowane
+  const onSubmit = async (values: AddExclusionFormData) => {
+    // Type guard - zod schema ensures these values are defined
     if (!values.blocker_participant_id || !values.blocked_participant_id) {
       return;
     }
 
-    // Sprawdzamy duplikaty przed wysłaniem
-    if (isExclusionDuplicate(values.blocker_participant_id, values.blocked_participant_id)) {
-      notify.error("EXCLUSION.ADD_DUPLICATE");
-      return;
-    }
+    const result = await submitExclusion(values, existingExclusions);
 
-    // Jeśli dwustronne, sprawdzamy też odwrotne wykluczenie
-    if (values.bidirectional && isExclusionDuplicate(values.blocked_participant_id, values.blocker_participant_id)) {
-      notify.error("EXCLUSION.ADD_REVERSE_EXISTS");
-      return;
-    }
-
-    try {
-      // Dodaj pierwsze wykluczenie
-      const command: CreateExclusionRuleCommand = {
-        blocker_participant_id: values.blocker_participant_id,
-        blocked_participant_id: values.blocked_participant_id,
-      };
-
-      const result = await addExclusion(command);
-
-      if (result.success && result.data) {
-        // Jeśli dwustronne, dodaj też odwrotne wykluczenie
-        if (values.bidirectional) {
-          const reverseCommand: CreateExclusionRuleCommand = {
-            blocker_participant_id: values.blocked_participant_id,
-            blocked_participant_id: values.blocker_participant_id,
-          };
-
-          const reverseResult = await addExclusion(reverseCommand);
-
-          if (!reverseResult.success) {
-            notify.warning("EXCLUSION.ADD_PARTIAL_SUCCESS");
-          }
-        }
-
-        form.reset();
-        onSuccess(result.data);
-        notify.success(values.bidirectional ? "EXCLUSION.ADD_BIDIRECTIONAL_SUCCESS" : "EXCLUSION.ADD_SUCCESS");
-      } else {
-        notify.error({ title: result.error || "Nie udało się dodać wykluczenia. Spróbuj ponownie." });
-      }
-    } catch {
-      notify.error("EXCLUSION.ADD_ERROR_GENERAL");
+    if (result.success && result.data) {
+      form.reset();
+      onSuccess(result.data);
     }
   };
 
@@ -224,11 +138,11 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
 
               <Button
                 type="submit"
-                disabled={form.formState.isSubmitting}
+                disabled={isSubmitting}
                 className="flex items-center gap-2 w-full sm:w-auto shrink-0"
               >
                 <Ban className="h-4 w-4" />
-                {form.formState.isSubmitting ? "Dodawanie..." : "Dodaj wykluczenie"}
+                {isSubmitting ? "Dodawanie..." : "Dodaj wykluczenie"}
               </Button>
             </div>
           </form>

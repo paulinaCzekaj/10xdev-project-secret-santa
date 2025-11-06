@@ -95,7 +95,7 @@ export default function Dashboard({ user, createdGroups, joinedGroups }: Dashboa
           <Button asChild size="lg" data-testid="create-group-cta-button">
             <a href="/groups/new">
               <span className="mr-2">🎅</span>
-              Utwórz nową grupę Secret Santa
+              Utwórz nową grupę
             </a>
           </Button>
         </div>

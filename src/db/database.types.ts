@@ -185,18 +185,27 @@ export interface Database {
       };
       wishes: {
         Row: {
+          ai_generated: boolean | null;
+          ai_generation_count_per_group: number | null;
+          ai_last_generated_at: string | null;
           id: number;
           participant_id: number;
           updated_at: string;
           wishlist: string;
         };
         Insert: {
+          ai_generated?: boolean | null;
+          ai_generation_count_per_group?: number | null;
+          ai_last_generated_at?: string | null;
           id?: number;
           participant_id: number;
           updated_at?: string;
           wishlist: string;
         };
         Update: {
+          ai_generated?: boolean | null;
+          ai_generation_count_per_group?: number | null;
+          ai_last_generated_at?: string | null;
           id?: number;
           participant_id?: number;
           updated_at?: string;
@@ -206,7 +215,7 @@ export interface Database {
           {
             foreignKeyName: "wishes_participant_id_fkey";
             columns: ["participant_id"];
-            isOneToOne: false;
+            isOneToOne: true;
             referencedRelation: "participants";
             referencedColumns: ["id"];
           },
@@ -247,6 +256,10 @@ export interface Database {
           participant_name: string;
           user_id: string;
         }[];
+      };
+      increment_ai_generation_count: {
+        Args: { p_participant_id: number };
+        Returns: undefined;
       };
       is_group_creator: {
         Args: { p_group_id: number; p_user_id: string };

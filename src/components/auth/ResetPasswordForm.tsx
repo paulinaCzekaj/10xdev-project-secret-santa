@@ -23,7 +23,7 @@ export default function ResetPasswordForm({ code, accessToken }: ResetPasswordFo
 
   const form = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordFormSchema),
-    mode: "onChange",
+    mode: "onBlur",
     defaultValues: {
       password: "",
       confirmPassword: "",

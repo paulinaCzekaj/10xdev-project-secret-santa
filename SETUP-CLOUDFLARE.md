@@ -87,6 +87,11 @@ Projekt został w pełni przygotowany do deploymentu na Cloudflare Pages z autom
    - Value: Twój Supabase Anon Key
    - Kliknij **Save**
 
+   **Zmienna 3:**
+   - Variable name: `OPENROUTER_API_KEY`
+   - Value: Twój OpenRouter API Key (uzyskaj z https://openrouter.ai/keys)
+   - Kliknij **Save**
+
 5. Powtórz proces dla środowiska **Preview** (jeśli planujesz używać preview deployments)
 
 **Gdzie znaleźć wartości Supabase?**
@@ -154,6 +159,39 @@ Error: Supabase credentials missing. Please check your .env file and ensure PUBL
 2. Zakładka **Settings** → **Environment variables**
 3. Dodaj `PUBLIC_SUPABASE_URL` i `PUBLIC_SUPABASE_ANON_KEY` (zobacz **Krok 5** powyżej)
 4. Po dodaniu zmiennych, wykonaj **redeploy** (przejdź do Deployments → kliknij "..." przy ostatnim deploymencie → Retry deployment)
+
+### ❌ Błąd: "Required" dla pola "apiKey" (400 Bad Request)
+
+**Objaw:** Endpointy AI zwracają 400 Bad Request z błędem:
+
+```json
+{
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "Required",
+    "details": {
+      "errors": [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "received": "undefined",
+          "path": ["apiKey"],
+          "message": "Required"
+        }
+      ]
+    }
+  }
+}
+```
+
+**Przyczyna:** Brakuje zmiennej środowiskowej `OPENROUTER_API_KEY` wymaganej przez OpenRouterService.
+
+**Rozwiązanie:**
+
+1. Przejdź do Cloudflare Dashboard → Workers & Pages → secret-santa-app
+2. Zakładka **Settings** → **Environment variables**
+3. Dodaj `OPENROUTER_API_KEY` (zobacz **Krok 5** powyżej)
+4. Wykonaj redeploy aplikacji
 
 ### Deployment failuje z błędem 401/403
 

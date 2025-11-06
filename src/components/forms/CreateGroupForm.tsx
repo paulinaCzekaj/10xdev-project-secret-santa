@@ -16,7 +16,7 @@ export default function CreateGroupForm() {
 
   const form = useForm<CreateGroupFormViewModel>({
     resolver: zodResolver(createGroupFormSchema),
-    mode: "onChange", // Enable real-time validation
+    mode: "onChange",
     defaultValues: {
       name: "",
       budget: undefined,
