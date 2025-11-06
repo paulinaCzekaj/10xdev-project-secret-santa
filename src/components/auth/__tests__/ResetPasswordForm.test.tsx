@@ -21,13 +21,21 @@ delete (window as any).location;
 window.location = { href: "" } as any;
 
 // Mock hooks
-let mockTokenVerification = {
+let mockTokenVerification: {
+  isValid: boolean;
+  isLoading: boolean;
+  error: string | null;
+} = {
   isValid: true,
   isLoading: false,
   error: null,
 };
 
-let mockResetPassword = {
+let mockResetPassword: {
+  resetPassword: ReturnType<typeof vi.fn>;
+  isSubmitting: boolean;
+  error: string | null;
+} = {
   resetPassword: vi.fn(),
   isSubmitting: false,
   error: null,
