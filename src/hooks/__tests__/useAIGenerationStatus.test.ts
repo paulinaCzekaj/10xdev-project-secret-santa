@@ -151,7 +151,7 @@ describe("useAIGenerationStatus", () => {
 
     it("should include authorization header for authenticated users", async () => {
       // Mock authenticated session
-      mockSupabaseClient.auth.getSession.mockResolvedValueOnce({
+      (mockSupabaseClient.auth.getSession as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           session: {
             access_token: "test-access-token",
