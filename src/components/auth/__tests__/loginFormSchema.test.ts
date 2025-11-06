@@ -418,99 +418,99 @@ describe("loginFormSchema", () => {
 
   describe("Edge Cases and Type Safety", () => {
     it("should reject missing email field", () => {
-      const data = {
+      const data: Record<string, unknown> = {
         password: "password123",
-      } as any;
+      };
 
       expect(() => loginFormSchema.parse(data)).toThrow(ZodError);
     });
 
     it("should reject missing password field", () => {
-      const data = {
+      const data: Record<string, unknown> = {
         email: "user@example.com",
-      } as any;
+      };
 
       expect(() => loginFormSchema.parse(data)).toThrow(ZodError);
     });
 
     it("should reject null email", () => {
-      const data = {
+      const data: Record<string, unknown> = {
         email: null,
         password: "password123",
-      } as any;
+      };
 
       expect(() => loginFormSchema.parse(data)).toThrow(ZodError);
     });
 
     it("should reject null password", () => {
-      const data = {
+      const data: Record<string, unknown> = {
         email: "user@example.com",
         password: null,
-      } as any;
+      };
 
       expect(() => loginFormSchema.parse(data)).toThrow(ZodError);
     });
 
     it("should reject undefined email", () => {
-      const data = {
+      const data: Record<string, unknown> = {
         email: undefined,
         password: "password123",
-      } as any;
+      };
 
       expect(() => loginFormSchema.parse(data)).toThrow(ZodError);
     });
 
     it("should reject undefined password", () => {
-      const data = {
+      const data: Record<string, unknown> = {
         email: "user@example.com",
         password: undefined,
-      } as any;
+      };
 
       expect(() => loginFormSchema.parse(data)).toThrow(ZodError);
     });
 
     it("should reject number as email", () => {
-      const data = {
+      const data: Record<string, unknown> = {
         email: 12345,
         password: "password123",
-      } as any;
+      };
 
       expect(() => loginFormSchema.parse(data)).toThrow(ZodError);
     });
 
     it("should reject number as password", () => {
-      const data = {
+      const data: Record<string, unknown> = {
         email: "user@example.com",
         password: 123456,
-      } as any;
+      };
 
       expect(() => loginFormSchema.parse(data)).toThrow(ZodError);
     });
 
     it("should reject object as email", () => {
-      const data = {
+      const data: Record<string, unknown> = {
         email: { value: "test@example.com" },
         password: "password123",
-      } as any;
+      };
 
       expect(() => loginFormSchema.parse(data)).toThrow(ZodError);
     });
 
     it("should reject array as password", () => {
-      const data = {
+      const data: Record<string, unknown> = {
         email: "user@example.com",
         password: ["p", "a", "s", "s"],
-      } as any;
+      };
 
       expect(() => loginFormSchema.parse(data)).toThrow(ZodError);
     });
 
     it("should ignore extra fields not in schema", () => {
-      const data = {
+      const data: Record<string, unknown> = {
         email: "user@example.com",
         password: "password123",
         extraField: "should be ignored",
-      } as any;
+      };
 
       const result = loginFormSchema.parse(data);
 
@@ -518,7 +518,7 @@ describe("loginFormSchema", () => {
         email: "user@example.com",
         password: "password123",
       });
-      expect((result as any).extraField).toBeUndefined();
+      expect("extraField" in result).toBe(false);
     });
   });
 

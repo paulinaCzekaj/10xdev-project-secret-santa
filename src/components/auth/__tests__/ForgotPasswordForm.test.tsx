@@ -17,8 +17,8 @@ vi.mock("@/lib/notifications", () => ({
 }));
 
 // Mock window.location.href
-delete (window as any).location;
-window.location = { href: "" } as any;
+delete (window as Window & typeof globalThis).location;
+window.location = { href: "" } as Location & { href: string };
 
 // =============================================================================
 // SETUP & TEARDOWN

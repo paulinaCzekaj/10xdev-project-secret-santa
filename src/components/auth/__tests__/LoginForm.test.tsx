@@ -19,7 +19,7 @@ vi.mock("@/lib/notifications", () => ({
 
 // Mock window.location.href
 const originalLocation = window.location;
-delete (window as any).location;
+delete (window as Window & typeof globalThis).location;
 window.location = { ...originalLocation, href: "" } as Location;
 
 // ============================================================================
