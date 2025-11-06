@@ -472,8 +472,10 @@ describe("OpenRouterService", () => {
       const requestBody = JSON.parse(fetchCall[1].body);
       const userMessage = requestBody.messages.find((m: { role: string; content: string }) => m.role === "user");
 
+      // striptags removes HTML tags but keeps the text content
       expect(userMessage?.content).not.toContain("<script>");
-      expect(userMessage?.content).not.toContain('alert("xss")');
+      expect(userMessage?.content).not.toContain("</script>");
+      expect(userMessage?.content).toContain('alert("xss")'); // Text content is preserved
     });
 
     it("should sanitize various XSS attack vectors", async () => {

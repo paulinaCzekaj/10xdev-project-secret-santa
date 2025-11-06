@@ -1,6 +1,22 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { useAIGenerationStatus } from "../useAIGenerationStatus";
+
+// Mock Supabase client must be defined inline to avoid hoisting issues
+vi.mock("@/db/supabase.client", () => ({
+  supabaseClient: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({
+        data: {
+          session: null,
+        },
+      }),
+    },
+  },
+}));
+
+// Import mock after vi.mock to access it
+const { supabaseClient: mockSupabaseClient } = await import("@/db/supabase.client");
 
 // Mock fetch globally
 const fetchMock = vi.fn();
@@ -10,11 +26,17 @@ describe("useAIGenerationStatus", () => {
   const participantId = 123;
 
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    // Only clear fetch mock, not the Supabase mock
+    fetchMock.mockClear();
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+    // Reset Supabase mock to default state (no session)
+    if (mockSupabaseClient?.auth?.getSession) {
+      (mockSupabaseClient.auth.getSession as ReturnType<typeof vi.fn>).mockResolvedValue({
+        data: {
+          session: null,
+        },
+      });
+    }
   });
 
   describe("initial state", () => {
@@ -128,13 +150,13 @@ describe("useAIGenerationStatus", () => {
     });
 
     it("should include authorization header for authenticated users", async () => {
-      // Mock localStorage
-      const localStorageMock = {
-        getItem: vi.fn(() => "test-access-token"),
-      };
-      Object.defineProperty(window, "localStorage", {
-        value: localStorageMock,
-        writable: true,
+      // Mock authenticated session
+      mockSupabaseClient.auth.getSession.mockResolvedValueOnce({
+        data: {
+          session: {
+            access_token: "test-access-token",
+          },
+        },
       });
 
       const mockResponse = {
