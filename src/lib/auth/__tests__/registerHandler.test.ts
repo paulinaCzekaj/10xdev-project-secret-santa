@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  performRegister,
-  validateRegisterCredentials,
-  type RegisterCredentials,
-  type RegisterResult,
-} from "../registerHandler";
+import { performRegister, validateRegisterCredentials, type RegisterCredentials } from "../registerHandler";
 
 // ============================================================================
 // UNIT TESTS FOR REGISTER API HANDLER
@@ -546,7 +541,7 @@ describe("registerHandler", () => {
       const credentials = {
         email: undefined,
         password: "Password123",
-      } as any;
+      } as unknown as RegisterCredentials;
 
       const result = validateRegisterCredentials(credentials);
 
@@ -557,7 +552,7 @@ describe("registerHandler", () => {
       const credentials = {
         email: "test@example.com",
         password: null,
-      } as any;
+      } as unknown as RegisterCredentials;
 
       const result = validateRegisterCredentials(credentials);
 
@@ -565,7 +560,7 @@ describe("registerHandler", () => {
     });
 
     it("should handle completely empty object", () => {
-      const credentials = {} as any;
+      const credentials = {} as unknown as RegisterCredentials;
 
       const result = validateRegisterCredentials(credentials);
 

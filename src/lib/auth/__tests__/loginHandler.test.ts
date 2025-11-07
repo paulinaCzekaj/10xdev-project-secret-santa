@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  performLogin,
-  validateLoginCredentials,
-  type LoginCredentials,
-  type LoginResult,
-} from "../loginHandler";
+import { performLogin, validateLoginCredentials, type LoginCredentials } from "../loginHandler";
 
 // ============================================================================
 // UNIT TESTS FOR LOGIN API HANDLER
@@ -415,7 +410,7 @@ describe("loginHandler", () => {
         password: "  password123  ",
       };
 
-      const result = await performLogin(credentials);
+      await performLogin(credentials);
 
       // Note: Handler doesn't trim - that's responsibility of validation layer
       expect(global.fetch).toHaveBeenCalledWith(
@@ -580,7 +575,7 @@ describe("loginHandler", () => {
       const credentials = {
         email: undefined,
         password: "password123",
-      } as any;
+      } as unknown as LoginCredentials;
 
       const result = validateLoginCredentials(credentials);
 
@@ -591,7 +586,7 @@ describe("loginHandler", () => {
       const credentials = {
         email: "test@example.com",
         password: null,
-      } as any;
+      } as unknown as LoginCredentials;
 
       const result = validateLoginCredentials(credentials);
 
@@ -599,7 +594,7 @@ describe("loginHandler", () => {
     });
 
     it("should handle completely empty object", () => {
-      const credentials = {} as any;
+      const credentials = {} as unknown as LoginCredentials;
 
       const result = validateLoginCredentials(credentials);
 

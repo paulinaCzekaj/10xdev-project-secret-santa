@@ -58,7 +58,7 @@ export async function performResetPassword(
         success: false,
         error: {
           message: getAuthErrorMessage(updateError),
-          code: (updateError as any).code,
+          code: (updateError as Error & { code?: string }).code,
         },
       };
     }

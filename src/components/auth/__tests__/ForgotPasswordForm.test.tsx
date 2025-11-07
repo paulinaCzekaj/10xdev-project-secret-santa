@@ -137,9 +137,7 @@ describe("ForgotPasswordForm", () => {
         expect(screen.getByText("Nie otrzymałeś emaila?")).toBeInTheDocument();
       });
 
-      expect(
-        screen.getByText(/sprawdź folder spam. link wygasa po 1 godzinie/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/sprawdź folder spam. link wygasa po 1 godzinie/i)).toBeInTheDocument();
     });
 
     it("should show back to login button in success state", async () => {

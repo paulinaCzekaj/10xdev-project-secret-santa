@@ -254,7 +254,9 @@ describe("forgotPasswordHandler", () => {
       const result = await performForgotPassword(credentials);
 
       expect(result.success).toBe(false);
-      expect(result.error?.message).toBe("Wystąpił błąd połączenia. Sprawdź połączenie z internetem i spróbuj ponownie.");
+      expect(result.error?.message).toBe(
+        "Wystąpił błąd połączenia. Sprawdź połączenie z internetem i spróbuj ponownie."
+      );
     });
 
     it("should handle fetch rejection with non-Error object", async () => {
@@ -267,7 +269,9 @@ describe("forgotPasswordHandler", () => {
       const result = await performForgotPassword(credentials);
 
       expect(result.success).toBe(false);
-      expect(result.error?.message).toBe("Wystąpił błąd połączenia. Sprawdź połączenie z internetem i spróbuj ponownie.");
+      expect(result.error?.message).toBe(
+        "Wystąpił błąd połączenia. Sprawdź połączenie z internetem i spróbuj ponownie."
+      );
     });
 
     it("should handle JSON parsing error", async () => {
@@ -285,7 +289,9 @@ describe("forgotPasswordHandler", () => {
       const result = await performForgotPassword(credentials);
 
       expect(result.success).toBe(false);
-      expect(result.error?.message).toBe("Wystąpił błąd połączenia. Sprawdź połączenie z internetem i spróbuj ponownie.");
+      expect(result.error?.message).toBe(
+        "Wystąpił błąd połączenia. Sprawdź połączenie z internetem i spróbuj ponownie."
+      );
     });
   });
 

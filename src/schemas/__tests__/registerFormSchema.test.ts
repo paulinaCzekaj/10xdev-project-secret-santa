@@ -476,7 +476,7 @@ describe("registerFormSchema", () => {
         email: "user@example.com",
         password: "Password123",
         confirmPassword: "Password123",
-      } as any;
+      } as unknown as RegisterFormData;
 
       expect(() => registerFormSchema.parse(data)).toThrow(ZodError);
     });
@@ -548,7 +548,7 @@ describe("registerFormSchema", () => {
         password: "Password123",
         confirmPassword: "Password123",
         acceptTerms: true,
-      } as any;
+      } as unknown as RegisterFormData;
 
       expect(() => registerFormSchema.parse(data)).toThrow(ZodError);
     });
@@ -559,7 +559,7 @@ describe("registerFormSchema", () => {
         password: undefined,
         confirmPassword: "Password123",
         acceptTerms: true,
-      } as any;
+      } as unknown as RegisterFormData;
 
       expect(() => registerFormSchema.parse(data)).toThrow(ZodError);
     });
@@ -570,7 +570,7 @@ describe("registerFormSchema", () => {
         password: "Password123",
         confirmPassword: "Password123",
         acceptTerms: 1,
-      } as any;
+      } as unknown as RegisterFormData;
 
       expect(() => registerFormSchema.parse(data)).toThrow(ZodError);
     });
@@ -581,7 +581,7 @@ describe("registerFormSchema", () => {
         password: "Password123",
         confirmPassword: "Password123",
         acceptTerms: "true",
-      } as any;
+      } as unknown as RegisterFormData;
 
       expect(() => registerFormSchema.parse(data)).toThrow(ZodError);
     });
@@ -593,11 +593,11 @@ describe("registerFormSchema", () => {
         confirmPassword: "Password123",
         acceptTerms: true,
         extraField: "should be ignored",
-      } as any;
+      } as unknown as RegisterFormData;
 
       const result = registerFormSchema.parse(data);
 
-      expect((result as any).extraField).toBeUndefined();
+      expect((result as Record<string, unknown>).extraField).toBeUndefined();
     });
 
     it("should handle very long password", () => {

@@ -4,7 +4,6 @@ import {
   validateResetPasswordCredentials,
   getAuthErrorMessage,
   type ResetPasswordCredentials,
-  type ResetPasswordResult,
 } from "../resetPasswordHandler";
 
 // ============================================================================
@@ -162,7 +161,7 @@ describe("resetPasswordHandler", () => {
 
     it("should include error code when available", async () => {
       const errorWithCode = new Error("Token has expired or is invalid");
-      (errorWithCode as any).code = "token_expired";
+      (errorWithCode as Error & { code: string }).code = "token_expired";
 
       const mockUpdateUser = vi.fn().mockResolvedValue({
         error: errorWithCode,
@@ -463,7 +462,7 @@ describe("resetPasswordHandler", () => {
     it("should handle credentials with undefined password", () => {
       const credentials = {
         password: undefined,
-      } as any;
+      } as unknown as ResetPasswordCredentials;
 
       const result = validateResetPasswordCredentials(credentials);
 
@@ -473,7 +472,7 @@ describe("resetPasswordHandler", () => {
     it("should handle credentials with null password", () => {
       const credentials = {
         password: null,
-      } as any;
+      } as unknown as ResetPasswordCredentials;
 
       const result = validateResetPasswordCredentials(credentials);
 
@@ -481,7 +480,7 @@ describe("resetPasswordHandler", () => {
     });
 
     it("should handle completely empty object", () => {
-      const credentials = {} as any;
+      const credentials = {} as unknown as ResetPasswordCredentials;
 
       const result = validateResetPasswordCredentials(credentials);
 

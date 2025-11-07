@@ -404,7 +404,7 @@ describe("resetPasswordFormSchema", () => {
       const data = {
         password: null,
         confirmPassword: "Password123",
-      } as any;
+      } as unknown as ResetPasswordFormData;
 
       expect(() => resetPasswordFormSchema.parse(data)).toThrow(ZodError);
     });
@@ -413,7 +413,7 @@ describe("resetPasswordFormSchema", () => {
       const data = {
         password: undefined,
         confirmPassword: "Password123",
-      } as any;
+      } as unknown as ResetPasswordFormData;
 
       expect(() => resetPasswordFormSchema.parse(data)).toThrow(ZodError);
     });
@@ -422,7 +422,7 @@ describe("resetPasswordFormSchema", () => {
       const data = {
         password: "Password123",
         confirmPassword: null,
-      } as any;
+      } as unknown as ResetPasswordFormData;
 
       expect(() => resetPasswordFormSchema.parse(data)).toThrow(ZodError);
     });
@@ -431,7 +431,7 @@ describe("resetPasswordFormSchema", () => {
       const data = {
         password: "Password123",
         confirmPassword: undefined,
-      } as any;
+      } as unknown as ResetPasswordFormData;
 
       expect(() => resetPasswordFormSchema.parse(data)).toThrow(ZodError);
     });
@@ -440,7 +440,7 @@ describe("resetPasswordFormSchema", () => {
       const data = {
         password: 123456789,
         confirmPassword: 123456789,
-      } as any;
+      } as unknown as ResetPasswordFormData;
 
       expect(() => resetPasswordFormSchema.parse(data)).toThrow(ZodError);
     });
@@ -449,7 +449,7 @@ describe("resetPasswordFormSchema", () => {
       const data = {
         password: ["P", "a", "s", "s"],
         confirmPassword: ["P", "a", "s", "s"],
-      } as any;
+      } as unknown as ResetPasswordFormData;
 
       expect(() => resetPasswordFormSchema.parse(data)).toThrow(ZodError);
     });
@@ -459,11 +459,11 @@ describe("resetPasswordFormSchema", () => {
         password: "Password123",
         confirmPassword: "Password123",
         extraField: "should be ignored",
-      } as any;
+      } as unknown as ResetPasswordFormData;
 
       const result = resetPasswordFormSchema.parse(data);
 
-      expect((result as any).extraField).toBeUndefined();
+      expect((result as Record<string, unknown>).extraField).toBeUndefined();
     });
 
     it("should handle very long password", () => {
@@ -492,7 +492,7 @@ describe("resetPasswordFormSchema", () => {
     it("should reject missing password field", () => {
       const data = {
         confirmPassword: "Password123",
-      } as any;
+      } as unknown as ResetPasswordFormData;
 
       expect(() => resetPasswordFormSchema.parse(data)).toThrow(ZodError);
     });
@@ -500,13 +500,13 @@ describe("resetPasswordFormSchema", () => {
     it("should reject missing confirmPassword field", () => {
       const data = {
         password: "Password123",
-      } as any;
+      } as unknown as ResetPasswordFormData;
 
       expect(() => resetPasswordFormSchema.parse(data)).toThrow(ZodError);
     });
 
     it("should reject completely empty object", () => {
-      const data = {} as any;
+      const data = {} as unknown as ResetPasswordFormData;
 
       expect(() => resetPasswordFormSchema.parse(data)).toThrow(ZodError);
     });

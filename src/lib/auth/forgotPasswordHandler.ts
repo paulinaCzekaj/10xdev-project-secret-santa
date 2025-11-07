@@ -70,8 +70,6 @@ export async function performForgotPassword(credentials: ForgotPasswordCredentia
     };
   } catch (error) {
     // Handle network errors or validation errors
-    const errorMessage = error instanceof Error ? error.message : "Wystąpił błąd podczas wysyłania emaila";
-
     // If it's a validation error, return it directly
     if (
       error instanceof Error &&
