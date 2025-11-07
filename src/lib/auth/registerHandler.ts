@@ -5,6 +5,8 @@
  * Can be tested in isolation as a unit test.
  */
 
+import { validatePassword } from "../validators/passwordValidators";
+
 export interface RegisterCredentials {
   email: string;
   password: string;
@@ -84,14 +86,9 @@ export function validateRegisterCredentials(credentials: RegisterCredentials): b
     return false;
   }
 
-  if (credentials.email.length === 0 || credentials.password.length < 8) {
+  if (credentials.email.length === 0) {
     return false;
   }
 
-  // Check password complexity (min requirements)
-  const hasLowercase = /[a-z]/.test(credentials.password);
-  const hasUppercase = /[A-Z]/.test(credentials.password);
-  const hasDigit = /\d/.test(credentials.password);
-
-  return hasLowercase && hasUppercase && hasDigit;
+  return validatePassword(credentials.password);
 }

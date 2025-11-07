@@ -450,7 +450,7 @@ describe("loginHandler", () => {
     it("should return true for valid email and password", () => {
       const credentials: LoginCredentials = {
         email: "test@example.com",
-        password: "password123",
+        password: "Password123",
       };
 
       const result = validateLoginCredentials(credentials);
@@ -458,10 +458,10 @@ describe("loginHandler", () => {
       expect(result).toBe(true);
     });
 
-    it("should return true for password with exactly 6 characters", () => {
+    it("should return true for password with exactly 8 characters", () => {
       const credentials: LoginCredentials = {
         email: "test@example.com",
-        password: "123456",
+        password: "Pass1234",
       };
 
       const result = validateLoginCredentials(credentials);
@@ -472,7 +472,7 @@ describe("loginHandler", () => {
     it("should return true for long password", () => {
       const credentials: LoginCredentials = {
         email: "test@example.com",
-        password: "verylongpassword12345678901234567890",
+        password: "Verylongpassword12345678901234567890",
       };
 
       const result = validateLoginCredentials(credentials);
@@ -483,7 +483,7 @@ describe("loginHandler", () => {
     it("should return true for email with special characters", () => {
       const credentials: LoginCredentials = {
         email: "user+test@example.com",
-        password: "password123",
+        password: "Password123",
       };
 
       const result = validateLoginCredentials(credentials);
@@ -555,7 +555,7 @@ describe("loginHandler", () => {
     it("should return false for whitespace-only email", () => {
       const credentials: LoginCredentials = {
         email: "   ",
-        password: "password123",
+        password: "Password123",
       };
 
       const result = validateLoginCredentials(credentials);

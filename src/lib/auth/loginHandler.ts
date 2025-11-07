@@ -5,6 +5,8 @@
  * Can be tested in isolation as a unit test.
  */
 
+import { validatePassword } from "../validators/passwordValidators";
+
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -84,9 +86,9 @@ export function validateLoginCredentials(credentials: LoginCredentials): boolean
     return false;
   }
 
-  if (credentials.email.length === 0 || credentials.password.length < 6) {
+  if (credentials.email.length === 0) {
     return false;
   }
 
-  return true;
+  return validatePassword(credentials.password);
 }
