@@ -17,14 +17,14 @@ const MIN_PROMPT_LENGTH = 10;
 const MAX_PROMPT_LENGTH = 2000;
 
 /**
- * Modal z formularzem do wpisania preferencji/zainteresowań użytkownika
- * Zawiera walidację długości promptu oraz licznik znaków
+ * Modal with a form to enter user's preferences/interests
+ * Contains validation for prompt length and character counter
  */
 export function AIPromptModal({ isOpen, onClose, onSubmit, isLoading, error }: AIPromptModalProps) {
   const [prompt, setPrompt] = useState("");
   const [charCount, setCharCount] = useState(0);
 
-  // Reset przy otwarciu modalu
+  // Reset when opening the modal
   useEffect(() => {
     if (isOpen) {
       setPrompt("");
@@ -47,11 +47,11 @@ export function AIPromptModal({ isOpen, onClose, onSubmit, isLoading, error }: A
     await onSubmit(prompt);
   };
 
-  // Walidacja
+  // Validation
   const trimmedLength = prompt.trim().length;
   const isValid = trimmedLength >= MIN_PROMPT_LENGTH && charCount <= MAX_PROMPT_LENGTH;
 
-  // Kolor licznika
+  // Color for the counter
   const getCharCountColor = () => {
     if (charCount < MIN_PROMPT_LENGTH || charCount > MAX_PROMPT_LENGTH) {
       return "text-destructive";

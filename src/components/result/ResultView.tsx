@@ -20,8 +20,8 @@ interface ResultViewProps {
 }
 
 /**
- * Główny kontener widoku wyniku Secret Santa
- * Koordynuje wszystkie komponenty i zarządza stanem aplikacji
+ * Main container for the Secret Santa result view
+ * Coordinates all components and manages the application state
  */
 export default function ResultView({ groupId, token, isAuthenticated = false }: ResultViewProps) {
   const { result, isLoading, error, refetch } = useResultData(groupId, token, isAuthenticated);
@@ -45,7 +45,7 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
     );
   }
 
-  // Obsługa błędów - mapowanie kodu błędu na odpowiedni komponent
+  // Error handling - mapping error code to the corresponding component
   if (error) {
     switch (error.code) {
       case "DRAW_NOT_COMPLETED":
@@ -65,12 +65,12 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
     }
   }
 
-  // Brak danych - nie powinno się zdarzyć, ale obsługujemy
+  // No data - should not happen, but we handle it
   if (!result) {
     return <GenericError message="Nie udało się załadować danych wyniku. Spróbuj ponownie." onRetry={refetch} />;
   }
 
-  // Główny widok sukcesu
+  // Main success view
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-green-50 dark:from-red-950 dark:via-gray-900 dark:to-green-950">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -87,7 +87,7 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
           isAuthenticated={result.isAuthenticated}
         />
 
-        {/* Sekcja odkrywania wyniku */}
+        {/* Reveal section */}
         <ResultReveal
           assignedPerson={{
             id: result.assigned_to.id,
@@ -97,13 +97,12 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
           participantName={result.participant.name}
           participantId={result.participant.id}
           groupId={result.group.id}
-          resultViewedAt={result.participant.result_viewed_at}
           isRevealed={isRevealed}
           onReveal={() => setIsRevealed(true)}
           accessToken={result.accessToken}
         />
 
-        {/* Sekcja list życzeń - widoczna tylko po odkryciu prezentu */}
+        {/* Wishlist section - visible only after revealing the present */}
         {isRevealed && (
           <WishlistSection
             myWishlist={result.my_wishlist}

@@ -2,8 +2,11 @@ import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { supabaseClient } from "@/db/supabase.client";
 import type { GenerateAIRequest, GenerateAIResponse, AIGenerationError, UseAIGenerationReturn } from "@/types";
+import { sleep, calculateBackoff } from "@/lib/utils/async.utils";
+import { fetchWithTimeout, isRetryableStatusCode, isNetworkError, buildAuthHeaders } from "@/lib/utils/http.utils";
+import { isApiErrorResponse, normalizeToAIError, createAIError } from "@/lib/utils/error.utils";
 
-// Mapowanie kodów błędów na user-friendly komunikaty
+// Mapping error codes to user-friendly messages
 const ERROR_MESSAGES: Record<string, string> = {
   END_DATE_PASSED: "Data zakończenia wydarzenia minęła. Nie możesz już generować listy życzeń.",
   INVALID_PROMPT: "Prompt musi mieć od 10 do 2000 znaków.",
@@ -16,44 +19,16 @@ const ERROR_MESSAGES: Record<string, string> = {
   NETWORK_ERROR: "Błąd połączenia. Sprawdź swoje połączenie internetowe.",
 };
 
-// Timeout dla pojedynczego requesta (15 sekund)
+// Timeout for a single request (15 seconds)
 const REQUEST_TIMEOUT = 15000;
 
 /**
- * Helper: fetch z timeoutem
- */
-async function fetchWithTimeout(url: string, options: RequestInit, timeout: number): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error.name === "AbortError") {
-      throw new Error("GATEWAY_TIMEOUT");
-    }
-    throw error;
-  }
-}
-
-/**
- * Helper: sleep dla retry backoff
- */
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/**
- * Hook do zarządzania procesem AI-generowania listu do Mikołaja
+ * Hook to manage the AI-generated letter process
  *
- * @param participantId - ID uczestnika
- * @param token - Token dostępu (dla niezarejestrowanych)
- * @param onStatusChange - Callback wywoływany po zmianach (dla refetch status)
- * @returns Stan generowania, funkcje akcji
+ * @param participantId - ID participant
+ * @param token - Access token (for unregistered users)
+ * @param onStatusChange - Callback called on changes (for refetch status)
+ * @returns Generating state, action functions
  */
 export function useAIGeneration(
   participantId: number,
@@ -68,7 +43,7 @@ export function useAIGeneration(
   const [remainingGenerations, setRemainingGenerations] = useState<number | null>(null);
 
   /**
-   * Wywołanie API z retry logic
+   * Calling API with retry logic
    */
   const callGenerateAPI = useCallback(
     async (prompt: string, retries = 2): Promise<GenerateAIResponse> => {
@@ -78,7 +53,7 @@ export function useAIGeneration(
         url.searchParams.append("token", token);
       }
 
-      // Pobieramy Bearer token z sesji Supabase
+      // Get Bearer token from Supabase session
       const {
         data: { session },
       } = await supabaseClient.auth.getSession();
@@ -91,10 +66,7 @@ export function useAIGeneration(
             url.toString(),
             {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                ...(token ? {} : session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-              },
+              headers: buildAuthHeaders(token, session?.access_token),
               body: JSON.stringify(requestBody),
             },
             REQUEST_TIMEOUT
@@ -104,60 +76,44 @@ export function useAIGeneration(
             return await response.json();
           }
 
-          // Retry dla 5xx i 504
-          if (attempt < retries && [500, 502, 503, 504].includes(response.status)) {
-            const backoff = Math.pow(2, attempt) * 1000;
-            await sleep(backoff);
+          // Check if error is retryable
+          if (attempt < retries && isRetryableStatusCode(response.status)) {
+            await sleep(calculateBackoff(attempt));
             continue;
           }
 
-          // Błąd nie nadający się do retry
+          // Parse and throw non-retryable error
           const errorData = await response.json();
-          const errorCode = errorData.error.code || "AI_API_ERROR";
-          const errorMessage = ERROR_MESSAGES[errorCode] || errorData.error.message;
 
-          throw {
-            code: errorCode,
-            message: errorMessage,
-          } as AIGenerationError;
+          if (isApiErrorResponse(errorData)) {
+            const errorCode = errorData.error.code || "AI_API_ERROR";
+            const errorMessage = ERROR_MESSAGES[errorCode] || errorData.error.message;
+
+            throw createAIError(errorCode, errorMessage);
+          }
+
+          // Fallback for unexpected error format
+          throw createAIError("AI_API_ERROR", ERROR_MESSAGES.AI_API_ERROR);
         } catch (err) {
-          // Retry dla network errors
-          if (attempt < retries && err instanceof TypeError) {
-            const backoff = Math.pow(2, attempt) * 1000;
-            await sleep(backoff);
+          // Retry for network errors
+          if (attempt < retries && isNetworkError(err)) {
+            await sleep(calculateBackoff(attempt));
             continue;
           }
 
-          // Błąd timeout
-          if (err.message === "GATEWAY_TIMEOUT") {
-            throw {
-              code: "GATEWAY_TIMEOUT",
-              message: ERROR_MESSAGES.GATEWAY_TIMEOUT,
-            } as AIGenerationError;
-          }
-
-          // Inne błędy - mapuj na AIGenerationError jeśli to nie jest już taki błąd
-          if (err.code && err.message) {
-            throw err; // już jest AIGenerationError
-          }
-          throw {
-            code: "AI_API_ERROR",
-            message: err.message || "Wystąpił nieoczekiwany błąd",
-          } as AIGenerationError;
+          // Normalize and throw error
+          throw normalizeToAIError(err, ERROR_MESSAGES);
         }
       }
 
-      // Max retries exceeded
-      throw {
-        code: "AI_API_ERROR",
-        message: "Przekroczono maksymalną liczbę prób. Spróbuj ponownie później.",
-      } as AIGenerationError;
+      // This should be unreachable, but needed for TypeScript
+      throw createAIError("AI_API_ERROR", "Przekroczono maksymalną liczbę prób. Spróbuj ponownie później.");
     },
     [participantId, token]
   );
 
   /**
-   * Generowanie nowego listu
+   * Generating a new letter
    */
   const generateLetter = useCallback(
     async (prompt: string) => {
@@ -183,7 +139,7 @@ export function useAIGeneration(
   );
 
   /**
-   * Regeneracja z tym samym promptem
+   * Regenerating with the same prompt
    */
   const regenerateLetter = useCallback(async () => {
     if (!currentPrompt) {
@@ -210,7 +166,7 @@ export function useAIGeneration(
   }, [currentPrompt, callGenerateAPI]);
 
   /**
-   * Akceptacja wygenerowanego listu
+   * Accepting the generated letter
    */
   const acceptLetter = useCallback(async () => {
     if (!generatedContent) return;
@@ -228,21 +184,21 @@ export function useAIGeneration(
   }, [generatedContent, onStatusChange]);
 
   /**
-   * Odrzucenie wygenerowanego listu
+   * Rejecting the generated letter
    */
   const rejectLetter = useCallback(async () => {
     setGeneratedContent(null);
     setCurrentPrompt(null);
     setError(null);
 
-    // Refetch AI status (licznik został zmniejszony)
+    // Refetch AI status (counter was decreased)
     await onStatusChange?.();
 
     toast.info("List został odrzucony. Wykorzystałeś 1 generowanie.");
   }, [onStatusChange]);
 
   /**
-   * Reset stanu (np. przy unmount)
+   * Reset state (e.g. when unmounting)
    */
   const reset = useCallback(() => {
     setIsGenerating(false);

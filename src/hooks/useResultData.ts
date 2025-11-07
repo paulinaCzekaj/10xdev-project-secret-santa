@@ -129,6 +129,8 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
         // Flagi dostępu
         isAuthenticated: !!isAuthenticated,
         accessToken: token,
+
+        // Convenience properties
         resultViewedAt: dto.participant.result_viewed_at,
       };
     },
