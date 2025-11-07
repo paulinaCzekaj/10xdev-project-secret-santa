@@ -608,6 +608,13 @@ export interface ResultViewModel {
   // Data of the assigned person (extended)
   assignedPersonInitials: string; // "JK" - initials for the avatar
   assignedPersonWishlistHtml?: string; // HTML with auto-linked URLs
+
+  // Access and authentication context
+  isAuthenticated: boolean; // whether the participant is authenticated
+  accessToken?: string; // access token for unregistered participants
+
+  // Convenience properties
+  resultViewedAt?: string; // when the participant viewed their result (convenience property)
 }
 
 /**
@@ -773,6 +780,17 @@ export interface UseAIGenerationStatusReturn {
   isLoading: boolean;
   error: AIGenerationError | null;
   refetch: () => Promise<void>;
+}
+
+/**
+ * Props for AIPromptModal component
+ */
+export interface AIPromptModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (prompt: string) => Promise<void>;
+  isLoading: boolean;
+  error: AIGenerationError | null;
 }
 
 /**

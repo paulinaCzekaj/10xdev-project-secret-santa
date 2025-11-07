@@ -23,7 +23,6 @@ interface ResultRevealProps {
   participantName: string;
   participantId: number;
   groupId: number;
-  resultViewedAt?: string;
   isRevealed: boolean;
   onReveal: () => void;
   accessToken?: string; // For token-based access
@@ -35,8 +34,6 @@ export default function ResultReveal({
   participantId,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   groupId,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  resultViewedAt,
   isRevealed,
   onReveal,
   accessToken,
