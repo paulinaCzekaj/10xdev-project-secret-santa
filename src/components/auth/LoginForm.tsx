@@ -18,12 +18,12 @@ interface LoginFormProps {
 }
 
 // Zod schema for login form validation
-const loginFormSchema = z.object({
+export const loginFormSchema = z.object({
   email: z.string().min(1, "Email jest wymagany").email("Nieprawidłowy format email"),
   password: z.string().min(6, "Hasło musi mieć co najmniej 6 znaków"),
 });
 
-type LoginFormData = z.infer<typeof loginFormSchema>;
+export type LoginFormData = z.infer<typeof loginFormSchema>;
 
 export default function LoginForm({ redirectTo, message }: LoginFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
