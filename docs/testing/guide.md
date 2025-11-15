@@ -15,12 +15,14 @@ This project uses a comprehensive testing setup:
 👉 **Read the [Test Safety Guide](test-safety-guide.md) for complete details.**
 
 **Quick Summary**:
+
 - ✅ E2E tests use `.env.test` with local Supabase only
 - ✅ Unit tests use mocked Supabase client
 - ✅ Automatic validation prevents production URL usage
 - ✅ Tests terminate immediately if production database is detected
 
 **Safe Test Commands**:
+
 ```bash
 npm run test          # Unit tests (mocked)
 npm run test:e2e      # E2E tests (local Supabase)

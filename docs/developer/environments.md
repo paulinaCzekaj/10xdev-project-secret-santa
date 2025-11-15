@@ -36,6 +36,7 @@ This project uses **Cloudflare Pages** adapter with Astro, which requires two ty
 **When to use**: Daily development work, testing features locally.
 
 **Configuration**:
+
 ```env
 # Server-side Supabase
 SUPABASE_URL=http://127.0.0.1:54321
@@ -62,6 +63,7 @@ OPENROUTER_API_KEY=sk-or-v1-...
 **When to use**: Automatically used by `npm run dev` for API endpoints.
 
 **Configuration**:
+
 ```env
 OPENROUTER_API_KEY=sk-or-v1-...
 SUPABASE_URL=http://127.0.0.1:54321
@@ -79,6 +81,7 @@ SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 **When to use**: Running `npm run test:e2e` or `npm run dev:e2e`.
 
 **Configuration**:
+
 ```env
 # Local Supabase for safe testing
 SUPABASE_URL=http://127.0.0.1:54321
@@ -103,6 +106,7 @@ SUPABASE_ACCESS_TOKEN=sbp_...
 **When to use**: Reference for setting up Cloudflare Pages environment variables.
 
 **Configuration**:
+
 ```env
 # Production Supabase
 SUPABASE_URL=https://uiyurwyzsckkkoqthxmv.supabase.co
@@ -121,6 +125,7 @@ OPENROUTER_API_KEY=###_REPLACE_WITH_YOUR_KEY_###
 ```
 
 **Important**:
+
 - This file is NOT used directly in development
 - Copy values to Cloudflare Pages dashboard: `Settings → Environment variables`
 - Never commit real production secrets to git!
@@ -132,12 +137,14 @@ OPENROUTER_API_KEY=###_REPLACE_WITH_YOUR_KEY_###
 ### First-Time Setup
 
 1. **Copy environment template**:
+
    ```bash
    cp .env.example .env
    cp .env.example .dev.vars
    ```
 
 2. **Update `.env` with local Supabase credentials**:
+
    ```bash
    # Make sure both URLs are local
    SUPABASE_URL=http://127.0.0.1:54321
@@ -145,6 +152,7 @@ OPENROUTER_API_KEY=###_REPLACE_WITH_YOUR_KEY_###
    ```
 
 3. **Start local Supabase**:
+
    ```bash
    supabase start
    ```
@@ -162,6 +170,7 @@ OPENROUTER_API_KEY=###_REPLACE_WITH_YOUR_KEY_###
    - Copy user ID and credentials
 
 2. **Update `.env.test`**:
+
    ```env
    E2E_USERNAME_ID=<user_id_from_supabase>
    E2E_USERNAME=test@example.com
@@ -182,11 +191,13 @@ OPENROUTER_API_KEY=###_REPLACE_WITH_YOUR_KEY_###
 **Warning**: Only do this temporarily for testing production API!
 
 1. **Backup your local `.env`**:
+
    ```bash
    cp .env .env.backup
    ```
 
 2. **Copy production values**:
+
    ```bash
    cp .env.production .env
    ```
@@ -208,6 +219,7 @@ sed -i 's|https://uiyurwyzsckkkoqthxmv.supabase.co|http://127.0.0.1:54321|g' .en
 ```
 
 Or simply edit `.env` manually:
+
 - Change `PUBLIC_SUPABASE_URL` to `http://127.0.0.1:54321`
 - Change `SUPABASE_URL` to `http://127.0.0.1:54321`
 
@@ -224,6 +236,7 @@ npm run backup:production
 ```
 
 This will create:
+
 - `backups/production_backup_TIMESTAMP.sql` - Full database dump
 - `backups/production_data_backup_TIMESTAMP.json` - Data in JSON format
 - `backups/backup_summary_TIMESTAMP.json` - Backup metadata
@@ -261,12 +274,14 @@ psql -h 127.0.0.1 -p 54322 -U postgres -d postgres < backups/production_backup_2
 ### Problem: Client and Server Use Different Databases
 
 **Symptoms**:
+
 - Login works but user data doesn't load
 - Features work in backend but fail in frontend
 - CORS errors or authentication mismatches
 
 **Solution**:
 Check that both URLs match in `.env`:
+
 ```bash
 grep SUPABASE_URL .env
 # Should show:
@@ -277,6 +292,7 @@ grep SUPABASE_URL .env
 ### Problem: E2E Tests Fail with "User not found"
 
 **Solution**:
+
 1. Check that `.env.test` points to local Supabase (`http://127.0.0.1:54321`)
 2. Verify test user exists in local database
 3. Reset local database: `supabase db reset`
@@ -284,6 +300,7 @@ grep SUPABASE_URL .env
 ### Problem: "SUPABASE_ACCESS_TOKEN not set" Error
 
 **Solution**:
+
 ```bash
 # Get token from: https://app.supabase.com/account/tokens
 export SUPABASE_ACCESS_TOKEN=sbp_your_token_here
@@ -297,11 +314,12 @@ echo "SUPABASE_ACCESS_TOKEN=sbp_your_token_here" >> .env
 **Symptoms**: API endpoints can't access `OPENROUTER_API_KEY`
 
 **Solution**:
+
 1. Ensure `.dev.vars` file exists
 2. Restart dev server: `npm run dev`
 3. Check variable access in API:
    ```typescript
-   const apiKey = locals.runtime?.env?.OPENROUTER_API_KEY
+   const apiKey = locals.runtime?.env?.OPENROUTER_API_KEY;
    ```
 
 ---
@@ -328,13 +346,13 @@ echo "SUPABASE_ACCESS_TOKEN=sbp_your_token_here" >> .env
 
 ## Quick Reference
 
-| Task | Command | File Used |
-|------|---------|-----------|
-| Local development | `npm run dev` | `.env`, `.dev.vars` |
-| E2E tests | `npm run test:e2e` | `.env.test` |
-| Production backup | `npm run backup:production` | Requires `SUPABASE_ACCESS_TOKEN` |
-| Start local Supabase | `supabase start` | `supabase/config.toml` |
-| Reset local database | `supabase db reset` | `supabase/migrations/*` |
+| Task                 | Command                     | File Used                        |
+| -------------------- | --------------------------- | -------------------------------- |
+| Local development    | `npm run dev`               | `.env`, `.dev.vars`              |
+| E2E tests            | `npm run test:e2e`          | `.env.test`                      |
+| Production backup    | `npm run backup:production` | Requires `SUPABASE_ACCESS_TOKEN` |
+| Start local Supabase | `supabase start`            | `supabase/config.toml`           |
+| Reset local database | `supabase db reset`         | `supabase/migrations/*`          |
 
 ---
 

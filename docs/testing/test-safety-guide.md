@@ -11,6 +11,7 @@ This project implements **multiple layers of protection** to ensure tests **NEVE
 ### Layer 1: Environment Configuration
 
 **File: `.env.test`**
+
 ```env
 SUPABASE_URL=http://127.0.0.1:54321  # ✅ Local only
 SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... # Local key
@@ -50,12 +51,14 @@ console.log(`   SUPABASE_URL: ${supabaseUrl || "not set"}\n`);
 ```
 
 **What it does**:
+
 1. Reads `.env.test` via dotenv (line 6)
 2. Checks if any Supabase URL contains production reference
 3. **Terminates tests immediately** if production URL is detected
 4. Prints confirmation when using local Supabase
 
 **Test Output**:
+
 ```
 ✅ E2E Test Safety Check: Using local Supabase
    SUPABASE_URL: http://127.0.0.1:54321
@@ -89,12 +92,14 @@ console.log("✅ Vitest Safety Check: Using mocked Supabase URLs");
 ```
 
 **What it does**:
+
 1. Checks for production URL in environment
 2. **Throws error** if production URL is detected
 3. Overrides environment with mocked Supabase URLs
 4. Ensures unit tests always use mocks, never real database
 
 **Test Output**:
+
 ```
 ✅ Vitest Safety Check: Using mocked Supabase URLs
 ```
@@ -108,6 +113,7 @@ console.log("✅ Vitest Safety Check: Using mocked Supabase URLs");
 **Protection**: Ensures E2E dev server uses `.env.test` configuration.
 
 **How it works**:
+
 1. Validates `.env.test` exists
 2. **Checks for production URLs** in `.env.test`
 3. **Verifies local Supabase URL** (127.0.0.1:54321) is present
@@ -116,11 +122,13 @@ console.log("✅ Vitest Safety Check: Using mocked Supabase URLs");
 6. **Auto-cleans** `.env.local` on exit
 
 **Usage**:
+
 ```bash
 npm run dev:e2e  # Uses scripts/dev-e2e.js
 ```
 
 **Output**:
+
 ```
 === E2E Development Server ===
 
@@ -134,9 +142,10 @@ npm run dev:e2e  # Uses scripts/dev-e2e.js
 ```
 
 **Safety Features**:
+
 - ❌ Exits with error if `.env.test` not found
 - ❌ Exits with error if production URL detected in `.env.test`
-- ⚠️  Warns if local URL not found in `.env.test`
+- ⚠️ Warns if local URL not found in `.env.test`
 - 🧹 Auto-removes `.env.local` on server stop (SIGINT, SIGTERM, exit)
 
 ---
@@ -146,10 +155,12 @@ npm run dev:e2e  # Uses scripts/dev-e2e.js
 **Protection**: No hardcoded production URLs in source code.
 
 **Verified directories**:
+
 - `src/**/*`
 - `e2e/**/*`
 
 **Search performed**:
+
 ```bash
 grep -r "uiyurwyzsckkkoqthxmv.supabase.co" src/ e2e/
 ```
@@ -163,6 +174,7 @@ grep -r "uiyurwyzsckkkoqthxmv.supabase.co" src/ e2e/
 **File: `.gitignore`**
 
 Protected environment files:
+
 ```gitignore
 .env
 .env.production
@@ -171,6 +183,7 @@ Protected environment files:
 ```
 
 **Purpose**: Prevents accidental commit of:
+
 - Production credentials
 - Test credentials
 - Temporary environment files
@@ -196,6 +209,7 @@ npm run test:e2e:debug
 ```
 
 **What happens**:
+
 1. `dev:e2e` runs `scripts/dev-e2e.js`
 2. Script validates `.env.test` doesn't contain production URL
 3. Creates `.env.local` from `.env.test`
@@ -221,6 +235,7 @@ npm run test:coverage
 ```
 
 **What happens**:
+
 1. Vitest loads `vitest.setup.ts`
 2. Setup file validates no production URL in environment
 3. Mocks Supabase URLs to `https://test.supabase.co`
@@ -280,6 +295,7 @@ Process exited with code 1
 ### Problem: "E2E tests are configured to use PRODUCTION database"
 
 **Solution**:
+
 1. Check `.env.test` file
 2. Ensure `SUPABASE_URL=http://127.0.0.1:54321`
 3. Ensure no production URL (`uiyurwyzsckkkoqthxmv.supabase.co`) is present
@@ -287,6 +303,7 @@ Process exited with code 1
 ### Problem: "Unit tests detected PRODUCTION database URL"
 
 **Solution**:
+
 1. Check your shell environment: `echo $PUBLIC_SUPABASE_URL`
 2. Ensure no production environment variables are set globally
 3. Restart your terminal/IDE
@@ -294,6 +311,7 @@ Process exited with code 1
 ### Problem: ".env.test file not found"
 
 **Solution**:
+
 1. Create `.env.test` from `.env.example`:
    ```bash
    cp .env.example .env.test
@@ -307,6 +325,7 @@ Process exited with code 1
 ### Problem: Tests fail with connection errors
 
 **Solution**:
+
 1. Ensure local Supabase is running:
    ```bash
    supabase start
@@ -334,17 +353,18 @@ Before running tests, verify:
 
 **Protection Status**: ✅ **5 Layers of Protection Active**
 
-| Layer | Status | Description |
-|-------|--------|-------------|
-| 1. `.env.test` | ✅ Active | Dedicated test environment file with local URLs |
-| 2. Playwright Check | ✅ Active | Validates URLs before E2E tests run |
-| 3. Vitest Check | ✅ Active | Validates URLs before unit tests run |
-| 4. dev-e2e Script | ✅ Active | Validates and enforces `.env.test` for dev server |
-| 5. Source Code | ✅ Verified | No hardcoded production URLs |
+| Layer               | Status      | Description                                       |
+| ------------------- | ----------- | ------------------------------------------------- |
+| 1. `.env.test`      | ✅ Active   | Dedicated test environment file with local URLs   |
+| 2. Playwright Check | ✅ Active   | Validates URLs before E2E tests run               |
+| 3. Vitest Check     | ✅ Active   | Validates URLs before unit tests run              |
+| 4. dev-e2e Script   | ✅ Active   | Validates and enforces `.env.test` for dev server |
+| 5. Source Code      | ✅ Verified | No hardcoded production URLs                      |
 
 **Production Database Protection**: 🛡️ **Fully Protected**
 
 Tests **cannot** run against production database due to multiple validation layers. Any attempt to use production URLs will:
+
 1. **Fail validation** in playwright.config.ts or vitest.setup.ts
 2. **Terminate immediately** with clear error message
 3. **Prevent any data modifications** to production
