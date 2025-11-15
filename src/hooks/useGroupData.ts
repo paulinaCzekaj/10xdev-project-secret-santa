@@ -1,19 +1,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { notify } from "@/lib/notifications";
-import { groupsService } from "@/services/groupsService";
+import { groupsService } from "@/services/groups.service";
 import type { GroupDetailDTO, UpdateGroupCommand, ApiError } from "@/types";
 
 /**
- * Hook do zarządzania danymi grupy
- * Pobiera dane grupy z API, śledzi stan ładowania i błędów
- * Udostępnia funkcję odświeżania danych i operacje CRUD
+ * Hook for managing group data
+ * Fetches group data from API, tracks loading state and errors
+ * Provides a function to refresh data and CRUD operations
  */
 export function useGroupData(groupId: number) {
   const [group, setGroup] = useState<GroupDetailDTO | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<ApiError | null>(null);
 
-  // Pobieranie danych grupy
+  // Fetching group data
   const fetchGroup = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -31,12 +31,12 @@ export function useGroupData(groupId: number) {
     }
   }, [groupId]);
 
-  // Aktualizacja grupy
+  // Updating group
   const updateGroup = useCallback(
     async (command: UpdateGroupCommand) => {
       try {
         const updatedGroup = await groupsService.update(groupId, command);
-        // Odśwież pełne dane grupy
+        // Refresh full group data
         await fetchGroup();
 
         notify.success("GROUP.UPDATE_SUCCESS");
@@ -51,7 +51,7 @@ export function useGroupData(groupId: number) {
     [groupId, fetchGroup]
   );
 
-  // Usunięcie grupy
+  // Deleting group
   const deleteGroup = useCallback(async () => {
     try {
       await groupsService.delete(groupId);
@@ -64,7 +64,7 @@ export function useGroupData(groupId: number) {
     }
   }, [groupId]);
 
-  // Pobierz dane przy montowaniu
+  // Fetch data on mount
   useEffect(() => {
     fetchGroup();
   }, [fetchGroup]);

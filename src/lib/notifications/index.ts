@@ -11,14 +11,14 @@
  * notify.show('success', loginSuccess);
  */
 
-// Główny service (najpopularniejszy export)
-export { notify, NotificationService } from "./notificationService";
+// Main service (most popular export)
+export { notify, NotificationService } from "./notification.service";
 
-// Słownik komunikatów
+// Dictionary of messages
 export { NOTIFICATION_MESSAGES, getMessage, isValidMessageKey } from "./messages";
 export type { MessageKey } from "./messages";
 
-// Typy
+// Types
 export type {
   NotificationType,
   NotificationMessage,

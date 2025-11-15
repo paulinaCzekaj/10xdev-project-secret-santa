@@ -3,12 +3,15 @@ import { supabaseClient } from "@/db/supabase.client";
 import type { AIGenerationStatusResponse, AIGenerationError, UseAIGenerationStatusReturn } from "@/types";
 
 /**
- * Hook do pobierania i zarządzania statusem AI generation
+ * Hook for fetching and managing the AI generation status
  *
- * @param participantId - ID uczestnika
- * @param token - Token dostępu (dla niezarejestrowanych)
- * @param enabled - Czy hook jest aktywny (default: true)
- * @returns Status AI generation, loading state, error, funkcja refetch
+ * @param participantId - ID participant
+ * @param token - Access token (for unregistered users)
+ * @param enabled - Whether the hook is active (default: true)
+ * @returns Status AI generation, loading state, error, function to refetch
+ *
+ * @example
+ * const { status, isLoading, error, refetch } = useAIGenerationStatus(participantId, token);
  */
 export function useAIGenerationStatus(
   participantId: number,
@@ -32,7 +35,7 @@ export function useAIGenerationStatus(
         url.searchParams.append("token", token);
       }
 
-      // Pobieramy Bearer token z sesji Supabase zamiast localStorage
+      // Get the Bearer token from the Supabase session instead of localStorage
       const {
         data: { session },
       } = await supabaseClient.auth.getSession();

@@ -56,9 +56,23 @@ const reactConfig = tseslint.config({
   },
 });
 
+const nodeConfig = tseslint.config({
+  files: ["scripts/**/*.js", "*.config.js", "*.config.ts"],
+  languageOptions: {
+    globals: {
+      console: "readonly",
+      process: "readonly",
+      global: "readonly",
+      __dirname: "readonly",
+      __filename: "readonly",
+    },
+  },
+});
+
 export default tseslint.config(
   includeIgnoreFile(gitignorePath),
   baseConfig,
+  nodeConfig,
   jsxA11yConfig,
   reactConfig,
   eslintPluginAstro.configs["flat/recommended"],

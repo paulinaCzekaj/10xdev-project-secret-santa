@@ -45,7 +45,8 @@ describe("OpenRouterService", () => {
 
   describe("constructor", () => {
     it("should initialize with custom config", () => {
-      const customService = new OpenRouterService(mockSupabase, {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const customService = new OpenRouterService(mockSupabase as any, {
         apiKey: "custom-key",
         model: "custom-model",
         maxTokens: 500,
@@ -56,11 +57,13 @@ describe("OpenRouterService", () => {
     });
 
     it("should throw error if API key is missing", () => {
-      expect(() => new OpenRouterService(mockSupabase, { apiKey: "" })).toThrow();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect(() => new OpenRouterService(mockSupabase as any, { apiKey: "" })).toThrow();
     });
 
     it("should use default values for optional config", () => {
-      const defaultService = new OpenRouterService(mockSupabase, { apiKey: "test-key" });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const defaultService = new OpenRouterService(mockSupabase as any, { apiKey: "test-key" });
       expect(defaultService).toBeDefined();
     });
   });
@@ -97,7 +100,8 @@ describe("OpenRouterService", () => {
     });
 
     it("should use custom options", async () => {
-      const customService = new OpenRouterService(mockSupabase, {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const customService = new OpenRouterService(mockSupabase as any, {
         apiKey: "test-key",
         temperature: 0.8,
         maxTokens: 500,

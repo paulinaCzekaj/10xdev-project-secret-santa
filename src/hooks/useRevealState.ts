@@ -2,15 +2,15 @@ import { useState, useEffect, useCallback } from "react";
 import type { UseRevealStateReturn } from "../types";
 
 /**
- * Custom hook do zarządzania stanem odkrycia wyniku
- * Sprawdza czy użytkownik już odkrył swój wynik na podstawie result_viewed_at z bazy danych
+ * Custom hook for managing the state of the result discovery
+ * Checks if the user has already revealed their result based on the result_viewed_at field in the database
  */
 export function useRevealState(participantId: number, resultViewedAt?: string): UseRevealStateReturn {
-  // Stan odkrycia oparty na polu result_viewed_at z bazy danych
+  // State of the discovery based on the result_viewed_at field in the database
   const [isRevealed, setIsRevealed] = useState(!!resultViewedAt);
 
   /**
-   * Wywołuje API do śledzenia odkrycia wyniku
+   * Calls the API to track the result discovery by the participant
    */
   const trackReveal = useCallback(async (): Promise<void> => {
     try {
@@ -18,7 +18,7 @@ export function useRevealState(participantId: number, resultViewedAt?: string): 
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Note: Authentication headers will be added by the browser for same-origin requests
+          // Note: Authentication headers will be added by the browser for requests to the same origin
         },
       });
 
@@ -35,25 +35,25 @@ export function useRevealState(participantId: number, resultViewedAt?: string): 
   }, [participantId]);
 
   /**
-   * Odkrywa wynik - wywołuje API i aktualizuje UI
+   * Reveals the result - calls the API and updates the UI
    */
   const reveal = useCallback(async (): Promise<void> => {
-    // Najpierw aktualizujemy UI
+    // First update the UI
     setIsRevealed(true);
 
-    // Następnie śledzimy w bazie danych
+    // Then track the result in the database
     await trackReveal();
   }, [trackReveal]);
 
   /**
-   * Resetuje stan odkrycia (głównie do celów debugowania)
-   * Uwaga: To nie resetuje bazy danych, tylko lokalny stan
+   * Resets the state of the discovery (mainly for debugging purposes)
+   * Note: This does not reset the database, only the local state
    */
   const reset = useCallback((): void => {
     setIsRevealed(false);
   }, []);
 
-  // Aktualizuj stan gdy zmieni się resultViewedAt
+  // Update the state when resultViewedAt changes
   useEffect(() => {
     setIsRevealed(!!resultViewedAt);
   }, [resultViewedAt]);

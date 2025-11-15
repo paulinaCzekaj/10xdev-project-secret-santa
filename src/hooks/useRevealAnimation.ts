@@ -7,12 +7,12 @@ interface UseRevealAnimationOptions {
 }
 
 /**
- * Hook do zarządzania animacją odkrycia wyniku losowania
+ * Hook for managing the animation of the result discovery
  *
- * @param isRevealed - Czy wynik jest już odkryty
- * @param onRevealComplete - Callback wywoływany po zakończeniu animacji
- * @param animationDuration - Czas trwania animacji w ms (domyślnie 800ms)
- * @returns Obiekt z stanem animacji i funkcją do jej rozpoczęcia
+ * @param isRevealed - Whether the result is already revealed
+ * @param onRevealComplete - Callback called after the animation completes
+ * @param animationDuration - Duration of the animation in ms (default 800ms)
+ * @returns Object with the animation state and function to start it
  *
  * @example
  * const { isAnimating, startAnimation } = useRevealAnimation({
@@ -29,7 +29,7 @@ export const useRevealAnimation = ({
   const [isAnimating, setIsAnimating] = useState(false);
 
   const startAnimation = useCallback(() => {
-    // Guard: nie rozpoczynaj animacji jeśli już odkryto lub animacja trwa
+    // Guard: do not start animation if already revealed or animation is in progress
     if (isRevealed || isAnimating) return;
 
     setIsAnimating(true);
@@ -39,7 +39,7 @@ export const useRevealAnimation = ({
       setIsAnimating(false);
     }, animationDuration);
 
-    // Cleanup function (zwracana dla potencjalnego użycia w useEffect)
+    // Cleanup function (returned for potential use in useEffect hook)
     return () => clearTimeout(timer);
   }, [isRevealed, isAnimating, onRevealComplete, animationDuration]);
 

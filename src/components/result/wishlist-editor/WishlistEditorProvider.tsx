@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { useWishlistEditor } from "@/hooks/useWishlistEditor";
 import { useAIGeneration } from "@/hooks/useAIGeneration";
 import { useAIGenerationStatus } from "@/hooks/useAIGenerationStatus";
-import type { AIGenerationStatusResponse } from "@/types";
+import type { AIGenerationStatusResponse, AIGenerationError } from "@/types";
 
 interface WishlistEditorProviderProps {
   participantId: number;
@@ -32,7 +32,7 @@ interface WishlistEditorContextValue {
   // AI generation state
   isGenerating: boolean;
   isRegenerating: boolean;
-  aiError: string | null;
+  aiError: AIGenerationError | null;
   generatedContent: string | null;
   currentPrompt: string | null;
   remainingGenerations: number | null;
@@ -94,7 +94,7 @@ export function WishlistEditorProvider({
       // AI generation state
       isGenerating,
       isRegenerating,
-      aiError: aiError?.message || null,
+      aiError,
       generatedContent,
       currentPrompt,
       remainingGenerations,

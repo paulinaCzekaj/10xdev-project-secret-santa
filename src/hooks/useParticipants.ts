@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
-import { participantsService } from "@/services/participantsService";
+import { participantsService } from "@/services/participants.service";
 import type { ParticipantListItemDTO, CreateParticipantCommand, UpdateParticipantCommand, ApiError } from "@/types";
 
 /**
- * Hook do zarządzania uczestnikami grupy
- * Obsługuje CRUD operacje na uczestnikach
+ * Hook for managing participants of a group
+ * Handles CRUD operations on participants
  */
 export function useParticipants(groupId: number) {
   const [participants, setParticipants] = useState<ParticipantListItemDTO[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<ApiError | null>(null);
 
-  // Pobieranie uczestników
+  // Fetching participants
   const fetchParticipants = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -29,7 +29,7 @@ export function useParticipants(groupId: number) {
     }
   }, [groupId]);
 
-  // Dodawanie uczestnika
+  // Adding a participant
   const addParticipant = useCallback(
     async (command: CreateParticipantCommand) => {
       try {
@@ -46,7 +46,7 @@ export function useParticipants(groupId: number) {
     [groupId]
   );
 
-  // Aktualizacja uczestnika
+  // Updating a participant
   const updateParticipant = useCallback(async (participantId: number, command: UpdateParticipantCommand) => {
     try {
       const updated = await participantsService.update(participantId, command);
@@ -60,7 +60,7 @@ export function useParticipants(groupId: number) {
     }
   }, []);
 
-  // Usuwanie uczestnika
+  // Deleting a participant
   const deleteParticipant = useCallback(async (participantId: number) => {
     try {
       await participantsService.delete(participantId);
@@ -74,7 +74,7 @@ export function useParticipants(groupId: number) {
     }
   }, []);
 
-  // Pobierz dane przy montowaniu
+  // Fetch data on mount
   useEffect(() => {
     fetchParticipants();
   }, [fetchParticipants]);

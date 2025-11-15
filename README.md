@@ -116,7 +116,7 @@ The application is configured for automatic deployment to Cloudflare Pages via G
 For detailed deployment instructions, see:
 
 - [Deployment Setup Guide](.github/DEPLOYMENT-SETUP.md)
-- [Cloudflare Deployment Guide](CLOUDFLARE-DEPLOYMENT.md)
+- [Cloudflare Deployment Guide](docs/deployment/cloudflare-deployment.md)
 
 ## Project Scope
 

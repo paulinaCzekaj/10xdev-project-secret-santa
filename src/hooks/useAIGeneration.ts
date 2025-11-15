@@ -171,13 +171,13 @@ export function useAIGeneration(
   const acceptLetter = useCallback(async () => {
     if (!generatedContent) return;
 
-    // Callback dla parent component (wstawienie do textarea)
-    // Reset stanu
+    // Callback for the parent component (inserting into textarea)
+    // Reset the state
     setGeneratedContent(null);
     setCurrentPrompt(null);
     setError(null);
 
-    // Refetch AI status
+    // Refetch the AI status
     await onStatusChange?.();
 
     toast.success("List został dodany do Twojej listy życzeń");
