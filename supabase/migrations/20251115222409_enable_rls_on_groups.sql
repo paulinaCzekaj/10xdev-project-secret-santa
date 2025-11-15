@@ -4,7 +4,7 @@
 -- Purpose: Enable RLS and create security policies for CRUD operations on the groups table
 -- Affected tables: groups
 -- Security model: RLS protects write operations only
---   - SELECT: No RLS (application layer controls access, needed for token-based unregistered users)
+--   - SELECT: Permissive RLS policy (allows all access, application layer controls fine-grained access, needed for token-based unregistered users)
 --   - INSERT: Only authenticated users can create groups (with creator_id validation)
 --   - UPDATE: Only group creators can update their groups
 --   - DELETE: Only group creators can delete their groups
