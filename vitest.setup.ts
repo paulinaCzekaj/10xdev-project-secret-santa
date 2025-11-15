@@ -2,9 +2,20 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 
+// SAFETY CHECK: Ensure unit tests never use production database
+const currentSupabaseUrl = process.env.PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+if (currentSupabaseUrl?.includes("uiyurwyzsckkkoqthxmv.supabase.co")) {
+  console.error("\n❌ CRITICAL ERROR: Unit tests detected PRODUCTION database URL!");
+  console.error(`   Found: ${currentSupabaseUrl}`);
+  console.error("   Unit tests must use mocked Supabase client.\n");
+  throw new Error("Unit tests cannot run against production database");
+}
+
 // Mock Supabase environment variables for tests
 process.env.PUBLIC_SUPABASE_URL = "https://test.supabase.co";
 process.env.PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
+
+console.log("✅ Vitest Safety Check: Using mocked Supabase URLs");
 
 // Cleanup after each test
 afterEach(() => {

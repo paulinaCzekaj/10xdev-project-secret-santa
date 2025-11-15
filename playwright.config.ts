@@ -1,7 +1,24 @@
 import { defineConfig, devices } from "@playwright/test";
 import dotenv from "dotenv";
 import path from "path";
+
+// Load test environment variables
 dotenv.config({ path: path.resolve(process.cwd(), ".env.test") });
+
+// SAFETY CHECK: Prevent tests from running against production database
+const supabaseUrl = process.env.SUPABASE_URL || process.env.PUBLIC_SUPABASE_URL;
+
+if (supabaseUrl?.includes("uiyurwyzsckkkoqthxmv.supabase.co")) {
+  console.error("\n❌ CRITICAL ERROR: E2E tests are configured to use PRODUCTION database!");
+  console.error(`   Detected URL: ${supabaseUrl}`);
+  console.error(`   Expected: http://127.0.0.1:54321 (local Supabase)`);
+  console.error("\n   Tests MUST NOT run against production!");
+  console.error("   Please check your .env.test file.\n");
+  process.exit(1);
+}
+
+console.log("✅ E2E Test Safety Check: Using local Supabase");
+console.log(`   SUPABASE_URL: ${supabaseUrl || "not set"}\n`);
 /**
  * See https://playwright.dev/docs/test-configuration.
  */

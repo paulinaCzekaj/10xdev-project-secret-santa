@@ -11,6 +11,7 @@
 The Secret Santa application has a **5.6% test coverage** with 1,888 lines of unit tests and 359 lines of E2E tests across 141 total source files. While a solid testing infrastructure is in place, **most of the application remains untested**, including React components, API routes, and business logic hooks.
 
 **Key Metrics:**
+
 - Total source files: **141**
 - Test files: **8 unit tests + 2 E2E tests**
 - Lines of unit test code: **1,888**
@@ -24,6 +25,7 @@ The Secret Santa application has a **5.6% test coverage** with 1,888 lines of un
 ## Test Framework Setup
 
 ### Vitest Configuration
+
 **File:** `/home/user/secret-santa/vitest.config.ts`
 
 ```typescript
@@ -38,9 +40,11 @@ The Secret Santa application has a **5.6% test coverage** with 1,888 lines of un
 ```
 
 ### Test Setup File
+
 **File:** `/home/user/secret-santa/vitest.setup.ts`
 
 Global mocks configured:
+
 - ✓ `window.matchMedia` - Media query mock
 - ✓ `IntersectionObserver` - DOM observer mock
 - ✓ `ResizeObserver` - DOM observer mock
@@ -48,6 +52,7 @@ Global mocks configured:
 - ✓ Testing Library jest-dom matchers
 
 ### Playwright E2E Configuration
+
 **File:** `/home/user/secret-santa/playwright.config.ts`
 
 ```typescript
@@ -62,6 +67,7 @@ Global mocks configured:
 ```
 
 ### Dependencies
+
 - **Testing Framework:** vitest ^3.2.4
 - **Component Testing:** @testing-library/react ^16.3.0, @testing-library/jest-dom ^6.9.1
 - **User Interactions:** @testing-library/user-event ^14.6.1
@@ -76,6 +82,7 @@ Global mocks configured:
 ### Unit Tests (1,888 lines)
 
 #### 1. **Drawing Algorithm** ⭐ WELL TESTED
+
 - **File:** `src/lib/services/__tests__/draw.service.test.ts` (437 lines)
 - **Tests:** 5 describe blocks, ~15 test cases
 - **Coverage:**
@@ -93,6 +100,7 @@ Global mocks configured:
   - Requirement validation with exclusions
 
 #### 2. **Drawing Algorithm - Cross-Pairs Check** ⭐ WELL TESTED
+
 - **File:** `src/lib/services/__tests__/draw-cross-pairs-check.test.ts` (partial)
 - **Tests:** Validation across 100 runs
 - **Coverage:**
@@ -101,6 +109,7 @@ Global mocks configured:
   - ✓ Algorithm consistency
 
 #### 3. **Wishlist Service** ⭐ EXTENSIVELY TESTED
+
 - **File:** `src/lib/services/wishlist.service.test.ts` (596 lines)
 - **Tests:** 2 describe blocks, ~25 test cases
 - **Coverage:**
@@ -120,6 +129,7 @@ Global mocks configured:
   - ✓ validateWishlistAccess method (15+ test cases)
 
 #### 4. **Notification Service** ✓ TESTED
+
 - **File:** `src/__tests__/notifications/notificationService.test.ts` (131 lines)
 - **Tests:** 6 describe blocks, ~13 test cases
 - **Coverage:**
@@ -134,6 +144,7 @@ Global mocks configured:
   - ✓ Dismiss functionality
 
 #### 5. **Notification Messages** ✓ TESTED
+
 - **File:** `src/__tests__/notifications/messages.test.ts` (55 lines)
 - **Tests:** 3 describe blocks, ~8 test cases
 - **Coverage:**
@@ -144,6 +155,7 @@ Global mocks configured:
   - ✓ Message retrieval
 
 #### 6. **Utility Functions** ✓ TESTED
+
 - **File:** `src/__tests__/lib/utils.test.ts` (36 lines)
 - **Tests:** 1 describe block, 6 test cases
 - **Coverage:**
@@ -155,6 +167,7 @@ Global mocks configured:
   - ✓ Tailwind class conflict resolution
 
 #### 7. **Button Component** ✓ TESTED
+
 - **File:** `src/__tests__/components/Button.test.tsx` (40 lines)
 - **Tests:** 1 describe block, 4 test cases
 - **Coverage:**
@@ -166,6 +179,7 @@ Global mocks configured:
 ### E2E Tests (359 lines)
 
 #### 1. **Example E2E** ✓ BASIC
+
 - **File:** `e2e/example.spec.ts` (55 lines)
 - **Tests:** 3 test cases
 - **Coverage:**
@@ -174,6 +188,7 @@ Global mocks configured:
   - ✓ Access to registration page
 
 #### 2. **Group Creation Flow** ✓ POM PATTERN
+
 - **File:** `e2e/groups/create-group-flow-pom.spec.ts` (100+ lines)
 - **Tests:** Page Object Model implementation
 - **Coverage:**
@@ -189,11 +204,13 @@ Global mocks configured:
 ### Critical Gaps
 
 #### React Components (69 files untested)
+
 **Location:** `src/components/`
 
 **By Category:**
 
 **Authentication Components (8 files)**
+
 - ForgotPasswordForm.tsx
 - LoginForm.tsx
 - RegisterForm.tsx
@@ -204,6 +221,7 @@ Global mocks configured:
 - ForgotPasswordSuccess.tsx
 
 **Group Management Components (20+ files)**
+
 - GroupView.tsx
 - AddParticipantForm.tsx
 - AddExclusionForm.tsx
@@ -222,6 +240,7 @@ Global mocks configured:
 - GroupHeader.tsx
 
 **Result Display Components (9 files)**
+
 - ResultView.tsx
 - ResultReveal.tsx
 - ResultHeader.tsx
@@ -233,27 +252,32 @@ Global mocks configured:
 - Error components (7 error types)
 
 **UI Components (20+ files)**
+
 - All @radix-ui wrapper components
 - Form fields components
 - Dialog, modal, dropdown components
 - Custom themed components
 
 **Other Components**
+
 - Dashboard.tsx
 - CreateGroupForm.tsx
 - Navbar.tsx
 - Layout/state components
 
 #### API Routes (18 files untested)
+
 **Location:** `src/pages/api/`
 
 **Authentication Endpoints (4 files)**
+
 - `auth/login.ts` - Login logic
 - `auth/register.ts` - Registration logic
 - `auth/reset-password.ts` - Password reset
 - `auth/logout.ts` - Logout logic
 
 **Group Management Endpoints (7 files)**
+
 - `groups/index.ts` - List/create groups
 - `groups/[groupId]/index.ts` - Get/update/delete group
 - `groups/[groupId]/participants.ts` - Manage participants
@@ -263,19 +287,23 @@ Global mocks configured:
 - `groups/[groupId]/result.ts` - Get group results
 
 **Participant/Wishlist Endpoints (4 files)**
+
 - `participants/[participantId].ts` - Get/update participant
 - `participants/[participantId]/reveal.ts` - Reveal result tracking
 - `participants/[participantId]/wishlist/index.ts` - Manage wishlist
 - `exclusions/[id].ts` - Delete exclusion
 
 **Result Endpoints (2 files)**
+
 - `results/[token]/index.ts` - Get result by token
 - `results/[token]/track.ts` - Track result access
 
 **Other**
+
 - `test.ts` - Test endpoint
 
 #### React Hooks (20 files untested)
+
 **Location:** `src/hooks/`
 
 - useCreateGroup.ts
@@ -300,9 +328,11 @@ Global mocks configured:
 - useWishlistLinking.ts
 
 #### Services & Business Logic (9 files partially untested)
+
 **Location:** `src/lib/services/` & `src/services/`
 
 **Untested Services:**
+
 - group.service.ts
 - participant.service.ts
 - results.service.ts
@@ -314,13 +344,16 @@ Global mocks configured:
 - apiClient.ts
 
 **Partially Tested:**
+
 - ✓ draw.service.ts (tested)
 - ✓ wishlist.service.ts (tested)
 
 #### Utilities (14 files partially untested)
+
 **Location:** `src/lib/utils/`
 
 **Untested:**
+
 - api-auth.utils.ts - Auth utilities
 - clipboard.ts - Clipboard operations
 - formatters.ts - Date/number formatting
@@ -330,6 +363,7 @@ Global mocks configured:
 - (Only `lib/utils.ts` with `cn()` function is tested)
 
 #### View Models & State Management (0% coverage)
+
 - AddExclusionFormViewModel.ts (inferred from code references)
 - Group state management
 - Form state management
@@ -398,24 +432,28 @@ Global mocks configured:
 ### Phase 1: Critical Path (70% coverage) - Weeks 1-2
 
 **Priority 1: Authentication & Authorization**
+
 - [ ] Test all auth components (LoginForm, RegisterForm, ResetPasswordForm)
 - [ ] Test auth API endpoints (login, register, reset-password, logout)
 - [ ] Test auth hooks (useRegister, useForgotPassword, useResetPassword)
 - **Impact:** Protects core user authentication
 
 **Priority 2: Group Management Core**
+
 - [ ] Test GroupView component
 - [ ] Test group CRUD API endpoints
 - [ ] Test group-related hooks (useGroupData, useCreateGroup)
 - **Impact:** Core business functionality
 
 **Priority 3: Draw Algorithm Integration**
+
 - [ ] Test draw validation API endpoint
 - [ ] Test draw execution API endpoint
 - [ ] Test draw-related hooks (useDraw, useExclusions)
 - **Impact:** Mission-critical business logic
 
 **Priority 4: Results & Display**
+
 - [ ] Test ResultView component
 - [ ] Test result API endpoints
 - [ ] Test result access tracking
@@ -465,18 +503,21 @@ src/
 ## Testing Priorities by Business Value
 
 ### Tier 1: Must Test First (MVP Critical)
+
 1. **Authentication API endpoints** - System security
 2. **Draw algorithm execution** - Core feature (✓ partially done)
 3. **Wishlist management** - User feature (✓ done)
 4. **Result retrieval** - User-facing feature
 
 ### Tier 2: Should Test (Feature Complete)
+
 1. **Group management** - CRUD operations
 2. **Participant management** - User management
 3. **Exclusion rules** - Business constraint
 4. **Auth forms & components** - User experience
 
 ### Tier 3: Nice to Test (Quality)
+
 1. **UI components** - Visual consistency
 2. **Error handling** - Error scenarios
 3. **Edge cases** - Boundary conditions
@@ -487,6 +528,7 @@ src/
 ## Configuration Updates Needed
 
 ### vitest.config.ts
+
 ```typescript
 // Current thresholds (too permissive):
 coverage: {
@@ -546,6 +588,7 @@ npm run test:e2e:report
 ## Files Needing Tests by Category
 
 ### Components Needing Tests (60+ files)
+
 - Authentication: LoginForm, RegisterForm, ResetPasswordForm, ForgotPasswordForm
 - Group Management: GroupView, ParticipantsList, ExclusionsSection, etc.
 - Results: ResultView, WishlistEditor, AssignedPersonCard, etc.
@@ -553,18 +596,21 @@ npm run test:e2e:report
 - All error components (7 types)
 
 ### API Routes Needing Tests (18 files)
+
 - Authentication: /auth/login, /auth/register, /auth/reset-password
 - Groups: /groups, /groups/[id], /groups/[id]/draw, /groups/[id]/participants
 - Results: /results/[token], /results/[token]/track
 - Wishlists: /participants/[id]/wishlist
 
 ### Hooks Needing Tests (20 files)
+
 - Data hooks: useGroupData, useResultData, useGroupViewModel
 - Form hooks: useRegister, useForgotPassword, useResetPassword
 - Event hooks: useDraw, useExclusions, useParticipants
 - UI hooks: useRevealAnimation, useConfetti, useModalState
 
 ### Services Needing Tests (9 files)
+
 - group.service.ts, participant.service.ts, results.service.ts
 - exclusion-rule.service.ts, assignments.service.ts
 - Client services: groupsService.ts, participantsService.ts, etc.
@@ -577,7 +623,8 @@ The Secret Santa application has **excellent test infrastructure** but **critica
 
 **Key Finding:** While 1,888 lines of tests exist, they cover fewer than 10 source files out of 141 total files (≈7% of codebase).
 
-**Recommended Action:** 
+**Recommended Action:**
+
 1. Update coverage thresholds to 70%+
 2. Focus on Tier 1 (authentication, draw, results) first
 3. Use existing tests as patterns for new tests
@@ -585,4 +632,3 @@ The Secret Santa application has **excellent test infrastructure** but **critica
 5. Enforce CI/CD test gates before merging
 
 This will ensure the Secret Santa application meets production quality standards and prevents regressions as the codebase evolves.
-

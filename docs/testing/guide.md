@@ -8,6 +8,25 @@ This project uses a comprehensive testing setup:
 - **React Testing Library** for component testing
 - **Playwright** for end-to-end (E2E) testing
 
+## 🛡️ Test Safety
+
+**IMPORTANT**: All tests are configured with **multiple protection layers** to ensure they **NEVER** run against the production database.
+
+👉 **Read the [Test Safety Guide](test-safety-guide.md) for complete details.**
+
+**Quick Summary**:
+- ✅ E2E tests use `.env.test` with local Supabase only
+- ✅ Unit tests use mocked Supabase client
+- ✅ Automatic validation prevents production URL usage
+- ✅ Tests terminate immediately if production database is detected
+
+**Safe Test Commands**:
+```bash
+npm run test          # Unit tests (mocked)
+npm run test:e2e      # E2E tests (local Supabase)
+npm run dev:e2e       # E2E dev server (local Supabase)
+```
+
 ## Test Structure
 
 ```
