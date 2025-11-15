@@ -1,9 +1,22 @@
 import type { Tables, TablesInsert, TablesUpdate } from "./db/database.types";
 import type React from "react";
+import type { APIContext } from "astro";
 
 // ============================================================================
 // COMMON TYPES
 // ============================================================================
+
+/**
+ * Extended API context for Cloudflare Workers environment
+ * Includes the env property that's available in Cloudflare Workers runtime
+ */
+export interface CloudflareWorkersAPIContext extends APIContext {
+  env?: {
+    OPENROUTER_API_KEY?: string;
+    PUBLIC_SITE_URL?: string;
+    [key: string]: string | undefined;
+  };
+}
 
 /**
  * Pagination metadata returned with list endpoints

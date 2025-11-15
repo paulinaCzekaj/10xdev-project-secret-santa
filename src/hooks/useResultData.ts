@@ -4,7 +4,7 @@ import { useWishlistLinking } from "./useWishlistLinking";
 import type { UseResultDataReturn, ResultViewModel, ApiError, DrawResultResponseDTO } from "../types";
 
 /**
- * Mapuje błąd na odpowiedni obiekt ApiError
+ * Maps the error to the corresponding ApiError object
  */
 function mapErrorToApiError(err: Error): ApiError {
   switch (true) {
@@ -26,26 +26,26 @@ function mapErrorToApiError(err: Error): ApiError {
 }
 
 /**
- * Custom hook do pobierania danych wyniku z API
- * Obsługuje zarówno dostęp dla zalogowanych jak i niezalogowanych użytkowników
+ * Custom hook for fetching the result data from the API
+ * Handles both authenticated and unauthenticated users
  */
 export function useResultData(groupId?: number, token?: string, isAuthenticated?: boolean): UseResultDataReturn {
   const [result, setResult] = useState<ResultViewModel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<ApiError | null>(null);
 
-  // Use the proper wishlist linking hook for markdown link support
+  // Use the proper wishlist linking hook for Markdown link support
   const { convertToHtml } = useWishlistLinking();
 
   /**
-   * Formatuje budżet do czytelnej postaci
+   * Formats the budget to a readable format
    */
   const formatBudget = useCallback((budget: number): string => {
     return `${budget} PLN`;
   }, []);
 
   /**
-   * Formatuje datę zakończenia do czytelnej postaci
+   * Formats the end date to a readable format
    */
   const formatEndDate = useCallback((endDate: string): string => {
     const date = new Date(endDate);
@@ -57,7 +57,7 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
   }, []);
 
   /**
-   * Formatuje datę zakończenia do krótkiej postaci
+   * Formats the end date to a short format
    */
   const formatShortEndDate = useCallback((endDate: string): string => {
     const date = new Date(endDate);
@@ -69,14 +69,14 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
   }, []);
 
   /**
-   * Sprawdza czy data zakończenia minęła
+   * Checks if the end date has passed
    */
   const isDateExpired = useCallback((endDate: string): boolean => {
     return new Date() > new Date(endDate);
   }, []);
 
   /**
-   * Oblicza dni do końca wydarzenia
+   * Calculates the days until the end of the event
    */
   const calculateDaysUntilEnd = useCallback((endDate: string): number => {
     const now = new Date();
@@ -87,7 +87,7 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
   }, []);
 
   /**
-   * Wyciąga inicjały z imienia i nazwiska
+   * Extracts the initials from the name and surname
    */
   const getInitials = useCallback((name: string): string => {
     return name
@@ -101,32 +101,32 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
   // Note: convertToHtml from useWishlistLinking handles both plain URLs and markdown links
 
   /**
-   * Transformuje DTO z API na ViewModel
+   * Transforms the DTO from the API to the ViewModel
    */
   const transformToViewModel = useCallback(
     (dto: DrawResultResponseDTO): ResultViewModel => {
       return {
-        // Dane z API
+        // Data from the API
         group: dto.group,
         participant: dto.participant,
         assigned_to: dto.assigned_to,
         my_wishlist: dto.my_wishlist,
         wishlist_stats: dto.wishlist_stats,
 
-        // Formatowane wartości
+        // Formatted values
         formattedBudget: formatBudget(dto.group.budget),
         formattedEndDate: formatEndDate(dto.group.end_date),
         formattedShortEndDate: formatShortEndDate(dto.group.end_date),
 
-        // Obliczone wartości
+        // Calculated values
         isExpired: isDateExpired(dto.group.end_date),
         daysUntilEnd: calculateDaysUntilEnd(dto.group.end_date),
 
-        // Dane wylosowanej osoby
+        // Data of the assigned person
         assignedPersonInitials: getInitials(dto.assigned_to.name),
         assignedPersonWishlistHtml: dto.assigned_to.wishlist ? convertToHtml(dto.assigned_to.wishlist) : undefined,
 
-        // Flagi dostępu
+        // Access flags
         isAuthenticated: !!isAuthenticated,
         accessToken: token,
 
@@ -148,7 +148,7 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
   );
 
   /**
-   * Pobiera dane z API
+   * Fetches the data from the API
    */
   const fetchResult = useCallback(async (): Promise<void> => {
     try {
@@ -160,12 +160,12 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
         "Content-Type": "application/json",
       };
 
-      // Określenie endpointu na podstawie parametrów
+      // Determine the endpoint based on the parameters
       if (groupId && isAuthenticated) {
-        // Dla zalogowanych użytkowników
+        // For authenticated users
         url = `/api/groups/${groupId}/result`;
 
-        // Pobieramy Bearer token z sesji Supabase
+        // Get the Bearer token from the Supabase session
         const {
           data: { session },
         } = await supabaseClient.auth.getSession();
@@ -174,7 +174,7 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
           headers["Authorization"] = `Bearer ${session.access_token}`;
         }
       } else if (token) {
-        // Dla niezalogowanych użytkowników
+        // For unauthenticated users
         url = `/api/results/${token}`;
       } else {
         throw new Error("INVALID_PARAMS");
@@ -210,13 +210,13 @@ export function useResultData(groupId?: number, token?: string, isAuthenticated?
   }, [groupId, token, isAuthenticated, transformToViewModel]);
 
   /**
-   * Funkcja refetch do ręcznego odświeżenia danych
+   * Function to manually refresh the data
    */
   const refetch = useCallback(async (): Promise<void> => {
     await fetchResult();
   }, [fetchResult]);
 
-  // Pobieranie danych przy montowaniu komponentu
+  // Fetching the data when the component is mounted
   useEffect(() => {
     if (groupId || token) {
       fetchResult();

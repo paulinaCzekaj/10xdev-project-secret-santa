@@ -26,7 +26,7 @@ export const useGroupViewHandlers = ({
   setOptimisticExclusions,
   navigate,
 }: UseGroupViewHandlersParams) => {
-  // Obsługa zdarzeń GroupHeader
+  // Handling events for GroupHeader
   const handleEditGroupClick = useCallback(() => {
     modals.openEditGroupModal();
   }, [modals]);
@@ -35,18 +35,18 @@ export const useGroupViewHandlers = ({
     modals.openDeleteGroupModal();
   }, [modals]);
 
-  // Obsługa zdarzeń związanych z grupą
+  // Handling events related to the group
   const handleGroupUpdated = useCallback(() => {
     refetchGroup();
     modals.closeModal();
   }, [refetchGroup, modals]);
 
   const handleGroupDeleted = useCallback(() => {
-    // Przekierowanie do dashboard
+    // Redirect to dashboard
     navigate?.("/dashboard");
   }, [navigate]);
 
-  // Obsługa zdarzeń związanych z uczestnikami
+  // Handling events related to participants
   const handleParticipantAdded = useCallback(() => {
     refetchParticipants();
   }, [refetchParticipants]);
@@ -79,21 +79,21 @@ export const useGroupViewHandlers = ({
 
     const participantId = modals.participantToDelete.id;
 
-    // React 19 optimistic update - UI reaguje natychmiast
+    // React 19 optimistic update - UI reacts immediately
     if (setOptimisticParticipants) {
       setOptimisticParticipants(participantId);
     }
 
-    // Wykonaj API call - React automatycznie przywróci stan przy błędzie
+    // Make API call - React automatically restores state on error
     const result = await deleteParticipant(participantId);
 
-    // Jeśli błąd i nie ma optimistic, ręcznie odśwież
+    // If error and no optimistic, manually refresh
     if (!result.success && !setOptimisticParticipants) {
       refetchParticipants();
       notify.error({ title: result.error || "Nie udało się usunąć uczestnika" });
     }
 
-    // Zamknij modal
+    // Close modal
     modals.closeModal();
   }, [modals, deleteParticipant, refetchParticipants, setOptimisticParticipants]);
 
@@ -109,7 +109,7 @@ export const useGroupViewHandlers = ({
     }
   }, []);
 
-  // Obsługa zdarzeń związanych z wykluczeniami
+  // Handling events related to exclusions
   const handleExclusionAdded = useCallback(() => {
     refetchExclusions();
   }, [refetchExclusions]);
@@ -120,15 +120,15 @@ export const useGroupViewHandlers = ({
 
   const handleDeleteExclusion = useCallback(
     async (exclusionId: number) => {
-      // React 19 optimistic update - UI reaguje natychmiast
+      // React 19 optimistic update - UI reacts immediately
       if (setOptimisticExclusions) {
         setOptimisticExclusions(exclusionId);
       }
 
-      // Wykonaj API call - React automatycznie przywróci stan przy błędzie
+      // Make API call - React automatically restores state on error
       const result = await deleteExclusion(exclusionId);
 
-      // Jeśli błąd i nie ma optimistic, ręcznie odśwież
+      // If error and no optimistic, manually refresh
       if (!result.success && !setOptimisticExclusions) {
         refetchExclusions();
         notify.error({ title: result.error || "Nie udało się usunąć wykluczenia" });
@@ -137,13 +137,13 @@ export const useGroupViewHandlers = ({
     [deleteExclusion, refetchExclusions, setOptimisticExclusions]
   );
 
-  // Obsługa zdarzeń DrawSection
+  // Handling events related to DrawSection
   const handleDrawClick = useCallback(() => {
     modals.openDrawConfirmationModal();
   }, [modals]);
 
   const handleDrawComplete = useCallback(async () => {
-    // Odśwież wszystkie dane po losowaniu
+    // Refresh all data after drawing
     await Promise.all([refetchGroup(), refetchParticipants(), refetchExclusions()]);
     modals.closeModal();
   }, [refetchGroup, refetchParticipants, refetchExclusions, modals]);

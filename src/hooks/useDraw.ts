@@ -3,8 +3,8 @@ import { supabaseClient } from "@/db/supabase.client";
 import type { DrawValidationDTO, DrawResultDTO, ApiError } from "@/types";
 
 /**
- * Hook do zarządzania procesem losowania
- * Obsługuje walidację i wykonanie losowania
+ * Hook for managing the drawing process
+ * Handles validation and execution of the drawing
  */
 export function useDraw(groupId: number) {
   const [validation, setValidation] = useState<DrawValidationDTO | null>(null);
@@ -12,7 +12,7 @@ export function useDraw(groupId: number) {
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [error, setError] = useState<ApiError | null>(null);
 
-  // Walidacja możliwości losowania
+  // Validation of the drawing possibility
   const validateDraw = useCallback(async () => {
     setIsValidating(true);
     setError(null);
@@ -47,7 +47,7 @@ export function useDraw(groupId: number) {
     }
   }, [groupId]);
 
-  // Wykonanie losowania
+  // Execution of the drawing process
   const executeDraw = useCallback(async () => {
     setIsDrawing(true);
     setError(null);

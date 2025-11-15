@@ -1,7 +1,7 @@
 import type { NotificationMessages, NotificationType } from "./types";
 
 /**
- * Helper do tworzenia wiadomości z domyślnym typem
+ * Helper to create a  message with a default type
  */
 const createMessage = (title: string, description?: string, type: NotificationType = "info") => ({
   title,
@@ -10,26 +10,26 @@ const createMessage = (title: string, description?: string, type: NotificationTy
 });
 
 /**
- * Centralny słownik wszystkich komunikatów notyfikacji
+ * Central dictionary of all notification messages
  *
- * Konwencja nazewnictwa kluczy: CATEGORY.ACTION_STATUS
- * - CATEGORY: sekcja aplikacji (AUTH, GROUP, etc.)
- * - ACTION: wykonywana akcja (LOGIN, CREATE, DELETE, etc.)
- * - STATUS: wynik akcji (SUCCESS, ERROR, WARNING, INFO)
+ * Key naming convention: CATEGORY.ACTION_STATUS
+ * - CATEGORY: section of the application (AUTH, GROUP, etc.)
+ * - ACTION: action performed (LOGIN, CREATE, DELETE, etc.)
+ * - STATUS: result of the action (SUCCESS, ERROR, WARNING, INFO)
  *
- * Przykłady:
+ * Examples:
  * - AUTH.LOGIN_SUCCESS
  * - GROUP.CREATE_ERROR
  * - PARTICIPANT.DELETE_SUCCESS
  *
  * @example
- * // Użycie w kodzie
+ * // Usage in code
  * import { notify } from '@/lib/notifications';
  * notify.success('AUTH.LOGIN_SUCCESS');
  */
 export const NOTIFICATION_MESSAGES: NotificationMessages = {
   // ============================================================================
-  // AUTHENTICATION (Autentykacja)
+  // AUTHENTICATION (Authentication)
   // ============================================================================
 
   "AUTH.LOGIN_SUCCESS": createMessage("Zalogowano pomyślnie!", undefined, "success"),
@@ -57,12 +57,12 @@ export const NOTIFICATION_MESSAGES: NotificationMessages = {
   "AUTH.PRIVACY_INFO": createMessage("Polityka prywatności będzie dostępna wkrótce", undefined, "info"),
 
   // ============================================================================
-  // GROUP (Grupy)
+  // GROUP (Groups)
   // ============================================================================
 
   "GROUP.CREATE_SUCCESS": createMessage(
-    "Loteria została utworzona pomyślnie!",
-    "Możesz teraz dodać uczestników",
+    "Lottery has been created successfully!",
+    "You can now add participants",
     "success"
   ),
 
@@ -188,19 +188,19 @@ export const NOTIFICATION_MESSAGES: NotificationMessages = {
 } as const;
 
 /**
- * Type helper - ekstrakcja kluczy jako union type dla lepszej sugestii IDE
+ * Type helper - extract keys as a union type for better IDE suggestions
  */
 export type MessageKey = keyof typeof NOTIFICATION_MESSAGES;
 
 /**
- * Helper do sprawdzania czy klucz istnieje w słowniku
+ * Helper to check if a key exists in the dictionary
  */
 export const isValidMessageKey = (key: string): key is MessageKey => {
   return key in NOTIFICATION_MESSAGES;
 };
 
 /**
- * Helper do pobierania wiadomości ze słownika
+ * Helper to get a message from the dictionary
  */
 export const getMessage = (key: MessageKey) => {
   return NOTIFICATION_MESSAGES[key];

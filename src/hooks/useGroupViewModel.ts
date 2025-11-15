@@ -57,12 +57,12 @@ export function useGroupViewModel({ group, participants, exclusions, currentUser
 
     return {
       ...group,
-      // Formatowane wartości dla wyświetlania
+      // Formatted values for display
       formattedBudget: formatCurrency(group.budget),
       formattedEndDate: formatDate(group.end_date),
       formattedCreatedAt: formatRelativeDate(group.created_at),
 
-      // Pola obliczeniowe
+      // Calculated fields
       isExpired: isDateExpired(group.end_date),
       daysUntilEnd: calculateDaysUntilEnd(group.end_date),
       participantsCount: group.participants.length,
@@ -87,20 +87,20 @@ export function useGroupViewModel({ group, participants, exclusions, currentUser
         // Flagi
         isCreator,
         isCurrentUser,
-        canDelete: !isCreator, // Twórca nie może być usunięty
+        canDelete: !isCreator, // The creator cannot be deleted
 
-        // Formatowane wartości
-        // W widoku grupy emaile zawsze są widoczne w pełnej formie (dostęp ma tylko twórca)
+        // Formatted values
+        // In the group view, emails are always visible in full form (only the creator has access)
         displayEmail: participant.email || "Brak",
-        rawEmail: participant.email || null, // Oryginalny email bez formatowania
+        rawEmail: participant.email || null, // Original email without formatting
         displayName: formatParticipantName(participant.name, isCurrentUser),
         initials: getInitials(participant.name),
 
-        // Status (po losowaniu)
+        // Status (after drawing)
         wishlistStatus: group?.is_drawn ? formatWishlistStatus(participant.has_wishlist) : undefined,
         resultStatus: group?.is_drawn ? formatResultStatus(participant.result_viewed || false) : undefined,
 
-        // Token (dla niezarejestrowanych)
+        // Token (for unregistered users)
         resultLink: participant.access_token
           ? `${window.location.origin}/results/${participant.access_token}`
           : undefined,
@@ -116,12 +116,12 @@ export function useGroupViewModel({ group, participants, exclusions, currentUser
     return exclusions.map((exclusion): ExclusionViewModel => {
       return {
         ...exclusion,
-        // Formatowane wartości
+        // Formatted values
         displayText: formatExclusionText(exclusion.blocker_name, exclusion.blocked_name),
         shortDisplayText: formatExclusionShortText(exclusion.blocker_name, exclusion.blocked_name),
 
-        // Flagi
-        canDelete: !group?.is_drawn, // Po losowaniu nie można usuwać wykluczeń
+        // Flags
+        canDelete: !group?.is_drawn, // After drawing, exclusions cannot be deleted
       };
     });
   }, [exclusions, group?.is_drawn]);

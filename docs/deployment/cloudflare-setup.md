@@ -136,8 +136,8 @@ Projekt został w pełni przygotowany do deploymentu na Cloudflare Pages z autom
 ## 📚 Dodatkowa dokumentacja
 
 - **Szczegółowa konfiguracja**: [.github/DEPLOYMENT-SETUP.md](.github/DEPLOYMENT-SETUP.md)
-- **Lista zmian**: [CHANGELOG-CLOUDFLARE.md](CHANGELOG-CLOUDFLARE.md)
-- **Cloudflare Deployment**: [CLOUDFLARE-DEPLOYMENT.md](CLOUDFLARE-DEPLOYMENT.md)
+- **Lista zmian**: [CHANGELOG-CLOUDFLARE.md](cloudflare-changelog.md)
+- **Cloudflare Deployment**: [CLOUDFLARE-DEPLOYMENT.md](cloudflare-deployment.md)
 
 ---
 

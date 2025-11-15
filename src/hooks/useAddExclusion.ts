@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { exclusionsService } from "@/services/exclusionsService";
+import { exclusionsService } from "@/services/exclusions.service";
 import { notify } from "@/lib/notifications";
 import type { ExclusionRuleDTO, ExclusionViewModel } from "@/types";
 
