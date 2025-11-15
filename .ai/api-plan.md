@@ -674,10 +674,14 @@ Authorization is implemented using **Supabase Row Level Security (RLS)** policie
 
 #### Groups Table
 
-- **Create**: Any authenticated user
-- **Read**: Group creator OR group participants (via participant.user_id)
-- **Update**: Only group creator AND draw not completed
-- **Delete**: Only group creator
+- **SELECT**: All users (authenticated + anonymous) - Permissive RLS policy `using (true)`
+  - Note: Application layer enforces access control via token validation
+  - Rationale: Unregistered participants with tokens need to view group details
+- **INSERT**: Authenticated users only - Permissive policy `with check (true)`
+  - Backend ensures creator_id assignment
+- **UPDATE**: Restrictive - Only group creator - `using (creator_id = auth.uid())`
+  - Business logic also checks: draw not completed
+- **DELETE**: Restrictive - Only group creator - `using (creator_id = auth.uid())`
 
 #### Participants Table
 

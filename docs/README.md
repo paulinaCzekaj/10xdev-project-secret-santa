@@ -40,6 +40,12 @@ Dokumentacja techniczna API aplikacji.
 - **[POSTMAN-README.md](api/postman-guide.md)** - Przewodnik testowania API
 - **[curl-examples.md](api/curl-examples.md)** - Przykłady użycia API
 
+### 🔒 Dokumentacja Bezpieczeństwa (`docs/security/`)
+
+Dokumentacja modelu bezpieczeństwa i polityk dostępu.
+
+- **[rls-policies.md](security/rls-policies.md)** - Dokumentacja Row-Level Security (RLS)
+
 ## 📄 Pliki w Katalogu Głównym
 
 Niektóre pliki dokumentacji pozostają w katalogu głównym dla kompatybilności z platformami takimi jak GitHub:
@@ -58,6 +64,7 @@ Niektóre pliki dokumentacji pozostają w katalogu głównym dla kompatybilnośc
 ### Dla Deweloperów:
 
 - Architektura projektu → [docs/developer/project-overview.md](developer/project-overview.md)
+- Polityki bezpieczeństwa (RLS) → [docs/security/rls-policies.md](security/rls-policies.md)
 - Jak uruchomić testy? → [docs/testing/guide.md](testing/guide.md)
 - Jak wdrożyć aplikację? → [docs/deployment/cloudflare-setup.md](deployment/cloudflare-setup.md)
 
