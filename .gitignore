@@ -60,6 +60,7 @@ logs/
 *.log
 .dev.vars
 
-# Database backups 
+# Database backups
 backups/
-*.sql
+backups/*.sql
+*backup*.sql
