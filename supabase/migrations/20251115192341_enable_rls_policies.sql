@@ -280,22 +280,22 @@ create policy "Service role can create assignments"
         -- Ensure giver belongs to the group
         exists (
             select 1 from public.participants
-            where participants.id = assignments.giver_id
+            where participants.id = assignments.giver_participant_id
             and participants.group_id = assignments.group_id
         ) and
         -- Ensure receiver belongs to the group
         exists (
             select 1 from public.participants
-            where participants.id = assignments.receiver_id
+            where participants.id = assignments.receiver_participant_id
             and participants.group_id = assignments.group_id
         ) and
         -- Ensure giver and receiver are different participants
-        assignments.giver_id != assignments.receiver_id and
+        assignments.giver_participant_id != assignments.receiver_participant_id and
         -- Ensure no existing assignment for this giver in this group (prevent duplicates)
         not exists (
             select 1 from public.assignments a2
             where a2.group_id = assignments.group_id
-            and a2.giver_id = assignments.giver_id
+            and a2.giver_participant_id = assignments.giver_participant_id
         )
     );
 
@@ -310,22 +310,22 @@ create policy "Service role can update assignments"
         -- Ensure giver belongs to the group
         exists (
             select 1 from public.participants
-            where participants.id = assignments.giver_id
+            where participants.id = assignments.giver_participant_id
             and participants.group_id = assignments.group_id
         ) and
         -- Ensure receiver belongs to the group
         exists (
             select 1 from public.participants
-            where participants.id = assignments.receiver_id
+            where participants.id = assignments.receiver_participant_id
             and participants.group_id = assignments.group_id
         ) and
         -- Ensure giver and receiver are different participants
-        assignments.giver_id != assignments.receiver_id and
+        assignments.giver_participant_id != assignments.receiver_participant_id and
         -- Ensure no existing assignment for this giver in this group (excluding current record)
         not exists (
             select 1 from public.assignments a2
             where a2.group_id = assignments.group_id
-            and a2.giver_id = assignments.giver_id
+            and a2.giver_participant_id = assignments.giver_participant_id
             and a2.id != assignments.id
         )
     );
