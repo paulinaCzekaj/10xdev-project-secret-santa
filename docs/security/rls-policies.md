@@ -75,8 +75,8 @@ The application uses a layered security model:
 
 ## Migration History
 
-| Migration File | Date | Status |
-|----------------|------|--------|
+| Migration File                            | Date       | Status    |
+| ----------------------------------------- | ---------- | --------- |
 | `20251115222409_enable_rls_on_groups.sql` | 2025-11-15 | ✅ Active |
 
 ## Testing RLS Policies
@@ -157,29 +157,22 @@ When implementing API endpoints that query groups:
 
 ```typescript
 // ❌ WRONG: Relying only on RLS
-const { data: group } = await supabase
-  .from('groups')
-  .select('*')
-  .eq('id', groupId)
-  .single();
+const { data: group } = await supabase.from("groups").select("*").eq("id", groupId).single();
 
 // ✅ CORRECT: Validate token ownership first
 const participant = await validateParticipantToken(token);
 if (participant.group_id !== groupId) {
-  throw new Error('FORBIDDEN');
+  throw new Error("FORBIDDEN");
 }
-const { data: group } = await supabase
-  .from('groups')
-  .select('*')
-  .eq('id', groupId)
-  .single();
+const { data: group } = await supabase.from("groups").select("*").eq("id", groupId).single();
 ```
 
 ## Related Documentation
 
-- [API Authorization Rules](../api/authorization.md)
+- [API Authorization Examples (cURL)](../api/curl-examples.md)
+- [API Authorization Guide (Postman)](../api/postman-guide.md)
 - [Testing Guide](../testing/guide.md)
-- [Deployment Security](../deployment/security.md)
+- [Cloudflare Deployment](../deployment/cloudflare-deployment.md)
 
 ---
 

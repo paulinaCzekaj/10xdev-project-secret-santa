@@ -170,4 +170,3 @@ jobs:
 
           # Cleanup
           docker stop test-app
-
