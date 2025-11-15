@@ -280,31 +280,22 @@ create policy "assignments_select_policy"
 
 -- Policy: Authenticated users can create assignments (for draw functionality)
 -- The draw is performed by authenticated group creators
+-- Simplified check: only verify user is group creator, rest is validated at app level
 create policy "assignments_insert_policy"
     on public.assignments
     for insert
     to authenticated
     with check (
-        -- Ensure user is the group creator
+        -- Only ensure user is the group creator
+        -- Application layer (DrawService + AssignmentsService) validates:
+        -- - participants exist and belong to group
+        -- - no self-assignments
+        -- - no duplicate assignments
         exists (
             select 1 from public.groups
             where groups.id = assignments.group_id
             and groups.creator_id = auth.uid()
-        ) and
-        -- Ensure giver belongs to the group
-        exists (
-            select 1 from public.participants
-            where participants.id = assignments.giver_participant_id
-            and participants.group_id = assignments.group_id
-        ) and
-        -- Ensure receiver belongs to the group
-        exists (
-            select 1 from public.participants
-            where participants.id = assignments.receiver_participant_id
-            and participants.group_id = assignments.group_id
-        ) and
-        -- Ensure giver and receiver are different participants
-        assignments.giver_participant_id != assignments.receiver_participant_id
+        )
     );
 
 -- Policy: Only group creators can update assignments
