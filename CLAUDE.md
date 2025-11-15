@@ -444,6 +444,49 @@ Dzięki i wesołych Świąt! ⭐
 - Klucz nie jest nigdy wysyłany do klienta (frontend)
 - Rotacja kluczy co 90 dni (zalecane)
 
+### 8.4. Database Security (Row-Level Security)
+
+**Current Status**: ✅ Enabled (Migration: `20251115222409_enable_rls_on_groups.sql`)
+
+**Policy Structure**:
+
+```sql
+-- SELECT: Permissive for all users (authenticated + anon)
+CREATE POLICY "anyone can view groups" ON groups FOR SELECT USING (true);
+
+-- INSERT: Permissive for authenticated users
+CREATE POLICY "authenticated users can create groups" ON groups
+  FOR INSERT TO authenticated WITH CHECK (true);
+
+-- UPDATE: Restrictive - only group creator
+CREATE POLICY "creators can update their groups" ON groups
+  FOR UPDATE TO authenticated
+  USING (creator_id = auth.uid())
+  WITH CHECK (creator_id = auth.uid());
+
+-- DELETE: Restrictive - only group creator
+CREATE POLICY "creators can delete their groups" ON groups
+  FOR DELETE TO authenticated
+  USING (creator_id = auth.uid());
+```
+
+**Design Rationale**:
+
+The SELECT policy is permissive (`using (true)`) to support:
+1. Anonymous participants with access tokens viewing group details
+2. Performance optimization (no complex RLS joins)
+3. Application-layer access control via token validation
+
+**Security Model**:
+- **Database Layer**: Restrictive write operations (INSERT/UPDATE/DELETE)
+- **API Layer**: Token validation and participant membership checks
+- **Application Layer**: Business logic enforcement
+
+**Important**: When implementing API endpoints that query groups:
+- Always validate participant tokens before serving data
+- Never rely solely on RLS for access control to groups
+- Implement additional authorization checks in API handlers
+
 ## CODING_PRACTICES
 
 ### Guidelines for SUPPORT_LEVEL

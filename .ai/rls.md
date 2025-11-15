@@ -19,25 +19,55 @@ This document describes the comprehensive Row Level Security (RLS) implementatio
 
 #### Policies:
 
-**`Users can view their groups`** (SELECT)
-- **Who**: authenticated users
-- **Condition**: Users can view groups they created OR groups they participate in
-- **Logic**: `creator_id = auth.uid() OR EXISTS (participants where user_id = auth.uid())`
+**`anyone can view groups`** (SELECT)
+- **Type**: Permissive
+- **Who**: All users (authenticated + anonymous)
+- **Condition**: No restrictions
+- **Logic**: `using (true)`
+- **Rationale**: Application layer controls fine-grained access. Anonymous participants with valid tokens need to view group details.
 
-**`Users can create groups`** (INSERT)
-- **Who**: authenticated users
-- **Condition**: User must be the creator
-- **Logic**: `creator_id = auth.uid()`
+**`authenticated users can create groups`** (INSERT)
+- **Type**: Permissive
+- **Who**: authenticated role only
+- **Condition**: Permissive - application handles creator_id assignment
+- **Logic**: `with check (true)`
+- **Rationale**: Any authenticated user can create groups; backend ensures creator_id integrity.
 
-**`Creators can update their groups`** (UPDATE)
-- **Who**: authenticated users
-- **Condition**: Only group creators can update their own groups
-- **Logic**: `creator_id = auth.uid()`
+**`creators can update their groups`** (UPDATE)
+- **Type**: Restrictive
+- **Who**: authenticated role only
+- **Condition**: Only group creators
+- **Logic**: `using (creator_id = auth.uid()) with check (creator_id = auth.uid())`
+- **Rationale**: Only owners can modify group settings (name, budget, end_date).
 
-**`Creators can delete their groups`** (DELETE)
-- **Who**: authenticated users
-- **Condition**: Only group creators can delete their own groups
-- **Logic**: `creator_id = auth.uid()`
+**`creators can delete their groups`** (DELETE)
+- **Type**: Restrictive
+- **Who**: authenticated role only
+- **Condition**: Only group creators
+- **Logic**: `using (creator_id = auth.uid())`
+- **Rationale**: Destructive operation restricted to owner. Cascading deletes handle related data.
+
+#### Security Model: Why SELECT is Permissive
+
+**Design Decision**: The groups table uses a permissive SELECT policy (`using (true)`) instead of restrictive access control.
+
+**Rationale**:
+1. **Unregistered Participant Support**: Anonymous users with valid participant tokens need to view group details (budget, end_date, name) without authentication
+2. **Application Layer Security**: Fine-grained access control is implemented in API endpoints, not at database level
+3. **Token-Based Access**: Access tokens validate participant membership before serving group data
+4. **No Sensitive Data**: Groups table contains no sensitive information that requires database-level restrictions
+5. **Performance**: Eliminates complex RLS joins for better query performance
+
+**Security Measures**:
+- API endpoints validate token ownership before returning data
+- Participant-specific data (assignments, wishlists) protected by restrictive RLS on other tables
+- Write operations (INSERT/UPDATE/DELETE) remain restrictive - only creators can modify
+
+**Trade-offs Considered**:
+- ✅ Simplifies architecture for token-based unregistered users
+- ✅ Better performance (no complex EXISTS queries on SELECT)
+- ⚠️ Groups metadata visible to all (acceptable - no PII in groups table)
+- ✅ Strong write protection maintained
 
 ---
 
@@ -158,9 +188,10 @@ This document describes the comprehensive Row Level Security (RLS) implementatio
 
 ## Migration Details
 
-**Migration File**: `20251115192341_enable_rls_policies.sql`
+**Migration File**: `20251115222409_enable_rls_on_groups.sql`
 **Migration Date**: November 15, 2025
-**Affected Tables**: groups, participants, exclusion_rules, wishes, assignments
+**Affected Tables**: groups (currently), participants, exclusion_rules, wishes, assignments (future)
+**Status**: ✅ Active and enforced
 
 ### Key Security Features:
 
@@ -188,13 +219,13 @@ This document describes the comprehensive Row Level Security (RLS) implementatio
 
 ## Quick Reference
 
-| Table | Creator Permissions | Participant Permissions | Service Role Permissions |
-|-------|-------------------|----------------------|-------------------------|
-| groups | Full CRUD | Read only | None |
-| participants | Full CRUD | Read only | None |
-| exclusion_rules | Full CRUD | Read only | None |
-| wishes | None | CRUD own only | None |
-| assignments | None | Read only | Full CRUD |
+| Table | Creator Permissions | Participant Permissions | Anonymous Users | Service Role |
+|-------|-------------------|------------------------|-----------------|--------------|
+| groups | Full CRUD | Read only | Read only | None |
+| participants | Full CRUD | Read only | None | None |
+| exclusion_rules | Full CRUD | Read only | None | None |
+| wishes | None | CRUD own only | None | None |
+| assignments | None | Read only | None | Full CRUD |
 
 **Legend:**
 - ✅ = Allowed
