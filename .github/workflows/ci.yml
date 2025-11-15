@@ -172,11 +172,8 @@ jobs:
           docker stop test-app
 
       - name: Deploy to DigitalOcean (Optional)
-        if: env.DIGITALOCEAN_ACCESS_TOKEN != ''
         run: |
           echo "Deployment to DigitalOcean would go here"
           # Add your DigitalOcean deployment commands here
           # Example: doctl apps create --spec app-spec.yml
-        env:
-          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
