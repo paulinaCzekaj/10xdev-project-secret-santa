@@ -3,18 +3,18 @@ import type { ToastT } from "sonner";
 /**
  * Notification System Types
  *
- * Centralne definicje typów TypeScript dla systemu notyfikacji
- * Zapewniają silne typowanie dla całego systemu
+ * Central definitions of TypeScript types for the notification system
+ * Provides strong typing for the entire system
  */
 
 /**
- * Typy notyfikacji wspierane przez system
- * Mapują się bezpośrednio na Sonner toast types
+ * Notification types supported by the system
+ * Map to Sonner toast types directly
  */
 export type NotificationType = "success" | "error" | "info" | "warning";
 
 /**
- * Struktura pojedynczej wiadomości notyfikacji
+ * Structure of a single notification message
  */
 export interface NotificationMessage {
   /** Tytuł notyfikacji (wymagany) */
@@ -26,77 +26,77 @@ export interface NotificationMessage {
 }
 
 /**
- * Opcje dla Sonner toast
- * Re-eksport z sonner dla spójności typów
+ * Options for Sonner toast
+ *  Re-export from sonner for consistency
  */
 export interface NotificationOptions {
-  /** Czas wyświetlania w ms (domyślnie: 4000) */
+  /** Display duration in ms (default: 4000) */
   duration?: number;
-  /** Czy można zamknąć klikając (domyślnie: true) */
+  /** Whether it can be closed by clicking (default: true) */
   dismissible?: boolean;
-  /** Pozycja toasta */
+  /** Position of the toast */
   position?: "top-left" | "top-center" | "top-right" | "bottom-left" | "bottom-center" | "bottom-right";
-  /** Custom ID dla toasta */
+  /** Custom ID for the toast */
   id?: string | number;
-  /** Callback po zamknięciu */
+  /** Callback on close */
   onDismiss?: (toast: ToastT) => void;
-  /** Callback po auto-dismiss */
+  /** Callback on auto-dismiss */
   onAutoClose?: (toast: ToastT) => void;
 }
 
 /**
- * Klucze kategorii komunikatów
- * Każda kategoria odpowiada sekcji w aplikacji
+ * Message category keys
+ * Each category corresponds to a section of the application
  */
 export type MessageCategory =
-  | "AUTH" // Autentykacja (login, register, password reset)
-  | "GROUP" // Grupy (CRUD operations)
-  | "PARTICIPANT" // Uczestnicy (add, edit, delete)
-  | "EXCLUSION" // Wykluczenia (add, delete)
-  | "DRAW" // Losowanie (validate, execute)
-  | "WISHLIST" // Listy życzeń (save, load)
-  | "CLIPBOARD" // Operacje schowka (copy link)
-  | "GENERAL"; // Ogólne komunikaty
+  | "AUTH" // Authentication (login, register, password reset)
+  | "GROUP" // Groups (CRUD operations)
+  | "PARTICIPANT" // Participants (add, edit, delete)
+  | "EXCLUSION" // Exclusions (add, delete)
+  | "DRAW" // Drawing (validate, execute)
+  | "WISHLIST" // Wishlists (save, load)
+  | "CLIPBOARD" // Clipboard operations (copy link)
+  | "GENERAL"; // General messages
 
 /**
- * Typ klucza wiadomości - budowany dynamicznie z kategorii
- * Przykład: 'AUTH.LOGIN_SUCCESS', 'GROUP.DELETE_SUCCESS'
+ * Message key type - built dynamically from categories
+ * Example: 'AUTH.LOGIN_SUCCESS', 'GROUP.DELETE_SUCCESS'
  */
 export type MessageKey = string;
 
 /**
- * Słownik wszystkich komunikatów
- * Klucz w formacie CATEGORY.ACTION_STATUS
+ * Dictionary of all messages
+ * Key in the format CATEGORY.ACTION_STATUS
  */
 export type NotificationMessages = Record<MessageKey, NotificationMessage>;
 
 /**
- * Input dla funkcji notify - może być klucz lub custom message
+ * Input for the notify function - can be a key or a custom message
  */
 export type NotificationInput = MessageKey | NotificationMessage;
 
 /**
- * Interfejs Notification Service
+ * Notification Service interface
  */
 export interface INotificationService {
-  /** Wyświetl notyfikację sukcesu */
+  /** Display a success notification */
   success(input: NotificationInput, options?: NotificationOptions): void;
 
-  /** Wyświetl notyfikację błędu */
+  /** Display an error notification */
   error(input: NotificationInput, options?: NotificationOptions): void;
 
-  /** Wyświetl notyfikację informacyjną */
+  /** Display an info notification */
   info(input: NotificationInput, options?: NotificationOptions): void;
 
-  /** Wyświetl notyfikację ostrzeżenia */
+  /** Display a warning notification */
   warning(input: NotificationInput, options?: NotificationOptions): void;
 
-  /** Uniwersalna metoda wyświetlania */
+  /** Universal method to display a notification */
   show(type: NotificationType, input: NotificationInput, options?: NotificationOptions): void;
 
-  /** Zamknij konkretną notyfikację po ID */
+  /** Close a specific notification by ID */
   dismiss(toastId?: string | number): void;
 
-  /** Pobierz wiadomość ze słownika (dla testów/debugowania) */
+  /** Get a message from the dictionary (for tests/debugging) */
   getMessage(key: MessageKey): NotificationMessage | undefined;
 }

@@ -271,19 +271,64 @@ create policy "Users can view assignments for their groups"
 
 -- Policy: Only service role can create assignments (draw results)
 -- This prevents users from manually creating assignments
+-- Includes validation: giver and receiver must belong to the same group, no duplicate giver assignments
 create policy "Service role can create assignments"
     on public.assignments
     for insert
     to service_role
-    with check (true);
+    with check (
+        -- Ensure giver belongs to the group
+        exists (
+            select 1 from public.participants
+            where participants.id = assignments.giver_id
+            and participants.group_id = assignments.group_id
+        ) and
+        -- Ensure receiver belongs to the group
+        exists (
+            select 1 from public.participants
+            where participants.id = assignments.receiver_id
+            and participants.group_id = assignments.group_id
+        ) and
+        -- Ensure giver and receiver are different participants
+        assignments.giver_id != assignments.receiver_id and
+        -- Ensure no existing assignment for this giver in this group (prevent duplicates)
+        not exists (
+            select 1 from public.assignments a2
+            where a2.group_id = assignments.group_id
+            and a2.giver_id = assignments.giver_id
+        )
+    );
 
 -- Policy: Only service role can update assignments
+-- Includes validation: updated assignments must still be valid
 create policy "Service role can update assignments"
     on public.assignments
     for update
     to service_role
     using (true)
-    with check (true);
+    with check (
+        -- Ensure giver belongs to the group
+        exists (
+            select 1 from public.participants
+            where participants.id = assignments.giver_id
+            and participants.group_id = assignments.group_id
+        ) and
+        -- Ensure receiver belongs to the group
+        exists (
+            select 1 from public.participants
+            where participants.id = assignments.receiver_id
+            and participants.group_id = assignments.group_id
+        ) and
+        -- Ensure giver and receiver are different participants
+        assignments.giver_id != assignments.receiver_id and
+        -- Ensure no existing assignment for this giver in this group (excluding current record)
+        not exists (
+            select 1 from public.assignments a2
+            where a2.group_id = assignments.group_id
+            and a2.giver_id = assignments.giver_id
+            and a2.id != assignments.id
+        )
+    );
 
 -- Policy: Only service role can delete assignments
 create policy "Service role can delete assignments"

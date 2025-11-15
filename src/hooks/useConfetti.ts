@@ -8,17 +8,17 @@ interface UseConfettiOptions {
 }
 
 /**
- * Hook do zarządzania efektem konfetti
+ * Hook for managing the confetti effect
  *
- * Obsługuje wyświetlanie animacji konfetti z automatycznym wyłączeniem po określonym czasie.
- * Śledzi wymiary okna dla responsywności animacji.
- * SSR-safe - sprawdza dostępność window przed użyciem.
+ * Handles displaying the confetti animation with automatic disabling after a specified time.
+ * Tracks the window dimensions for responsive animation.
+ * SSR-safe - checks for the availability of window before using it.
  *
- * @param duration - Czas wyświetlania konfetti w ms (domyślnie 3000ms)
- * @param colors - Tablica kolorów konfetti
- * @param numberOfPieces - Liczba elementów konfetti
- * @param gravity - Siła grawitacji dla konfetti
- * @returns Obiekt z funkcją triggerConfetti i komponentem do renderowania
+ * @param duration - Duration of the confetti display in ms (default 3000ms)
+ * @param colors - Array of confetti colors
+ * @param numberOfPieces - Number of confetti pieces
+ * @param gravity - Gravity for the confetti
+ * @returns Object with the triggerConfetti function and the component to render
  *
  * @example
  * const { showConfetti, triggerConfetti, windowSize, confettiConfig } = useConfetti({
@@ -26,7 +26,7 @@ interface UseConfettiOptions {
  *   colors: ['#dc2626', '#16a34a']
  * });
  *
- * // W komponencie renderuj konfetti używając showConfetti i config
+ * // In the component, render the confetti using showConfetti and config
  */
 export const useConfetti = ({
   duration = 3000,
@@ -37,7 +37,7 @@ export const useConfetti = ({
   const [showConfetti, setShowConfetti] = useState(false);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
 
-  // Handle window resize - SSR safe
+  // Handle window resize - SSR-safe
   useEffect(() => {
     if (typeof window !== "undefined") {
       const updateSize = () => {

@@ -11,14 +11,14 @@ interface RevealTrackingResult {
 }
 
 /**
- * Hook do śledzenia otwarć wyniku losowania przez uczestników
+ * Hook for tracking the opening of the drawing result by participants
  *
- * Wywołuje API endpoint który rejestruje w bazie danych fakt otwarcia wyniku.
- * Błędy API nie blokują UI - użytkownik zawsze widzi wynik niezależnie od statusu trackingu.
+ * Calls the API endpoint which records the fact of opening the result in the database.
+ * API errors do not block the UI - the user always sees the result regardless of the tracking status.
  *
- * @param participantId - ID uczestnika
- * @param accessToken - Opcjonalny token dostępu dla niezalogowanych użytkowników
- * @returns Obiekt z funkcją trackReveal do wywołania
+ * @param participantId - ID of the participant
+ * @param accessToken - Optional access token for unregistered users
+ * @returns Object with the trackReveal function to call
  *
  * @example
  * const { trackReveal } = useRevealTracking({
@@ -26,13 +26,13 @@ interface RevealTrackingResult {
  *   accessToken: 'abc123'
  * });
  *
- * // W handleReveal:
+ * // In handleReveal:
  * await trackReveal();
  */
 export const useRevealTracking = ({ participantId, accessToken }: UseRevealTrackingOptions) => {
   const trackReveal = useCallback(async (): Promise<RevealTrackingResult> => {
     try {
-      // Konstruuj URL z opcjonalnym tokenem
+      // Construct URL with optional token
       const url = accessToken
         ? `/api/participants/${participantId}/reveal?token=${accessToken}`
         : `/api/participants/${participantId}/reveal`;

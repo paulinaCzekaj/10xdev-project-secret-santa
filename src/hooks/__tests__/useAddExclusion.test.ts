@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useAddExclusion } from "../useAddExclusion";
-import { exclusionsService } from "@/services/exclusionsService";
+import { exclusionsService } from "@/services/exclusions.service";
 import { notify } from "@/lib/notifications";
 
 // Mock the service
-vi.mock("@/services/exclusionsService", () => ({
+vi.mock("@/services/exclusions.service", () => ({
   exclusionsService: {
     create: vi.fn(),
   },

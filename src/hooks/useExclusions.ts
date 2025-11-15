@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
-import { exclusionsService } from "@/services/exclusionsService";
+import { exclusionsService } from "@/services/exclusions.service";
 import type { ExclusionRuleListItemDTO, CreateExclusionRuleCommand, ApiError } from "@/types";
 
 /**
- * Hook do zarządzania regułami wykluczeń
- * Obsługuje dodawanie i usuwanie wykluczeń
+ * Hook for managing exclusion rules
+ * Handles adding and deleting exclusion rules
  */
 export function useExclusions(groupId: number) {
   const [exclusions, setExclusions] = useState<ExclusionRuleListItemDTO[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<ApiError | null>(null);
 
-  // Pobieranie wykluczeń
+  // Fetching exclusions
   const fetchExclusions = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -29,12 +29,12 @@ export function useExclusions(groupId: number) {
     }
   }, [groupId]);
 
-  // Dodawanie wykluczenia
+  // Adding an exclusion
   const addExclusion = useCallback(
     async (command: CreateExclusionRuleCommand) => {
       try {
         const newExclusion = await exclusionsService.create(groupId, command);
-        await fetchExclusions(); // Odśwież listę
+        await fetchExclusions(); // Refresh list
 
         return { success: true, data: newExclusion };
       } catch (err) {
@@ -47,12 +47,12 @@ export function useExclusions(groupId: number) {
     [groupId, fetchExclusions]
   );
 
-  // Usuwanie wykluczenia
+  // Deleting an exclusion
   const deleteExclusion = useCallback(
     async (exclusionId: number) => {
       try {
         await exclusionsService.delete(exclusionId);
-        await fetchExclusions(); // Odśwież listę
+        await fetchExclusions(); // Refresh list
 
         return { success: true };
       } catch (err) {
@@ -65,7 +65,7 @@ export function useExclusions(groupId: number) {
     [fetchExclusions]
   );
 
-  // Pobierz dane przy montowaniu
+  // Fetch data on mount
   useEffect(() => {
     fetchExclusions();
   }, [fetchExclusions]);

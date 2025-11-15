@@ -93,7 +93,11 @@ cat > "$JSON_FILE" << 'EOF'
 EOF
 
 # Replace timestamp placeholder
-sed -i "s/TIMESTAMP_PLACEHOLDER/$(date -Iseconds)/" "$JSON_FILE"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' "s/TIMESTAMP_PLACEHOLDER/$(date -Iseconds)/" "$JSON_FILE"
+else
+    sed -i "s/TIMESTAMP_PLACEHOLDER/$(date -Iseconds)/" "$JSON_FILE"
+fi
 echo -e "${GREEN}✓ Data backup template created: $JSON_FILE${NC}"
 
 # Backup 3: Create summary file

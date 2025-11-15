@@ -9,49 +9,49 @@ import type {
 import { NOTIFICATION_MESSAGES, isValidMessageKey, type MessageKey } from "./messages";
 
 /**
- * Notification Service - główny punkt dostępu do systemu notyfikacji
+ * Notification Service - a central access point to the notification system
  *
- * Wrapper nad biblioteką Sonner zapewniający:
- * - Scentralizowane zarządzanie komunikatami
- * - Typowanie TypeScript
- * - Spójne API
- * - Łatwą migrację w przyszłości
+ * Wrapper over the Sonner library providing:
+ * - Centralized management of messages
+ * - TypeScript typing
+ * - Consistent API
+ * - Easy migration in the future
  *
  * @example
- * // Użycie z kluczem ze słownika
+ * // Usage with a message key from the dictionary
  * notify.success('AUTH.LOGIN_SUCCESS');
  *
  * @example
- * // Użycie z custom message
+ * // Usage with a custom message
  * notify.error({ title: 'Custom error', description: 'Details...' });
  *
  * @example
- * // Z dodatkowymi opcjami
+ * // With additional options
  * notify.info('GENERAL.LOADING', { duration: 2000 });
  */
 class NotificationService implements INotificationService {
   /**
-   * Przetwarza input i zwraca NotificationMessage
+   * Processes the input and returns a NotificationMessage
    * @private
    */
   private resolveMessage(input: NotificationInput): NotificationMessage {
-    // Jeśli input to string, traktuj jako klucz ze słownika
+    // If input is a string, treat it as a message key from the dictionary
     if (typeof input === "string") {
       if (isValidMessageKey(input)) {
         return NOTIFICATION_MESSAGES[input];
       }
 
-      // Fallback: jeśli klucz nie istnieje, zwróć jako tytuł
+      // Fallback: if the key does not exist, return it as the title
       console.warn(`[NotificationService] Unknown message key: "${input}". Using as title.`);
       return { title: input, type: "info" };
     }
 
-    // Jeśli input to obiekt NotificationMessage, użyj go bezpośrednio
+    // If input is a NotificationMessage object, use it directly
     return input;
   }
 
   /**
-   * Wywołuje odpowiednią metodę Sonner toast
+   * Calls the appropriate Sonner toast method
    * @private
    */
   private displayToast(type: NotificationType, message: NotificationMessage, options?: NotificationOptions): void {
@@ -72,13 +72,13 @@ class NotificationService implements INotificationService {
         toast.info(title, toastOptions);
         break;
       default:
-        // Fallback na toast (domyślny)
+        // Fallback to toast (default)
         toast(title, toastOptions);
     }
   }
 
   /**
-   * Wyświetl notyfikację sukcesu
+   * Display a success notification
    */
   success(input: NotificationInput, options?: NotificationOptions): void {
     const message = this.resolveMessage(input);
@@ -86,7 +86,7 @@ class NotificationService implements INotificationService {
   }
 
   /**
-   * Wyświetl notyfikację błędu
+   * Display an error notification
    */
   error(input: NotificationInput, options?: NotificationOptions): void {
     const message = this.resolveMessage(input);
@@ -94,7 +94,7 @@ class NotificationService implements INotificationService {
   }
 
   /**
-   * Wyświetl notyfikację informacyjną
+   * Display an info notification
    */
   info(input: NotificationInput, options?: NotificationOptions): void {
     const message = this.resolveMessage(input);
@@ -102,7 +102,7 @@ class NotificationService implements INotificationService {
   }
 
   /**
-   * Wyświetl notyfikację ostrzeżenia
+   * Display a warning notification
    */
   warning(input: NotificationInput, options?: NotificationOptions): void {
     const message = this.resolveMessage(input);
@@ -110,7 +110,7 @@ class NotificationService implements INotificationService {
   }
 
   /**
-   * Uniwersalna metoda wyświetlania notyfikacji
+   * Universal method to display a notification
    */
   show(type: NotificationType, input: NotificationInput, options?: NotificationOptions): void {
     const message = this.resolveMessage(input);
@@ -118,8 +118,8 @@ class NotificationService implements INotificationService {
   }
 
   /**
-   * Zamknij konkretną notyfikację po ID
-   * Jeśli nie podano ID, zamyka wszystkie notyfikacje
+   * Close a specific notification by ID
+   * If no ID is provided, closes all notifications
    */
   dismiss(toastId?: string | number): void {
     if (toastId !== undefined) {
@@ -130,20 +130,13 @@ class NotificationService implements INotificationService {
   }
 
   /**
-   * Pobierz wiadomość ze słownika (przydatne dla testów/debugowania)
+   * Get a message from the dictionary (useful for tests/debugging)
    */
   getMessage(key: MessageKey): NotificationMessage | undefined {
     return isValidMessageKey(key) ? NOTIFICATION_MESSAGES[key] : undefined;
   }
 }
 
-/**
- * Singleton instance notification service
- * Eksportowany jako główny punkt dostępu
- */
 export const notify = new NotificationService();
 
-/**
- * Dla zaawansowanych przypadków - eksport klasy
- */
 export { NotificationService };

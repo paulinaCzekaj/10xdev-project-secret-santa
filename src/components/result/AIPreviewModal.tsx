@@ -58,7 +58,7 @@ export function AIPreviewModal({
           <div className="space-y-4">
             {/* Alert o ostatnim generowaniu */}
             {isLastGeneration && (
-              <Alert variant="destructive">
+              <Alert variant="default">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   ⚠️ To Twoje ostatnie generowanie! Upewnij się, że treść Ci odpowiada.
