@@ -114,9 +114,8 @@ cat > "$SUMMARY_FILE" << EOF
     "groups",
     "participants",
     "exclusion_rules",
-    "assignments",
-    "wishlists",
-    "result_views"
+    "wishes",
+    "assignments"
   ]
 }
 EOF

@@ -60,7 +60,8 @@ const GenerateAISchema = z.object({
  * @returns {ApiErrorResponse} 500 - Internal server error
  * @returns {ApiErrorResponse} 504 - Gateway timeout (AI took too long)
  */
-export const POST: APIRoute = async ({ params, request, locals, url, ...context }) => {
+export const POST: APIRoute = async (context) => {
+  const { params, request, locals, url } = context;
   console.log("[POST /api/participants/:participantId/wishlist/generate-ai] Endpoint hit", {
     participantId: params.participantId,
     method: request.method,
@@ -151,7 +152,8 @@ export const POST: APIRoute = async ({ params, request, locals, url, ...context 
     // Try multiple ways to access environment variables in Cloudflare Pages
     const openRouterApiKey =
       locals.runtime?.env?.OPENROUTER_API_KEY || // platformProxy local dev
-      (context as Record<string, unknown>).env?.OPENROUTER_API_KEY || // Cloudflare Workers runtime
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (context as unknown as Record<string, any>).env?.OPENROUTER_API_KEY || // Cloudflare Workers runtime
       import.meta.env.OPENROUTER_API_KEY || // Build-time fallback
       process.env.OPENROUTER_API_KEY; // Node.js dev mode fallback
 

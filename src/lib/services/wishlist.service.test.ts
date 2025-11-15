@@ -42,11 +42,14 @@ describe("WishlistService.createOrUpdateWishlist", () => {
   });
 
   // Helper function to create mock wishlist data
-  const createMockWishlist = (overrides: Partial<WishlistDTO> = {}) => ({
+  const createMockWishlist = (overrides: Partial<WishlistDTO> = {}): WishlistDTO => ({
     id: 1,
     participant_id: 1,
     wishlist: "Test wishlist content",
     updated_at: "2025-10-15T10:00:00Z",
+    ai_generated: null,
+    ai_generation_count_per_group: 0,
+    ai_last_generated_at: null,
     ...overrides,
   });
 
@@ -263,7 +266,8 @@ describe("WishlistService.createOrUpdateWishlist", () => {
           user: {
             id: authUserId,
             email: "wrong@example.com", // Different email than participant
-          },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any,
         },
         error: null,
       });

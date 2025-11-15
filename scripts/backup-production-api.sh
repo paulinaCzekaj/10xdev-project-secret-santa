@@ -62,9 +62,8 @@ TABLES=(
     "groups"
     "participants"
     "exclusion_rules"
+    "wishes"
     "assignments"
-    "wishlists"
-    "result_views"
 )
 
 # Create main backup file

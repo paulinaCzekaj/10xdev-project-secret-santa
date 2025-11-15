@@ -61,6 +61,7 @@ export interface GenerationOptions {
   temperature?: number;
   maxTokens?: number;
   participantName?: string;
+  language?: string;
 }
 
 export interface SantaLetterResponse {
