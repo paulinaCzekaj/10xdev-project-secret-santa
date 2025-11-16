@@ -1,5 +1,6 @@
 name = "secret-santa-app"
 compatibility_date = "2025-10-22"
+pages_build_output_dir = "dist"
 
 # KV binding for sessions
 [[kv_namespaces]]
