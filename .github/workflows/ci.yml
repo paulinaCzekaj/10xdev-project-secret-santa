@@ -141,6 +141,9 @@ jobs:
 
       - name: Test Docker image locally
         run: |
+          # Build image locally for testing (ensure it's available)
+          docker build -t ${{ env.DOCKER_IMAGE }}:test .
+
           # Run container and test health endpoint
           docker run --rm -d --name test-app -p 3000:3000 ${{ env.DOCKER_IMAGE }}:test
 
