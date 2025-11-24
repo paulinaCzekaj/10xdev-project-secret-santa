@@ -1,5 +1,9 @@
 # Secret Santa
 
+> **AI-Generated Code**
+>
+> This project was developed with the assistance of [Claude Code](https://claude.com/claude-code) - Anthropic's AI-powered coding assistant and [Cursor](https://cursor.com) - AI-powered code editor. These AI tools were used for code generation, debugging, documentation, and implementing features throughout the development process.
+
 ## Table of Contents
 
 - [Project Description](#project-description)
