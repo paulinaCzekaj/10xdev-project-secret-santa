@@ -124,7 +124,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
       message = "Draw can be executed successfully";
     } else {
       // Draw is impossible - provide clear error message with actionable details
-      message = "Draw is impossible with current exclusion rules";
+      message = "Losowanie jest niemożliwe z obecnymi regułami wykluczeń";
       details =
         "Too many exclusions create an impossible scenario. Consider removing some exclusion rules to allow the draw to proceed.";
     }

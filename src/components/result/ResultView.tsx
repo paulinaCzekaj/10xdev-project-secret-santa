@@ -3,6 +3,8 @@ import { useResultData } from "@/hooks/useResultData";
 import ResultHeader from "./ResultHeader";
 import ResultReveal from "./ResultReveal";
 import WishlistSection from "./WishlistSection";
+import ElfInfoBox from "./ElfInfoBox";
+import ElfHelpSection from "./ElfHelpSection";
 import {
   DrawNotCompletedError,
   UnauthorizedError,
@@ -116,6 +118,22 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
             accessToken={result.accessToken}
             wishlistStats={result.wishlist_stats}
           />
+        )}
+
+        {/* Elf help section - shows if participant is an elf (at the bottom) */}
+        {result.participant.isElfForSomeone && result.participant.elfForParticipantId && (
+          <ElfHelpSection
+            helpedParticipantName={result.participant.elfForParticipantName || "uczestnik"}
+            helpedParticipantId={result.participant.elfForParticipantId}
+            groupId={result.group.id}
+            isAuthenticated={result.isAuthenticated}
+            accessToken={result.accessToken}
+          />
+        )}
+
+        {/* Elf info box - shows if participant has an elf (at the bottom) */}
+        {result.elf && (
+          <ElfInfoBox elfName={result.elf.name} />
         )}
       </div>
     </div>

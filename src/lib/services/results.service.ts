@@ -28,6 +28,7 @@ interface ParticipantDataFromDB {
   name: string;
   email: string | null;
   result_viewed_at: string | null;
+  elf_for_participant_id: number | null;
 }
 
 /**
@@ -83,9 +84,12 @@ export class ResultsService {
     // Step 4: Get wishlist statistics for the group
     const wishlistStats = await this.getWishlistStats(groupId);
 
-    // Step 5: Note - result_viewed_at is now updated only when gift is revealed
+    // Step 5: Get my elf helper (who is helping me)
+    const myElf = await this.getMyElfHelper(participant.id, groupId);
 
-    // Step 6: Format and return response
+    // Step 6: Note - result_viewed_at is now updated only when gift is revealed
+
+    // Step 7: Format and return response
     const now = new Date();
     const endDate = new Date(group.end_date);
     // Compare only dates (ignore time) - end date is inclusive
@@ -107,16 +111,18 @@ export class ResultsService {
 
     const result: DrawResultResponseDTO = {
       group: this.formatGroupInfo(group),
-      participant: this.formatParticipantInfo(participant),
+      participant: await this.formatParticipantInfo(participant),
       assigned_to: this.formatAssignedParticipant(assignedParticipant, assignedWishlist),
       my_wishlist: this.formatMyWishlist(myWishlist, !isExpired), // Can edit only if not expired
       wishlist_stats: wishlistStats,
+      elf: myElf || undefined,
     };
 
     console.log("[ResultsService.getAuthenticatedUserResult] Successfully retrieved result", {
       groupId,
       participantId: participant.id,
       assignedToId: assignedParticipant.id,
+      hasElf: !!myElf,
     });
 
     return result;
@@ -156,9 +162,12 @@ export class ResultsService {
     // Step 4: Get wishlist statistics for the group
     const wishlistStats = await this.getWishlistStats(participant.group_id);
 
-    // Step 5: Note - result_viewed_at is now updated only when gift is revealed
+    // Step 5: Get my elf helper (who is helping me)
+    const myElf = await this.getMyElfHelper(participant.id, participant.group_id);
 
-    // Step 6: Format and return response
+    // Step 6: Note - result_viewed_at is now updated only when gift is revealed
+
+    // Step 7: Format and return response
     const now = new Date();
     const endDate = new Date(group.end_date);
     // Compare only dates (ignore time) - end date is inclusive
@@ -180,16 +189,18 @@ export class ResultsService {
 
     const result: DrawResultResponseDTO = {
       group: this.formatGroupInfo(group),
-      participant: this.formatParticipantInfo(participant),
+      participant: await this.formatParticipantInfo(participant),
       assigned_to: this.formatAssignedParticipant(assignedParticipant, assignedWishlist),
       my_wishlist: this.formatMyWishlist(myWishlist, !isExpired), // Can edit only if not expired
       wishlist_stats: wishlistStats,
+      elf: myElf || undefined,
     };
 
     console.log("[ResultsService.getTokenBasedResult] Successfully retrieved result", {
       groupId: participant.group_id,
       participantId: participant.id,
       assignedToId: assignedParticipant.id,
+      hasElf: !!myElf,
     });
 
     return result;
@@ -254,7 +265,7 @@ export class ResultsService {
       // Find participant by user_id OR email (for users added before account creation)
       const { data: participantData, error: participantError } = await this.supabase
         .from("participants")
-        .select("id, group_id, user_id, name, email, result_viewed_at")
+        .select("id, group_id, user_id, name, email, result_viewed_at, elf_for_participant_id")
         .eq("group_id", groupId)
         .or(`user_id.eq.${userId},email.eq.${userEmail || ""}`)
         .single();
@@ -275,7 +286,7 @@ export class ResultsService {
       }
       const { data: participantData, error: participantError } = await this.supabase
         .from("participants")
-        .select("id, group_id, user_id, name, email, result_viewed_at")
+        .select("id, group_id, user_id, name, email, result_viewed_at, elf_for_participant_id")
         .eq("access_token", token)
         .single();
 
@@ -462,14 +473,89 @@ export class ResultsService {
   }
 
   /**
+   * Gets elf helper data for a participant (who is helping them)
+   * Finds a participant who has elf_for_participant_id === currentParticipantId
+   */
+  private async getMyElfHelper(
+    currentParticipantId: number,
+    groupId: number
+  ): Promise<{ id: number; name: string } | null> {
+    const { data: elfParticipant, error } = await this.supabase
+      .from("participants")
+      .select("id, name")
+      .eq("group_id", groupId)
+      .eq("elf_for_participant_id", currentParticipantId)
+      .single();
+
+    if (error) {
+      // No elf assigned (PGRST116 = no rows found) - this is not an error
+      if (error.code === "PGRST116") {
+        return null;
+      }
+      console.error("[ResultsService.getMyElfHelper] Error fetching elf:", error);
+      return null;
+    }
+
+    if (!elfParticipant) {
+      return null;
+    }
+
+    return {
+      id: elfParticipant.id,
+      name: elfParticipant.name,
+    };
+  }
+
+  /**
+   * Gets elf helper data for a participant (who they are helping)
+   */
+  private async getElfHelperData(
+    elfForParticipantId: number | null
+  ): Promise<{ elfForParticipantName?: string; elfForParticipantId?: number } | null> {
+    if (!elfForParticipantId) {
+      return null;
+    }
+
+    const { data: elfParticipant, error } = await this.supabase
+      .from("participants")
+      .select("id, name")
+      .eq("id", elfForParticipantId)
+      .single();
+
+    if (error || !elfParticipant) {
+      console.error("[ResultsService.getElfHelperData] Error fetching elf participant:", error);
+      return null;
+    }
+
+    return {
+      elfForParticipantName: elfParticipant.name,
+      elfForParticipantId: elfParticipant.id,
+    };
+  }
+
+  /**
    * Formats participant data for response
    */
-  private formatParticipantInfo(participant: ParticipantData): ResultParticipantInfo {
-    return {
+  private async formatParticipantInfo(
+    participant: ParticipantDataFromDB
+  ): Promise<ResultParticipantInfo> {
+    const baseInfo: ResultParticipantInfo = {
       id: participant.id,
       name: participant.name,
       result_viewed_at: participant.result_viewed_at || undefined,
     };
+
+    // If participant is an elf for someone, get their data
+    if (participant.elf_for_participant_id) {
+      const elfData = await this.getElfHelperData(participant.elf_for_participant_id);
+      if (elfData) {
+        baseInfo.isElfForSomeone = true;
+        baseInfo.elfForParticipantName = elfData.elfForParticipantName;
+        baseInfo.elfForParticipantId = elfData.elfForParticipantId;
+      }
+    }
+
+    return baseInfo;
   }
 
   /**
