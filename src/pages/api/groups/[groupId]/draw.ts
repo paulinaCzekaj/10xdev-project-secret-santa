@@ -155,7 +155,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
       const errorResponse: ApiErrorResponse = {
         error: {
           code: "IMPOSSIBLE_DRAW",
-          message: "Draw is impossible with current exclusion rules",
+          message: "Losowanie jest niemożliwe z obecnymi regułami wykluczeń",
           details: {
             reason: "Exclusion rules create an impossible configuration",
             suggestion: "Review and remove some exclusion rules",

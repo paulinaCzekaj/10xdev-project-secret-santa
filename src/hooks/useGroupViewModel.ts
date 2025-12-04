@@ -82,6 +82,17 @@ export function useGroupViewModel({ group, participants, exclusions, currentUser
       const isCurrentUser = participant.user_id !== null && participant.user_id === currentUserId;
       const isCreator = participant.user_id === group?.creator_id;
 
+      // Compute elf-related fields
+      const isElfForSomeone = participant.elf_for_participant_id !== null;
+      const elfForParticipantName = isElfForSomeone
+        ? participants.find((p) => p.id === participant.elf_for_participant_id)?.name || null
+        : null;
+      const hasElf = participants.some((p) => p.elf_for_participant_id === participant.id);
+      const elfParticipant = hasElf ? participants.find((p) => p.elf_for_participant_id === participant.id) : null;
+      const elfParticipantId = elfParticipant?.id || null;
+      const elfName = elfParticipant?.name || null;
+      const elfAccessedAt = elfParticipant?.elf_accessed_at || null;
+
       return {
         ...participant,
         // Flagi
@@ -104,6 +115,15 @@ export function useGroupViewModel({ group, participants, exclusions, currentUser
         resultLink: participant.access_token
           ? `${window.location.origin}/results/${participant.access_token}`
           : undefined,
+
+        // Elf-related fields (v1.1.0)
+        elfParticipantId, // ID of participant who is elf for this participant
+        elfForParticipantId: participant.elf_for_participant_id, // ID of participant that this participant helps
+        elfForParticipantName, // Name of participant that this participant helps
+        isElfForSomeone, // Whether this participant is an elf for someone
+        hasElf, // Whether this participant has an assigned elf helper
+        elfName, // Name of this participant's elf helper
+        elfAccessedAt, // When elf viewed this participant's result
       };
     });
   }, [participants, currentUserId, group?.creator_id, group?.is_drawn]);
@@ -114,6 +134,15 @@ export function useGroupViewModel({ group, participants, exclusions, currentUser
    */
   const exclusionViewModels = useMemo<ExclusionViewModel[]>(() => {
     return exclusions.map((exclusion): ExclusionViewModel => {
+      // Check if this is an automatic elf exclusion (cannot be deleted manually)
+      // Elf exclusion: podopieczny (blocker) cannot draw their elf helper (blocked)
+      // The elf participant has elf_for_participant_id === blocker_participant_id
+      const isElfExclusion = participants.some(
+        (p) =>
+          p.id === exclusion.blocked_participant_id && // blocked is the elf helper
+          p.elf_for_participant_id === exclusion.blocker_participant_id // elf's elf_for_participant_id points to blocker (podopieczny)
+      );
+
       return {
         ...exclusion,
         // Formatted values
@@ -121,10 +150,11 @@ export function useGroupViewModel({ group, participants, exclusions, currentUser
         shortDisplayText: formatExclusionShortText(exclusion.blocker_name, exclusion.blocked_name),
 
         // Flags
-        canDelete: !group?.is_drawn, // After drawing, exclusions cannot be deleted
+        canDelete: !group?.is_drawn && !isElfExclusion, // After drawing or if elf exclusion, cannot be deleted
+        isElfExclusion, // whether this is an automatic elf exclusion
       };
     });
-  }, [exclusions, group?.is_drawn]);
+  }, [exclusions, group?.is_drawn, participants]);
 
   return {
     groupViewModel,

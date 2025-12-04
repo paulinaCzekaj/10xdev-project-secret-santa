@@ -1,5 +1,16 @@
 # REST API Plan - Secret Santa
 
+**Ostatnia aktualizacja**: 2025-11-17
+**Wersja dokumentu**: 1.1.0
+
+## Historia zmian
+
+- **2025-11-17 (v1.1.0)**: Dodano endpointy dla funkcjonalności Elfa - `GET /api/participants/:id/elf-result`, `POST /api/participants/:id/track-elf-access`, rozszerzono endpointy CRUD participants o pole `elfForParticipantId`
+- **2025-11-03 (v1.0.1)**: Dodano endpointy AI-generowania wishlist - `POST /api/participants/:id/wishlist/generate-ai`, `GET /api/participants/:id/wishlist/ai-status`
+- **2025-10-09 (v1.0.0)**: Inicjalna wersja API dla MVP
+
+---
+
 ## 1. Resources
 
 The API is built around the following primary resources, each corresponding to database entities:
@@ -7,14 +18,23 @@ The API is built around the following primary resources, each corresponding to d
 - **Auth** - User authentication and account management (managed by Supabase Auth)
 - **Groups** - Secret Santa groups/events (`groups` table)
 - **Participants** - Group members (`participants` table)
+  - Includes elf assignment support (Version 1.1)
+  - Elf-to-participant relationship tracking
 - **Exclusions** - Draw exclusion rules (`exclusion_rules` table)
+  - Automatic exclusions for elf relationships (Version 1.1)
 - **Wishlists** - Participant wish lists (`wishes` table)
   - Includes AI-generated content support (Version 1.1)
   - AI generation quota tracking per participant
+  - Editable by elfs (if elf has account) (Version 1.1)
 - **Results** - Draw results and access tokens (derived from participants and assignments)
+  - Includes elf result access (Version 1.1)
+  - Separate tracking for elf access vs participant access
 - **AI Generation** - AI-powered wishlist generation (Version 1.1)
   - OpenRouter API integration for personalized Santa letters
   - Usage limits: 3 generations (unregistered) / 5 generations (registered)
+- **Elf Access** - Elf helper functionality (Version 1.1)
+  - Elfs can view results of participants they help
+  - Elf access tracking and permissions
 
 ---
 
@@ -194,9 +214,15 @@ The API is built around the following primary resources, each corresponding to d
 ```json
 {
   "name": "Jane Smith",
-  "email": "jane@example.com"
+  "email": "jane@example.com",
+  "elfForParticipantId": 1
 }
 ```
+
+**Fields:**
+- `name` (required): Participant's name
+- `email` (optional): Participant's email (must be unique per group)
+- `elfForParticipantId` (optional, v1.1.0): ID of participant this person will help as an elf
 
 - **Success Response** (201):
 
@@ -207,23 +233,24 @@ The API is built around the following primary resources, each corresponding to d
   "user_id": null,
   "name": "Jane Smith",
   "email": "jane@example.com",
+  "elf_for_participant_id": 1,
   "created_at": "2025-10-09T10:00:00Z",
   "access_token": "unique-secure-token-xyz"
 }
 ```
 
 - **Error Responses**:
-  - 400: Invalid data, email already exists in group, draw already completed
+  - 400: Invalid data, email already exists in group, draw already completed, elf target not in same group, participant already has an elf
   - 401: Unauthorized
   - 403: Forbidden (only creator can add participants)
-  - 404: Group not found
+  - 404: Group not found, elf target participant not found
   - 422: Missing required field (name)
 
 #### List Participants
 
 - **Method**: `GET`
 - **Path**: `/api/groups/:groupId/participants`
-- **Description**: Get all participants in a group
+- **Description**: Get all participants in a group with elf relationship information (v1.1.0)
 - **Headers**: `Authorization: Bearer {access_token}`
 - **Success Response** (200):
 
@@ -237,7 +264,13 @@ The API is built around the following primary resources, each corresponding to d
       "name": "John Doe",
       "email": "john@example.com",
       "created_at": "2025-10-09T10:00:00Z",
-      "has_wishlist": true
+      "has_wishlist": true,
+      "elfForParticipantId": null,
+      "elfForParticipantName": null,
+      "isElfForSomeone": false,
+      "hasElf": true,
+      "elfName": "Jane Smith",
+      "elfAccessedAt": null
     },
     {
       "id": 2,
@@ -246,11 +279,25 @@ The API is built around the following primary resources, each corresponding to d
       "name": "Jane Smith",
       "email": "jane@example.com",
       "created_at": "2025-10-09T10:00:00Z",
-      "has_wishlist": false
+      "has_wishlist": false,
+      "elfForParticipantId": 1,
+      "elfForParticipantName": "John Doe",
+      "isElfForSomeone": true,
+      "hasElf": false,
+      "elfName": null,
+      "elfAccessedAt": null
     }
   ]
 }
 ```
+
+**Response Fields (v1.1.0 Elf fields):**
+- `elfForParticipantId`: ID of participant this person is helping (null if not an elf)
+- `elfForParticipantName`: Name of participant this person is helping
+- `isElfForSomeone`: Boolean indicating if this participant is an elf
+- `hasElf`: Boolean indicating if this participant has an assigned elf
+- `elfName`: Name of this participant's elf (null if no elf)
+- `elfAccessedAt`: Timestamp when elf accessed this participant's result (null if not accessed)
 
 - **Error Responses**:
   - 401: Unauthorized
@@ -261,23 +308,29 @@ The API is built around the following primary resources, each corresponding to d
 
 - **Method**: `PATCH`
 - **Path**: `/api/participants/:id`
-- **Description**: Update participant details (only before draw)
+- **Description**: Update participant details (name only before draw, email always, elf assignment only before draw - v1.1.0)
 - **Headers**: `Authorization: Bearer {access_token}`
 - **Request Body** (all fields optional):
 
 ```json
 {
   "name": "Updated Name",
-  "email": "updated@example.com"
+  "email": "updated@example.com",
+  "elfForParticipantId": 2
 }
 ```
 
+**Fields:**
+- `name` (optional): Can only be updated before draw
+- `email` (optional): Can be updated anytime
+- `elfForParticipantId` (optional, v1.1.0): ID of participant this person will help as an elf. Can only be updated before draw. Set to `null` to remove elf assignment.
+
 - **Success Response** (200): Updated participant object
 - **Error Responses**:
-  - 400: Invalid data, email already exists in group, draw already completed
+  - 400: Invalid data, email already exists in group, draw already completed (for name/elf changes), elf target not in same group, participant already has an elf
   - 401: Unauthorized
   - 403: Forbidden (only group creator can update)
-  - 404: Participant not found
+  - 404: Participant not found, elf target participant not found
 
 #### Delete Participant
 
@@ -1076,6 +1129,89 @@ Wytyczne:
 6. Odpowiadaj TYLKO po polsku
 7. Zakończ list w ciepły, świąteczny sposób
 ```
+
+### 2.9. Elf Access (v1.1.0)
+
+#### Get Elf Result
+
+- **Method**: `GET`
+- **Path**: `/api/participants/:participantId/elf-result`
+- **Description**: Get the draw result of the participant the elf is helping (elf must be logged in)
+- **Headers**: `Authorization: Bearer {access_token}` (required - elf must have account)
+- **Success Response** (200):
+
+```json
+{
+  "assignment": {
+    "receiverName": "Alice Johnson",
+    "receiverWishlist": "I would love a new book...",
+    "receiverWishlistHtml": "<p>I would love a new book...</p>"
+  },
+  "group": {
+    "id": 1,
+    "name": "Family Christmas 2025",
+    "budget": 150,
+    "endDate": "2025-12-25T23:59:59Z"
+  },
+  "helpedParticipant": {
+    "id": 3,
+    "name": "John Doe"
+  }
+}
+```
+
+**Response Fields:**
+- `assignment`: Draw result of the participant the elf is helping
+  - `receiverName`: Name of person the helped participant drew
+  - `receiverWishlist`: Raw wishlist text of the receiver
+  - `receiverWishlistHtml`: HTML-formatted wishlist with clickable links
+- `group`: Group information (name, budget, end date)
+- `helpedParticipant`: Information about the participant the elf is helping
+
+**Authorization Logic:**
+1. Check if authenticated user is a participant in this group
+2. Check if participant has `elf_for_participant_id` set (is an elf)
+3. Fetch assignment for `elf_for_participant_id`
+4. Track access via `elf_accessed_at` timestamp
+
+- **Error Responses**:
+  - 401: Unauthorized (no Bearer token)
+  - 403: Forbidden (not an elf, or not an elf for anyone)
+  - 404: Participant not found, assignment not found (draw not completed)
+  - 500: Internal server error
+
+#### Track Elf Access
+
+- **Method**: `POST`
+- **Path**: `/api/participants/:participantId/track-elf-access`
+- **Description**: Track when elf accessed the result (sets `elf_accessed_at` timestamp if not already set)
+- **Headers**: `Authorization: Bearer {access_token}` (required)
+- **Success Response** (200):
+
+```json
+{
+  "success": true
+}
+```
+
+**Behavior:**
+- Only sets `elf_accessed_at` on first access (if currently NULL)
+- Subsequent calls do not update the timestamp
+- Used for analytics to track elf engagement
+
+- **Error Responses**:
+  - 401: Unauthorized
+  - 403: Forbidden (not an elf)
+  - 404: Participant not found
+  - 500: Internal server error
+
+**Notes:**
+- Both endpoints require the elf to be a registered user (have `user_id`)
+- Niezarejestrowani elfowie (without `user_id`) cannot access these endpoints
+- Access token for unregistered participants does NOT grant access to elf endpoints
+- Separate tracking: `elf_accessed_at` (elf's access) vs `result_viewed_at` (participant's own access)
+
+---
 
 ### 5.7. Future Enhancements (Out of Scope)
 
