@@ -25,7 +25,7 @@ describe("Elf API Endpoints Integration Tests", () => {
 
   it("should mock GET /api/participants/1/elf-result endpoint", async () => {
     server.use(
-      http.get("/api/participants/1/elf-result", () => {
+      http.get("http://localhost/api/participants/1/elf-result", () => {
         return HttpResponse.json(
           {
             error: {
