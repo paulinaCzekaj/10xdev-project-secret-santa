@@ -127,6 +127,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockWishlist = createMockWishlist();
 
       // Mock Supabase queries
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: mockWishlist, error: null });
 
@@ -152,6 +153,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockWishlist = createMockWishlist();
 
       // Mock Supabase queries
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: mockWishlist, error: null });
 
@@ -178,6 +180,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       });
 
       // Mock Supabase queries
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: mockWishlist, error: null });
 
@@ -211,6 +214,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockWishlist = createMockWishlist();
 
       // Mock Supabase queries
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: mockWishlist, error: null });
 
@@ -258,6 +262,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       });
 
       // Mock participants query
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
 
       // Mock auth.getUser to return different email
@@ -290,6 +295,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockParticipant = createMockParticipant({ access_token: "token-abc" }); // Different token
 
       // Mock participants query
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
 
       // Act & Assert
@@ -310,6 +316,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockParticipant = createMockParticipant();
 
       // Mock participants query
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
 
       // Act & Assert
@@ -336,6 +343,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       });
 
       // Mock participants query
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
 
       // Act & Assert
@@ -358,6 +366,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockParticipant = createMockParticipant({ user_id: authUserId }) as ParticipantWithGroupDTO;
 
       // Mock Supabase queries
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: null, error: { message: "Database connection failed" } });
 
@@ -378,6 +387,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockParticipant = createMockParticipant({ user_id: authUserId }) as ParticipantWithGroupDTO;
 
       // Mock Supabase queries
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: null, error: null });
 
@@ -402,6 +412,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockWishlist = createMockWishlist({ wishlist: "" });
 
       // Mock Supabase queries
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: mockWishlist, error: null });
 
@@ -426,6 +437,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockWishlist = createMockWishlist({ wishlist: longContent });
 
       // Mock Supabase queries
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: mockWishlist, error: null });
 
@@ -451,6 +463,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockWishlist = createMockWishlist({ wishlist: specialContent });
 
       // Mock Supabase queries
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: mockWishlist, error: null });
 
@@ -478,6 +491,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockWishlist = createMockWishlist();
 
       // Mock Supabase queries
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: mockWishlist, error: null });
 
@@ -504,6 +518,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockWishlist = createMockWishlist();
 
       // Mock Supabase queries
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: mockWishlist, error: null });
 
@@ -539,6 +554,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockWishlist = createMockWishlist();
 
       // Mock Supabase queries
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: mockWishlist, error: null });
 
@@ -570,6 +586,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       });
 
       // Mock participants query
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
 
       // Act & Assert
@@ -603,6 +620,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockWishlist = createMockWishlist();
 
       // Mock Supabase queries
+      // @ts-ignore - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: mockWishlist, error: null });
 
@@ -631,7 +649,7 @@ describe("WishlistService.validateWishlistAccess", () => {
   });
 
   // Helper function to create mock participant data
-  const createMockParticipant = (overrides: Partial<ParticipantWithGroupDTO> = {}): ParticipantWithGroupDTO => {
+  const createMockParticipant = (overrides: Record<string, any> = {}): ParticipantWithGroupDTO => {
     const result = {
       id: 1,
       group_id: 1,
@@ -649,11 +667,12 @@ describe("WishlistService.validateWishlistAccess", () => {
         creator_id: "creator-123",
       },
       ...overrides,
-    } as ParticipantWithGroupDTO;
+    };
 
-    // Ensure these properties are never undefined
-    result.elf_accessed_at = (result.elf_accessed_at ?? null) as string | null;
-    result.elf_for_participant_id = (result.elf_for_participant_id ?? null) as number | null;
+    // Ensure nested group properties are handled correctly
+    if (overrides.group) {
+      result.group = { ...result.group, ...overrides.group };
+    }
 
     return result;
   };
