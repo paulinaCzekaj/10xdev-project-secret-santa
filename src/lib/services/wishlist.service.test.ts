@@ -211,6 +211,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockWishlist = createMockWishlist();
 
       // Mock Supabase queries
+      // @ts-expect-error - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: mockWishlist, error: null });
 
@@ -258,6 +259,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       });
 
       // Mock participants query
+      // @ts-expect-error - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
 
       // Mock auth.getUser to return different email
@@ -290,6 +292,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockParticipant = createMockParticipant({ access_token: "token-abc" }); // Different token
 
       // Mock participants query
+      // @ts-expect-error - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
 
       // Act & Assert
@@ -310,6 +313,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockParticipant = createMockParticipant();
 
       // Mock participants query
+      // @ts-expect-error - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
 
       // Act & Assert
@@ -336,6 +340,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       });
 
       // Mock participants query
+      // @ts-expect-error - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
 
       // Act & Assert
@@ -478,6 +483,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockWishlist = createMockWishlist();
 
       // Mock Supabase queries
+      // @ts-expect-error - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: mockWishlist, error: null });
 
@@ -504,6 +510,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockWishlist = createMockWishlist();
 
       // Mock Supabase queries
+      // @ts-expect-error - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: mockWishlist, error: null });
 
@@ -539,6 +546,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockWishlist = createMockWishlist();
 
       // Mock Supabase queries
+      // @ts-expect-error - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: mockWishlist, error: null });
 
@@ -570,6 +578,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       });
 
       // Mock participants query
+      // @ts-expect-error - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
 
       // Act & Assert
@@ -603,6 +612,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const mockWishlist = createMockWishlist();
 
       // Mock Supabase queries
+      // @ts-expect-error - TypeScript limitation with mock function typing
       mockParticipantsQuery({ data: mockParticipant, error: null });
       mockWishesUpsert({ data: mockWishlist, error: null });
 
@@ -649,11 +659,12 @@ describe("WishlistService.validateWishlistAccess", () => {
         creator_id: "creator-123",
       },
       ...overrides,
-    } as ParticipantWithGroupDTO;
+    };
 
-    // Ensure these properties are never undefined
-    result.elf_accessed_at = (result.elf_accessed_at ?? null) as string | null;
-    result.elf_for_participant_id = (result.elf_for_participant_id ?? null) as number | null;
+    // Ensure nested group properties are handled correctly
+    if (overrides.group) {
+      result.group = { ...result.group, ...overrides.group };
+    }
 
     return result;
   };
