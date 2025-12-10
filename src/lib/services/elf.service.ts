@@ -1,9 +1,5 @@
 import type { SupabaseClient } from "../../db/supabase.client";
-import type {
-  ElfResultResponseDTO,
-  TrackElfAccessResponseDTO,
-  UserId,
-} from "../../types";
+import type { ElfResultResponseDTO, TrackElfAccessResponseDTO, UserId } from "../../types";
 import { linkifyUrls } from "../utils/linkify";
 
 /**
@@ -27,6 +23,17 @@ interface TrackElfAccessCommand {
  */
 interface GetElfResultByTokenCommand {
   token: string; // access token z participants.access_token
+}
+
+/**
+ * Type for validated elf participant (guarantees elf_for_participant_id is not null)
+ */
+interface ValidatedElfParticipant {
+  id: number;
+  user_id: string | null;
+  elf_for_participant_id: number;
+  group_id: number;
+  access_token?: string | null;
 }
 
 /**
@@ -54,7 +61,7 @@ export class ElfService {
     const participant = await this.validateElfParticipant(command.participantId, command.userId);
 
     // Step 2: Get helped participant details
-    const helpedParticipant = await this.getHelpedParticipant(participant.elf_for_participant_id!);
+    const helpedParticipant = await this.getHelpedParticipant(participant.elf_for_participant_id);
 
     // Step 3: Get assignment for the helped participant
     const assignment = await this.getHelpedParticipantAssignment(helpedParticipant.id);
@@ -135,7 +142,7 @@ export class ElfService {
    * Validates that a participant exists, belongs to the authenticated user, and is an elf
    * @private
    */
-  private async validateElfParticipant(participantId: number, userId: UserId) {
+  private async validateElfParticipant(participantId: number, userId: UserId): Promise<ValidatedElfParticipant> {
     const { data: participant, error } = await this.supabase
       .from("participants")
       .select("id, user_id, elf_for_participant_id, group_id")
@@ -169,7 +176,8 @@ export class ElfService {
       throw new Error("FORBIDDEN");
     }
 
-    return participant;
+    // At this point, we've validated that elf_for_participant_id is not null
+    return participant as ValidatedElfParticipant;
   }
 
   /**
@@ -302,7 +310,7 @@ export class ElfService {
     const participant = await this.validateElfParticipantByToken(command.token);
 
     // Step 2: Get helped participant details
-    const helpedParticipant = await this.getHelpedParticipant(participant.elf_for_participant_id!);
+    const helpedParticipant = await this.getHelpedParticipant(participant.elf_for_participant_id);
 
     // Step 3: Get assignment for the helped participant
     const assignment = await this.getHelpedParticipantAssignment(helpedParticipant.id);
@@ -346,7 +354,7 @@ export class ElfService {
    * Validates that a participant exists by access token and is an elf
    * @private
    */
-  private async validateElfParticipantByToken(token: string) {
+  private async validateElfParticipantByToken(token: string): Promise<ValidatedElfParticipant> {
     const { data: participant, error } = await this.supabase
       .from("participants")
       .select("id, elf_for_participant_id, group_id, access_token")
@@ -370,6 +378,7 @@ export class ElfService {
       throw new Error("FORBIDDEN");
     }
 
-    return participant;
+    // At this point, we've validated that elf_for_participant_id is not null
+    return participant as ValidatedElfParticipant;
   }
 }

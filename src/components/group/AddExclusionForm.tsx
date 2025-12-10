@@ -40,15 +40,13 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
   const availableBlocked = React.useMemo(() => {
     if (!selectedBlocker) return participants;
 
-    return participants.filter(p => {
+    return participants.filter((p) => {
       // Can't block yourself
       if (p.id === selectedBlocker) return false;
 
       // Check if this participant is already blocked by the selected blocker
       const alreadyBlocked = existingExclusions.some(
-        exclusion =>
-          exclusion.blocker_participant_id === selectedBlocker &&
-          exclusion.blocked_participant_id === p.id
+        (exclusion) => exclusion.blocker_participant_id === selectedBlocker && exclusion.blocked_participant_id === p.id
       );
 
       return !alreadyBlocked;
@@ -58,7 +56,7 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
   // Clear blocked selection if it's no longer available (e.g., blocker changed)
   React.useEffect(() => {
     if (selectedBlocked && selectedBlocker) {
-      const isStillAvailable = availableBlocked.some(p => p.id === selectedBlocked);
+      const isStillAvailable = availableBlocked.some((p) => p.id === selectedBlocked);
       if (!isStillAvailable) {
         form.setValue("blocked_participant_id", undefined);
       }
@@ -131,7 +129,9 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder={!selectedBlocker ? "Wybierz najpierw osobę powyżej" : "Wybierz osobę"} />
+                          <SelectValue
+                            placeholder={!selectedBlocker ? "Wybierz najpierw osobę powyżej" : "Wybierz osobę"}
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>

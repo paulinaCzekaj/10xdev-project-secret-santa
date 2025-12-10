@@ -45,9 +45,7 @@ function ElfAssignedPersonCard({ name, wishlistHtml }: ElfAssignedPersonCardProp
 
         {/* Name with elegant typography */}
         <div className="text-center space-y-2 max-w-md">
-          <h3 className="text-4xl font-bold text-red-500 dark:text-red-400 drop-shadow-sm">
-            {name}
-          </h3>
+          <h3 className="text-4xl font-bold text-red-500 dark:text-red-400 drop-shadow-sm">{name}</h3>
         </div>
       </div>
 

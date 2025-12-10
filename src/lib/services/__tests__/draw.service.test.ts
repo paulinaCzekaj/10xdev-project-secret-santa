@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { DrawService } from "../draw.service";
 import type { ParticipantDTO, ExclusionRuleDTO } from "../../../types";
 
@@ -188,7 +188,7 @@ describe("DrawService - Algorithm Validation", () => {
           id: 1,
           group_id: 1,
           blocker_participant_id: 2, // Bob cannot draw...
-          blocked_participant_id: 1,  // ...Alice (his elf)
+          blocked_participant_id: 1, // ...Alice (his elf)
           created_at: "",
         },
       ];

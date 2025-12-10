@@ -11,8 +11,7 @@ interface DateCardProps {
  * Used in ResultView and ElfResultView
  */
 function DateCard({ endDate, formattedEndDate }: DateCardProps) {
-  const displayDate =
-    formattedEndDate || (endDate ? new Date(endDate).toLocaleDateString("pl-PL") : "");
+  const displayDate = formattedEndDate || (endDate ? new Date(endDate).toLocaleDateString("pl-PL") : "");
 
   return (
     <div className="bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-900 dark:to-rose-900 rounded-lg p-4 border border-red-200 dark:border-red-700">
@@ -21,12 +20,8 @@ function DateCard({ endDate, formattedEndDate }: DateCardProps) {
           <Calendar className="w-6 h-6 text-white" />
         </div>
         <div>
-          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-            Termin wymiany
-          </p>
-          <p className="text-2xl font-bold text-red-700 dark:text-red-300">
-            {displayDate}
-          </p>
+          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Termin wymiany</p>
+          <p className="text-2xl font-bold text-red-700 dark:text-red-300">{displayDate}</p>
         </div>
       </div>
     </div>

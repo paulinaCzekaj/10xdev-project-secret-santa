@@ -26,12 +26,15 @@ describe("Elf API Endpoints Integration Tests", () => {
   it("should mock GET /api/participants/1/elf-result endpoint", async () => {
     server.use(
       http.get("/api/participants/1/elf-result", () => {
-        return HttpResponse.json({
-          error: {
-            code: "UNAUTHORIZED",
-            message: "Authentication required",
-          },
-        } as ApiErrorResponse, { status: 401 });
+        return HttpResponse.json(
+          {
+            error: {
+              code: "UNAUTHORIZED",
+              message: "Authentication required",
+            },
+          } as ApiErrorResponse,
+          { status: 401 }
+        );
       })
     );
 

@@ -20,12 +20,8 @@ function BudgetCard({ budget, formattedBudget }: BudgetCardProps) {
           <DollarSign className="w-6 h-6 text-white" />
         </div>
         <div>
-          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-            Budżet prezentu
-          </p>
-          <p className="text-2xl font-bold text-green-700 dark:text-green-300">
-            {displayBudget}
-          </p>
+          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Budżet prezentu</p>
+          <p className="text-2xl font-bold text-green-700 dark:text-green-300">{displayBudget}</p>
         </div>
       </div>
     </div>

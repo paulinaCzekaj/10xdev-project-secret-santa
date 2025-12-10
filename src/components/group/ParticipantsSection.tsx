@@ -55,7 +55,14 @@ export function ParticipantsSection({
 
         <CardContent className="space-y-6">
           {/* Formularz dodawania uczestnika - tylko przed losowaniem */}
-          {canEdit && !isDrawn && <AddParticipantForm groupId={groupId} participants={participants} isDrawn={isDrawn} onSuccess={onParticipantAdded} />}
+          {canEdit && !isDrawn && (
+            <AddParticipantForm
+              groupId={groupId}
+              participants={participants}
+              isDrawn={isDrawn}
+              onSuccess={onParticipantAdded}
+            />
+          )}
 
           {/* Lista uczestników */}
           {participants.length > 0 ? (

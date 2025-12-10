@@ -10,15 +10,6 @@ import type {
 } from "../../types";
 
 /**
- * Type for participant data used in formatting
- */
-interface ParticipantData {
-  id: number;
-  name: string;
-  result_viewed_at: string | null;
-}
-
-/**
  * Type for full participant data from database
  */
 interface ParticipantDataFromDB {
@@ -536,9 +527,7 @@ export class ResultsService {
   /**
    * Formats participant data for response
    */
-  private async formatParticipantInfo(
-    participant: ParticipantDataFromDB
-  ): Promise<ResultParticipantInfo> {
+  private async formatParticipantInfo(participant: ParticipantDataFromDB): Promise<ResultParticipantInfo> {
     const baseInfo: ResultParticipantInfo = {
       id: participant.id,
       name: participant.name,

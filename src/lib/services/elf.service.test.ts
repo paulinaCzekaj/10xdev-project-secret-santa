@@ -3,7 +3,8 @@ import { ElfService } from "./elf.service";
 
 // Mock Supabase client with a more comprehensive mock
 const createMockSupabaseClient = () => ({
-  from: vi.fn((table: string) => ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  from: vi.fn((_table: string) => ({
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),

@@ -132,9 +132,7 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
         )}
 
         {/* Elf info box - shows if participant has an elf (at the bottom) */}
-        {result.elf && (
-          <ElfInfoBox elfName={result.elf.name} />
-        )}
+        {result.elf && <ElfInfoBox elfName={result.elf.name} />}
       </div>
     </div>
   );

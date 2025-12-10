@@ -62,24 +62,22 @@ export default function ElfResultView({ groupId, token, isAuthenticated = false 
 
   // No data - should not happen
   if (!data) {
-    return <GenericError message="Nie udało się załadować danych elfa. Spróbuj ponownie." onRetry={() => window.location.reload()} />;
+    return (
+      <GenericError
+        message="Nie udało się załadować danych elfa. Spróbuj ponownie."
+        onRetry={() => window.location.reload()}
+      />
+    );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-purple-950 dark:via-gray-900 dark:to-pink-950">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Elf role banner */}
-        <ElfRoleBanner
-          helpedParticipantName={data.helpedParticipant.name}
-          variant="elf-result"
-        />
+        <ElfRoleBanner helpedParticipantName={data.helpedParticipant.name} variant="elf-result" />
 
         {/* Group info */}
-        <GroupInfoCard
-          groupName={data.group.name}
-          budget={data.group.budget}
-          endDate={data.group.endDate}
-        />
+        <GroupInfoCard groupName={data.group.name} budget={data.group.budget} endDate={data.group.endDate} />
 
         {/* Assigned person card */}
         <div className="space-y-2">

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
-import { rest } from "msw";
+import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import type { ApiErrorResponse, ElfResultResponseDTO, TrackElfAccessResponseDTO } from "../../src/types";
 
@@ -48,21 +48,20 @@ describe("Elf API Endpoints Integration Tests", () => {
   });
 
   describe("GET /api/participants/:participantId/elf-result", () => {
-    const endpoint = (participantId: number) =>
-      `/api/participants/${participantId}/elf-result`;
+    const endpoint = (participantId: number) => `/api/participants/${participantId}/elf-result`;
 
     describe("authentication", () => {
       it("should return 401 when no authorization header is provided", async () => {
         server.use(
-          rest.get(endpoint(validParticipantId), (req, res, ctx) => {
-            return res(
-              ctx.status(401),
-              ctx.json({
+          http.get(endpoint(validParticipantId), () => {
+            return HttpResponse.json(
+              {
                 error: {
                   code: "UNAUTHORIZED",
                   message: "Authentication required (Bearer token or participant token)",
                 },
-              } as ApiErrorResponse)
+              } as ApiErrorResponse,
+              { status: 401 }
             );
           })
         );
@@ -76,20 +75,20 @@ describe("Elf API Endpoints Integration Tests", () => {
 
       it("should return 401 when invalid token is provided", async () => {
         server.use(
-          rest.get(endpoint(validParticipantId), (req, res, ctx) => {
-            const authHeader = req.headers.get("authorization");
+          http.get(endpoint(validParticipantId), ({ request }) => {
+            const authHeader = request.headers.get("authorization");
             if (authHeader !== `Bearer ${validAuthToken}`) {
-              return res(
-                ctx.status(401),
-                ctx.json({
+              return HttpResponse.json(
+                {
                   error: {
                     code: "UNAUTHORIZED",
                     message: "Authentication required",
                   },
-                } as ApiErrorResponse)
+                } as ApiErrorResponse,
+                { status: 401 }
               );
             }
-            return res(ctx.status(200), ctx.json(mockElfResult));
+            return HttpResponse.json(mockElfResult, { status: 200 });
           })
         );
 
@@ -105,15 +104,15 @@ describe("Elf API Endpoints Integration Tests", () => {
     describe("validation", () => {
       it("should return 400 for invalid participant ID format", async () => {
         server.use(
-          rest.get("/api/participants/invalid/elf-result", (req, res, ctx) => {
-            return res(
-              ctx.status(400),
-              ctx.json({
+          http.get("/api/participants/invalid/elf-result", () => {
+            return HttpResponse.json(
+              {
                 error: {
                   code: "INVALID_INPUT",
                   message: "Participant ID must be a positive integer",
                 },
-              } as ApiErrorResponse)
+              } as ApiErrorResponse,
+              { status: 400 }
             );
           })
         );
@@ -133,20 +132,20 @@ describe("Elf API Endpoints Integration Tests", () => {
     describe("authorization", () => {
       it("should return 403 when user is not an elf", async () => {
         server.use(
-          rest.get(endpoint(validParticipantId), (req, res, ctx) => {
-            const authHeader = req.headers.get("authorization");
+          http.get(endpoint(validParticipantId), ({ request }) => {
+            const authHeader = request.headers.get("authorization");
             if (authHeader === `Bearer ${validAuthToken}`) {
-              return res(
-                ctx.status(403),
-                ctx.json({
+              return HttpResponse.json(
+                {
                   error: {
                     code: "FORBIDDEN",
                     message: "You are not authorized to access this resource",
                   },
-                } as ApiErrorResponse)
+                } as ApiErrorResponse,
+                { status: 403 }
               );
             }
-            return res(ctx.status(401));
+            return HttpResponse.json({}, { status: 401 });
           })
         );
 
@@ -163,20 +162,20 @@ describe("Elf API Endpoints Integration Tests", () => {
 
       it("should return 404 when participant does not exist", async () => {
         server.use(
-          rest.get(endpoint(invalidParticipantId), (req, res, ctx) => {
-            const authHeader = req.headers.get("authorization");
+          http.get(endpoint(invalidParticipantId), ({ request }) => {
+            const authHeader = request.headers.get("authorization");
             if (authHeader === `Bearer ${validAuthToken}`) {
-              return res(
-                ctx.status(404),
-                ctx.json({
+              return HttpResponse.json(
+                {
                   error: {
                     code: "NOT_FOUND",
                     message: "Participant not found",
                   },
-                } as ApiErrorResponse)
+                } as ApiErrorResponse,
+                { status: 404 }
               );
             }
-            return res(ctx.status(401));
+            return HttpResponse.json({}, { status: 401 });
           })
         );
 
@@ -195,12 +194,12 @@ describe("Elf API Endpoints Integration Tests", () => {
     describe("success scenarios", () => {
       it("should return 200 with elf result data when authenticated elf requests", async () => {
         server.use(
-          rest.get(endpoint(validParticipantId), (req, res, ctx) => {
-            const authHeader = req.headers.get("authorization");
+          http.get(endpoint(validParticipantId), ({ request }) => {
+            const authHeader = request.headers.get("authorization");
             if (authHeader === `Bearer ${validAuthToken}`) {
-              return res(ctx.status(200), ctx.json(mockElfResult));
+              return HttpResponse.json(mockElfResult, { status: 200 });
             }
-            return res(ctx.status(401));
+            return HttpResponse.json({}, { status: 401 });
           })
         );
 
@@ -221,21 +220,20 @@ describe("Elf API Endpoints Integration Tests", () => {
   });
 
   describe("POST /api/participants/:participantId/track-elf-access", () => {
-    const endpoint = (participantId: number) =>
-      `/api/participants/${participantId}/track-elf-access`;
+    const endpoint = (participantId: number) => `/api/participants/${participantId}/track-elf-access`;
 
     describe("authentication", () => {
       it("should return 401 when no authorization header is provided", async () => {
         server.use(
-          rest.post(endpoint(validParticipantId), (req, res, ctx) => {
-            return res(
-              ctx.status(401),
-              ctx.json({
+          http.post(endpoint(validParticipantId), () => {
+            return HttpResponse.json(
+              {
                 error: {
                   code: "UNAUTHORIZED",
                   message: "Authentication required",
                 },
-              } as ApiErrorResponse)
+              } as ApiErrorResponse,
+              { status: 401 }
             );
           })
         );
@@ -253,15 +251,15 @@ describe("Elf API Endpoints Integration Tests", () => {
     describe("validation", () => {
       it("should return 400 for invalid participant ID format", async () => {
         server.use(
-          rest.post("/api/participants/invalid/track-elf-access", (req, res, ctx) => {
-            return res(
-              ctx.status(400),
-              ctx.json({
+          http.post("/api/participants/invalid/track-elf-access", () => {
+            return HttpResponse.json(
+              {
                 error: {
                   code: "INVALID_INPUT",
                   message: "Participant ID must be a positive integer",
                 },
-              } as ApiErrorResponse)
+              } as ApiErrorResponse,
+              { status: 400 }
             );
           })
         );
@@ -282,12 +280,12 @@ describe("Elf API Endpoints Integration Tests", () => {
     describe("success scenarios", () => {
       it("should return 200 with success confirmation", async () => {
         server.use(
-          rest.post(endpoint(validParticipantId), (req, res, ctx) => {
-            const authHeader = req.headers.get("authorization");
+          http.post(endpoint(validParticipantId), ({ request }) => {
+            const authHeader = request.headers.get("authorization");
             if (authHeader === `Bearer ${validAuthToken}`) {
-              return res(ctx.status(200), ctx.json(mockTrackAccessResult));
+              return HttpResponse.json(mockTrackAccessResult, { status: 200 });
             }
-            return res(ctx.status(401));
+            return HttpResponse.json({}, { status: 401 });
           })
         );
 

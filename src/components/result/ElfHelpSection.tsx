@@ -14,16 +14,14 @@ interface ElfHelpSectionProps {
  */
 export default function ElfHelpSection({
   helpedParticipantName,
-  helpedParticipantId,
+  helpedParticipantId: _helpedParticipantId, // eslint-disable-line @typescript-eslint/no-unused-vars
   groupId,
   isAuthenticated = false,
   accessToken,
 }: ElfHelpSectionProps) {
   const handleViewResult = () => {
     // Navigate to elf result page
-    const url = isAuthenticated
-      ? `/groups/${groupId}/elf-result`
-      : `/elf-results/${accessToken}`;
+    const url = isAuthenticated ? `/groups/${groupId}/elf-result` : `/elf-results/${accessToken}`;
     window.location.href = url;
   };
 
@@ -36,8 +34,8 @@ export default function ElfHelpSection({
             Jesteś świątecznym elfem dla {helpedParticipantName}! 🎄
           </h3>
           <p className="text-sm text-green-800">
-            W magicznej pracowni Świętego Mikołaja został Ci przydzielony specjalny pomocniczy task!
-            Możesz zajrzeć do wyniku losowania {helpedParticipantName} i pomóc w wyborze idealnego prezentu gwiazdkowego.
+            W magicznej pracowni Świętego Mikołaja został Ci przydzielony specjalny pomocniczy task! Możesz zajrzeć do
+            wyniku losowania {helpedParticipantName} i pomóc w wyborze idealnego prezentu gwiazdkowego.
           </p>
           <button
             onClick={handleViewResult}

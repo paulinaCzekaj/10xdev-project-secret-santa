@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { ParticipantService } from "../../../lib/services/participant.service";
 import { requireApiAuth, requireGroupOwner } from "../../../lib/utils/api-auth.utils";
-import type { ApiErrorResponse, UpdateParticipantCommand } from "../../../types";
+import type { ApiErrorResponse, UpdateParticipantCommand, ParticipantUpdate } from "../../../types";
 
 export const prerender = false;
 export const trailingSlash = "never";
@@ -153,7 +153,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
 
     // Happy path: Update participant
     // Convert camelCase to snake_case for database compatibility
-    const updateData: Record<string, unknown> = {};
+    const updateData: ParticipantUpdate = {};
     if (validatedData.name !== undefined) updateData.name = validatedData.name;
     if (validatedData.email !== undefined) updateData.email = validatedData.email;
 
@@ -166,7 +166,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       );
     }
 
-    const updatedParticipant = await participantService.updateParticipant(participantId, updateData as any);
+    const updatedParticipant = await participantService.updateParticipant(participantId, updateData);
 
     return new Response(JSON.stringify(updatedParticipant), {
       status: 200,

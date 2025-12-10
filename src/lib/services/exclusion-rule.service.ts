@@ -346,6 +346,8 @@ export class ExclusionRuleService {
           `
           id,
           group_id,
+          blocker_participant_id,
+          blocked_participant_id,
           groups!inner(id, creator_id)
         `
         )
@@ -382,8 +384,8 @@ export class ExclusionRuleService {
       console.log("[ExclusionRuleService.deleteExclusionRule] User is creator - authorized");
 
       // Step 2.5: Check if this is an automatic elf exclusion that cannot be deleted manually
-      const blockerParticipantId = (exclusionRule as any).blocker_participant_id;
-      const blockedParticipantId = (exclusionRule as any).blocked_participant_id;
+      const blockerParticipantId = exclusionRule.blocker_participant_id;
+      const blockedParticipantId = exclusionRule.blocked_participant_id;
 
       if (blockerParticipantId && blockedParticipantId) {
         const { data: elfParticipant, error: elfError } = await this.supabase

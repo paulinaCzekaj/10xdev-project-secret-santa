@@ -14,9 +14,7 @@ export default function ElfInfoBox({ elfName }: ElfInfoBoxProps) {
       <div className="flex items-center gap-3">
         <span className="text-2xl">🎄</span>
         <div>
-          <p className="text-sm font-medium text-blue-900">
-            Twój pomocnik: {elfName}
-          </p>
+          <p className="text-sm font-medium text-blue-900">Twój pomocnik: {elfName}</p>
           <p className="text-xs text-blue-700">
             {elfName} może zobaczyć kogo wylosowałeś i pomóc Ci w wyborze prezentu
           </p>

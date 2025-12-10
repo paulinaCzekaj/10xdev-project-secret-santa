@@ -53,8 +53,7 @@ test.describe("Elf Access to Results", () => {
     // Get authentication token from localStorage or session
     const authToken = await page.evaluate(() => {
       // Try to get from localStorage (adjust based on your auth implementation)
-      return localStorage.getItem("supabase.auth.token") ||
-             sessionStorage.getItem("supabase.auth.token");
+      return localStorage.getItem("supabase.auth.token") || sessionStorage.getItem("supabase.auth.token");
     });
 
     expect(authToken).toBeTruthy();
@@ -65,7 +64,7 @@ test.describe("Elf Access to Results", () => {
     // Make API call to get elf result
     const apiResponse = await page.request.get("/api/participants/1/elf-result", {
       headers: {
-        "Authorization": `Bearer ${authToken}`,
+        Authorization: `Bearer ${authToken}`,
         "Content-Type": "application/json",
       },
     });
@@ -99,7 +98,7 @@ test.describe("Elf Access to Results", () => {
     // ==========================================
     const trackingResponse = await page.request.post("/api/participants/1/track-elf-access", {
       headers: {
-        "Authorization": `Bearer ${authToken}`,
+        Authorization: `Bearer ${authToken}`,
         "Content-Type": "application/json",
       },
     });
@@ -127,8 +126,7 @@ test.describe("Elf Access to Results", () => {
 
     // Get auth token
     const authToken = await page.evaluate(() => {
-      return localStorage.getItem("supabase.auth.token") ||
-             sessionStorage.getItem("supabase.auth.token");
+      return localStorage.getItem("supabase.auth.token") || sessionStorage.getItem("supabase.auth.token");
     });
 
     expect(authToken).toBeTruthy();
@@ -138,7 +136,7 @@ test.describe("Elf Access to Results", () => {
     // ==========================================
     const apiResponse = await page.request.get("/api/participants/1/elf-result", {
       headers: {
-        "Authorization": `Bearer ${authToken}`,
+        Authorization: `Bearer ${authToken}`,
         "Content-Type": "application/json",
       },
     });

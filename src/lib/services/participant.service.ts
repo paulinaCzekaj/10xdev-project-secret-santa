@@ -210,27 +210,28 @@ export class ParticipantService {
             .maybeSingle();
 
           if (!existingExclusion) {
-            const { error: exclusionError } = await this.supabase
-              .from("exclusion_rules")
-              .insert({
-                group_id: groupId,
-                blocker_participant_id: participant.id, // New participant (podopieczny) cannot draw their elf
-                blocked_participant_id: command.elfParticipantId,
-              });
+            const { error: exclusionError } = await this.supabase.from("exclusion_rules").insert({
+              group_id: groupId,
+              blocker_participant_id: participant.id, // New participant (podopieczny) cannot draw their elf
+              blocked_participant_id: command.elfParticipantId,
+            });
 
             if (exclusionError) {
-              console.error("[ParticipantService.addParticipantToGroup] Failed to create automatic exclusion:", exclusionError);
+              console.error(
+                "[ParticipantService.addParticipantToGroup] Failed to create automatic exclusion:",
+                exclusionError
+              );
               // Don't throw here - the participant was created successfully, exclusion is just a bonus
             } else {
               console.log("[ParticipantService.addParticipantToGroup] Automatic exclusion created successfully", {
-                elfParticipantId: participant.id,
-                helpedParticipantId: command.elfForParticipantId,
+                podopiecznyId: participant.id,
+                elfId: command.elfParticipantId,
               });
             }
           } else {
             console.log("[ParticipantService.addParticipantToGroup] Automatic exclusion already exists", {
-              elfParticipantId: participant.id,
-              helpedParticipantId: command.elfForParticipantId,
+              podopiecznyId: participant.id,
+              elfId: command.elfParticipantId,
             });
           }
         } catch (error) {
@@ -568,7 +569,8 @@ export class ParticipantService {
 
       // Step 3: Handle automatic exclusion rules for elf relationships
       const oldElfForParticipantId = currentParticipant.elf_for_participant_id;
-      const newElfForParticipantId = data.elf_for_participant_id !== undefined ? data.elf_for_participant_id : oldElfForParticipantId;
+      const newElfForParticipantId =
+        data.elf_for_participant_id !== undefined ? data.elf_for_participant_id : oldElfForParticipantId;
 
       // Check if elf relationship changed
       if (oldElfForParticipantId !== newElfForParticipantId) {
@@ -628,13 +630,11 @@ export class ParticipantService {
               .maybeSingle();
 
             if (!existingNewExclusion) {
-              const { error: insertError } = await this.supabase
-                .from("exclusion_rules")
-                .insert({
-                  group_id: currentParticipant.group_id,
-                  blocker_participant_id: newElfForParticipantId, // Person being helped cannot draw their elf
-                  blocked_participant_id: id,
-                });
+              const { error: insertError } = await this.supabase.from("exclusion_rules").insert({
+                group_id: currentParticipant.group_id,
+                blocker_participant_id: newElfForParticipantId, // Person being helped cannot draw their elf
+                blocked_participant_id: id,
+              });
 
               if (insertError) {
                 console.error("[ParticipantService.updateParticipant] Failed to create new exclusion:", insertError);
@@ -789,9 +789,11 @@ export class ParticipantService {
         }
 
         console.log("[ParticipantService.updateParticipantElfRelationship] Elf relationship updated successfully");
-      } else if (currentElfId && !elfParticipantId) {
+      } else if (currentElfId) {
         // No new elf, but there was an old one - already removed in Step 2
-        console.log("[ParticipantService.updateParticipantElfRelationship] Elf relationship removed (no new elf assigned)");
+        console.log(
+          "[ParticipantService.updateParticipantElfRelationship] Elf relationship removed (no new elf assigned)"
+        );
       }
     } catch (error) {
       console.error("[ParticipantService.updateParticipantElfRelationship] Error:", error);
