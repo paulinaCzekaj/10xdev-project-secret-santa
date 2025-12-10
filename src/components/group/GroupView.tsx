@@ -195,6 +195,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
 
       <EditParticipantModal
         participant={modals.selectedParticipant}
+        participants={participantViewModels}
         isOpen={modals.isEditParticipantModalOpen}
         isDrawn={isDrawn}
         onClose={modals.closeModal}

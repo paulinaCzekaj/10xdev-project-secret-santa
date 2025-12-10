@@ -22,6 +22,7 @@ const GroupIdParamSchema = z.object({
 const CreateParticipantSchema = z.object({
   name: z.string().min(1, "Name cannot be empty").max(255, "Name is too long").trim(),
   email: z.string().email("Invalid email format").optional(),
+  elfParticipantId: z.number().optional().nullable(),
 });
 
 /**
@@ -150,6 +151,14 @@ export const GET: APIRoute = async ({ params, locals }) => {
 export const POST: APIRoute = async ({ params, request, locals }) => {
   console.log("[POST /api/groups/:groupId/participants] Endpoint hit", { groupId: params.groupId });
 
+  let requestBody: unknown;
+  try {
+    requestBody = await request.clone().json();
+    console.log("[POST /api/groups/:groupId/participants] Request body", requestBody);
+  } catch {
+    // Ignore if can't parse
+  }
+
   let userId: string | undefined;
 
   try {
@@ -190,6 +199,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     let validatedData: CreateParticipantCommand;
     try {
       validatedData = CreateParticipantSchema.parse(body);
+      console.log("[POST /api/groups/:groupId/participants] Validated data", validatedData);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const firstError = error.errors[0];

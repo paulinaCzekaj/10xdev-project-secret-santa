@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { ParticipantService } from "../../../lib/services/participant.service";
 import { requireApiAuth, requireGroupOwner } from "../../../lib/utils/api-auth.utils";
-import type { ApiErrorResponse, UpdateParticipantCommand } from "../../../types";
+import type { ApiErrorResponse, UpdateParticipantCommand, ParticipantUpdate } from "../../../types";
 
 export const prerender = false;
 export const trailingSlash = "never";
@@ -26,9 +26,10 @@ const UpdateParticipantSchema = z
   .object({
     name: z.string().min(1, "Name cannot be empty").max(255, "Name is too long").trim().optional(),
     email: z.string().email("Invalid email format").optional(),
+    elfParticipantId: z.number().optional().nullable(),
   })
-  .refine((data) => data.name !== undefined || data.email !== undefined, {
-    message: "At least one field (name or email) must be provided",
+  .refine((data) => data.name !== undefined || data.email !== undefined || data.elfParticipantId !== undefined, {
+    message: "At least one field (name, email, or elfParticipantId) must be provided",
   });
 
 /**
@@ -151,7 +152,21 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Happy path: Update participant
-    const updatedParticipant = await participantService.updateParticipant(participantId, validatedData);
+    // Convert camelCase to snake_case for database compatibility
+    const updateData: ParticipantUpdate = {};
+    if (validatedData.name !== undefined) updateData.name = validatedData.name;
+    if (validatedData.email !== undefined) updateData.email = validatedData.email;
+
+    // Handle elf relationship separately if provided
+    if (validatedData.elfParticipantId !== undefined) {
+      await participantService.updateParticipantElfRelationship(
+        participantId,
+        validatedData.elfParticipantId,
+        participant.group_id
+      );
+    }
+
+    const updatedParticipant = await participantService.updateParticipant(participantId, updateData);
 
     return new Response(JSON.stringify(updatedParticipant), {
       status: 200,

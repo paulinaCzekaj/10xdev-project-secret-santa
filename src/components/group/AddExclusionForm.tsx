@@ -31,6 +31,38 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
     },
   });
 
+  // Watch the blocker selection to filter the blocked list
+  const selectedBlocker = form.watch("blocker_participant_id");
+  const selectedBlocked = form.watch("blocked_participant_id");
+
+  // Filter participants for the "blocked" select
+  // Exclude: the selected blocker (can't exclude yourself) and anyone already excluded by the blocker
+  const availableBlocked = React.useMemo(() => {
+    if (!selectedBlocker) return participants;
+
+    return participants.filter((p) => {
+      // Can't block yourself
+      if (p.id === selectedBlocker) return false;
+
+      // Check if this participant is already blocked by the selected blocker
+      const alreadyBlocked = existingExclusions.some(
+        (exclusion) => exclusion.blocker_participant_id === selectedBlocker && exclusion.blocked_participant_id === p.id
+      );
+
+      return !alreadyBlocked;
+    });
+  }, [selectedBlocker, participants, existingExclusions]);
+
+  // Clear blocked selection if it's no longer available (e.g., blocker changed)
+  React.useEffect(() => {
+    if (selectedBlocked && selectedBlocker) {
+      const isStillAvailable = availableBlocked.some((p) => p.id === selectedBlocked);
+      if (!isStillAvailable) {
+        form.setValue("blocked_participant_id", undefined);
+      }
+    }
+  }, [selectedBlocker, selectedBlocked, availableBlocked, form]);
+
   const onSubmit = async (values: AddExclusionFormData) => {
     // Type guard - zod schema ensures these values are defined
     if (!values.blocker_participant_id || !values.blocked_participant_id) {
@@ -93,19 +125,28 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
                     <Select
                       onValueChange={(value) => field.onChange(Number(value))}
                       value={field.value?.toString() || ""}
+                      disabled={!selectedBlocker}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Wybierz osobę" />
+                          <SelectValue
+                            placeholder={!selectedBlocker ? "Wybierz najpierw osobę powyżej" : "Wybierz osobę"}
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {participants.map((participant) => (
-                          <SelectItem key={participant.id} value={participant.id.toString()}>
-                            {participant.name}
-                            {participant.email && ` (${participant.email})`}
-                          </SelectItem>
-                        ))}
+                        {availableBlocked.length > 0 ? (
+                          availableBlocked.map((participant) => (
+                            <SelectItem key={participant.id} value={participant.id.toString()}>
+                              {participant.name}
+                              {participant.email && ` (${participant.email})`}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                            Brak dostępnych osób do wykluczenia
+                          </div>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage className="min-h-[20px]" />

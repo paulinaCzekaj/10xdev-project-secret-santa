@@ -16,6 +16,8 @@ describe("DrawService - Cross-Pairs Analysis", () => {
         access_token: "token1",
         result_viewed_at: null,
         user_id: null,
+        elf_accessed_at: null,
+        elf_for_participant_id: null,
       },
       {
         id: 2,
@@ -26,6 +28,8 @@ describe("DrawService - Cross-Pairs Analysis", () => {
         access_token: "token2",
         result_viewed_at: null,
         user_id: null,
+        elf_accessed_at: null,
+        elf_for_participant_id: null,
       },
       {
         id: 3,
@@ -36,6 +40,8 @@ describe("DrawService - Cross-Pairs Analysis", () => {
         access_token: "token3",
         result_viewed_at: null,
         user_id: null,
+        elf_accessed_at: null,
+        elf_for_participant_id: null,
       },
       {
         id: 4,
@@ -46,6 +52,8 @@ describe("DrawService - Cross-Pairs Analysis", () => {
         access_token: "token4",
         result_viewed_at: null,
         user_id: null,
+        elf_accessed_at: null,
+        elf_for_participant_id: null,
       },
       {
         id: 5,
@@ -56,6 +64,8 @@ describe("DrawService - Cross-Pairs Analysis", () => {
         access_token: "token5",
         result_viewed_at: null,
         user_id: null,
+        elf_accessed_at: null,
+        elf_for_participant_id: null,
       },
       {
         id: 6,
@@ -66,6 +76,8 @@ describe("DrawService - Cross-Pairs Analysis", () => {
         access_token: "token6",
         result_viewed_at: null,
         user_id: null,
+        elf_accessed_at: null,
+        elf_for_participant_id: null,
       },
     ];
 

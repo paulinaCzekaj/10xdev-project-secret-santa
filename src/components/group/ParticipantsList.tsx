@@ -48,6 +48,8 @@ export function ParticipantsList({
           <TableRow>
             <TableHead>Uczestnik</TableHead>
             <TableHead>Email</TableHead>
+            <TableHead className="w-[140px]">Elf-pomocnik</TableHead>
+            <TableHead className="w-[140px]">Podopieczny</TableHead>
             {!isDrawn ? (
               <>
                 <TableHead className="w-[100px]">Akcje</TableHead>
@@ -83,6 +85,24 @@ export function ParticipantsList({
               </TableCell>
 
               <TableCell className="text-muted-foreground">{participant.displayEmail}</TableCell>
+
+              {/* Elf-pomocnik column - Shows who helps this participant */}
+              <TableCell>
+                {participant.hasElf ? (
+                  <span className="text-xs text-green-600">{participant.elfName} 🎁</span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">—</span>
+                )}
+              </TableCell>
+
+              {/* Podopieczny column - Shows who this participant helps */}
+              <TableCell>
+                {participant.isElfForSomeone ? (
+                  <span className="text-xs text-blue-600">{participant.elfForParticipantName} 🧝</span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">—</span>
+                )}
+              </TableCell>
 
               {!isDrawn ? (
                 // Action column before drawing

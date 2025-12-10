@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { X, Ban } from "lucide-react";
+import { X, Ban, HelpCircle } from "lucide-react";
 import type { ExclusionViewModel } from "@/types";
 
 interface ExclusionsListProps {
@@ -26,13 +26,22 @@ export function ExclusionsList({ exclusions, canEdit, isDrawn, onDelete }: Exclu
         <div key={exclusion.id} className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
-              <Ban className="h-4 w-4 text-muted-foreground" />
+              {exclusion.isElfExclusion ? (
+                <HelpCircle className="h-4 w-4 text-blue-600" />
+              ) : (
+                <Ban className="h-4 w-4 text-muted-foreground" />
+              )}
             </div>
-            <span className="text-sm font-medium">
-              <span className="text-red-600 font-semibold">{exclusion.blocker_name}</span>
-              <span className="text-muted-foreground mx-1">→</span>
-              <span className="text-green-600 font-semibold">{exclusion.blocked_name}</span>
-            </span>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">
+                <span className="text-red-600 font-semibold">{exclusion.blocker_name}</span>
+                <span className="text-muted-foreground mx-1">→</span>
+                <span className="text-green-600 font-semibold">{exclusion.blocked_name}</span>
+              </span>
+              {exclusion.isElfExclusion && (
+                <span className="text-xs text-blue-600">Wykluczenie automatyczne (relacja elf)</span>
+              )}
+            </div>
           </div>
 
           {canEdit && !isDrawn && exclusion.canDelete && (

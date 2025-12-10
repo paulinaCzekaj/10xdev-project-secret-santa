@@ -1,0 +1,23 @@
+---
+// Elf result page - shows the result for the participant the user is helping as an elf
+import Layout from "@/layouts/Layout.astro";
+import ElfResultView from "@/components/result/ElfResultView";
+
+const { groupId } = Astro.params;
+const { user } = Astro.locals;
+
+// Require authentication
+if (!user) {
+  return Astro.redirect("/login?returnUrl=" + Astro.url.pathname);
+}
+
+// Validate groupId
+const parsedGroupId = parseInt(groupId || "0", 10);
+if (isNaN(parsedGroupId) || parsedGroupId <= 0) {
+  return Astro.redirect("/dashboard?error=invalid_group");
+}
+---
+
+<Layout title="Widok Elfa - Secret Santa">
+  <ElfResultView groupId={parsedGroupId} isAuthenticated={true} client:load />
+</Layout>

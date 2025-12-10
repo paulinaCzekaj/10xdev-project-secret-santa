@@ -146,6 +146,8 @@ export interface Database {
         Row: {
           access_token: string;
           created_at: string;
+          elf_accessed_at: string | null;
+          elf_for_participant_id: number | null;
           email: string | null;
           group_id: number;
           id: number;
@@ -156,6 +158,8 @@ export interface Database {
         Insert: {
           access_token?: string;
           created_at?: string;
+          elf_accessed_at?: string | null;
+          elf_for_participant_id?: number | null;
           email?: string | null;
           group_id: number;
           id?: number;
@@ -166,6 +170,8 @@ export interface Database {
         Update: {
           access_token?: string;
           created_at?: string;
+          elf_accessed_at?: string | null;
+          elf_for_participant_id?: number | null;
           email?: string | null;
           group_id?: number;
           id?: number;
@@ -174,6 +180,13 @@ export interface Database {
           user_id?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "fk_elf_for_participant";
+            columns: ["elf_for_participant_id"];
+            isOneToOne: false;
+            referencedRelation: "participants";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "participants_group_id_fkey";
             columns: ["group_id"];
