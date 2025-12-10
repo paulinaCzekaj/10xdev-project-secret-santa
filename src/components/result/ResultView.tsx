@@ -29,10 +29,12 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
   const { result, isLoading, error, refetch } = useResultData(groupId, token, isAuthenticated);
   const [isRevealed, setIsRevealed] = useState(false);
 
-  // Update isRevealed when result loads
+  // Always hide the result when entering the page, regardless of previous views
+  // Only reveal when user clicks the present
   useEffect(() => {
-    setIsRevealed(!!result?.resultViewedAt);
-  }, [result?.resultViewedAt]);
+    // Reset to hidden state when component mounts or result changes
+    setIsRevealed(false);
+  }, [result]);
 
   // Komponent ładowania
   if (isLoading) {
