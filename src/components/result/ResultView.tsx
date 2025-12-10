@@ -104,21 +104,20 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
           accessToken={result.accessToken}
         />
 
-        {/* Wishlist section - visible only after revealing the present */}
-        {isRevealed && (
-          <WishlistSection
-            myWishlist={result.my_wishlist}
-            theirWishlist={{
-              content: result.assigned_to.wishlist,
-              contentHtml: result.assignedPersonWishlistHtml,
-            }}
-            assignedPersonName={result.assigned_to.name}
-            participantId={result.participant.id}
-            groupEndDate={result.group.end_date}
-            accessToken={result.accessToken}
-            wishlistStats={result.wishlist_stats}
-          />
-        )}
+        {/* Wishlist section - user's wishlist always visible, assigned person's wishlist visible if they have content or if revealed */}
+        <WishlistSection
+          myWishlist={result.my_wishlist}
+          theirWishlist={{
+            content: result.assigned_to.wishlist,
+            contentHtml: result.assignedPersonWishlistHtml,
+          }}
+          assignedPersonName={result.assigned_to.name}
+          participantId={result.participant.id}
+          groupEndDate={result.group.end_date}
+          accessToken={result.accessToken}
+          wishlistStats={result.wishlist_stats}
+          isRevealed={isRevealed}
+        />
 
         {/* Elf help section - shows if participant is an elf (at the bottom) */}
         {result.participant.isElfForSomeone && result.participant.elfForParticipantId && (
