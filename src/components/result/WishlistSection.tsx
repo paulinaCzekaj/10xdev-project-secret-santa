@@ -17,6 +17,7 @@ interface WishlistSectionProps {
   groupEndDate: string;
   accessToken?: string; // dla niezalogowanych
   wishlistStats?: WishlistStats;
+  isRevealed?: boolean;
 }
 
 /**
@@ -31,17 +32,23 @@ function WishlistSection({
   groupEndDate,
   accessToken,
   wishlistStats,
+  isRevealed = false,
 }: WishlistSectionProps) {
+  // Show assigned person's wishlist if they have content OR if the present was revealed
+  const shouldShowTheirWishlist = theirWishlist.content || theirWishlist.contentHtml || isRevealed;
+
   return (
     <div className="space-y-6">
-      {/* Lista życzeń wylosowanej osoby */}
-      <WishlistDisplay
-        content={theirWishlist.content}
-        contentHtml={theirWishlist.contentHtml}
-        personName={assignedPersonName}
-      />
+      {/* Lista życzeń wylosowanej osoby - widoczna jeśli ma zawartość lub jeśli prezent został odkryty */}
+      {shouldShowTheirWishlist && (
+        <WishlistDisplay
+          content={theirWishlist.content}
+          contentHtml={theirWishlist.contentHtml}
+          personName={assignedPersonName}
+        />
+      )}
 
-      {/* Moja lista życzeń */}
+      {/* Moja lista życzeń - zawsze widoczna */}
       <WishlistEditor
         initialContent={myWishlist.content || ""}
         participantId={participantId}
