@@ -137,6 +137,75 @@ describe("DrawService - Algorithm Validation", () => {
         expect(aliceAssignment?.receiver_participant_id).not.toBe(2);
       }
     });
+
+    it("should respect automatic elf exclusions (elf cannot draw the person they help)", () => {
+      const participants: ParticipantDTO[] = [
+        {
+          id: 1,
+          name: "Alice (Helper)",
+          group_id: 1,
+          email: null,
+          created_at: "",
+          access_token: "token1",
+          result_viewed_at: null,
+          user_id: null,
+        },
+        {
+          id: 2,
+          name: "Bob (Helped)",
+          group_id: 1,
+          email: null,
+          created_at: "",
+          access_token: "token2",
+          result_viewed_at: null,
+          user_id: null,
+        },
+        {
+          id: 3,
+          name: "Charlie",
+          group_id: 1,
+          email: null,
+          created_at: "",
+          access_token: "token3",
+          result_viewed_at: null,
+          user_id: null,
+        },
+        {
+          id: 4,
+          name: "David",
+          group_id: 1,
+          email: null,
+          created_at: "",
+          access_token: "token4",
+          result_viewed_at: null,
+          user_id: null,
+        },
+      ];
+
+      // Automatic exclusion: Bob (person being helped) cannot draw Alice (his elf/helper)
+      const exclusions: ExclusionRuleDTO[] = [
+        {
+          id: 1,
+          group_id: 1,
+          blocker_participant_id: 2, // Bob cannot draw...
+          blocked_participant_id: 1, // ...Alice (his elf)
+          created_at: "",
+        },
+      ];
+
+      const result = drawService.executeDrawAlgorithm(participants, exclusions);
+
+      expect(result).not.toBeNull();
+
+      if (result) {
+        // Verify automatic elf exclusion is respected
+        const bobAssignment = result.find((a) => a.giver_participant_id === 2);
+        expect(bobAssignment?.receiver_participant_id).not.toBe(1); // Bob should not draw Alice
+
+        // Verify all other rules are still respected
+        expect(drawService.validateAssignments(result, participants, exclusions)).toBe(true);
+      }
+    });
   });
 
   describe("executeDrawAlgorithm - Randomness", () => {

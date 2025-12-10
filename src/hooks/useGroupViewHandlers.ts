@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, startTransition } from "react";
 import { notify } from "@/lib/notifications";
 import type { ParticipantViewModel } from "@/types";
 import type { useModalState } from "./useModalState";
@@ -48,13 +48,16 @@ export const useGroupViewHandlers = ({
 
   // Handling events related to participants
   const handleParticipantAdded = useCallback(() => {
+    console.log("[handleParticipantAdded] Refreshing participants and exclusions after adding");
     refetchParticipants();
-  }, [refetchParticipants]);
+    refetchExclusions(); // Refresh exclusions because adding an elf participant creates automatic exclusions
+  }, [refetchParticipants, refetchExclusions]);
 
-  const handleParticipantUpdated = useCallback(() => {
-    refetchParticipants();
+  const handleParticipantUpdated = useCallback(async () => {
+    // Wait for both refetches to complete before closing modal to prevent race conditions
+    await Promise.all([refetchParticipants(), refetchExclusions()]);
     modals.closeModal();
-  }, [refetchParticipants, modals]);
+  }, [refetchParticipants, refetchExclusions, modals]);
 
   const handleParticipantDeleted = useCallback(() => {
     refetchParticipants();
@@ -79,22 +82,24 @@ export const useGroupViewHandlers = ({
 
     const participantId = modals.participantToDelete.id;
 
-    // React 19 optimistic update - UI reacts immediately
-    if (setOptimisticParticipants) {
-      setOptimisticParticipants(participantId);
-    }
+    // React 19 optimistic update - UI reacts immediately within transition
+    startTransition(async () => {
+      if (setOptimisticParticipants) {
+        setOptimisticParticipants(participantId);
+      }
 
-    // Make API call - React automatically restores state on error
-    const result = await deleteParticipant(participantId);
+      // Make API call - React automatically restores state on error
+      const result = await deleteParticipant(participantId);
 
-    // If error and no optimistic, manually refresh
-    if (!result.success && !setOptimisticParticipants) {
-      refetchParticipants();
-      notify.error({ title: result.error || "Nie udało się usunąć uczestnika" });
-    }
+      // If error and no optimistic, manually refresh
+      if (!result.success && !setOptimisticParticipants) {
+        refetchParticipants();
+        notify.error({ title: result.error || "Nie udało się usunąć uczestnika" });
+      }
 
-    // Close modal
-    modals.closeModal();
+      // Close modal
+      modals.closeModal();
+    });
   }, [modals, deleteParticipant, refetchParticipants, setOptimisticParticipants]);
 
   const handleCopyParticipantToken = useCallback(async (participant: ParticipantViewModel) => {
@@ -120,19 +125,21 @@ export const useGroupViewHandlers = ({
 
   const handleDeleteExclusion = useCallback(
     async (exclusionId: number) => {
-      // React 19 optimistic update - UI reacts immediately
-      if (setOptimisticExclusions) {
-        setOptimisticExclusions(exclusionId);
-      }
+      // React 19 optimistic update - UI reacts immediately within transition
+      startTransition(async () => {
+        if (setOptimisticExclusions) {
+          setOptimisticExclusions(exclusionId);
+        }
 
-      // Make API call - React automatically restores state on error
-      const result = await deleteExclusion(exclusionId);
+        // Make API call - React automatically restores state on error
+        const result = await deleteExclusion(exclusionId);
 
-      // If error and no optimistic, manually refresh
-      if (!result.success && !setOptimisticExclusions) {
-        refetchExclusions();
-        notify.error({ title: result.error || "Nie udało się usunąć wykluczenia" });
-      }
+        // If error and no optimistic, manually refresh
+        if (!result.success && !setOptimisticExclusions) {
+          refetchExclusions();
+          notify.error({ title: result.error || "Nie udało się usunąć wykluczenia" });
+        }
+      });
     },
     [deleteExclusion, refetchExclusions, setOptimisticExclusions]
   );

@@ -120,6 +120,7 @@ export type PaginatedGroupsDTO = PaginatedResponse<GroupListItemDTO>;
 export interface CreateParticipantCommand {
   name: string;
   email?: string; // Optional - for registered participants
+  elfParticipantId?: number | null; // Optional - ID of participant who will be elf for this participant
 }
 
 /**
@@ -171,6 +172,8 @@ export interface ParticipantListItemDTO {
   has_wishlist: boolean;
   access_token?: string; // Only included for group creator
   result_viewed?: boolean; // Only present when group is drawn
+  elf_for_participant_id: number | null; // Elf assignment (v1.1.0)
+  elf_accessed_at: string | null; // When elf accessed result (v1.1.0)
 }
 
 /**
@@ -249,6 +252,40 @@ export interface DrawValidationDTO {
 export type AssignmentDTO = Tables<"assignments">;
 
 // ============================================================================
+// ELF DTOs
+// ============================================================================
+
+/**
+ * Response from getting elf result
+ * GET /api/participants/:participantId/elf-result
+ */
+export interface ElfResultResponseDTO {
+  assignment: {
+    receiverName: string;
+    receiverWishlist: string;
+    receiverWishlistHtml: string;
+  };
+  group: {
+    id: number;
+    name: string;
+    budget: number;
+    endDate: string; // ISO 8601 format
+  };
+  helpedParticipant: {
+    id: number;
+    name: string;
+  };
+}
+
+/**
+ * Response from tracking elf access
+ * POST /api/participants/:participantId/track-elf-access
+ */
+export interface TrackElfAccessResponseDTO {
+  success: boolean;
+}
+
+// ============================================================================
 // RESULT DTOs
 // ============================================================================
 
@@ -269,6 +306,9 @@ export interface ResultParticipantInfo {
   id: number;
   name: string;
   result_viewed_at?: string; // When the participant viewed their result
+  isElfForSomeone?: boolean; // Whether this participant is an elf for another participant (v1.1.0)
+  elfForParticipantName?: string; // Name of the participant this elf is helping (v1.1.0)
+  elfForParticipantId?: number; // ID of the participant this elf is helping (v1.1.0)
 }
 
 /**
@@ -307,6 +347,10 @@ export interface DrawResultResponseDTO {
   assigned_to: ResultAssignedParticipant;
   my_wishlist: ResultMyWishlist;
   wishlist_stats: WishlistStats;
+  elf?: {
+    id: number;
+    name: string;
+  } | null; // Elf assigned to this participant (v1.1.0)
 }
 
 /**
@@ -492,6 +536,15 @@ export interface ParticipantViewModel extends Omit<ParticipantListItemDTO, "acce
 
   // Token (for unregistered users)
   resultLink?: string; // full URL: /results/:token
+
+  // Elf-related fields (v1.1.0)
+  elfParticipantId: number | null; // ID of participant who is elf for this participant
+  elfForParticipantId: number | null; // ID of participant that this participant helps as elf
+  elfForParticipantName: string | null; // Name of participant that this participant helps
+  isElfForSomeone: boolean; // Whether this participant is an elf for someone
+  hasElf: boolean; // Whether this participant has an assigned elf helper
+  elfName: string | null; // Name of this participant's elf helper
+  elfAccessedAt: string | null; // When elf viewed this participant's result
 }
 
 /**
@@ -503,7 +556,8 @@ export interface ExclusionViewModel extends ExclusionRuleListItemDTO {
   shortDisplayText: string; // "Jan → Anna" (for mobile)
 
   // Flags
-  canDelete: boolean; // whether it can be deleted (false after drawing)
+  canDelete: boolean; // whether it can be deleted (false after drawing or if elf exclusion)
+  isElfExclusion?: boolean; // whether this is an automatic elf exclusion
 }
 
 /**
@@ -548,6 +602,7 @@ export interface EditGroupFormViewModel {
 export interface AddParticipantFormViewModel {
   name: string;
   email?: string;
+  elfParticipantId?: number | null; // ID of participant who will be elf for this participant
 }
 
 /**
@@ -556,6 +611,7 @@ export interface AddParticipantFormViewModel {
 export interface EditParticipantFormViewModel {
   name: string;
   email?: string;
+  elfParticipantId?: number | null; // ID of participant who will be elf for this participant
 }
 
 /**
@@ -608,6 +664,10 @@ export interface ResultViewModel {
   assigned_to: ResultAssignedParticipant;
   my_wishlist: ResultMyWishlist;
   wishlist_stats: WishlistStats;
+  elf?: {
+    id: number;
+    name: string;
+  } | null; // Elf assigned to this participant (v1.1.0)
 
   // Formatted values for display
   formattedBudget: string; // "150 PLN"

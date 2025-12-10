@@ -76,6 +76,26 @@ Aplikacja "Secret Santa" adresuje te problemy, oferując scentralizowaną, zauto
 - Aplikacja musi być w pełni responsywna (RWD) i poprawnie wyświetlać się na urządzeniach mobilnych oraz desktopowych.
 - Interfejs użytkownika musi być prosty i intuicyjny.
 
+### 3.6. Funkcjonalność Elfa (Wersja 1.1)
+
+- Twórca grupy może przypisać uczestnikowi rolę "Elfa" (pomocnika) dla innego uczestnika.
+- Przypisanie odbywa się ręcznie podczas dodawania lub edycji uczestnika w widoku grupy.
+- Jeden uczestnik może mieć maksymalnie jednego elfa (relacja 1:1).
+- Jeden elf może pomagać maksymalnie jednej osobie (relacja 1:1).
+- Przypisanie elfa jest możliwe tylko przed losowaniem.
+- Po uruchomieniu losowania role elfów stają się niemutowalne.
+- System automatycznie tworzy jednokierunkowe wykluczenie: osoba, która ma przypisanego elfa, nie może go wylosować.
+- Elf może wylosować osobę, której pomaga (wykluczenie działa tylko w jedną stronę).
+- Elf zalogowany widzi na stronie swojego wyniku przycisk "Zobacz wynik [Imię] 🧝".
+- Po kliknięciu przycisku elf jest przekierowywany na dedykowaną stronę `/groups/[groupId]/elf-result`.
+- Na tej stronie elf widzi pełny wynik losowania osoby, której pomaga: imię wylosowanej osoby, jej listę życzeń, budżet grupy.
+- Elf z kontem może edytować listę życzeń osoby, której pomaga (do upłynięcia daty zakończenia wydarzenia).
+- Osoba, która ma przypisanego elfa, widzi na stronie swojego wyniku informację "Twój pomocnik: [Imię] 🧝".
+- System oddzielnie trackuje moment otwarcia wyniku przez elfa w kolumnie `elf_accessed_at`.
+- W widoku grupy elf jest oznaczony badge "🧝 Elf dla: [Imię]".
+- W widoku grupy uczestnik z elfem ma informację "Pomocnik: [Imię] 🧝".
+- Niezarejestrowani elfowie (bez user_id) nie mogą otworzyć widoku `/elf-result` - elf musi być zalogowany.
+
 ## 4. Granice produktu
 
 ### 4.1. Funkcjonalności wchodzące w zakres MVP
@@ -97,13 +117,20 @@ Aplikacja "Secret Santa" adresuje te problemy, oferując scentralizowaną, zauto
 - Zaawansowane role użytkowników (np. współorganizator).
 - Obsługa wielu walut (domyślną i jedyną walutą jest PLN).
 - Dostęp do wyniku losowania poprzez podanie samego imienia (zrezygnowano na rzecz bezpieczniejszej metody unikalnych linków).
-- AI-generowanie listu do Mikołaja (przesunięte do wersji 1.1).
 
-### 4.3. Funkcjonalności planowane na wersję 1.1
+### 4.3. Funkcjonalności zrealizowane w wersji 1.1
 
-- **AI-generowanie listu do Mikołaja**: Inteligentny asystent pomagający użytkownikom w tworzeniu spersonalizowanych listów do świętego Mikołaja zawierających listę życzeń. Funkcjonalność wykorzystuje model AI (openai/gpt-4o-mini via OpenRouter) do generowania listu w ciepłym, świątecznym tonie narracyjnym.
+- ✅ **AI-generowanie listu do Mikołaja**: Inteligentny asystent pomagający użytkownikom w tworzeniu spersonalizowanych listów do świętego Mikołaja zawierających listę życzeń. Funkcjonalność wykorzystuje model AI (openai/gpt-4o-mini via OpenRouter) do generowania listu w ciepłym, świątecznym tonie narracyjnym.
+- ✅ **Rola Elfa (Pomocnika)**: Opcjonalna funkcjonalność umożliwiająca przypisanie uczestnika jako pomocnika dla innego uczestnika w grupie. Elf ma dostęp do wyniku losowania osoby, której pomaga, i może wspierać ją w wyborze prezentu.
+
+### 4.4. Funkcjonalności planowane na przyszłe wersje (1.2+)
+
 - Rozszerzenie mechanizmu śledzenia: Szczegółowe statystyki dotyczące korzystania z AI-generatora (liczba użyć, akceptacje vs odrzucenia).
-- Optymalizacja UX: Udoskonalenia interfejsu na podstawie feedbacku z MVP.
+- Optymalizacja UX: Udoskonalenia interfejsu na podstawie feedbacku z wersji 1.1.
+- System powiadomień email: Powiadomienia o dodaniu do grupy, zakończeniu losowania, przypomnienia.
+- Formalny system zaproszeń: Dołączanie do grupy przez link zapraszający lub kod.
+- Możliwość ponownego losowania: Z opcją zachowania niektórych przydziałów.
+- Zaawansowane role użytkowników: Współorganizator grupy.
 
 ## 5. Historyjki użytkowników
 
@@ -260,6 +287,28 @@ Aplikacja "Secret Santa" adresuje te problemy, oferując scentralizowaną, zauto
   13. System zapisuje w bazie danych licznik użyć AI per-participant-per-grupa.
   14. Wygenerowany list zawiera maksymalnie 1000 znaków i jest zgodny z limitami pola listy życzeń (10000 znaków).
 
+- ID: US-016
+- Tytuł: Rola Elfa - pomocnika w grupie Secret Santa (Wersja 1.1)
+- Opis: Jako Twórca grupy, chcę móc przypisać uczestnikowi pomocnika (Elfa), który będzie pomagał w wyborze prezentu, mając dostęp do wyniku losowania tej osoby.
+- Kryteria akceptacji:
+  1.  W formularzu dodawania uczestnika znajduje się opcjonalny select "Elf dla uczestnika (opcjonalnie)".
+  2.  Twórca może wybrać z listy rozwijanej, dla którego uczestnika nowa osoba będzie elfem.
+  3.  Lista pokazuje tylko uczestników, którzy nie mają jeszcze przypisanego elfa.
+  4.  Twórca może edytować przypisanie elfa w modalu edycji uczestnika do momentu rozpoczęcia losowania.
+  5.  Po losowaniu przypisania elfów są niemutowalne (pole select staje się disabled).
+  6.  W liście uczestników w widoku grupy jest widoczny badge "🧝 Elf dla: [Imię]" dla uczestników będących elfami.
+  7.  Uczestnik, który ma przypisanego elfa, widzi info "Pomocnik: [Imię] 🧝" w liście uczestników.
+  8.  Elf zalogowany na stronie swojego wyniku (`/groups/[groupId]/result`) widzi przycisk "Zobacz wynik [Imię] 🧝".
+  9.  Po kliknięciu przycisku elf jest przekierowywany na dedykowaną stronę `/groups/[groupId]/elf-result`.
+  10. Na stronie `/elf-result` wyświetla się banner z informacją "Pomagasz: [Imię]" i opis roli elfa.
+  11. Elf widzi pełny wynik losowania osoby, której pomaga: imię wylosowanej osoby, jej listę życzeń, nazwę grupy i budżet.
+  12. Elf z kontem (user_id) może edytować listę życzeń osoby, której pomaga (do upłynięcia daty zakończenia wydarzenia).
+  13. Niezarejestrowani elfowie (bez user_id) nie mają dostępu do strony `/elf-result` - wymagane jest logowanie.
+  14. System automatycznie tworzy wykluczenie: osoba z elfem nie może wylosować swojego elfa podczas losowania.
+  15. Elf może wylosować osobę, której pomaga (wykluczenie jest jednokierunkowe).
+  16. System trackuje moment otwarcia wyniku przez elfa w osobnej kolumnie `elf_accessed_at` (oddzielnie od `result_viewed_at`).
+  17. W przypadku próby otwarcia `/elf-result` przez użytkownika, który nie jest elfem, następuje redirect do dashboard z błędem.
+
 ## 6. Metryki sukcesu
 
 ### 6.1. Metryki Biznesowe / Produktowe
@@ -274,6 +323,13 @@ Aplikacja "Secret Santa" adresuje te problemy, oferując scentralizowaną, zauto
 - Średni czas tworzenia listy życzeń: Porównanie czasu między metodą manualną a AI-generowaniem (oczekiwana redukcja o 50%).
 - Średnia liczba generowań na użytkownika: Monitorowanie, czy użytkownicy wykorzystują dostępne limity (3/5 generowań per-grupa).
 - Wskaźnik wypełnienia list życzeń: Procent uczestników, którzy mają wypełnioną listę życzeń po wprowadzeniu AI (oczekiwany wzrost z bazowego poziomu MVP).
+
+**Wersja 1.1 (Rola Elfa):**
+- Wskaźnik adopcji Elfa: Odsetek grup wykorzystujących funkcjonalność Elfa (cel: 20% nowych grup w ciągu pierwszego miesiąca).
+- Aktywność elfów: Procent elfów którzy otworzyli wynik osoby, której pomagają (cel: min. 70% elfów otwiera wynik).
+- Edycja przez elfów: Procent list życzeń edytowanych przez elfów (cel: min. 30% elfów edytuje listę życzeń osoby, której pomaga).
+- Completion rate: Procent grup z elfami które ukończyły losowanie pomyślnie (cel: identyczny jak grupy bez elfów, 99%+).
+- Średni czas od losowania do otwarcia wyniku przez elfa: Monitorowanie zaangażowania elfów (cel: <24h od losowania).
 
 ### 6.2. Metryki Techniczne / Projektowe
 

@@ -346,6 +346,8 @@ export class ExclusionRuleService {
           `
           id,
           group_id,
+          blocker_participant_id,
+          blocked_participant_id,
           groups!inner(id, creator_id)
         `
         )
@@ -380,6 +382,28 @@ export class ExclusionRuleService {
       }
 
       console.log("[ExclusionRuleService.deleteExclusionRule] User is creator - authorized");
+
+      // Step 2.5: Check if this is an automatic elf exclusion that cannot be deleted manually
+      const blockerParticipantId = exclusionRule.blocker_participant_id;
+      const blockedParticipantId = exclusionRule.blocked_participant_id;
+
+      if (blockerParticipantId && blockedParticipantId) {
+        const { data: elfParticipant, error: elfError } = await this.supabase
+          .from("participants")
+          .select("id")
+          .eq("id", blockedParticipantId) // blocked is the elf
+          .eq("elf_for_participant_id", blockerParticipantId) // elf_for_participant_id is the person being helped (blocker)
+          .maybeSingle();
+
+        if (!elfError && elfParticipant) {
+          console.log("[ExclusionRuleService.deleteExclusionRule] Cannot delete automatic elf exclusion", {
+            exclusionRuleId,
+            helpedParticipantId: blockerParticipantId,
+            elfParticipantId: blockedParticipantId,
+          });
+          throw new Error("CANNOT_DELETE_ELF_EXCLUSION");
+        }
+      }
 
       // Step 3: Check if draw has been completed
       const { data: hasAssignments } = await this.supabase

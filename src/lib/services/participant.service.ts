@@ -57,6 +57,7 @@ export class ParticipantService {
       userId,
       participantName: command.name,
       hasEmail: !!command.email,
+      elfParticipantId: command.elfParticipantId,
     });
 
     try {
@@ -143,13 +144,14 @@ export class ParticipantService {
         tokenLength: accessToken.length,
       });
 
-      // Step 7: Insert participant with access token
+      // Step 7: Insert participant with access token (without elf assignment yet)
       const participantInsert: ParticipantInsert = {
         group_id: groupId,
         user_id: linkedUserId,
         name: command.name,
         email: command.email || null,
         access_token: accessToken, // Store token in database
+        elf_for_participant_id: null, // Will be set on the elf participant if elfParticipantId is provided
       };
 
       const { data: participant, error: insertError } = await this.supabase
@@ -169,7 +171,76 @@ export class ParticipantService {
         name: participant.name,
       });
 
-      // Step 8: Return ParticipantWithTokenDTO
+      // Step 8: Assign elf helper if specified
+      // If elfParticipantId is provided, update that participant to be an elf for the newly created participant
+      if (command.elfParticipantId) {
+        try {
+          console.log("[ParticipantService.addParticipantToGroup] Assigning elf helper", {
+            newParticipantId: participant.id,
+            elfParticipantId: command.elfParticipantId,
+          });
+
+          // Update the elf participant to help the new participant
+          const { error: elfUpdateError } = await this.supabase
+            .from("participants")
+            .update({ elf_for_participant_id: participant.id })
+            .eq("id", command.elfParticipantId)
+            .eq("group_id", groupId); // Security: ensure elf is in the same group
+
+          if (elfUpdateError) {
+            console.error("[ParticipantService.addParticipantToGroup] Failed to assign elf:", elfUpdateError);
+            // Non-critical error - participant was created successfully
+          } else {
+            console.log("[ParticipantService.addParticipantToGroup] Elf helper assigned successfully");
+          }
+
+          // Step 9: Auto-create exclusion for elf relationship (Podopieczny cannot draw their Elf)
+          console.log("[ParticipantService.addParticipantToGroup] Creating automatic exclusion for elf relationship", {
+            podopiecznyId: participant.id,
+            elfId: command.elfParticipantId,
+          });
+
+          // Check if exclusion already exists
+          const { data: existingExclusion } = await this.supabase
+            .from("exclusion_rules")
+            .select("id")
+            .eq("group_id", groupId)
+            .eq("blocker_participant_id", participant.id)
+            .eq("blocked_participant_id", command.elfParticipantId)
+            .maybeSingle();
+
+          if (!existingExclusion) {
+            const { error: exclusionError } = await this.supabase.from("exclusion_rules").insert({
+              group_id: groupId,
+              blocker_participant_id: participant.id, // New participant (podopieczny) cannot draw their elf
+              blocked_participant_id: command.elfParticipantId,
+            });
+
+            if (exclusionError) {
+              console.error(
+                "[ParticipantService.addParticipantToGroup] Failed to create automatic exclusion:",
+                exclusionError
+              );
+              // Don't throw here - the participant was created successfully, exclusion is just a bonus
+            } else {
+              console.log("[ParticipantService.addParticipantToGroup] Automatic exclusion created successfully", {
+                podopiecznyId: participant.id,
+                elfId: command.elfParticipantId,
+              });
+            }
+          } else {
+            console.log("[ParticipantService.addParticipantToGroup] Automatic exclusion already exists", {
+              podopiecznyId: participant.id,
+              elfId: command.elfParticipantId,
+            });
+          }
+        } catch (error) {
+          console.error("[ParticipantService.addParticipantToGroup] Error creating automatic exclusion:", error);
+          // Don't throw - participant creation succeeded
+        }
+      }
+
+      // Step 9: Return ParticipantWithTokenDTO
       const result: ParticipantWithTokenDTO = {
         ...participant,
         access_token: accessToken,
@@ -451,7 +522,7 @@ export class ParticipantService {
    * Must be called only after all validations have passed (authorization, draw status, email uniqueness).
    *
    * @param id - The participant ID to update
-   * @param data - Partial update data (name and/or email)
+   * @param data - Partial update data (name, email, elfForParticipantId)
    * @returns Promise resolving to updated participant data
    * @throws {Error} "Failed to update participant" if database operation fails
    *
@@ -466,6 +537,19 @@ export class ParticipantService {
     });
 
     try {
+      // Step 1: Get current participant data before update (needed for elf exclusion logic)
+      const { data: currentParticipant, error: fetchError } = await this.supabase
+        .from("participants")
+        .select("id, group_id, elf_for_participant_id")
+        .eq("id", id)
+        .single();
+
+      if (fetchError || !currentParticipant) {
+        console.error("[ParticipantService.updateParticipant] Failed to fetch current participant:", fetchError);
+        throw new Error("Failed to fetch participant for update");
+      }
+
+      // Step 2: Update the participant
       const { data: updatedParticipant, error } = await this.supabase
         .from("participants")
         .update(data)
@@ -483,9 +567,236 @@ export class ParticipantService {
         updatedFields: Object.keys(data),
       });
 
+      // Step 3: Handle automatic exclusion rules for elf relationships
+      const oldElfForParticipantId = currentParticipant.elf_for_participant_id;
+      const newElfForParticipantId =
+        data.elf_for_participant_id !== undefined ? data.elf_for_participant_id : oldElfForParticipantId;
+
+      // Check if elf relationship changed
+      if (oldElfForParticipantId !== newElfForParticipantId) {
+        console.log("[ParticipantService.updateParticipant] Elf relationship changed", {
+          participantId: id,
+          oldElfForParticipantId,
+          newElfForParticipantId,
+        });
+
+        try {
+          // Remove old exclusion if it existed
+          if (oldElfForParticipantId) {
+            console.log("[ParticipantService.updateParticipant] Removing old elf exclusion", {
+              elfParticipantId: id,
+              oldHelpedParticipantId: oldElfForParticipantId,
+            });
+
+            // Check if exclusion exists before trying to delete
+            const { data: existingExclusion } = await this.supabase
+              .from("exclusion_rules")
+              .select("id")
+              .eq("group_id", currentParticipant.group_id)
+              .eq("blocker_participant_id", oldElfForParticipantId)
+              .eq("blocked_participant_id", id)
+              .maybeSingle();
+
+            if (existingExclusion) {
+              const { error: deleteError } = await this.supabase
+                .from("exclusion_rules")
+                .delete()
+                .eq("id", existingExclusion.id);
+
+              if (deleteError) {
+                console.error("[ParticipantService.updateParticipant] Failed to remove old exclusion:", deleteError);
+              } else {
+                console.log("[ParticipantService.updateParticipant] Old exclusion removed successfully");
+              }
+            } else {
+              console.log("[ParticipantService.updateParticipant] Old exclusion not found - nothing to remove");
+            }
+          }
+
+          // Create new exclusion if elf relationship exists
+          if (newElfForParticipantId) {
+            console.log("[ParticipantService.updateParticipant] Creating new elf exclusion", {
+              elfParticipantId: id,
+              newHelpedParticipantId: newElfForParticipantId,
+            });
+
+            // Check if exclusion already exists before trying to create
+            const { data: existingNewExclusion } = await this.supabase
+              .from("exclusion_rules")
+              .select("id")
+              .eq("group_id", currentParticipant.group_id)
+              .eq("blocker_participant_id", newElfForParticipantId)
+              .eq("blocked_participant_id", id)
+              .maybeSingle();
+
+            if (!existingNewExclusion) {
+              const { error: insertError } = await this.supabase.from("exclusion_rules").insert({
+                group_id: currentParticipant.group_id,
+                blocker_participant_id: newElfForParticipantId, // Person being helped cannot draw their elf
+                blocked_participant_id: id,
+              });
+
+              if (insertError) {
+                console.error("[ParticipantService.updateParticipant] Failed to create new exclusion:", insertError);
+              } else {
+                console.log("[ParticipantService.updateParticipant] New exclusion created successfully", {
+                  elfParticipantId: id,
+                  helpedParticipantId: newElfForParticipantId,
+                });
+              }
+            } else {
+              console.log("[ParticipantService.updateParticipant] New exclusion already exists - skipping creation", {
+                elfParticipantId: id,
+                helpedParticipantId: newElfForParticipantId,
+              });
+            }
+          }
+        } catch (exclusionError) {
+          console.error("[ParticipantService.updateParticipant] Error handling elf exclusions:", exclusionError);
+          // Don't throw - participant update succeeded, exclusion handling is secondary
+        }
+      }
+
       return updatedParticipant;
     } catch (error) {
       console.error("[ParticipantService.updateParticipant] Error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Updates the elf helper relationship for a participant
+   *
+   * This method handles the logic where:
+   * - We select which participant will be the elf helper FOR the edited participant
+   * - We update that elf participant's elf_for_participant_id to point to the edited participant
+   * - We manage the automatic exclusion rule (podopieczny cannot draw their elf)
+   *
+   * @param participantId - The ID of the participant being edited (podopieczny)
+   * @param elfParticipantId - The ID of the participant who will be the elf helper (or null to remove)
+   * @param groupId - The group ID for security validation
+   * @returns Promise resolving when the relationship is updated
+   * @throws {Error} "Failed to update elf relationship" if database operation fails
+   *
+   * @example
+   * await service.updateParticipantElfRelationship(5, 3, 1);
+   * // Participant 3 is now the elf helper for participant 5
+   */
+  async updateParticipantElfRelationship(
+    participantId: number,
+    elfParticipantId: number | null,
+    groupId: number
+  ): Promise<void> {
+    console.log("[ParticipantService.updateParticipantElfRelationship] Starting", {
+      participantId,
+      elfParticipantId,
+      groupId,
+    });
+
+    try {
+      // Step 1: Find current elf helper (if any)
+      const { data: currentElf } = await this.supabase
+        .from("participants")
+        .select("id")
+        .eq("group_id", groupId)
+        .eq("elf_for_participant_id", participantId)
+        .maybeSingle();
+
+      const currentElfId = currentElf?.id || null;
+
+      console.log("[ParticipantService.updateParticipantElfRelationship] Current elf found", {
+        currentElfId,
+      });
+
+      // Step 2: If there's a current elf and it's different from the new one, remove the relationship
+      if (currentElfId && currentElfId !== elfParticipantId) {
+        console.log("[ParticipantService.updateParticipantElfRelationship] Removing old elf relationship", {
+          oldElfId: currentElfId,
+        });
+
+        const { error: removeError } = await this.supabase
+          .from("participants")
+          .update({ elf_for_participant_id: null })
+          .eq("id", currentElfId)
+          .eq("group_id", groupId);
+
+        if (removeError) {
+          console.error(
+            "[ParticipantService.updateParticipantElfRelationship] Failed to remove old elf relationship:",
+            removeError
+          );
+        }
+
+        // Remove old exclusion rule (podopieczny cannot draw old elf)
+        const { data: oldExclusion } = await this.supabase
+          .from("exclusion_rules")
+          .select("id")
+          .eq("group_id", groupId)
+          .eq("blocker_participant_id", participantId)
+          .eq("blocked_participant_id", currentElfId)
+          .maybeSingle();
+
+        if (oldExclusion) {
+          await this.supabase.from("exclusion_rules").delete().eq("id", oldExclusion.id);
+          console.log("[ParticipantService.updateParticipantElfRelationship] Old exclusion removed");
+        }
+      }
+
+      // Step 3: If new elf is provided, create the relationship
+      if (elfParticipantId) {
+        console.log("[ParticipantService.updateParticipantElfRelationship] Creating new elf relationship", {
+          newElfId: elfParticipantId,
+        });
+
+        const { error: updateError } = await this.supabase
+          .from("participants")
+          .update({ elf_for_participant_id: participantId })
+          .eq("id", elfParticipantId)
+          .eq("group_id", groupId);
+
+        if (updateError) {
+          console.error(
+            "[ParticipantService.updateParticipantElfRelationship] Failed to create new elf relationship:",
+            updateError
+          );
+          throw new Error("Failed to update elf relationship");
+        }
+
+        // Create new exclusion rule (podopieczny cannot draw new elf)
+        const { data: existingExclusion } = await this.supabase
+          .from("exclusion_rules")
+          .select("id")
+          .eq("group_id", groupId)
+          .eq("blocker_participant_id", participantId)
+          .eq("blocked_participant_id", elfParticipantId)
+          .maybeSingle();
+
+        if (!existingExclusion) {
+          const { error: exclusionError } = await this.supabase.from("exclusion_rules").insert({
+            group_id: groupId,
+            blocker_participant_id: participantId, // Podopieczny cannot draw their elf
+            blocked_participant_id: elfParticipantId,
+          });
+
+          if (exclusionError) {
+            console.error(
+              "[ParticipantService.updateParticipantElfRelationship] Failed to create exclusion:",
+              exclusionError
+            );
+          } else {
+            console.log("[ParticipantService.updateParticipantElfRelationship] New exclusion created");
+          }
+        }
+
+        console.log("[ParticipantService.updateParticipantElfRelationship] Elf relationship updated successfully");
+      } else if (currentElfId) {
+        // No new elf, but there was an old one - already removed in Step 2
+        console.log(
+          "[ParticipantService.updateParticipantElfRelationship] Elf relationship removed (no new elf assigned)"
+        );
+      }
+    } catch (error) {
+      console.error("[ParticipantService.updateParticipantElfRelationship] Error:", error);
       throw error;
     }
   }
@@ -609,7 +920,9 @@ export class ParticipantService {
           email,
           created_at,
           access_token,
-          result_viewed_at
+          result_viewed_at,
+          elf_for_participant_id,
+          elf_accessed_at
         `
         )
         .eq("group_id", groupId)
@@ -666,6 +979,8 @@ export class ParticipantService {
           result_viewed_at: participant.result_viewed_at,
           has_wishlist: hasWishlist,
           result_viewed: participant.result_viewed_at !== null,
+          elf_for_participant_id: participant.elf_for_participant_id,
+          elf_accessed_at: participant.elf_accessed_at,
         };
 
         // Only include access_token if user is creator

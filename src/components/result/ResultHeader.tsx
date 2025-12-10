@@ -1,7 +1,6 @@
 import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
-// Card components not needed for this component
-import { Calendar, DollarSign } from "lucide-react";
+import GroupInfoCard from "./GroupInfoCard";
 
 interface ResultHeaderProps {
   group: {
@@ -84,40 +83,12 @@ function ResultHeader({ group, isAuthenticated }: ResultHeaderProps) {
       <Breadcrumb />
 
       {/* Event Card - czytelny design */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-red-500 dark:text-red-400 mb-2">🎅 {group.name}</h1>
-          <StatusBadge />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Budżet */}
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900 dark:to-emerald-900 rounded-lg p-4 border border-green-200 dark:border-green-700">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-12 h-12 bg-green-600 rounded-full">
-                <DollarSign className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Budżet prezentu</p>
-                <p className="text-2xl font-bold text-green-700 dark:text-green-300">{group.formattedBudget}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Data zakończenia */}
-          <div className="bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-900 dark:to-rose-900 rounded-lg p-4 border border-red-200 dark:border-red-700">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-12 h-12 bg-red-500 rounded-full">
-                <Calendar className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Termin wymiany</p>
-                <p className="text-2xl font-bold text-red-700 dark:text-red-300">{group.formattedEndDate}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <GroupInfoCard
+        groupName={group.name}
+        formattedBudget={group.formattedBudget}
+        formattedEndDate={group.formattedEndDate}
+        statusBadge={<StatusBadge />}
+      />
     </div>
   );
 }

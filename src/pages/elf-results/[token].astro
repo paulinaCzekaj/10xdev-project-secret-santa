@@ -1,0 +1,19 @@
+---
+// Strona wyniku elfa dla niezarejestrowanych uczestników (token-based)
+import Layout from "@/layouts/Layout.astro";
+import ElfResultView from "@/components/result/ElfResultView";
+
+// Pobieramy token z URL
+const { token } = Astro.params;
+
+// Walidacja tokenu
+if (!token || typeof token !== "string" || token.length === 0) {
+  return Astro.redirect("/");
+}
+
+const pageTitle = "Widok Elfa - Secret Santa";
+---
+
+<Layout title={pageTitle}>
+  <ElfResultView client:load token={token} isAuthenticated={false} />
+</Layout>

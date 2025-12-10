@@ -17,11 +17,12 @@ export function DrawSection({ groupId, participantsCount, exclusionsCount, isCre
   const { validation, isValidating, validateDraw } = useDraw(groupId);
 
   // Sprawdzamy czy można rozpocząć losowanie przy montowaniu komponentu
+  // i po każdej zmianie liczby uczestników lub wykluczeń
   useEffect(() => {
     if (isCreator && participantsCount >= 3) {
       validateDraw();
     }
-  }, [groupId, isCreator, participantsCount, validateDraw]);
+  }, [groupId, isCreator, participantsCount, exclusionsCount, validateDraw]);
 
   // Warunki wyświetlania
   const canDraw = participantsCount >= 3 && isCreator;
