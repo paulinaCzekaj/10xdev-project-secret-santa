@@ -123,7 +123,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const authUserId = "user-123";
       const participantToken = null;
 
-      const mockParticipant = createMockParticipant({ user_id: authUserId });
+      const mockParticipant = createMockParticipant({ user_id: authUserId }) as ParticipantWithGroupDTO;
       const mockWishlist = createMockWishlist();
 
       // Mock Supabase queries
@@ -148,7 +148,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const authUserId = null;
       const participantToken = "token-abc";
 
-      const mockParticipant = createMockParticipant({ access_token: participantToken });
+      const mockParticipant = createMockParticipant({ access_token: participantToken }) as ParticipantWithGroupDTO;
       const mockWishlist = createMockWishlist();
 
       // Mock Supabase queries
@@ -171,7 +171,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       const authUserId = "user-123";
       const participantToken = null;
 
-      const mockParticipant = createMockParticipant({ user_id: authUserId });
+      const mockParticipant = createMockParticipant({ user_id: authUserId }) as ParticipantWithGroupDTO;
       const mockWishlist = createMockWishlist({
         wishlist: "Updated wishlist content",
         updated_at: "2025-10-15T11:00:00Z",
@@ -355,7 +355,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       };
       const authUserId = "user-123";
 
-      const mockParticipant = createMockParticipant({ user_id: authUserId });
+      const mockParticipant = createMockParticipant({ user_id: authUserId }) as ParticipantWithGroupDTO;
 
       // Mock Supabase queries
       mockParticipantsQuery({ data: mockParticipant, error: null });
@@ -375,7 +375,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       };
       const authUserId = "user-123";
 
-      const mockParticipant = createMockParticipant({ user_id: authUserId });
+      const mockParticipant = createMockParticipant({ user_id: authUserId }) as ParticipantWithGroupDTO;
 
       // Mock Supabase queries
       mockParticipantsQuery({ data: mockParticipant, error: null });
@@ -398,7 +398,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       };
       const authUserId = "user-123";
 
-      const mockParticipant = createMockParticipant({ user_id: authUserId });
+      const mockParticipant = createMockParticipant({ user_id: authUserId }) as ParticipantWithGroupDTO;
       const mockWishlist = createMockWishlist({ wishlist: "" });
 
       // Mock Supabase queries
@@ -422,7 +422,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       };
       const authUserId = "user-123";
 
-      const mockParticipant = createMockParticipant({ user_id: authUserId });
+      const mockParticipant = createMockParticipant({ user_id: authUserId }) as ParticipantWithGroupDTO;
       const mockWishlist = createMockWishlist({ wishlist: longContent });
 
       // Mock Supabase queries
@@ -447,7 +447,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
       };
       const authUserId = "user-123";
 
-      const mockParticipant = createMockParticipant({ user_id: authUserId });
+      const mockParticipant = createMockParticipant({ user_id: authUserId }) as ParticipantWithGroupDTO;
       const mockWishlist = createMockWishlist({ wishlist: specialContent });
 
       // Mock Supabase queries
@@ -631,22 +631,32 @@ describe("WishlistService.validateWishlistAccess", () => {
   });
 
   // Helper function to create mock participant data
-  const createMockParticipant = (overrides: Partial<ParticipantWithGroupDTO> = {}): ParticipantWithGroupDTO => ({
-    id: 1,
-    group_id: 1,
-    user_id: "user-123",
-    name: "John Doe",
-    email: "john@example.com",
-    created_at: "2025-10-15T10:00:00Z",
-    access_token: "token-abc",
-    result_viewed_at: null,
-    group: {
+  const createMockParticipant = (overrides: Partial<ParticipantWithGroupDTO> = {}): ParticipantWithGroupDTO => {
+    const result = {
       id: 1,
-      end_date: "2025-12-25T23:59:59Z",
-      creator_id: "creator-123",
-    },
-    ...overrides,
-  });
+      group_id: 1,
+      user_id: "user-123",
+      name: "John Doe",
+      email: "john@example.com",
+      created_at: "2025-10-15T10:00:00Z",
+      access_token: "token-abc",
+      result_viewed_at: null,
+      elf_accessed_at: null,
+      elf_for_participant_id: null,
+      group: {
+        id: 1,
+        end_date: "2025-12-25T23:59:59Z",
+        creator_id: "creator-123",
+      },
+      ...overrides,
+    } as ParticipantWithGroupDTO;
+
+    // Ensure these properties are never undefined
+    result.elf_accessed_at = (result.elf_accessed_at ?? null) as string | null;
+    result.elf_for_participant_id = (result.elf_for_participant_id ?? null) as number | null;
+
+    return result;
+  };
 
   describe("successful access validation", () => {
     it("should grant access to registered user who owns the participant", async () => {

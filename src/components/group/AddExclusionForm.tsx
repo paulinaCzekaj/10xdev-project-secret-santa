@@ -58,7 +58,7 @@ export function AddExclusionForm({ groupId, participants, existingExclusions, on
     if (selectedBlocked && selectedBlocker) {
       const isStillAvailable = availableBlocked.some((p) => p.id === selectedBlocked);
       if (!isStillAvailable) {
-        form.setValue("blocked_participant_id", undefined);
+        form.resetField("blocked_participant_id");
       }
     }
   }, [selectedBlocker, selectedBlocked, availableBlocked, form]);
