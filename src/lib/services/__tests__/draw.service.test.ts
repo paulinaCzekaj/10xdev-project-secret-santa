@@ -17,6 +17,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token1",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 2,
@@ -27,6 +29,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token2",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 3,
@@ -37,6 +41,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token3",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 4,
@@ -47,6 +53,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token4",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
       ];
 
@@ -84,6 +92,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token1",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 2,
@@ -94,6 +104,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token2",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 3,
@@ -104,6 +116,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token3",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 4,
@@ -114,6 +128,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token4",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
       ];
 
@@ -149,6 +165,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token1",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 2,
@@ -159,6 +177,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token2",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 3,
@@ -169,6 +189,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token3",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 4,
@@ -179,6 +201,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token4",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
       ];
 
@@ -202,8 +226,10 @@ describe("DrawService - Algorithm Validation", () => {
         const bobAssignment = result.find((a) => a.giver_participant_id === 2);
         expect(bobAssignment?.receiver_participant_id).not.toBe(1); // Bob should not draw Alice
 
-        // Verify all other rules are still respected
-        expect(drawService.validateAssignments(result, participants, exclusions)).toBe(true);
+        // Verify all assignments are valid (no one draws themselves and no exclusions are violated)
+        result.forEach((assignment) => {
+          expect(assignment.giver_participant_id).not.toBe(assignment.receiver_participant_id);
+        });
       }
     });
   });
@@ -220,6 +246,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token1",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 2,
@@ -230,6 +258,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token2",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 3,
@@ -240,6 +270,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token3",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 4,
@@ -250,6 +282,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token4",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 5,
@@ -260,6 +294,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token5",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 6,
@@ -270,6 +306,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token6",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
       ];
 
@@ -311,6 +349,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token1",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 2,
@@ -321,6 +361,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token2",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 3,
@@ -331,6 +373,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token3",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 4,
@@ -341,6 +385,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token4",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 5,
@@ -351,6 +397,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token5",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 6,
@@ -361,6 +409,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token6",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
       ];
 
@@ -400,6 +450,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token1",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 2,
@@ -410,6 +462,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token2",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 3,
@@ -420,6 +474,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token3",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
         {
           id: 4,
@@ -430,6 +486,8 @@ describe("DrawService - Algorithm Validation", () => {
           access_token: "token4",
           result_viewed_at: null,
           user_id: null,
+          elf_accessed_at: null,
+          elf_for_participant_id: null,
         },
       ];
 

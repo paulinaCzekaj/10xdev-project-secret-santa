@@ -29,10 +29,12 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
   const { result, isLoading, error, refetch } = useResultData(groupId, token, isAuthenticated);
   const [isRevealed, setIsRevealed] = useState(false);
 
-  // Update isRevealed when result loads
+  // Always hide the result when entering the page, regardless of previous views
+  // Only reveal when user clicks the present
   useEffect(() => {
-    setIsRevealed(!!result?.resultViewedAt);
-  }, [result?.resultViewedAt]);
+    // Reset to hidden state when component mounts or result changes
+    setIsRevealed(false);
+  }, [result]);
 
   // Komponent ładowania
   if (isLoading) {
@@ -104,21 +106,20 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
           accessToken={result.accessToken}
         />
 
-        {/* Wishlist section - visible only after revealing the present */}
-        {isRevealed && (
-          <WishlistSection
-            myWishlist={result.my_wishlist}
-            theirWishlist={{
-              content: result.assigned_to.wishlist,
-              contentHtml: result.assignedPersonWishlistHtml,
-            }}
-            assignedPersonName={result.assigned_to.name}
-            participantId={result.participant.id}
-            groupEndDate={result.group.end_date}
-            accessToken={result.accessToken}
-            wishlistStats={result.wishlist_stats}
-          />
-        )}
+        {/* Wishlist section - user's wishlist always visible, assigned person's wishlist visible if they have content or if revealed */}
+        <WishlistSection
+          myWishlist={result.my_wishlist}
+          theirWishlist={{
+            content: result.assigned_to.wishlist,
+            contentHtml: result.assignedPersonWishlistHtml,
+          }}
+          assignedPersonName={result.assigned_to.name}
+          participantId={result.participant.id}
+          groupEndDate={result.group.end_date}
+          accessToken={result.accessToken}
+          wishlistStats={result.wishlist_stats}
+          isRevealed={isRevealed}
+        />
 
         {/* Elf help section - shows if participant is an elf (at the bottom) */}
         {result.participant.isElfForSomeone && result.participant.elfForParticipantId && (
