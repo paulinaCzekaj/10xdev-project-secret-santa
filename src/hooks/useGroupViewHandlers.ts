@@ -11,7 +11,8 @@ interface UseGroupViewHandlersParams {
   addExclusion: (command: {
     blocker_participant_id: number;
     blocked_participant_id: number;
-  }) => Promise<{ success: boolean; error?: string; data?: import("@/types").ExclusionRuleListItemDTO }>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }) => Promise<{ success: boolean; error?: string; data?: any }>;
   deleteParticipant: (id: number) => Promise<{ success: boolean; error?: string }>;
   deleteExclusion: (id: number) => Promise<{ success: boolean; error?: string }>;
   setOptimisticParticipants?: (id: number) => void;

@@ -159,7 +159,7 @@ export interface Database {
           access_token?: string;
           created_at?: string;
           elf_accessed_at?: string | null;
-          elf_for_participant_id?: number | null;
+          elf_participant_id?: number | null;
           email?: string | null;
           group_id: number;
           id?: number;
@@ -171,7 +171,7 @@ export interface Database {
           access_token?: string;
           created_at?: string;
           elf_accessed_at?: string | null;
-          elf_for_participant_id?: number | null;
+          elf_participant_id?: number | null;
           email?: string | null;
           group_id?: number;
           id?: number;
@@ -181,8 +181,8 @@ export interface Database {
         };
         Relationships: [
           {
-            foreignKeyName: "fk_elf_for_participant";
-            columns: ["elf_for_participant_id"];
+            foreignKeyName: "fk_elf_participant";
+            columns: ["elf_participant_id"];
             isOneToOne: false;
             referencedRelation: "participants";
             referencedColumns: ["id"];
