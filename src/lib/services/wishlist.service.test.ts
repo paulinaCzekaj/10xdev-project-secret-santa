@@ -59,7 +59,24 @@ describe("WishlistService.createOrUpdateWishlist", () => {
     error: { message: string } | null;
   }) => {
     const participantsChain = {
-      select: vi.fn().mockReturnThis(),
+      select: vi.fn().mockImplementation((fields?: string) => {
+        // If selecting specific fields for elf check, return no data (no elf relationship)
+        if (fields === "id, elf_for_participant_id") {
+          return {
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  single: vi
+                    .fn()
+                    .mockResolvedValue({ data: null, error: { code: "PGRST116", message: "No rows found" } }),
+                }),
+              }),
+            }),
+          };
+        }
+        // For the main participant query (select with group join)
+        return participantsChain;
+      }),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue(result),
     };

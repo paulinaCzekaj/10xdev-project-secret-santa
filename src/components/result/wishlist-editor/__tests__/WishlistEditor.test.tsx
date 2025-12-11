@@ -34,7 +34,7 @@ vi.mock("@/hooks/useAIGeneration", () => ({
 
 vi.mock("@/hooks/useAIGenerationStatus", () => ({
   useAIGenerationStatus: vi.fn(() => ({
-    status: { remaining_generations: 3 },
+    status: { remaining_generations: 7 },
     isLoading: false,
     error: null,
     refetch: vi.fn(),
@@ -47,7 +47,7 @@ describe("WishlistEditor", () => {
       <WishlistEditor participantId={1} initialContent="Test content" canEdit={true} endDate="2025-12-25T00:00:00Z" />
     );
 
-    expect(screen.getByText("🎁 Moja lista życzeń")).toBeInTheDocument();
+    expect(screen.getByText("🎁 Lista życzeń")).toBeInTheDocument();
     expect(screen.getByText(/Magia Świąt Bożego Narodzenia/)).toBeInTheDocument();
     expect(screen.getByDisplayValue("Test content")).toBeInTheDocument();
   });
@@ -57,7 +57,7 @@ describe("WishlistEditor", () => {
       <WishlistEditor participantId={1} initialContent="Test content" canEdit={false} endDate="2025-12-25T00:00:00Z" />
     );
 
-    expect(screen.getByText("🔒 Moja lista życzeń")).toBeInTheDocument();
+    expect(screen.getByText("🔒 Lista życzeń")).toBeInTheDocument();
     expect(screen.getByText(/została zablokowana/)).toBeInTheDocument();
   });
 

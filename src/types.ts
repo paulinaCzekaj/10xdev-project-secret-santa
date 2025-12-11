@@ -274,6 +274,9 @@ export interface ElfResultResponseDTO {
   helpedParticipant: {
     id: number;
     name: string;
+    wishlist: string;
+    canEditWishlist: boolean;
+    accessToken?: string;
   };
 }
 

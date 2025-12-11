@@ -77,17 +77,23 @@ export const PUT: APIRoute = async ({ params, request, locals, url }) => {
     const queryParams = Object.fromEntries(urlSearchParams.entries());
     const { token: queryToken } = ParticipantTokenQuerySchema.parse(queryParams);
 
-    // Guard 3: Authentication - try Bearer token first, then participant token
-    const userIdOrResponse = requireApiAuth({ locals });
-
-    if (typeof userIdOrResponse === "string") {
-      // Bearer token authentication successful
-      authUserId = userIdOrResponse;
-      participantToken = null;
-      console.log("[PUT /api/participants/:participantId/wishlist] Bearer token authentication successful");
+    // Guard 3: Authentication - participant token in URL takes priority over Bearer token
+    if (queryToken) {
+      // PRIORITY: Use participant token from URL if provided
+      authUserId = null;
+      participantToken = queryToken;
+      console.log("[PUT /api/participants/:participantId/wishlist] Using participant token from URL (priority over Bearer)");
     } else {
-      // Bearer token failed, try participant token
-      if (!queryToken) {
+      // Fallback: Try Bearer token
+      const userIdOrResponse = requireApiAuth({ locals });
+
+      if (typeof userIdOrResponse === "string") {
+        // Bearer token authentication successful
+        authUserId = userIdOrResponse;
+        participantToken = null;
+        console.log("[PUT /api/participants/:participantId/wishlist] Using Bearer token authentication");
+      } else {
+        // No authentication provided
         console.log("[PUT /api/participants/:participantId/wishlist] No authentication provided");
         const errorResponse: ApiErrorResponse = {
           error: {
@@ -100,11 +106,6 @@ export const PUT: APIRoute = async ({ params, request, locals, url }) => {
           headers: { "Content-Type": "application/json" },
         });
       }
-
-      // Use participant token
-      authUserId = null;
-      participantToken = queryToken;
-      console.log("[PUT /api/participants/:participantId/wishlist] Using participant token authentication");
     }
 
     // Guard 4: Parse request body
@@ -289,17 +290,23 @@ export const GET: APIRoute = async ({ params, request, locals, url }) => {
     const queryParams = Object.fromEntries(urlSearchParams.entries());
     const { token: queryToken } = ParticipantTokenQuerySchema.parse(queryParams);
 
-    // Guard 3: Authentication - try Bearer token first, then participant token
-    const userIdOrResponse = requireApiAuth({ locals });
-
-    if (typeof userIdOrResponse === "string") {
-      // Bearer token authentication successful
-      authUserId = userIdOrResponse;
-      participantToken = null;
-      console.log("[GET /api/participants/:participantId/wishlist] Bearer token authentication successful");
+    // Guard 3: Authentication - participant token in URL takes priority over Bearer token
+    if (queryToken) {
+      // PRIORITY: Use participant token from URL if provided
+      authUserId = null;
+      participantToken = queryToken;
+      console.log("[GET /api/participants/:participantId/wishlist] Using participant token from URL (priority over Bearer)");
     } else {
-      // Bearer token failed, try participant token
-      if (!queryToken) {
+      // Fallback: Try Bearer token
+      const userIdOrResponse = requireApiAuth({ locals });
+
+      if (typeof userIdOrResponse === "string") {
+        // Bearer token authentication successful
+        authUserId = userIdOrResponse;
+        participantToken = null;
+        console.log("[GET /api/participants/:participantId/wishlist] Using Bearer token authentication");
+      } else {
+        // No authentication provided
         console.log("[GET /api/participants/:participantId/wishlist] No authentication provided");
         const errorResponse: ApiErrorResponse = {
           error: {
@@ -312,11 +319,6 @@ export const GET: APIRoute = async ({ params, request, locals, url }) => {
           headers: { "Content-Type": "application/json" },
         });
       }
-
-      // Use participant token
-      authUserId = null;
-      participantToken = queryToken;
-      console.log("[GET /api/participants/:participantId/wishlist] Using participant token authentication");
     }
 
     // Get Supabase client and create service
@@ -471,17 +473,23 @@ export const DELETE: APIRoute = async ({ params, request, locals, url }) => {
     const queryParams = Object.fromEntries(urlSearchParams.entries());
     const { token: queryToken } = ParticipantTokenQuerySchema.parse(queryParams);
 
-    // Guard 3: Authentication - try Bearer token first, then participant token
-    const userIdOrResponse = requireApiAuth({ locals });
-
-    if (typeof userIdOrResponse === "string") {
-      // Bearer token authentication successful
-      authUserId = userIdOrResponse;
-      participantToken = null;
-      console.log("[DELETE /api/participants/:participantId/wishlist] Bearer token authentication successful");
+    // Guard 3: Authentication - participant token in URL takes priority over Bearer token
+    if (queryToken) {
+      // PRIORITY: Use participant token from URL if provided
+      authUserId = null;
+      participantToken = queryToken;
+      console.log("[DELETE /api/participants/:participantId/wishlist] Using participant token from URL (priority over Bearer)");
     } else {
-      // Bearer token failed, try participant token
-      if (!queryToken) {
+      // Fallback: Try Bearer token
+      const userIdOrResponse = requireApiAuth({ locals });
+
+      if (typeof userIdOrResponse === "string") {
+        // Bearer token authentication successful
+        authUserId = userIdOrResponse;
+        participantToken = null;
+        console.log("[DELETE /api/participants/:participantId/wishlist] Using Bearer token authentication");
+      } else {
+        // No authentication provided
         console.log("[DELETE /api/participants/:participantId/wishlist] No authentication provided");
         const errorResponse: ApiErrorResponse = {
           error: {
@@ -494,11 +502,6 @@ export const DELETE: APIRoute = async ({ params, request, locals, url }) => {
           headers: { "Content-Type": "application/json" },
         });
       }
-
-      // Use participant token
-      authUserId = null;
-      participantToken = queryToken;
-      console.log("[DELETE /api/participants/:participantId/wishlist] Using participant token authentication");
     }
 
     // Get Supabase client and create service

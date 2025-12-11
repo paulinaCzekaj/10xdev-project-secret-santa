@@ -14,7 +14,7 @@ export function WishlistEditorHeader() {
           />
         </svg>
       </div>
-      <h3 className="text-xl font-bold text-green-600 dark:text-green-400">🎁 Moja lista życzeń</h3>
+      <h3 className="text-xl font-bold text-green-600 dark:text-green-400">🎁 Lista życzeń</h3>
     </div>
   );
 }

@@ -89,6 +89,7 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
             daysUntilEnd: result.daysUntilEnd,
           }}
           isAuthenticated={result.isAuthenticated}
+          participantName={result.participant.name}
         />
 
         {/* Reveal section */}

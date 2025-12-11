@@ -1,8 +1,9 @@
 import React from "react";
 import { useElfResult } from "@/hooks/useElfResult";
-import ElfAssignedPersonCard from "./ElfAssignedPersonCard";
+import ElfAssignmentReveal from "./ElfAssignmentReveal";
 import ElfRoleBanner from "./ElfRoleBanner";
 import GroupInfoCard from "./GroupInfoCard";
+import WishlistEditor from "./WishlistEditor";
 import {
   DrawNotCompletedError,
   UnauthorizedError,
@@ -79,14 +80,24 @@ export default function ElfResultView({ groupId, token, isAuthenticated = false 
         {/* Group info */}
         <GroupInfoCard groupName={data.group.name} budget={data.group.budget} endDate={data.group.endDate} />
 
-        {/* Assigned person card */}
-        <div className="space-y-2">
+        {/* Assignment reveal with gift box */}
+        <ElfAssignmentReveal
+          receiverName={data.assignment.receiverName}
+          receiverWishlistHtml={data.assignment.receiverWishlistHtml}
+          helpedParticipantName={data.helpedParticipant.name}
+        />
+
+        {/* Helped participant's wishlist editor */}
+        <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {data.helpedParticipant.name} przygotowuje prezent dla:
+            Lista życzeń {data.helpedParticipant.name}
           </h3>
-          <ElfAssignedPersonCard
-            name={data.assignment.receiverName}
-            wishlistHtml={data.assignment.receiverWishlistHtml}
+          <WishlistEditor
+            initialContent={data.helpedParticipant.wishlist}
+            participantId={data.helpedParticipant.id}
+            canEdit={data.helpedParticipant.canEditWishlist}
+            endDate={data.group.endDate}
+            accessToken={data.helpedParticipant.accessToken}
           />
         </div>
 

@@ -70,7 +70,10 @@ export class ElfService {
     const receiver = await this.getReceiverDetails(assignment.receiver_participant_id);
     const wishlist = await this.getReceiverWishlist(assignment.receiver_participant_id);
 
-    // Step 5: Get group details
+    // Step 5: Get helped participant's wishlist
+    const helpedParticipantWishlist = await this.getReceiverWishlist(helpedParticipant.id);
+
+    // Step 6: Get group details
     const group = await this.getGroupDetails(participant.group_id);
 
     // Step 6: Build response DTO
@@ -89,6 +92,9 @@ export class ElfService {
       helpedParticipant: {
         id: helpedParticipant.id,
         name: helpedParticipant.name,
+        wishlist: helpedParticipantWishlist,
+        canEditWishlist: this.canEditWishlist(group.end_date), // Check group end date
+        accessToken: helpedParticipant.access_token,
       },
     };
 
@@ -187,7 +193,7 @@ export class ElfService {
   private async getHelpedParticipant(helpedParticipantId: number) {
     const { data: helpedParticipant, error } = await this.supabase
       .from("participants")
-      .select("id, name")
+      .select("id, name, access_token")
       .eq("id", helpedParticipantId)
       .single();
 
@@ -293,6 +299,22 @@ export class ElfService {
   }
 
   /**
+   * Determines if wishlist can be edited based on group end date
+   * Uses date-only comparison (ignores time) - end date is inclusive
+   * @private
+   */
+  private canEditWishlist(groupEndDate: string): boolean {
+    const now = new Date();
+    const endDate = new Date(groupEndDate);
+    // Compare only dates (ignore time) - end date is inclusive
+    const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+    const isExpired = endDateOnly < nowDate;
+
+    return !isExpired;
+  }
+
+  /**
    * Retrieves the draw result that an elf can see using access token (for unauthenticated users)
    *
    * @param command - The command containing access token
@@ -319,7 +341,10 @@ export class ElfService {
     const receiver = await this.getReceiverDetails(assignment.receiver_participant_id);
     const wishlist = await this.getReceiverWishlist(assignment.receiver_participant_id);
 
-    // Step 5: Get group details
+    // Step 5: Get helped participant's wishlist
+    const helpedParticipantWishlist = await this.getReceiverWishlist(helpedParticipant.id);
+
+    // Step 6: Get group details
     const group = await this.getGroupDetails(participant.group_id);
 
     // Step 6: Build response DTO
@@ -338,6 +363,9 @@ export class ElfService {
       helpedParticipant: {
         id: helpedParticipant.id,
         name: helpedParticipant.name,
+        wishlist: helpedParticipantWishlist,
+        canEditWishlist: this.canEditWishlist(group.end_date), // Check group end date
+        accessToken: helpedParticipant.access_token,
       },
     };
 
