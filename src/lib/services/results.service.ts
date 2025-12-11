@@ -19,7 +19,7 @@ interface ParticipantDataFromDB {
   name: string;
   email: string | null;
   result_viewed_at: string | null;
-  elf_for_participant_id: number | null;
+  elf_participant_id: number | null;
 }
 
 /**
@@ -254,12 +254,21 @@ export class ResultsService {
         throw new Error("INVALID_ACCESS");
       }
       // Find participant by user_id OR email (for users added before account creation)
-      const { data: participantData, error: participantError } = await this.supabase
+
+      const query = this.supabase
         .from("participants")
-        .select("id, group_id, user_id, name, email, result_viewed_at, elf_for_participant_id")
-        .eq("group_id", groupId)
-        .or(`user_id.eq.${userId},email.eq.${userEmail || ""}`)
-        .single();
+        .select("id, group_id, user_id, name, email, result_viewed_at, elf_participant_id")
+        .eq("group_id", groupId);
+
+      // Build OR condition carefully - always include user_id check
+      // Also check email if provided (for legacy participants added by email)
+      if (userEmail) {
+        query.or(`user_id.eq.${userId},email.eq.${userEmail}`);
+      } else {
+        query.eq("user_id", userId);
+      }
+
+      const { data: participantData, error: participantError } = await query.single();
 
       if (participantError || !participantData) {
         console.log("[ResultsService.validateDrawCompletedAndGetParticipant] Participant not found", {
@@ -267,17 +276,58 @@ export class ResultsService {
           userId,
           userEmail,
           error: participantError?.message,
+          code: participantError?.code,
         });
-        throw new Error("FORBIDDEN");
+
+        // If we can't find a participant record, check if the user is the group creator
+        // and if so, they should be allowed to view results (they might be missing participant record)
+        const { data: groupData } = await this.supabase.from("groups").select("creator_id").eq("id", groupId).single();
+
+        if (groupData?.creator_id === userId) {
+          console.log(
+            "[ResultsService.validateDrawCompletedAndGetParticipant] User is group creator but missing participant record, creating one",
+            {
+              groupId,
+              userId,
+            }
+          );
+
+          // Create a participant record for the creator
+          const { data: newParticipant, error: createError } = await this.supabase
+            .from("participants")
+            .insert({
+              group_id: groupId,
+              user_id: userId,
+              name: "Creator", // This will be updated by the user later
+              email: userEmail || null,
+            })
+            .select("id, group_id, user_id, name, email, result_viewed_at, elf_participant_id")
+            .single();
+
+          if (createError || !newParticipant) {
+            console.error(
+              "[ResultsService.validateDrawCompletedAndGetParticipant] Failed to create participant record for creator",
+              {
+                error: createError?.message,
+              }
+            );
+            throw new Error("FORBIDDEN");
+          }
+
+          participant = newParticipant;
+        } else {
+          throw new Error("FORBIDDEN");
+        }
+      } else {
+        participant = participantData;
       }
-      participant = participantData;
     } else {
       if (!token) {
         throw new Error("INVALID_ACCESS");
       }
       const { data: participantData, error: participantError } = await this.supabase
         .from("participants")
-        .select("id, group_id, user_id, name, email, result_viewed_at, elf_for_participant_id")
+        .select("id, group_id, user_id, name, email, result_viewed_at, elf_participant_id")
         .eq("access_token", token)
         .single();
 
@@ -337,7 +387,7 @@ export class ResultsService {
     // Get assigned participant details
     const { data: assignedParticipant, error: participantError } = await this.supabase
       .from("participants")
-      .select("id, name")
+      .select("id, name, elf_participant_id")
       .eq("id", assignment.receiver_participant_id)
       .single();
 
@@ -465,7 +515,7 @@ export class ResultsService {
 
   /**
    * Gets elf helper data for a participant (who is helping them)
-   * Finds a participant who has elf_for_participant_id === currentParticipantId
+   * Finds a participant who has elf_participant_id === currentParticipantId
    */
   private async getMyElfHelper(
     currentParticipantId: number,
@@ -475,7 +525,7 @@ export class ResultsService {
       .from("participants")
       .select("id, name")
       .eq("group_id", groupId)
-      .eq("elf_for_participant_id", currentParticipantId)
+      .eq("elf_participant_id", currentParticipantId)
       .single();
 
     if (error) {
@@ -498,29 +548,30 @@ export class ResultsService {
   }
 
   /**
-   * Gets elf helper data for a participant (who they are helping)
+   * Gets elf helper data for a participant (who they are helping as an elf)
    */
   private async getElfHelperData(
-    elfForParticipantId: number | null
-  ): Promise<{ elfForParticipantName?: string; elfForParticipantId?: number } | null> {
-    if (!elfForParticipantId) {
+    participantId: number,
+    groupId: number
+  ): Promise<{ helpedParticipantNames: string[]; helpedParticipantIds: number[] } | null> {
+    const { data: helpedParticipants, error } = await this.supabase
+      .from("participants")
+      .select("id, name")
+      .eq("elf_participant_id", participantId)
+      .eq("group_id", groupId);
+
+    if (error) {
+      console.error("[ResultsService.getElfHelperData] Error fetching helped participants:", error);
       return null;
     }
 
-    const { data: elfParticipant, error } = await this.supabase
-      .from("participants")
-      .select("id, name")
-      .eq("id", elfForParticipantId)
-      .single();
-
-    if (error || !elfParticipant) {
-      console.error("[ResultsService.getElfHelperData] Error fetching elf participant:", error);
+    if (!helpedParticipants || helpedParticipants.length === 0) {
       return null;
     }
 
     return {
-      elfForParticipantName: elfParticipant.name,
-      elfForParticipantId: elfParticipant.id,
+      helpedParticipantNames: helpedParticipants.map((p) => p.name),
+      helpedParticipantIds: helpedParticipants.map((p) => p.id),
     };
   }
 
@@ -535,13 +586,11 @@ export class ResultsService {
     };
 
     // If participant is an elf for someone, get their data
-    if (participant.elf_for_participant_id) {
-      const elfData = await this.getElfHelperData(participant.elf_for_participant_id);
-      if (elfData) {
-        baseInfo.isElfForSomeone = true;
-        baseInfo.elfForParticipantName = elfData.elfForParticipantName;
-        baseInfo.elfForParticipantId = elfData.elfForParticipantId;
-      }
+    const elfData = await this.getElfHelperData(participant.id, participant.group_id);
+    if (elfData) {
+      baseInfo.isElfForSomeone = true;
+      baseInfo.helpedParticipantNames = elfData.helpedParticipantNames;
+      baseInfo.helpedParticipantIds = elfData.helpedParticipantIds;
     }
 
     return baseInfo;

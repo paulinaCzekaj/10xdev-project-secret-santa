@@ -89,6 +89,7 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
             daysUntilEnd: result.daysUntilEnd,
           }}
           isAuthenticated={result.isAuthenticated}
+          participantName={result.participant.name}
         />
 
         {/* Reveal section */}
@@ -103,6 +104,7 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
           groupId={result.group.id}
           isRevealed={isRevealed}
           onReveal={() => setIsRevealed(true)}
+          onHide={() => setIsRevealed(false)}
           accessToken={result.accessToken}
         />
 
@@ -122,15 +124,17 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
         />
 
         {/* Elf help section - shows if participant is an elf (at the bottom) */}
-        {result.participant.isElfForSomeone && result.participant.elfForParticipantId && (
-          <ElfHelpSection
-            helpedParticipantName={result.participant.elfForParticipantName || "uczestnik"}
-            helpedParticipantId={result.participant.elfForParticipantId}
-            groupId={result.group.id}
-            isAuthenticated={result.isAuthenticated}
-            accessToken={result.accessToken}
-          />
-        )}
+        {result.participant.isElfForSomeone &&
+          result.participant.helpedParticipantIds &&
+          result.participant.helpedParticipantIds.length > 0 && (
+            <ElfHelpSection
+              helpedParticipantNames={result.participant.helpedParticipantNames || []}
+              helpedParticipantIds={result.participant.helpedParticipantIds}
+              groupId={result.group.id}
+              isAuthenticated={result.isAuthenticated}
+              accessToken={result.accessToken}
+            />
+          )}
 
         {/* Elf info box - shows if participant has an elf (at the bottom) */}
         {result.elf && <ElfInfoBox elfName={result.elf.name} />}

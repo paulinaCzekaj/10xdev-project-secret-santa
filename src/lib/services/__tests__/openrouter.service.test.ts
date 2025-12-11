@@ -250,8 +250,8 @@ describe("OpenRouterService", () => {
 
       expect(result.canGenerate).toBe(true);
       expect(result.generationsUsed).toBe(0);
-      expect(result.generationsRemaining).toBe(5);
-      expect(result.maxGenerations).toBe(5);
+      expect(result.generationsRemaining).toBe(7);
+      expect(result.maxGenerations).toBe(7);
     });
 
     it("should check existing participant with remaining generations", async () => {
@@ -274,8 +274,8 @@ describe("OpenRouterService", () => {
 
       expect(result.canGenerate).toBe(true);
       expect(result.generationsUsed).toBe(2);
-      expect(result.generationsRemaining).toBe(3);
-      expect(result.maxGenerations).toBe(5);
+      expect(result.generationsRemaining).toBe(5);
+      expect(result.maxGenerations).toBe(7);
     });
 
     it("should return false when limit exceeded", async () => {
@@ -285,7 +285,7 @@ describe("OpenRouterService", () => {
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
               data: {
-                ai_generation_count_per_group: 5,
+                ai_generation_count_per_group: 7,
                 ai_last_generated_at: new Date(),
               },
               error: null,
@@ -297,7 +297,7 @@ describe("OpenRouterService", () => {
       const result = await service.validateRateLimit("123", true);
 
       expect(result.canGenerate).toBe(false);
-      expect(result.generationsUsed).toBe(5);
+      expect(result.generationsUsed).toBe(7);
       expect(result.generationsRemaining).toBe(0);
     });
 
@@ -321,8 +321,8 @@ describe("OpenRouterService", () => {
 
       expect(result.canGenerate).toBe(true);
       expect(result.generationsUsed).toBe(2);
-      expect(result.generationsRemaining).toBe(1);
-      expect(result.maxGenerations).toBe(3);
+      expect(result.generationsRemaining).toBe(3);
+      expect(result.maxGenerations).toBe(5);
     });
 
     it("should handle database errors", async () => {

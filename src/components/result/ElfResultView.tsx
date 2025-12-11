@@ -1,8 +1,9 @@
 import React from "react";
 import { useElfResult } from "@/hooks/useElfResult";
-import ElfAssignedPersonCard from "./ElfAssignedPersonCard";
+import ElfAssignmentReveal from "./ElfAssignmentReveal";
 import ElfRoleBanner from "./ElfRoleBanner";
 import GroupInfoCard from "./GroupInfoCard";
+import WishlistEditor from "./WishlistEditor";
 import {
   DrawNotCompletedError,
   UnauthorizedError,
@@ -17,6 +18,7 @@ interface ElfResultViewProps {
   groupId?: number;
   token?: string;
   isAuthenticated?: boolean;
+  helpedParticipantId?: number;
 }
 
 /**
@@ -24,8 +26,14 @@ interface ElfResultViewProps {
  * Shows the person the helped participant drew and their wishlist
  * Supports both authenticated (groupId) and unauthenticated (token) access
  */
-export default function ElfResultView({ groupId, token, isAuthenticated = false }: ElfResultViewProps) {
-  const { data, isLoading, error } = useElfResult(groupId, token, isAuthenticated);
+export default function ElfResultView({
+  groupId,
+  token,
+  isAuthenticated = false,
+  helpedParticipantId,
+}: ElfResultViewProps) {
+  const { data, isLoading, error } = useElfResult(groupId, token, isAuthenticated, helpedParticipantId);
+  const [isRevealed, setIsRevealed] = React.useState(false);
 
   // Loading state
   if (isLoading) {
@@ -79,14 +87,27 @@ export default function ElfResultView({ groupId, token, isAuthenticated = false 
         {/* Group info */}
         <GroupInfoCard groupName={data.group.name} budget={data.group.budget} endDate={data.group.endDate} />
 
-        {/* Assigned person card */}
-        <div className="space-y-2">
+        {/* Assignment reveal with gift box */}
+        <ElfAssignmentReveal
+          receiverName={data.assignment.receiverName}
+          receiverWishlistHtml={data.assignment.receiverWishlistHtml}
+          helpedParticipantName={data.helpedParticipant.name}
+          isRevealed={isRevealed}
+          onReveal={() => setIsRevealed(true)}
+          onHide={() => setIsRevealed(false)}
+        />
+
+        {/* Helped participant's wishlist editor */}
+        <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {data.helpedParticipant.name} przygotowuje prezent dla:
+            Lista życzeń {data.helpedParticipant.name}
           </h3>
-          <ElfAssignedPersonCard
-            name={data.assignment.receiverName}
-            wishlistHtml={data.assignment.receiverWishlistHtml}
+          <WishlistEditor
+            initialContent={data.helpedParticipant.wishlist}
+            participantId={data.helpedParticipant.id}
+            canEdit={data.helpedParticipant.canEditWishlist}
+            endDate={data.group.endDate}
+            accessToken={data.helpedParticipant.accessToken}
           />
         </div>
 

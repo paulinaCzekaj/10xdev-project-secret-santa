@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -28,6 +30,19 @@ export function ParticipantsList({
   onDelete,
   onCopyToken,
 }: ParticipantsListProps) {
+  const [expandedRows, setExpandedRows] = React.useState<Set<number>>(new Set());
+
+  const toggleExpanded = (participantId: number) => {
+    setExpandedRows((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(participantId)) {
+        newSet.delete(participantId);
+      } else {
+        newSet.add(participantId);
+      }
+      return newSet;
+    });
+  };
   const handleCopyToken = async (participant: ParticipantViewModel) => {
     if (participant.resultLink) {
       try {
@@ -89,16 +104,73 @@ export function ParticipantsList({
               {/* Elf-pomocnik column - Shows who helps this participant */}
               <TableCell>
                 {participant.hasElf ? (
-                  <span className="text-xs text-green-600">{participant.elfName} 🎁</span>
+                  <span
+                    className="text-xs text-green-600"
+                    title={`elf_participant_id: ${participant.elfParticipantId}`}
+                  >
+                    {participant.elfName} 🎁
+                  </span>
                 ) : (
-                  <span className="text-xs text-muted-foreground">—</span>
+                  <span
+                    className="text-xs text-muted-foreground"
+                    title={`elf_participant_id: ${participant.elfParticipantId}`}
+                  >
+                    —
+                  </span>
                 )}
               </TableCell>
 
               {/* Podopieczny column - Shows who this participant helps */}
               <TableCell>
-                {participant.isElfForSomeone ? (
-                  <span className="text-xs text-blue-600">{participant.elfForParticipantName} 🧝</span>
+                {participant.helpedParticipantNames.length > 0 ? (
+                  <div className="text-xs text-blue-600">
+                    {participant.helpedParticipantNames.length === 1 ? (
+                      <span>{participant.helpedParticipantNames[0]} 🧝</span>
+                    ) : expandedRows.has(participant.id) ? (
+                      <div className="space-y-1">
+                        {participant.helpedParticipantNames.map((name, index) => (
+                          <Tooltip key={index}>
+                            <TooltipTrigger asChild>
+                              <div
+                                className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer px-1 py-0.5 rounded hover:bg-blue-50"
+                                onClick={() => toggleExpanded(participant.id)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    toggleExpanded(participant.id);
+                                  }
+                                }}
+                                tabIndex={0}
+                                role="button"
+                                aria-expanded={expandedRows.has(participant.id)}
+                              >
+                                <span>{name} 🧝</span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Kliknij aby ukryć listę</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ))}
+                      </div>
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto px-1 text-xs text-blue-600 hover:text-blue-800 p-0"
+                            onClick={() => toggleExpanded(participant.id)}
+                          >
+                            {participant.helpedParticipantNames[0]}... 🧝
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Kliknij aby zobaczyć pozostałych podopiecznych</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
                 ) : (
                   <span className="text-xs text-muted-foreground">—</span>
                 )}
@@ -149,15 +221,13 @@ export function ParticipantsList({
                   <TableCell>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="cursor-pointer">
-                          {participant.wishlistStatus?.icon && (
-                            <participant.wishlistStatus.icon
-                              className={`h-4 w-4 ${
-                                participant.wishlistStatus.variant === "default" ? "text-green-600" : "text-red-600"
-                              }`}
-                            />
-                          )}
-                        </div>
+                        {participant.wishlistStatus?.icon && (
+                          <participant.wishlistStatus.icon
+                            className={`h-4 w-4 ${
+                              participant.wishlistStatus.variant === "default" ? "text-green-600" : "text-red-600"
+                            }`}
+                          />
+                        )}
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>{participant.wishlistStatus?.text || "Brak listy życzeń"}</p>
@@ -168,15 +238,13 @@ export function ParticipantsList({
                   <TableCell>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="cursor-pointer">
-                          {participant.resultStatus?.icon && (
-                            <participant.resultStatus.icon
-                              className={`h-4 w-4 ${
-                                participant.resultStatus.variant === "default" ? "text-green-600" : "text-gray-500"
-                              }`}
-                            />
-                          )}
-                        </div>
+                        {participant.resultStatus?.icon && (
+                          <participant.resultStatus.icon
+                            className={`h-4 w-4 ${
+                              participant.resultStatus.variant === "default" ? "text-green-600" : "text-gray-500"
+                            }`}
+                          />
+                        )}
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>{participant.resultStatus?.text || "Wynik nie został jeszcze zobaczony"}</p>

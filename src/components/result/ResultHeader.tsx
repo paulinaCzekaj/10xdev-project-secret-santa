@@ -12,13 +12,14 @@ interface ResultHeaderProps {
     daysUntilEnd: number;
   };
   isAuthenticated: boolean;
+  participantName?: string; // For token-based access to show whose result this is
 }
 
 /**
  * Nagłówek widoku wyniku zawierający breadcrumb i informacje o grupie
  * Responsywny design z informacjami o budżecie i terminie
  */
-function ResultHeader({ group, isAuthenticated }: ResultHeaderProps) {
+function ResultHeader({ group, isAuthenticated, participantName }: ResultHeaderProps) {
   // Breadcrumb tylko dla zalogowanych użytkowników
   const Breadcrumb = () => {
     if (!isAuthenticated) return null;
@@ -81,6 +82,16 @@ function ResultHeader({ group, isAuthenticated }: ResultHeaderProps) {
     <div className="space-y-4">
       {/* Breadcrumb */}
       <Breadcrumb />
+
+      {/* Participant name for token-based access */}
+      {participantName && !isAuthenticated && (
+        <div className="text-center py-4">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Wyniki losowania dla {participantName}
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">Odkryj, komu przygotowujesz świąteczny prezent! 🎁</p>
+        </div>
+      )}
 
       {/* Event Card - czytelny design */}
       <GroupInfoCard

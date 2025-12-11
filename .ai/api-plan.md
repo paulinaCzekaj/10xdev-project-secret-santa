@@ -1135,8 +1135,10 @@ Wytyczne:
 #### Get Elf Result
 
 - **Method**: `GET`
-- **Path**: `/api/participants/:participantId/elf-result`
-- **Description**: Get the draw result of the participant the elf is helping (elf must be logged in)
+- **Path**: `/api/groups/:groupId/elf-result`
+- **Query Parameters**:
+  - `helpedParticipantId` (optional): ID of specific participant to get result for. If not provided, returns result for first participant the elf is helping.
+- **Description**: Get the draw result of a specific participant the elf is helping (elf must be logged in)
 - **Headers**: `Authorization: Bearer {access_token}` (required - elf must have account)
 - **Success Response** (200):
 

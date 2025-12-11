@@ -172,7 +172,7 @@ export interface ParticipantListItemDTO {
   has_wishlist: boolean;
   access_token?: string; // Only included for group creator
   result_viewed?: boolean; // Only present when group is drawn
-  elf_for_participant_id: number | null; // Elf assignment (v1.1.0)
+  elf_participant_id: number | null; // Elf assignment (v1.1.0)
   elf_accessed_at: string | null; // When elf accessed result (v1.1.0)
 }
 
@@ -274,6 +274,9 @@ export interface ElfResultResponseDTO {
   helpedParticipant: {
     id: number;
     name: string;
+    wishlist: string;
+    canEditWishlist: boolean;
+    accessToken?: string;
   };
 }
 
@@ -307,8 +310,8 @@ export interface ResultParticipantInfo {
   name: string;
   result_viewed_at?: string; // When the participant viewed their result
   isElfForSomeone?: boolean; // Whether this participant is an elf for another participant (v1.1.0)
-  elfForParticipantName?: string; // Name of the participant this elf is helping (v1.1.0)
-  elfForParticipantId?: number; // ID of the participant this elf is helping (v1.1.0)
+  helpedParticipantNames?: string[]; // Names of participants this elf is helping (v1.1.0)
+  helpedParticipantIds?: number[]; // IDs of participants this elf is helping (v1.1.0)
 }
 
 /**
@@ -539,8 +542,8 @@ export interface ParticipantViewModel extends Omit<ParticipantListItemDTO, "acce
 
   // Elf-related fields (v1.1.0)
   elfParticipantId: number | null; // ID of participant who is elf for this participant
-  elfForParticipantId: number | null; // ID of participant that this participant helps as elf
-  elfForParticipantName: string | null; // Name of participant that this participant helps
+  elfForParticipantIds: number[]; // IDs of participants that this participant helps as elf
+  helpedParticipantNames: string[]; // Names of participants that this participant helps
   isElfForSomeone: boolean; // Whether this participant is an elf for someone
   hasElf: boolean; // Whether this participant has an assigned elf helper
   elfName: string | null; // Name of this participant's elf helper

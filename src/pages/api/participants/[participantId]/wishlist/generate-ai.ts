@@ -78,20 +78,25 @@ export const POST: APIRoute = async ({ params, request, locals, url }) => {
     const queryParams = Object.fromEntries(urlSearchParams.entries());
     const { token: queryToken } = ParticipantTokenQuerySchema.parse(queryParams);
 
-    // Guard 3: Authentication - try Bearer token first, then participant token
-    // FIX #5: Added authentication (was completely missing!)
-    const userIdOrResponse = requireApiAuth({ locals });
-
-    if (typeof userIdOrResponse === "string") {
-      // Bearer token authentication successful
-      authUserId = userIdOrResponse;
-      participantToken = null;
+    // Guard 3: Authentication - participant token in URL takes priority over Bearer token
+    if (queryToken) {
+      // PRIORITY: Use participant token from URL if provided
+      authUserId = null;
+      participantToken = queryToken;
       console.log(
-        "[POST /api/participants/:participantId/wishlist/generate-ai] Bearer token authentication successful"
+        "[POST /api/participants/:participantId/wishlist/generate-ai] Using participant token from URL (priority over Bearer)"
       );
     } else {
-      // Bearer token failed, try participant token
-      if (!queryToken) {
+      // Fallback: Try Bearer token
+      const userIdOrResponse = requireApiAuth({ locals });
+
+      if (typeof userIdOrResponse === "string") {
+        // Bearer token authentication successful
+        authUserId = userIdOrResponse;
+        participantToken = null;
+        console.log("[POST /api/participants/:participantId/wishlist/generate-ai] Using Bearer token authentication");
+      } else {
+        // No authentication provided
         console.log("[POST /api/participants/:participantId/wishlist/generate-ai] No authentication provided");
         const errorResponse: ApiErrorResponse = {
           error: {
@@ -104,13 +109,6 @@ export const POST: APIRoute = async ({ params, request, locals, url }) => {
           headers: { "Content-Type": "application/json" },
         });
       }
-
-      // Use participant token
-      authUserId = null;
-      participantToken = queryToken;
-      console.log(
-        "[POST /api/participants/:participantId/wishlist/generate-ai] Using participant token authentication"
-      );
     }
 
     // Guard 4: Parse request body

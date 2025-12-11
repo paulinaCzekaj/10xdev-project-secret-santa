@@ -473,16 +473,19 @@ CREATE POLICY "creators can delete their groups" ON groups
 **Design Rationale**:
 
 The SELECT policy is permissive (`using (true)`) to support:
+
 1. Anonymous participants with access tokens viewing group details
 2. Performance optimization (no complex RLS joins)
 3. Application-layer access control via token validation
 
 **Security Model**:
+
 - **Database Layer**: Restrictive write operations (INSERT/UPDATE/DELETE)
 - **API Layer**: Token validation and participant membership checks
 - **Application Layer**: Business logic enforcement
 
 **Important**: When implementing API endpoints that query groups:
+
 - Always validate participant tokens before serving data
 - Never rely solely on RLS for access control to groups
 - Implement additional authorization checks in API handlers

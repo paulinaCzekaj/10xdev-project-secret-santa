@@ -14,6 +14,7 @@ interface ExclusionsSectionProps {
   onExclusionAdded: () => void;
   onExclusionDeleted: () => void;
   onDeleteExclusion: (exclusionId: number) => void;
+  onAddExclusion: (blockerId: number, blockedId: number) => Promise<{ success: boolean; error?: string }>;
 }
 
 export function ExclusionsSection({
@@ -25,6 +26,7 @@ export function ExclusionsSection({
   onExclusionAdded,
   onExclusionDeleted,
   onDeleteExclusion,
+  onAddExclusion,
 }: ExclusionsSectionProps) {
   const handleExclusionAdded = () => {
     onExclusionAdded();
@@ -33,6 +35,15 @@ export function ExclusionsSection({
   const handleExclusionDeleted = (exclusionId: number) => {
     onDeleteExclusion(exclusionId);
     onExclusionDeleted();
+  };
+
+  const handleAddReverseExclusion = async (blockerId: number, blockedId: number) => {
+    const result = await onAddExclusion(blockedId, blockerId); // Reverse the direction
+    if (result.success) {
+      onExclusionAdded(); // Refresh the list
+    } else {
+      console.error("Failed to add reverse exclusion:", result.error);
+    }
   };
 
   return (
@@ -69,6 +80,7 @@ export function ExclusionsSection({
               canEdit={canEdit}
               isDrawn={isDrawn}
               onDelete={handleExclusionDeleted}
+              onAddReverseExclusion={handleAddReverseExclusion}
             />
           ) : (
             <div className="text-center py-8">

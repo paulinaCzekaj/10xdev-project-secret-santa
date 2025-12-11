@@ -31,9 +31,11 @@ const userEmail = user?.email;
       rel="stylesheet"
     />
   </head>
-  <body class="font-['Poppins',sans-serif] antialiased">
+  <body class="font-['Poppins',sans-serif] antialiased pt-16">
     <Navbar client:load isLoggedIn={isLoggedIn} userEmail={userEmail} />
-    <slot />
+    <main class="min-h-[calc(100vh-4rem)]">
+      <slot />
+    </main>
     <Toaster client:load />
   </body>
 </html>

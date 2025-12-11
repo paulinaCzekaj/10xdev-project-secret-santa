@@ -36,9 +36,9 @@ interface AddParticipantFormProps {
 export function AddParticipantForm({ groupId, participants, isDrawn, onSuccess }: AddParticipantFormProps) {
   const { addParticipant } = useParticipants(groupId);
 
-  // Filter participants who are not already helping someone
-  // These participants can become elves for the new participant
-  const availableAsElf = participants?.filter((p) => !p.isElfForSomeone) || [];
+  // All participants can be chosen as elves for the new participant
+  // One elf can help multiple people, so existing elves can be selected again
+  const availableAsElf = participants || [];
 
   const form = useForm<AddParticipantFormViewModel>({
     resolver: zodResolver(addParticipantFormSchema),

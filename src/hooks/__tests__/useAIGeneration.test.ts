@@ -44,7 +44,7 @@ describe("useAIGeneration", () => {
     it("should handle successful generation", async () => {
       const mockResponse = {
         generated_content: "Test letter content",
-        remaining_generations: 3,
+        remaining_generations: 6,
         can_generate_more: true,
       };
 
@@ -150,13 +150,13 @@ describe("useAIGeneration", () => {
     it("should regenerate with existing prompt", async () => {
       const mockResponse1 = {
         generated_content: "First letter",
-        remaining_generations: 4,
+        remaining_generations: 6,
         can_generate_more: true,
       };
 
       const mockResponse2 = {
         generated_content: "Second letter",
-        remaining_generations: 3,
+        remaining_generations: 5,
         can_generate_more: true,
       };
 

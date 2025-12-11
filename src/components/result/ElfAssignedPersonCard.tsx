@@ -1,10 +1,12 @@
 import { memo } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Gift } from "lucide-react";
 
 interface ElfAssignedPersonCardProps {
   name: string;
   wishlistHtml: string;
+  onHide?: () => void;
 }
 
 /**
@@ -12,7 +14,7 @@ interface ElfAssignedPersonCardProps {
  * Shows avatar with initials, name, and their wishlist
  * Used in the elf result view to show what the helped participant can see
  */
-function ElfAssignedPersonCard({ name, wishlistHtml }: ElfAssignedPersonCardProps) {
+function ElfAssignedPersonCard({ name, wishlistHtml, onHide }: ElfAssignedPersonCardProps) {
   // Generate initials from name
   const initials = name
     .split(" ")
@@ -36,11 +38,24 @@ function ElfAssignedPersonCard({ name, wishlistHtml }: ElfAssignedPersonCardProp
             <AvatarFallback className="text-3xl font-bold bg-red-500 text-white">{initials}</AvatarFallback>
           </Avatar>
           {/* Gift icon badge */}
-          <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-green-200 z-20">
-            <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-              <Gift className="w-4 h-4 text-white" />
-            </div>
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onHide}
+                  className="absolute -bottom-1 -right-1 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-green-200 z-20 hover:bg-gray-50 transition-colors cursor-pointer"
+                  aria-label="Ukryj widok elfa"
+                >
+                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center hover:bg-green-700 transition-colors">
+                    <Gift className="w-4 h-4 text-white" />
+                  </div>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Kliknij, aby ponownie ukryć tajemnicę</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         {/* Name with elegant typography */}

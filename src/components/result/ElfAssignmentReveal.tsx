@@ -1,65 +1,63 @@
-import { useCallback, lazy, Suspense } from "react";
+import { useCallback, lazy, Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
-import AssignedPersonCard from "./AssignedPersonCard";
+import ElfAssignedPersonCard from "./ElfAssignedPersonCard";
 import { GiftBox } from "./GiftBox";
 import { useRevealAnimation } from "@/hooks/useRevealAnimation";
-import { useRevealTracking } from "@/hooks/useRevealTracking";
 import { useConfetti } from "@/hooks/useConfetti";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { FallbackConfetti } from "@/components/FallbackConfetti";
 
-// Lazy load Confetti component for better performance
-const Confetti = lazy(() => import("react-confetti"));
+// Lazy load Confetti component for better performance with error handling
+const Confetti = lazy(() =>
+  import("react-confetti").catch((error) => {
+    console.warn("Failed to load react-confetti, will use fallback:", error);
+    // Return a fallback component that renders nothing
+    return { default: () => null };
+  })
+);
 
 /**
- * Interaktywny komponent odkrywania wyniku losowania
- * Zawiera animowany prezent, przycisk odkrycia, konfetti i kartę wyniku
+ * Interaktywny komponent odkrywania przypisania dla elfa
+ * Pozwala elfowi zobaczyć, komu pomaga kupić prezent
  */
-interface ResultRevealProps {
-  assignedPerson: {
-    id: number;
-    name: string;
-    initials: string;
-  };
-  participantName: string;
-  participantId: number;
-  groupId: number;
+interface ElfAssignmentRevealProps {
+  receiverName: string;
+  receiverWishlistHtml: string;
+  helpedParticipantName: string;
   isRevealed: boolean;
   onReveal: () => void;
   onHide?: () => void;
-  accessToken?: string; // For token-based access
 }
 
-export default function ResultReveal({
-  assignedPerson,
-  participantName,
-  participantId,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  groupId,
+export interface ElfAssignmentRevealRef {
+  resetReveal: () => void;
+}
+
+export default function ElfAssignmentReveal({
+  receiverName,
+  receiverWishlistHtml,
+  helpedParticipantName,
   isRevealed,
   onReveal,
   onHide,
-  accessToken,
-}: ResultRevealProps) {
+}: ElfAssignmentRevealProps) {
   // Sprawdzamy czy użytkownik prefers-reduced-motion
   const prefersReducedMotion =
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // Custom hooks dla separacji odpowiedzialności
-  const { trackReveal } = useRevealTracking({ participantId, accessToken });
-  const { showConfetti, triggerConfetti, windowSize, confettiConfig } = useConfetti();
+  const { showConfetti, triggerConfetti, confettiConfig } = useConfetti();
+  const [confettiError, setConfettiError] = useState(false);
 
   const handleRevealComplete = useCallback(() => {
-    // Najpierw aktualizujemy stan UI
+    // Aktualizujemy stan UI
     onReveal();
-
-    // Następnie wywołujemy API do zapisania w bazie danych (non-blocking)
-    trackReveal();
 
     // Uruchamiamy konfetti jeśli użytkownik nie prefers-reduced-motion
     if (!prefersReducedMotion) {
       triggerConfetti();
     }
-  }, [onReveal, trackReveal, triggerConfetti, prefersReducedMotion]);
+  }, [onReveal, triggerConfetti, prefersReducedMotion]);
 
   const { isAnimating, startAnimation } = useRevealAnimation({
     isRevealed,
@@ -68,21 +66,43 @@ export default function ResultReveal({
   });
 
   const handleReveal = useCallback(() => {
-    startAnimation();
-  }, [startAnimation]);
+    if (!isAnimating && !isRevealed) {
+      startAnimation();
+    }
+  }, [startAnimation, isAnimating, isRevealed]);
 
-  // Render konfetti jeśli aktywne
+  // Render konfetti jeśli aktywne z obsługą błędów i fallback
   const ConfettiComponent = showConfetti ? (
-    <Suspense fallback={null}>
-      <Confetti
-        width={windowSize.width}
-        height={windowSize.height}
-        recycle={false}
-        numberOfPieces={confettiConfig.numberOfPieces}
-        gravity={confettiConfig.gravity}
-        colors={confettiConfig.colors}
-      />
-    </Suspense>
+    confettiError ? (
+      <FallbackConfetti />
+    ) : (
+      <ErrorBoundary
+        fallback={<FallbackConfetti />}
+        onError={(error) => {
+          console.warn("Confetti component failed to load, using fallback:", error);
+          setConfettiError(true);
+        }}
+      >
+        <div
+          className="fixed top-0 left-0 pointer-events-none z-50"
+          style={{
+            width: typeof window !== "undefined" ? window.innerWidth : 1920,
+            height: typeof window !== "undefined" ? window.innerHeight : 1080,
+            right: 0,
+            bottom: 0,
+          }}
+        >
+          <Suspense fallback={null}>
+            <Confetti
+              recycle={false}
+              numberOfPieces={confettiConfig.numberOfPieces}
+              gravity={confettiConfig.gravity}
+              colors={confettiConfig.colors}
+            />
+          </Suspense>
+        </div>
+      </ErrorBoundary>
+    )
   ) : null;
 
   // Jeśli wynik już odkryty, pokazujemy kartę od razu
@@ -93,14 +113,15 @@ export default function ResultReveal({
 
         <div className="text-center py-8 px-6">
           <div className="mb-4">
-            <span className="text-4xl">🎄</span>
+            <span className="text-4xl">🎁</span>
           </div>
-          <h2 className="text-2xl font-bold text-red-500 dark:text-red-400 mb-6">
-            🎅 {participantName}, Twój los padł na... 🎅
+          <h2 className="text-2xl font-bold text-red-500 dark:text-red-400 mb-2">
+            🎅 {helpedParticipantName} przygotowuje prezent dla... 🎅
           </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Możesz pomóc w wyborze prezentu!</p>
 
           {/* Karta wylosowanej osoby */}
-          <AssignedPersonCard person={assignedPerson} onHide={onHide} />
+          <ElfAssignedPersonCard name={receiverName} wishlistHtml={receiverWishlistHtml} onHide={onHide} />
         </div>
       </div>
     );
@@ -113,9 +134,9 @@ export default function ResultReveal({
 
       <div className="text-center py-12 px-6">
         <div className="mb-6">
-          <h2 className="text-3xl font-bold text-red-500 dark:text-red-400 mb-2">🎄 Odkryj wynik losowania! 🎄</h2>
+          <h2 className="text-3xl font-bold text-red-500 dark:text-red-400 mb-2">🎁 Odkryj przypisanie! 🎁</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            🎅 Kliknij w świąteczny prezent, aby zobaczyć, komu kupujesz prezent! 🎅
+            🎅 Kliknij w prezent, aby zobaczyć, komu {helpedParticipantName} kupuje prezent! 🎅
           </p>
         </div>
 
@@ -137,7 +158,9 @@ export default function ResultReveal({
               </Button>
 
               {/* Tekst pod przyciskiem */}
-              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Zobacz, kogo wylosowałeś 🎁</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                Zobacz przypisanie {helpedParticipantName} 🎁
+              </p>
             </div>
           )}
 

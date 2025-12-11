@@ -151,7 +151,7 @@ export class ParticipantService {
         name: command.name,
         email: command.email || null,
         access_token: accessToken, // Store token in database
-        elf_for_participant_id: null, // Will be set on the elf participant if elfParticipantId is provided
+        elf_participant_id: null, // Will be set on the helped participant if elfParticipantId is provided
       };
 
       const { data: participant, error: insertError } = await this.supabase
@@ -172,7 +172,7 @@ export class ParticipantService {
       });
 
       // Step 8: Assign elf helper if specified
-      // If elfParticipantId is provided, update that participant to be an elf for the newly created participant
+      // If elfParticipantId is provided, set the new participant's elf to be that participant
       if (command.elfParticipantId) {
         try {
           console.log("[ParticipantService.addParticipantToGroup] Assigning elf helper", {
@@ -180,12 +180,12 @@ export class ParticipantService {
             elfParticipantId: command.elfParticipantId,
           });
 
-          // Update the elf participant to help the new participant
+          // Update the new participant to have the specified participant as their elf
           const { error: elfUpdateError } = await this.supabase
             .from("participants")
-            .update({ elf_for_participant_id: participant.id })
-            .eq("id", command.elfParticipantId)
-            .eq("group_id", groupId); // Security: ensure elf is in the same group
+            .update({ elf_participant_id: command.elfParticipantId })
+            .eq("id", participant.id)
+            .eq("group_id", groupId);
 
           if (elfUpdateError) {
             console.error("[ParticipantService.addParticipantToGroup] Failed to assign elf:", elfUpdateError);
@@ -194,49 +194,18 @@ export class ParticipantService {
             console.log("[ParticipantService.addParticipantToGroup] Elf helper assigned successfully");
           }
 
-          // Step 9: Auto-create exclusion for elf relationship (Podopieczny cannot draw their Elf)
-          console.log("[ParticipantService.addParticipantToGroup] Creating automatic exclusion for elf relationship", {
-            podopiecznyId: participant.id,
-            elfId: command.elfParticipantId,
-          });
-
-          // Check if exclusion already exists
-          const { data: existingExclusion } = await this.supabase
-            .from("exclusion_rules")
-            .select("id")
-            .eq("group_id", groupId)
-            .eq("blocker_participant_id", participant.id)
-            .eq("blocked_participant_id", command.elfParticipantId)
-            .maybeSingle();
-
-          if (!existingExclusion) {
-            const { error: exclusionError } = await this.supabase.from("exclusion_rules").insert({
-              group_id: groupId,
-              blocker_participant_id: participant.id, // New participant (podopieczny) cannot draw their elf
-              blocked_participant_id: command.elfParticipantId,
-            });
-
-            if (exclusionError) {
-              console.error(
-                "[ParticipantService.addParticipantToGroup] Failed to create automatic exclusion:",
-                exclusionError
-              );
-              // Don't throw here - the participant was created successfully, exclusion is just a bonus
-            } else {
-              console.log("[ParticipantService.addParticipantToGroup] Automatic exclusion created successfully", {
-                podopiecznyId: participant.id,
-                elfId: command.elfParticipantId,
-              });
-            }
-          } else {
-            console.log("[ParticipantService.addParticipantToGroup] Automatic exclusion already exists", {
+          // Since elves can help multiple people now, we no longer create automatic exclusions
+          // between elves and the people they help. The relationship is now informational only.
+          console.log(
+            "[ParticipantService.addParticipantToGroup] Skipping automatic exclusion creation - elves can help multiple people",
+            {
               podopiecznyId: participant.id,
               elfId: command.elfParticipantId,
-            });
-          }
+            }
+          );
         } catch (error) {
-          console.error("[ParticipantService.addParticipantToGroup] Error creating automatic exclusion:", error);
-          // Don't throw - participant creation succeeded
+          console.error("[ParticipantService.addParticipantToGroup] Error assigning elf helper:", error);
+          // Non-critical error - participant was created successfully
         }
       }
 
@@ -540,7 +509,7 @@ export class ParticipantService {
       // Step 1: Get current participant data before update (needed for elf exclusion logic)
       const { data: currentParticipant, error: fetchError } = await this.supabase
         .from("participants")
-        .select("id, group_id, elf_for_participant_id")
+        .select("id, group_id, elf_participant_id")
         .eq("id", id)
         .single();
 
@@ -568,93 +537,16 @@ export class ParticipantService {
       });
 
       // Step 3: Handle automatic exclusion rules for elf relationships
-      const oldElfForParticipantId = currentParticipant.elf_for_participant_id;
-      const newElfForParticipantId =
-        data.elf_for_participant_id !== undefined ? data.elf_for_participant_id : oldElfForParticipantId;
+      const oldElfParticipantId = currentParticipant.elf_participant_id;
+      const newElfParticipantId = data.elf_participant_id !== undefined ? data.elf_participant_id : oldElfParticipantId;
 
       // Check if elf relationship changed
-      if (oldElfForParticipantId !== newElfForParticipantId) {
+      if (oldElfParticipantId !== newElfParticipantId) {
         console.log("[ParticipantService.updateParticipant] Elf relationship changed", {
           participantId: id,
-          oldElfForParticipantId,
-          newElfForParticipantId,
+          oldElfParticipantId,
+          newElfParticipantId,
         });
-
-        try {
-          // Remove old exclusion if it existed
-          if (oldElfForParticipantId) {
-            console.log("[ParticipantService.updateParticipant] Removing old elf exclusion", {
-              elfParticipantId: id,
-              oldHelpedParticipantId: oldElfForParticipantId,
-            });
-
-            // Check if exclusion exists before trying to delete
-            const { data: existingExclusion } = await this.supabase
-              .from("exclusion_rules")
-              .select("id")
-              .eq("group_id", currentParticipant.group_id)
-              .eq("blocker_participant_id", oldElfForParticipantId)
-              .eq("blocked_participant_id", id)
-              .maybeSingle();
-
-            if (existingExclusion) {
-              const { error: deleteError } = await this.supabase
-                .from("exclusion_rules")
-                .delete()
-                .eq("id", existingExclusion.id);
-
-              if (deleteError) {
-                console.error("[ParticipantService.updateParticipant] Failed to remove old exclusion:", deleteError);
-              } else {
-                console.log("[ParticipantService.updateParticipant] Old exclusion removed successfully");
-              }
-            } else {
-              console.log("[ParticipantService.updateParticipant] Old exclusion not found - nothing to remove");
-            }
-          }
-
-          // Create new exclusion if elf relationship exists
-          if (newElfForParticipantId) {
-            console.log("[ParticipantService.updateParticipant] Creating new elf exclusion", {
-              elfParticipantId: id,
-              newHelpedParticipantId: newElfForParticipantId,
-            });
-
-            // Check if exclusion already exists before trying to create
-            const { data: existingNewExclusion } = await this.supabase
-              .from("exclusion_rules")
-              .select("id")
-              .eq("group_id", currentParticipant.group_id)
-              .eq("blocker_participant_id", newElfForParticipantId)
-              .eq("blocked_participant_id", id)
-              .maybeSingle();
-
-            if (!existingNewExclusion) {
-              const { error: insertError } = await this.supabase.from("exclusion_rules").insert({
-                group_id: currentParticipant.group_id,
-                blocker_participant_id: newElfForParticipantId, // Person being helped cannot draw their elf
-                blocked_participant_id: id,
-              });
-
-              if (insertError) {
-                console.error("[ParticipantService.updateParticipant] Failed to create new exclusion:", insertError);
-              } else {
-                console.log("[ParticipantService.updateParticipant] New exclusion created successfully", {
-                  elfParticipantId: id,
-                  helpedParticipantId: newElfForParticipantId,
-                });
-              }
-            } else {
-              console.log("[ParticipantService.updateParticipant] New exclusion already exists - skipping creation", {
-                elfParticipantId: id,
-                helpedParticipantId: newElfForParticipantId,
-              });
-            }
-          }
-        } catch (exclusionError) {
-          console.error("[ParticipantService.updateParticipant] Error handling elf exclusions:", exclusionError);
-          // Don't throw - participant update succeeded, exclusion handling is secondary
-        }
       }
 
       return updatedParticipant;
@@ -669,7 +561,7 @@ export class ParticipantService {
    *
    * This method handles the logic where:
    * - We select which participant will be the elf helper FOR the edited participant
-   * - We update that elf participant's elf_for_participant_id to point to the edited participant
+   * - We update the edited participant's elf_participant_id to point to their elf
    * - We manage the automatic exclusion rule (podopieczny cannot draw their elf)
    *
    * @param participantId - The ID of the participant being edited (podopieczny)
@@ -680,7 +572,7 @@ export class ParticipantService {
    *
    * @example
    * await service.updateParticipantElfRelationship(5, 3, 1);
-   * // Participant 3 is now the elf helper for participant 5
+   * // Participant 5 now has participant 3 as their elf helper
    */
   async updateParticipantElfRelationship(
     participantId: number,
@@ -695,14 +587,14 @@ export class ParticipantService {
 
     try {
       // Step 1: Find current elf helper (if any)
-      const { data: currentElf } = await this.supabase
+      const { data: currentParticipant } = await this.supabase
         .from("participants")
-        .select("id")
+        .select("elf_participant_id")
+        .eq("id", participantId)
         .eq("group_id", groupId)
-        .eq("elf_for_participant_id", participantId)
-        .maybeSingle();
+        .single();
 
-      const currentElfId = currentElf?.id || null;
+      const currentElfId = currentParticipant?.elf_participant_id || null;
 
       console.log("[ParticipantService.updateParticipantElfRelationship] Current elf found", {
         currentElfId,
@@ -711,13 +603,14 @@ export class ParticipantService {
       // Step 2: If there's a current elf and it's different from the new one, remove the relationship
       if (currentElfId && currentElfId !== elfParticipantId) {
         console.log("[ParticipantService.updateParticipantElfRelationship] Removing old elf relationship", {
+          participantId,
           oldElfId: currentElfId,
         });
 
         const { error: removeError } = await this.supabase
           .from("participants")
-          .update({ elf_for_participant_id: null })
-          .eq("id", currentElfId)
+          .update({ elf_participant_id: null })
+          .eq("id", participantId)
           .eq("group_id", groupId);
 
         if (removeError) {
@@ -745,13 +638,14 @@ export class ParticipantService {
       // Step 3: If new elf is provided, create the relationship
       if (elfParticipantId) {
         console.log("[ParticipantService.updateParticipantElfRelationship] Creating new elf relationship", {
+          participantId,
           newElfId: elfParticipantId,
         });
 
         const { error: updateError } = await this.supabase
           .from("participants")
-          .update({ elf_for_participant_id: participantId })
-          .eq("id", elfParticipantId)
+          .update({ elf_participant_id: elfParticipantId })
+          .eq("id", participantId)
           .eq("group_id", groupId);
 
         if (updateError) {
@@ -921,7 +815,7 @@ export class ParticipantService {
           created_at,
           access_token,
           result_viewed_at,
-          elf_for_participant_id,
+          elf_participant_id,
           elf_accessed_at
         `
         )
@@ -979,7 +873,7 @@ export class ParticipantService {
           result_viewed_at: participant.result_viewed_at,
           has_wishlist: hasWishlist,
           result_viewed: participant.result_viewed_at !== null,
-          elf_for_participant_id: participant.elf_for_participant_id,
+          elf_participant_id: participant.elf_participant_id,
           elf_accessed_at: participant.elf_accessed_at,
         };
 

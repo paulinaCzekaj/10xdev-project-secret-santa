@@ -17,7 +17,7 @@ describe("Final Test - True Randomness Verification", () => {
         result_viewed_at: null,
         user_id: null,
         elf_accessed_at: null,
-        elf_for_participant_id: null,
+        elf_participant_id: null,
       },
       {
         id: 2,
@@ -29,7 +29,7 @@ describe("Final Test - True Randomness Verification", () => {
         result_viewed_at: null,
         user_id: null,
         elf_accessed_at: null,
-        elf_for_participant_id: null,
+        elf_participant_id: null,
       },
       {
         id: 3,
@@ -41,7 +41,7 @@ describe("Final Test - True Randomness Verification", () => {
         result_viewed_at: null,
         user_id: null,
         elf_accessed_at: null,
-        elf_for_participant_id: null,
+        elf_participant_id: null,
       },
       {
         id: 4,
@@ -53,7 +53,7 @@ describe("Final Test - True Randomness Verification", () => {
         result_viewed_at: null,
         user_id: null,
         elf_accessed_at: null,
-        elf_for_participant_id: null,
+        elf_participant_id: null,
       },
       {
         id: 5,
@@ -65,7 +65,7 @@ describe("Final Test - True Randomness Verification", () => {
         result_viewed_at: null,
         user_id: null,
         elf_accessed_at: null,
-        elf_for_participant_id: null,
+        elf_participant_id: null,
       },
       {
         id: 6,
@@ -77,7 +77,7 @@ describe("Final Test - True Randomness Verification", () => {
         result_viewed_at: null,
         user_id: null,
         elf_accessed_at: null,
-        elf_for_participant_id: null,
+        elf_participant_id: null,
       },
     ];
 

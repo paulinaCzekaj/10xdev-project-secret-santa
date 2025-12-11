@@ -104,19 +104,6 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
           headers: { "Content-Type": "application/json" },
         });
       }
-
-      if (error.message === "CANNOT_DELETE_ELF_EXCLUSION") {
-        const errorResponse: ApiErrorResponse = {
-          error: {
-            code: "CANNOT_DELETE_ELF_EXCLUSION",
-            message: "Cannot delete automatic exclusion created for elf relationship. Remove the elf role first.",
-          },
-        };
-        return new Response(JSON.stringify(errorResponse), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
     }
 
     // Handle validation errors (from Zod)
