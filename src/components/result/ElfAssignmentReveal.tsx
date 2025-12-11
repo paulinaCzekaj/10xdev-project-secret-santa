@@ -13,7 +13,8 @@ const Confetti = lazy(() =>
   import("react-confetti").catch((error) => {
     console.warn("Failed to load react-confetti, will use fallback:", error);
     // Return a fallback component that renders nothing
-    return { default: () => null };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return { default: () => null } as any;
   })
 );
 

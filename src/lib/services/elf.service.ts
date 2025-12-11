@@ -409,7 +409,7 @@ export class ElfService {
   private async validateElfParticipantByToken(token: string): Promise<ValidatedElfParticipant> {
     const { data: participant, error } = await this.supabase
       .from("participants")
-      .select("id, group_id, access_token")
+      .select("id, group_id, access_token, user_id")
       .eq("access_token", token)
       .single();
 
