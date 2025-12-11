@@ -43,6 +43,11 @@ export const GET: APIRoute = async ({ params, request, locals }) => {
     // Guard 1: Validate groupId parameter
     const { groupId } = GroupIdParamSchema.parse({ groupId: params.groupId });
 
+    // Parse query parameters
+    const url = new URL(request.url);
+    const helpedParticipantIdParam = url.searchParams.get("helpedParticipantId");
+    const helpedParticipantId = helpedParticipantIdParam ? parseInt(helpedParticipantIdParam) : null;
+
     // Guard 2: Authentication - require Bearer token
     const userIdOrResponse = requireApiAuth({ locals });
     if (typeof userIdOrResponse === "object") {
@@ -60,14 +65,103 @@ export const GET: APIRoute = async ({ params, request, locals }) => {
     // Get Supabase client and create service
     const supabase = locals.supabase;
 
-    // Step 1: Find the participant for the current user in this group who is an elf
+    // Step 1: Find the participant for the current user in this group
     const { data: participant, error: participantError } = await supabase
       .from("participants")
-      .select("id, elf_for_participant_id")
+      .select("id")
       .eq("group_id", groupId)
       .eq("user_id", userId)
-      .not("elf_for_participant_id", "is", null)
       .single();
+
+    if (participantError || !participant) {
+      console.log("[GET /api/groups/:groupId/elf-result] User has no participant in this group", {
+        groupId,
+        userId: userId.substring(0, 8) + "...",
+        error: participantError?.message,
+      });
+
+      const forbiddenResponse: ApiErrorResponse = {
+        error: {
+          code: "FORBIDDEN",
+          message: "You are not a participant in this group",
+        },
+      };
+      return new Response(JSON.stringify(forbiddenResponse), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Step 2: Find all participants this user helps as an elf
+    const { data: allHelpedParticipants, error: elfCheckError } = await supabase
+      .from("participants")
+      .select("id")
+      .eq("elf_participant_id", participant.id)
+      .eq("group_id", groupId);
+
+    if (elfCheckError) {
+      console.error("[GET /api/groups/:groupId/elf-result] Error checking elf relationships:", elfCheckError);
+      const errorResponse: ApiErrorResponse = {
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "Failed to check elf relationships",
+        },
+      };
+      return new Response(JSON.stringify(errorResponse), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (!allHelpedParticipants || allHelpedParticipants.length === 0) {
+      console.log("[GET /api/groups/:groupId/elf-result] User is not an elf in this group", {
+        groupId,
+        userId: userId.substring(0, 8) + "...",
+        participantId: participant.id,
+      });
+
+      const forbiddenResponse: ApiErrorResponse = {
+        error: {
+          code: "FORBIDDEN",
+          message: "You are not an elf in this group",
+        },
+      };
+      return new Response(JSON.stringify(forbiddenResponse), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Step 3: Determine which participant to show result for
+    let targetHelpedParticipantId: number;
+
+    if (helpedParticipantId) {
+      // Check if the requested participant is actually helped by this elf
+      const isValidTarget = allHelpedParticipants.some((p) => p.id === helpedParticipantId);
+      if (!isValidTarget) {
+        console.log("[GET /api/groups/:groupId/elf-result] Requested participant is not helped by this elf", {
+          groupId,
+          userId: userId.substring(0, 8) + "...",
+          requestedHelpedParticipantId: helpedParticipantId,
+          validHelpedParticipantIds: allHelpedParticipants.map((p) => p.id),
+        });
+
+        const forbiddenResponse: ApiErrorResponse = {
+          error: {
+            code: "FORBIDDEN",
+            message: "You cannot view results for this participant",
+          },
+        };
+        return new Response(JSON.stringify(forbiddenResponse), {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      targetHelpedParticipantId = helpedParticipantId;
+    } else {
+      // No specific participant requested - use the first one
+      targetHelpedParticipantId = allHelpedParticipants[0].id;
+    }
 
     if (participantError || !participant) {
       console.log("[GET /api/groups/:groupId/elf-result] User is not an elf in this group", {
@@ -88,11 +182,12 @@ export const GET: APIRoute = async ({ params, request, locals }) => {
       });
     }
 
-    // Step 2: Use ElfService to get the elf result
+    // Step 4: Use ElfService to get the elf result for the target participant
     const elfService = new ElfService(supabase);
     const result: ElfResultResponseDTO = await elfService.getElfResult({
       participantId: participant.id,
       userId,
+      helpedParticipantId: targetHelpedParticipantId,
     });
 
     return new Response(JSON.stringify(result), {

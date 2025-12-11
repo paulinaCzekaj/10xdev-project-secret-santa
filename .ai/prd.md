@@ -80,16 +80,16 @@ Aplikacja "Secret Santa" adresuje te problemy, oferując scentralizowaną, zauto
 
 - Twórca grupy może przypisać uczestnikowi rolę "Elfa" (pomocnika) dla innego uczestnika.
 - Przypisanie odbywa się ręcznie podczas dodawania lub edycji uczestnika w widoku grupy.
-- Jeden uczestnik może mieć maksymalnie jednego elfa (relacja 1:1).
-- Jeden elf może pomagać maksymalnie jednej osobie (relacja 1:1).
+- Jeden uczestnik może mieć maksymalnie jednego elfa (relacja 1:many od elfa do pomaganych osób).
+- Jeden elf może pomagać wielu osobom (relacja 1:many od elfa do pomaganych osób).
 - Przypisanie elfa jest możliwe tylko przed losowaniem.
 - Po uruchomieniu losowania role elfów stają się niemutowalne.
-- System automatycznie tworzy jednokierunkowe wykluczenie: osoba, która ma przypisanego elfa, nie może go wylosować.
-- Elf może wylosować osobę, której pomaga (wykluczenie działa tylko w jedną stronę).
-- Elf zalogowany widzi na stronie swojego wyniku przycisk "Zobacz wynik [Imię] 🧝".
+- System automatycznie tworzy jednokierunkowe wykluczenia: każda osoba, która ma przypisanego elfa, nie może wylosować swojego elfa.
+- Elf może wylosować osobę, której pomaga (wykluczenia działają tylko w jedną stronę).
+- Elf zalogowany widzi na stronie swojego wyniku przyciski "Zobacz wynik [Imię] 🧝" dla każdej osoby, której pomaga.
 - Po kliknięciu przycisku elf jest przekierowywany na dedykowaną stronę `/groups/[groupId]/elf-result`.
 - Na tej stronie elf widzi pełny wynik losowania osoby, której pomaga: imię wylosowanej osoby, jej listę życzeń, budżet grupy.
-- Elf z kontem może edytować listę życzeń osoby, której pomaga (do upłynięcia daty zakończenia wydarzenia).
+- Elf z kontem może edytować listy życzeń osób, którym pomaga (do upłynięcia daty zakończenia wydarzenia).
 - Osoba, która ma przypisanego elfa, widzi na stronie swojego wyniku informację "Twój pomocnik: [Imię] 🧝".
 - System oddzielnie trackuje moment otwarcia wyniku przez elfa w kolumnie `elf_accessed_at`.
 - W widoku grupy elf jest oznaczony badge "🧝 Elf dla: [Imię]".

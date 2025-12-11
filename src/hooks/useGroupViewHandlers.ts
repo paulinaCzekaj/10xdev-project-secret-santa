@@ -8,6 +8,10 @@ interface UseGroupViewHandlersParams {
   refetchGroup: () => void;
   refetchParticipants: () => void;
   refetchExclusions: () => void;
+  addExclusion: (command: {
+    blocker_participant_id: number;
+    blocked_participant_id: number;
+  }) => Promise<{ success: boolean; error?: string; data?: import("@/types").ExclusionRuleListItemDTO }>;
   deleteParticipant: (id: number) => Promise<{ success: boolean; error?: string }>;
   deleteExclusion: (id: number) => Promise<{ success: boolean; error?: string }>;
   setOptimisticParticipants?: (id: number) => void;
@@ -20,6 +24,7 @@ export const useGroupViewHandlers = ({
   refetchGroup,
   refetchParticipants,
   refetchExclusions,
+  addExclusion,
   deleteParticipant,
   deleteExclusion,
   setOptimisticParticipants,
@@ -115,6 +120,14 @@ export const useGroupViewHandlers = ({
   }, []);
 
   // Handling events related to exclusions
+  const handleAddExclusion = useCallback(
+    async (blockerId: number, blockedId: number) => {
+      console.log("[handleAddExclusion] Adding exclusion", { blockerId, blockedId });
+      return await addExclusion({ blocker_participant_id: blockerId, blocked_participant_id: blockedId });
+    },
+    [addExclusion]
+  );
+
   const handleExclusionAdded = useCallback(() => {
     refetchExclusions();
   }, [refetchExclusions]);
@@ -167,6 +180,7 @@ export const useGroupViewHandlers = ({
     handleDeleteParticipant,
     handleConfirmDeleteParticipant,
     handleCopyParticipantToken,
+    handleAddExclusion,
     handleExclusionAdded,
     handleExclusionDeleted,
     handleDeleteExclusion,

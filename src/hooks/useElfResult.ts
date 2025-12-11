@@ -29,7 +29,12 @@ function mapErrorToApiError(err: Error): { code: string; message: string } {
  * Used by elves to view the result of the participant they are helping
  * Supports both authenticated (groupId) and unauthenticated (token) access
  */
-export function useElfResult(groupId?: number, token?: string, isAuthenticated?: boolean) {
+export function useElfResult(
+  groupId?: number,
+  token?: string,
+  isAuthenticated?: boolean,
+  helpedParticipantId?: number
+) {
   const [data, setData] = useState<ElfResultResponseDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
@@ -60,6 +65,9 @@ export function useElfResult(groupId?: number, token?: string, isAuthenticated?:
 
         // Use the new endpoint that automatically finds the user's elf participant
         url = `/api/groups/${groupId}/elf-result`;
+        if (helpedParticipantId) {
+          url += `?helpedParticipantId=${helpedParticipantId}`;
+        }
       } else if (token) {
         // For unauthenticated users - use token-based endpoint
         url = `/api/elf-results/${token}`;
@@ -93,7 +101,7 @@ export function useElfResult(groupId?: number, token?: string, isAuthenticated?:
     } finally {
       setIsLoading(false);
     }
-  }, [groupId, token, isAuthenticated]);
+  }, [groupId, token, isAuthenticated, helpedParticipantId]);
 
   /**
    * Function to manually refresh the data

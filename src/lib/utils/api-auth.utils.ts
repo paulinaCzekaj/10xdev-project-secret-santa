@@ -7,8 +7,8 @@ import type { ApiErrorResponse } from "@/types";
 type AuthContext = Pick<APIContext, "locals">;
 
 /**
- * Weryfikuje sesję użytkownika w endpoincie API
- * Zwraca user_id lub odpowiedź 401
+ * Validates user session in API endpoint
+ * Returns user_id or 401 response
  */
 export function requireApiAuth(context: AuthContext): string | Response {
   const { user } = context.locals;
@@ -30,8 +30,8 @@ export function requireApiAuth(context: AuthContext): string | Response {
 }
 
 /**
- * Sprawdza czy użytkownik jest twórcą grupy
- * Zwraca true lub odpowiedź 403
+ * Checks if user is the owner of the group
+ * Returns true or 403 response
  */
 export async function requireGroupOwner(context: AuthContext, groupId: number): Promise<true | Response> {
   const userIdOrResponse = requireApiAuth(context);
@@ -75,8 +75,8 @@ export async function requireGroupOwner(context: AuthContext, groupId: number): 
 }
 
 /**
- * Sprawdza czy użytkownik ma dostęp do grupy (jako twórca lub uczestnik)
- * Sprawdza uczestnictwo zarówno po user_id jak i po email (dla użytkowników dodanych przed założeniem konta)
+ * Checks if user has access to the group (as owner or participant)
+ * Checks participation both by user_id and email (for users added before account creation)
  */
 export async function requireGroupAccess(context: AuthContext, groupId: number): Promise<true | Response> {
   const userIdOrResponse = requireApiAuth(context);
@@ -89,14 +89,14 @@ export async function requireGroupAccess(context: AuthContext, groupId: number):
   const { supabase, user } = context.locals;
   const userEmail = user?.email || "";
 
-  // Sprawdź czy użytkownik jest twórcą
+  // Check if user is the owner
   const { data: group } = await supabase.from("groups").select("creator_id").eq("id", groupId).single();
 
   if (group?.creator_id === userId) {
     return true;
   }
 
-  // Sprawdź czy użytkownik jest uczestnikiem (po user_id LUB email)
+  // Check if user is a participant (by user_id or email)
   const { data: participant } = await supabase
     .from("participants")
     .select("id")
@@ -108,7 +108,7 @@ export async function requireGroupAccess(context: AuthContext, groupId: number):
     return true;
   }
 
-  // Brak dostępu
+  // No access
   const errorResponse: ApiErrorResponse = {
     error: {
       code: "FORBIDDEN",

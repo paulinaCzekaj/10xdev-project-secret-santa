@@ -8,6 +8,7 @@ import { linkifyUrls } from "../utils/linkify";
 interface GetElfResultCommand {
   participantId: number;
   userId: string; // UUID z Supabase Auth
+  helpedParticipantId?: number; // Optional: specific participant to get result for
 }
 
 /**
@@ -26,12 +27,12 @@ interface GetElfResultByTokenCommand {
 }
 
 /**
- * Type for validated elf participant (guarantees elf_for_participant_id is not null)
+ * Type for validated elf participant (guarantees elf_participant_ids is not empty)
  */
 interface ValidatedElfParticipant {
   id: number;
   user_id: string | null;
-  elf_for_participant_id: number;
+  elf_participant_ids: number[]; // IDs of participants this elf helps
   group_id: number;
   access_token?: string | null;
 }
@@ -60,8 +61,21 @@ export class ElfService {
     // Step 1: Validate participant exists and belongs to user, and is an elf
     const participant = await this.validateElfParticipant(command.participantId, command.userId);
 
-    // Step 2: Get helped participant details
-    const helpedParticipant = await this.getHelpedParticipant(participant.elf_for_participant_id);
+    // Step 2: Determine which participant to get result for
+    const targetHelpedParticipantId = command.helpedParticipantId || participant.elf_participant_ids[0];
+
+    // Validate that the elf actually helps this participant
+    if (!participant.elf_participant_ids.includes(targetHelpedParticipantId)) {
+      console.log("[ElfService.getElfResult] Elf does not help requested participant", {
+        elfParticipantId: command.participantId,
+        requestedHelpedParticipantId: targetHelpedParticipantId,
+        actualHelpedParticipantIds: participant.elf_participant_ids,
+      });
+      throw new Error("FORBIDDEN");
+    }
+
+    // Step 3: Get helped participant details
+    const helpedParticipant = await this.getHelpedParticipant(targetHelpedParticipantId);
 
     // Step 3: Get assignment for the helped participant
     const assignment = await this.getHelpedParticipantAssignment(helpedParticipant.id);
@@ -151,7 +165,7 @@ export class ElfService {
   private async validateElfParticipant(participantId: number, userId: UserId): Promise<ValidatedElfParticipant> {
     const { data: participant, error } = await this.supabase
       .from("participants")
-      .select("id, user_id, elf_for_participant_id, group_id")
+      .select("id, user_id, group_id")
       .eq("id", participantId)
       .single();
 
@@ -173,17 +187,26 @@ export class ElfService {
       throw new Error("FORBIDDEN");
     }
 
-    // Check if participant is an elf
-    if (!participant.elf_for_participant_id) {
+    // Check if participant is an elf (helps anyone)
+    const { data: helpedParticipants } = await this.supabase
+      .from("participants")
+      .select("id")
+      .eq("elf_participant_id", participantId)
+      .eq("group_id", participant.group_id);
+
+    if (!helpedParticipants || helpedParticipants.length === 0) {
       console.log("[ElfService.validateElfParticipant] Participant is not an elf", {
         participantId,
-        elfForParticipantId: participant.elf_for_participant_id,
       });
       throw new Error("FORBIDDEN");
     }
 
-    // At this point, we've validated that elf_for_participant_id is not null
-    return participant as ValidatedElfParticipant;
+    const elfParticipantIds = helpedParticipants.map((p) => p.id);
+
+    return {
+      ...participant,
+      elf_participant_ids: elfParticipantIds,
+    };
   }
 
   /**
@@ -331,8 +354,9 @@ export class ElfService {
     // Step 1: Validate token and get participant (must be an elf)
     const participant = await this.validateElfParticipantByToken(command.token);
 
-    // Step 2: Get helped participant details
-    const helpedParticipant = await this.getHelpedParticipant(participant.elf_for_participant_id);
+    // Step 2: Get helped participant details (for now, get the first one they help)
+    const helpedParticipantId = participant.elf_participant_ids[0];
+    const helpedParticipant = await this.getHelpedParticipant(helpedParticipantId);
 
     // Step 3: Get assignment for the helped participant
     const assignment = await this.getHelpedParticipantAssignment(helpedParticipant.id);
@@ -385,7 +409,7 @@ export class ElfService {
   private async validateElfParticipantByToken(token: string): Promise<ValidatedElfParticipant> {
     const { data: participant, error } = await this.supabase
       .from("participants")
-      .select("id, elf_for_participant_id, group_id, access_token")
+      .select("id, group_id, access_token")
       .eq("access_token", token)
       .single();
 
@@ -397,16 +421,25 @@ export class ElfService {
       throw new Error("INVALID_TOKEN");
     }
 
-    // Check if participant is an elf
-    if (!participant.elf_for_participant_id) {
+    // Check if participant is an elf (helps anyone)
+    const { data: helpedParticipants } = await this.supabase
+      .from("participants")
+      .select("id")
+      .eq("elf_participant_id", participant.id)
+      .eq("group_id", participant.group_id);
+
+    if (!helpedParticipants || helpedParticipants.length === 0) {
       console.log("[ElfService.validateElfParticipantByToken] Participant is not an elf", {
         participantId: participant.id,
-        elfForParticipantId: participant.elf_for_participant_id,
       });
       throw new Error("FORBIDDEN");
     }
 
-    // At this point, we've validated that elf_for_participant_id is not null
-    return participant as ValidatedElfParticipant;
+    const elfParticipantIds = helpedParticipants.map((p) => p.id);
+
+    return {
+      ...participant,
+      elf_participant_ids: elfParticipantIds,
+    };
   }
 }

@@ -15,7 +15,7 @@ export default function Navbar({ isLoggedIn = false, userEmail }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-sm shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b bg-white/95 backdrop-blur-sm shadow-sm">
       <div className="mx-auto max-w-7xl px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}

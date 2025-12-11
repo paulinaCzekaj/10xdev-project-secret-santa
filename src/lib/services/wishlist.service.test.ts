@@ -61,7 +61,7 @@ describe("WishlistService.createOrUpdateWishlist", () => {
     const participantsChain = {
       select: vi.fn().mockImplementation((fields?: string) => {
         // If selecting specific fields for elf check, return no data (no elf relationship)
-        if (fields === "id, elf_for_participant_id") {
+        if (fields === "id, elf_participant_id") {
           return {
             eq: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
@@ -669,7 +669,7 @@ describe("WishlistService.validateWishlistAccess", () => {
       access_token: "token-abc",
       result_viewed_at: null,
       elf_accessed_at: null,
-      elf_for_participant_id: null,
+      elf_participant_id: null,
       group: {
         id: 1,
         end_date: "2025-12-25T23:59:59Z",

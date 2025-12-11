@@ -18,6 +18,7 @@ interface ElfResultViewProps {
   groupId?: number;
   token?: string;
   isAuthenticated?: boolean;
+  helpedParticipantId?: number;
 }
 
 /**
@@ -25,8 +26,13 @@ interface ElfResultViewProps {
  * Shows the person the helped participant drew and their wishlist
  * Supports both authenticated (groupId) and unauthenticated (token) access
  */
-export default function ElfResultView({ groupId, token, isAuthenticated = false }: ElfResultViewProps) {
-  const { data, isLoading, error } = useElfResult(groupId, token, isAuthenticated);
+export default function ElfResultView({
+  groupId,
+  token,
+  isAuthenticated = false,
+  helpedParticipantId,
+}: ElfResultViewProps) {
+  const { data, isLoading, error } = useElfResult(groupId, token, isAuthenticated, helpedParticipantId);
   const [isRevealed, setIsRevealed] = React.useState(false);
 
   // Loading state

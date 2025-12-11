@@ -18,7 +18,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 2,
@@ -30,7 +30,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 3,
@@ -42,7 +42,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 4,
@@ -54,7 +54,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
       ];
 
@@ -93,7 +93,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 2,
@@ -105,7 +105,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 3,
@@ -117,7 +117,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 4,
@@ -129,7 +129,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
       ];
 
@@ -154,7 +154,7 @@ describe("DrawService - Algorithm Validation", () => {
       }
     });
 
-    it("should respect automatic elf exclusions (elf cannot draw the person they help)", () => {
+    it("should respect legacy elf exclusions (person cannot draw their elf helper)", () => {
       const participants: ParticipantDTO[] = [
         {
           id: 1,
@@ -166,7 +166,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 2,
@@ -178,7 +178,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 3,
@@ -190,7 +190,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 4,
@@ -202,11 +202,11 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
       ];
 
-      // Automatic exclusion: Bob (person being helped) cannot draw Alice (his elf/helper)
+      // Legacy exclusion: Bob (person being helped) cannot draw Alice (his elf/helper)
       const exclusions: ExclusionRuleDTO[] = [
         {
           id: 1,
@@ -222,7 +222,7 @@ describe("DrawService - Algorithm Validation", () => {
       expect(result).not.toBeNull();
 
       if (result) {
-        // Verify automatic elf exclusion is respected
+        // Verify legacy elf exclusion is respected
         const bobAssignment = result.find((a) => a.giver_participant_id === 2);
         expect(bobAssignment?.receiver_participant_id).not.toBe(1); // Bob should not draw Alice
 
@@ -247,7 +247,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 2,
@@ -259,7 +259,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 3,
@@ -271,7 +271,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 4,
@@ -283,7 +283,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 5,
@@ -295,7 +295,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 6,
@@ -307,7 +307,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
       ];
 
@@ -350,7 +350,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 2,
@@ -362,7 +362,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 3,
@@ -374,7 +374,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 4,
@@ -386,7 +386,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 5,
@@ -398,7 +398,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 6,
@@ -410,7 +410,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
       ];
 
@@ -451,7 +451,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 2,
@@ -463,7 +463,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 3,
@@ -475,7 +475,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
         {
           id: 4,
@@ -487,7 +487,7 @@ describe("DrawService - Algorithm Validation", () => {
           result_viewed_at: null,
           user_id: null,
           elf_accessed_at: null,
-          elf_for_participant_id: null,
+          elf_participant_id: null,
         },
       ];
 

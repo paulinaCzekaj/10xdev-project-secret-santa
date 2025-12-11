@@ -1,13 +1,21 @@
-import { useCallback, lazy, Suspense } from "react";
+import { useCallback, lazy, Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import ElfAssignedPersonCard from "./ElfAssignedPersonCard";
 import { GiftBox } from "./GiftBox";
 import { useRevealAnimation } from "@/hooks/useRevealAnimation";
 import { useConfetti } from "@/hooks/useConfetti";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { FallbackConfetti } from "@/components/FallbackConfetti";
 
-// Lazy load Confetti component for better performance
-const Confetti = lazy(() => import("react-confetti"));
+// Lazy load Confetti component for better performance with error handling
+const Confetti = lazy(() =>
+  import("react-confetti").catch((error) => {
+    console.warn("Failed to load react-confetti, will use fallback:", error);
+    // Return a fallback component that renders nothing
+    return { default: () => null };
+  })
+);
 
 /**
  * Interaktywny komponent odkrywania przypisania dla elfa
@@ -38,7 +46,8 @@ export default function ElfAssignmentReveal({
   const prefersReducedMotion =
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  const { showConfetti, triggerConfetti, windowSize, confettiConfig } = useConfetti();
+  const { showConfetti, triggerConfetti, confettiConfig } = useConfetti();
+  const [confettiError, setConfettiError] = useState(false);
 
   const handleRevealComplete = useCallback(() => {
     // Aktualizujemy stan UI
@@ -62,18 +71,38 @@ export default function ElfAssignmentReveal({
     }
   }, [startAnimation, isAnimating, isRevealed]);
 
-  // Render konfetti jeśli aktywne
+  // Render konfetti jeśli aktywne z obsługą błędów i fallback
   const ConfettiComponent = showConfetti ? (
-    <Suspense fallback={null}>
-      <Confetti
-        width={windowSize.width}
-        height={windowSize.height}
-        recycle={false}
-        numberOfPieces={confettiConfig.numberOfPieces}
-        gravity={confettiConfig.gravity}
-        colors={confettiConfig.colors}
-      />
-    </Suspense>
+    confettiError ? (
+      <FallbackConfetti />
+    ) : (
+      <ErrorBoundary
+        fallback={<FallbackConfetti />}
+        onError={(error) => {
+          console.warn("Confetti component failed to load, using fallback:", error);
+          setConfettiError(true);
+        }}
+      >
+        <div
+          className="fixed top-0 left-0 pointer-events-none z-50"
+          style={{
+            width: typeof window !== "undefined" ? window.innerWidth : 1920,
+            height: typeof window !== "undefined" ? window.innerHeight : 1080,
+            right: 0,
+            bottom: 0,
+          }}
+        >
+          <Suspense fallback={null}>
+            <Confetti
+              recycle={false}
+              numberOfPieces={confettiConfig.numberOfPieces}
+              gravity={confettiConfig.gravity}
+              colors={confettiConfig.colors}
+            />
+          </Suspense>
+        </div>
+      </ErrorBoundary>
+    )
   ) : null;
 
   // Jeśli wynik już odkryty, pokazujemy kartę od razu

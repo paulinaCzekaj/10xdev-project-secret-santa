@@ -93,15 +93,28 @@ export class WishlistService {
           console.log("[WishlistService.createOrUpdateWishlist] Access granted via participant token");
         } else {
           // Case 2: Token belongs to an elf who is helping this participant
-          const { data: elfParticipant, error: elfError } = await this.supabase
+          // First get the participant with the token
+          const { data: tokenParticipant, error: tokenError } = await this.supabase
             .from("participants")
-            .select("id, elf_for_participant_id")
+            .select("id")
             .eq("access_token", participantToken)
-            .eq("elf_for_participant_id", participantId)
             .eq("group_id", participantWithGroup.group_id)
             .single();
 
-          const isElfForParticipant = !elfError && elfParticipant !== null;
+          // Then check if the target participant has this token participant as their elf
+          const { data: targetParticipant, error: elfError } = await this.supabase
+            .from("participants")
+            .select("elf_participant_id")
+            .eq("id", participantId)
+            .eq("group_id", participantWithGroup.group_id)
+            .single();
+
+          const isElfForParticipant =
+            !tokenError &&
+            !elfError &&
+            tokenParticipant !== null &&
+            targetParticipant !== null &&
+            targetParticipant.elf_participant_id === tokenParticipant.id;
 
           if (isElfForParticipant) {
             hasAccess = true;
@@ -140,9 +153,9 @@ export class WishlistService {
             // Check if user is an elf for this participant
             const { data: elfParticipant, error: elfError } = await this.supabase
               .from("participants")
-              .select("id, elf_for_participant_id")
+              .select("id, elf_participant_id")
               .eq("user_id", authUserId)
-              .eq("elf_for_participant_id", participantId)
+              .eq("elf_participant_id", participantId)
               .eq("group_id", participantWithGroup.group_id)
               .single();
 
@@ -410,9 +423,9 @@ export class WishlistService {
           // Case 2: Token belongs to an elf who is helping this participant
           const { data: elfParticipant, error: elfError } = await this.supabase
             .from("participants")
-            .select("id, elf_for_participant_id")
+            .select("id, elf_participant_id")
             .eq("access_token", participantToken)
-            .eq("elf_for_participant_id", participantId)
+            .eq("elf_participant_id", participantId)
             .eq("group_id", participantWithGroup.group_id)
             .single();
 
@@ -453,9 +466,9 @@ export class WishlistService {
             // Check if user is an elf for this participant
             const { data: elfParticipant, error: elfError } = await this.supabase
               .from("participants")
-              .select("id, elf_for_participant_id")
+              .select("id, elf_participant_id")
               .eq("user_id", authUserId)
-              .eq("elf_for_participant_id", participantId)
+              .eq("elf_participant_id", participantId)
               .eq("group_id", participantWithGroup.group_id)
               .single();
 
@@ -607,9 +620,9 @@ export class WishlistService {
           // Case 2: Token belongs to an elf who is helping this participant
           const { data: elfParticipant, error: elfError } = await this.supabase
             .from("participants")
-            .select("id, elf_for_participant_id")
+            .select("id, elf_participant_id")
             .eq("access_token", participantToken)
-            .eq("elf_for_participant_id", participantId)
+            .eq("elf_participant_id", participantId)
             .eq("group_id", participantWithGroup.group_id)
             .single();
 
@@ -652,9 +665,9 @@ export class WishlistService {
             // Check if user is an elf for this participant
             const { data: elfParticipant, error: elfError } = await this.supabase
               .from("participants")
-              .select("id, elf_for_participant_id")
+              .select("id, elf_participant_id")
               .eq("user_id", authUserId)
-              .eq("elf_for_participant_id", participantId)
+              .eq("elf_participant_id", participantId)
               .eq("group_id", participantWithGroup.group_id)
               .single();
 
@@ -870,9 +883,9 @@ export class WishlistService {
           // Case 2: Token belongs to an elf who is helping this participant
           const { data: elfParticipant, error: elfError } = await this.supabase
             .from("participants")
-            .select("id, elf_for_participant_id")
+            .select("id, elf_participant_id")
             .eq("access_token", participantToken)
-            .eq("elf_for_participant_id", participantId)
+            .eq("elf_participant_id", participantId)
             .eq("group_id", participantWithGroup.group_id)
             .single();
 
@@ -913,9 +926,9 @@ export class WishlistService {
             // Check if user is an elf for this participant
             const { data: elfParticipant, error: elfError } = await this.supabase
               .from("participants")
-              .select("id, elf_for_participant_id")
+              .select("id, elf_participant_id")
               .eq("user_id", authUserId)
-              .eq("elf_for_participant_id", participantId)
+              .eq("elf_participant_id", participantId)
               .eq("group_id", participantWithGroup.group_id)
               .single();
 

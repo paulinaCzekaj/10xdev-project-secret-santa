@@ -29,10 +29,10 @@ check (
   or elf_for_participant_id is null
 );
 
--- Add unique constraint: one participant can have max one elf per group
-create unique index unique_elf_assignment_per_group
-on participants(group_id, elf_for_participant_id)
-where elf_for_participant_id is not null;
+-- Add unique constraint: one participant can have max one elf per group (DEPRECATED - see migration for new constraint)
+-- create unique index unique_elf_assignment_per_group
+-- on participants(group_id, elf_for_participant_id)
+-- where elf_for_participant_id is not null;
 
 -- Add index for efficient elf lookups
 create index participants_elf_for_idx
