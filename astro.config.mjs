@@ -12,6 +12,7 @@ export default defineConfig({
   integrations: [react(), sitemap()],
   server: { port: 3000, host: true },
   vite: {
+    // @ts-expect-error - Vite version mismatch between Astro and Tailwind CSS plugin
     plugins: [tailwindcss()],
     optimizeDeps: {
       include: [

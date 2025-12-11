@@ -137,13 +137,13 @@ export const GET: APIRoute = async ({ params, request, locals }) => {
 
     if (helpedParticipantId) {
       // Check if the requested participant is actually helped by this elf
-      const isValidTarget = allHelpedParticipants.some((p) => p.id === helpedParticipantId);
+      const isValidTarget = allHelpedParticipants.some((p: { id: number }) => p.id === helpedParticipantId);
       if (!isValidTarget) {
         console.log("[GET /api/groups/:groupId/elf-result] Requested participant is not helped by this elf", {
           groupId,
           userId: userId.substring(0, 8) + "...",
           requestedHelpedParticipantId: helpedParticipantId,
-          validHelpedParticipantIds: allHelpedParticipants.map((p) => p.id),
+          validHelpedParticipantIds: allHelpedParticipants.map((p: { id: number }) => p.id),
         });
 
         const forbiddenResponse: ApiErrorResponse = {
