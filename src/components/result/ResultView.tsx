@@ -104,6 +104,7 @@ export default function ResultView({ groupId, token, isAuthenticated = false }: 
           groupId={result.group.id}
           isRevealed={isRevealed}
           onReveal={() => setIsRevealed(true)}
+          onHide={() => setIsRevealed(false)}
           accessToken={result.accessToken}
         />
 

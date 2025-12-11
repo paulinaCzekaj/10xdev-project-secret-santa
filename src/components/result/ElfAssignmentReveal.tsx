@@ -1,4 +1,4 @@
-import { useState, useCallback, lazy, Suspense } from "react";
+import { useCallback, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import ElfAssignedPersonCard from "./ElfAssignedPersonCard";
@@ -17,15 +17,23 @@ interface ElfAssignmentRevealProps {
   receiverName: string;
   receiverWishlistHtml: string;
   helpedParticipantName: string;
+  isRevealed: boolean;
+  onReveal: () => void;
+  onHide?: () => void;
+}
+
+export interface ElfAssignmentRevealRef {
+  resetReveal: () => void;
 }
 
 export default function ElfAssignmentReveal({
   receiverName,
   receiverWishlistHtml,
   helpedParticipantName,
+  isRevealed,
+  onReveal,
+  onHide,
 }: ElfAssignmentRevealProps) {
-  const [isRevealed, setIsRevealed] = useState(false);
-
   // Sprawdzamy czy użytkownik prefers-reduced-motion
   const prefersReducedMotion =
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -34,13 +42,13 @@ export default function ElfAssignmentReveal({
 
   const handleRevealComplete = useCallback(() => {
     // Aktualizujemy stan UI
-    setIsRevealed(true);
+    onReveal();
 
     // Uruchamiamy konfetti jeśli użytkownik nie prefers-reduced-motion
     if (!prefersReducedMotion) {
       triggerConfetti();
     }
-  }, [triggerConfetti, prefersReducedMotion]);
+  }, [onReveal, triggerConfetti, prefersReducedMotion]);
 
   const { isAnimating, startAnimation } = useRevealAnimation({
     isRevealed,
@@ -81,12 +89,10 @@ export default function ElfAssignmentReveal({
           <h2 className="text-2xl font-bold text-red-500 dark:text-red-400 mb-2">
             🎅 {helpedParticipantName} przygotowuje prezent dla... 🎅
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-            Możesz pomóc w wyborze prezentu!
-          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Możesz pomóc w wyborze prezentu!</p>
 
           {/* Karta wylosowanej osoby */}
-          <ElfAssignedPersonCard name={receiverName} wishlistHtml={receiverWishlistHtml} />
+          <ElfAssignedPersonCard name={receiverName} wishlistHtml={receiverWishlistHtml} onHide={onHide} />
         </div>
       </div>
     );

@@ -156,17 +156,14 @@ export class WishlistService {
                 console.log("[WishlistService.createOrUpdateWishlist] Access granted via elf relationship");
               }
             } else {
-              console.log(
-                "[WishlistService.createOrUpdateWishlist] Bearer token permissions not satisfied",
-                {
-                  authUserId,
-                  userEmail,
-                  participantId,
-                  participantUserId: participantWithGroup.user_id,
-                  participantEmail: participantWithGroup.email,
-                  isElfForParticipant,
-                }
-              );
+              console.log("[WishlistService.createOrUpdateWishlist] Bearer token permissions not satisfied", {
+                authUserId,
+                userEmail,
+                participantId,
+                participantUserId: participantWithGroup.user_id,
+                participantEmail: participantWithGroup.email,
+                isElfForParticipant,
+              });
             }
           }
         } else {
@@ -472,17 +469,14 @@ export class WishlistService {
                 console.log("[WishlistService.getWishlist] Access granted via elf relationship");
               }
             } else {
-              console.log(
-                "[WishlistService.getWishlist] Bearer token permissions not satisfied",
-                {
-                  authUserId,
-                  userEmail,
-                  participantId,
-                  participantUserId: participantWithGroup.user_id,
-                  participantEmail: participantWithGroup.email,
-                  isElfForParticipant,
-                }
-              );
+              console.log("[WishlistService.getWishlist] Bearer token permissions not satisfied", {
+                authUserId,
+                userEmail,
+                participantId,
+                participantUserId: participantWithGroup.user_id,
+                participantEmail: participantWithGroup.email,
+                isElfForParticipant,
+              });
             }
           }
         } else {
@@ -674,17 +668,14 @@ export class WishlistService {
                 console.log("[WishlistService.generateSantaLetterFromWishlist] Access granted via elf relationship");
               }
             } else {
-              console.log(
-                "[WishlistService.generateSantaLetterFromWishlist] Bearer token permissions not satisfied",
-                {
-                  authUserId,
-                  userEmail,
-                  participantId,
-                  participantUserId: participantWithGroup.user_id,
-                  participantEmail: participantWithGroup.email,
-                  isElfForParticipant,
-                }
-              );
+              console.log("[WishlistService.generateSantaLetterFromWishlist] Bearer token permissions not satisfied", {
+                authUserId,
+                userEmail,
+                participantId,
+                participantUserId: participantWithGroup.user_id,
+                participantEmail: participantWithGroup.email,
+                isElfForParticipant,
+              });
             }
           }
         } else {
@@ -938,17 +929,14 @@ export class WishlistService {
                 console.log("[WishlistService.deleteWishlist] Access granted via elf relationship");
               }
             } else {
-              console.log(
-                "[WishlistService.deleteWishlist] Bearer token permissions not satisfied",
-                {
-                  authUserId,
-                  userEmail,
-                  participantId,
-                  participantUserId: participantWithGroup.user_id,
-                  participantEmail: participantWithGroup.email,
-                  isElfForParticipant,
-                }
-              );
+              console.log("[WishlistService.deleteWishlist] Bearer token permissions not satisfied", {
+                authUserId,
+                userEmail,
+                participantId,
+                participantUserId: participantWithGroup.user_id,
+                participantEmail: participantWithGroup.email,
+                isElfForParticipant,
+              });
             }
           }
         } else {

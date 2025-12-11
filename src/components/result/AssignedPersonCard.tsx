@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Gift } from "lucide-react";
 
 interface AssignedPersonCardProps {
@@ -8,13 +9,14 @@ interface AssignedPersonCardProps {
     name: string;
     initials: string;
   };
+  onHide?: () => void;
 }
 
 /**
  * Karta wyświetlająca informacje o wylosowanej osobie
  * Pokazuje avatar z inicjałami i imię w atrakcyjnym layout
  */
-function AssignedPersonCard({ person }: AssignedPersonCardProps) {
+function AssignedPersonCard({ person, onHide }: AssignedPersonCardProps) {
   return (
     <div className="flex flex-col items-center gap-4 py-8 relative">
       {/* Świąteczne dekoracje */}
@@ -30,11 +32,24 @@ function AssignedPersonCard({ person }: AssignedPersonCardProps) {
           <AvatarFallback className="text-4xl font-bold bg-red-500 text-white">{person.initials}</AvatarFallback>
         </Avatar>
         {/* Gift icon badge */}
-        <div className="absolute -bottom-1 -right-1 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg border-3 border-green-200 z-20">
-          <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
-            <Gift className="w-5 h-5 text-white" />
-          </div>
-        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onHide}
+                className="absolute -bottom-1 -right-1 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg border-3 border-green-200 z-20 hover:bg-gray-50 transition-colors cursor-pointer"
+                aria-label="Ukryj wynik losowania"
+              >
+                <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center hover:bg-green-700 transition-colors">
+                  <Gift className="w-5 h-5 text-white" />
+                </div>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Kliknij, aby ponownie ukryć tajemnicę</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Name with elegant typography */}

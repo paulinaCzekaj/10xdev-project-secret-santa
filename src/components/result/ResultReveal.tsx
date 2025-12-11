@@ -25,6 +25,7 @@ interface ResultRevealProps {
   groupId: number;
   isRevealed: boolean;
   onReveal: () => void;
+  onHide?: () => void;
   accessToken?: string; // For token-based access
 }
 
@@ -36,6 +37,7 @@ export default function ResultReveal({
   groupId,
   isRevealed,
   onReveal,
+  onHide,
   accessToken,
 }: ResultRevealProps) {
   // Sprawdzamy czy użytkownik prefers-reduced-motion
@@ -98,7 +100,7 @@ export default function ResultReveal({
           </h2>
 
           {/* Karta wylosowanej osoby */}
-          <AssignedPersonCard person={assignedPerson} />
+          <AssignedPersonCard person={assignedPerson} onHide={onHide} />
         </div>
       </div>
     );

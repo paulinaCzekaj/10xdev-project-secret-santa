@@ -82,7 +82,9 @@ export const PUT: APIRoute = async ({ params, request, locals, url }) => {
       // PRIORITY: Use participant token from URL if provided
       authUserId = null;
       participantToken = queryToken;
-      console.log("[PUT /api/participants/:participantId/wishlist] Using participant token from URL (priority over Bearer)");
+      console.log(
+        "[PUT /api/participants/:participantId/wishlist] Using participant token from URL (priority over Bearer)"
+      );
     } else {
       // Fallback: Try Bearer token
       const userIdOrResponse = requireApiAuth({ locals });
@@ -295,7 +297,9 @@ export const GET: APIRoute = async ({ params, request, locals, url }) => {
       // PRIORITY: Use participant token from URL if provided
       authUserId = null;
       participantToken = queryToken;
-      console.log("[GET /api/participants/:participantId/wishlist] Using participant token from URL (priority over Bearer)");
+      console.log(
+        "[GET /api/participants/:participantId/wishlist] Using participant token from URL (priority over Bearer)"
+      );
     } else {
       // Fallback: Try Bearer token
       const userIdOrResponse = requireApiAuth({ locals });
@@ -478,7 +482,9 @@ export const DELETE: APIRoute = async ({ params, request, locals, url }) => {
       // PRIORITY: Use participant token from URL if provided
       authUserId = null;
       participantToken = queryToken;
-      console.log("[DELETE /api/participants/:participantId/wishlist] Using participant token from URL (priority over Bearer)");
+      console.log(
+        "[DELETE /api/participants/:participantId/wishlist] Using participant token from URL (priority over Bearer)"
+      );
     } else {
       // Fallback: Try Bearer token
       const userIdOrResponse = requireApiAuth({ locals });

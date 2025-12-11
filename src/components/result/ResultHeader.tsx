@@ -89,9 +89,7 @@ function ResultHeader({ group, isAuthenticated, participantName }: ResultHeaderP
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Wyniki losowania dla {participantName}
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Odkryj, komu przygotowujesz świąteczny prezent! 🎁
-          </p>
+          <p className="text-gray-600 dark:text-gray-400">Odkryj, komu przygotowujesz świąteczny prezent! 🎁</p>
         </div>
       )}
 

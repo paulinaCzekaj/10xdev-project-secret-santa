@@ -27,6 +27,7 @@ interface ElfResultViewProps {
  */
 export default function ElfResultView({ groupId, token, isAuthenticated = false }: ElfResultViewProps) {
   const { data, isLoading, error } = useElfResult(groupId, token, isAuthenticated);
+  const [isRevealed, setIsRevealed] = React.useState(false);
 
   // Loading state
   if (isLoading) {
@@ -85,6 +86,9 @@ export default function ElfResultView({ groupId, token, isAuthenticated = false 
           receiverName={data.assignment.receiverName}
           receiverWishlistHtml={data.assignment.receiverWishlistHtml}
           helpedParticipantName={data.helpedParticipant.name}
+          isRevealed={isRevealed}
+          onReveal={() => setIsRevealed(true)}
+          onHide={() => setIsRevealed(false)}
         />
 
         {/* Helped participant's wishlist editor */}

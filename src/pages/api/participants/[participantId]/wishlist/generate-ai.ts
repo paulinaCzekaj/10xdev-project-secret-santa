@@ -83,7 +83,9 @@ export const POST: APIRoute = async ({ params, request, locals, url }) => {
       // PRIORITY: Use participant token from URL if provided
       authUserId = null;
       participantToken = queryToken;
-      console.log("[POST /api/participants/:participantId/wishlist/generate-ai] Using participant token from URL (priority over Bearer)");
+      console.log(
+        "[POST /api/participants/:participantId/wishlist/generate-ai] Using participant token from URL (priority over Bearer)"
+      );
     } else {
       // Fallback: Try Bearer token
       const userIdOrResponse = requireApiAuth({ locals });
@@ -92,9 +94,7 @@ export const POST: APIRoute = async ({ params, request, locals, url }) => {
         // Bearer token authentication successful
         authUserId = userIdOrResponse;
         participantToken = null;
-        console.log(
-          "[POST /api/participants/:participantId/wishlist/generate-ai] Using Bearer token authentication"
-        );
+        console.log("[POST /api/participants/:participantId/wishlist/generate-ai] Using Bearer token authentication");
       } else {
         // No authentication provided
         console.log("[POST /api/participants/:participantId/wishlist/generate-ai] No authentication provided");

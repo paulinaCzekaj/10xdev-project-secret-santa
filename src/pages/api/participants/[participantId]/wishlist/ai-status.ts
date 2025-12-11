@@ -63,7 +63,9 @@ export const GET: APIRoute = async ({ params, locals, url }) => {
       // PRIORITY: Use participant token from URL if provided
       authUserId = null;
       participantToken = queryToken;
-      console.log("[GET /api/participants/:participantId/wishlist/ai-status] Using participant token from URL (priority over Bearer)");
+      console.log(
+        "[GET /api/participants/:participantId/wishlist/ai-status] Using participant token from URL (priority over Bearer)"
+      );
     } else {
       // Fallback: Try Bearer token
       const userIdOrResponse = requireApiAuth({ locals });

@@ -149,15 +149,13 @@ export function ParticipantsList({
                   <TableCell>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="cursor-pointer">
-                          {participant.wishlistStatus?.icon && (
-                            <participant.wishlistStatus.icon
-                              className={`h-4 w-4 ${
-                                participant.wishlistStatus.variant === "default" ? "text-green-600" : "text-red-600"
-                              }`}
-                            />
-                          )}
-                        </div>
+                        {participant.wishlistStatus?.icon && (
+                          <participant.wishlistStatus.icon
+                            className={`h-4 w-4 ${
+                              participant.wishlistStatus.variant === "default" ? "text-green-600" : "text-red-600"
+                            }`}
+                          />
+                        )}
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>{participant.wishlistStatus?.text || "Brak listy życzeń"}</p>
@@ -168,15 +166,13 @@ export function ParticipantsList({
                   <TableCell>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="cursor-pointer">
-                          {participant.resultStatus?.icon && (
-                            <participant.resultStatus.icon
-                              className={`h-4 w-4 ${
-                                participant.resultStatus.variant === "default" ? "text-green-600" : "text-gray-500"
-                              }`}
-                            />
-                          )}
-                        </div>
+                        {participant.resultStatus?.icon && (
+                          <participant.resultStatus.icon
+                            className={`h-4 w-4 ${
+                              participant.resultStatus.variant === "default" ? "text-green-600" : "text-gray-500"
+                            }`}
+                          />
+                        )}
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>{participant.resultStatus?.text || "Wynik nie został jeszcze zobaczony"}</p>
