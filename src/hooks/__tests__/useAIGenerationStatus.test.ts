@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 import { useAIGenerationStatus } from "../useAIGenerationStatus";
 
 // Mock Supabase client must be defined inline to avoid hoisting issues
@@ -40,12 +40,31 @@ describe("useAIGenerationStatus", () => {
   });
 
   describe("initial state", () => {
-    it("should return correct initial state", () => {
+    it("should return correct initial state", async () => {
+      // Mock a successful response to prevent undefined fetch errors
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ai_generation_count: 0,
+          remaining_generations: 5,
+          max_generations: 5,
+          can_generate: true,
+          is_registered: true,
+          last_generated_at: null,
+        }),
+      });
+
       const { result } = renderHook(() => useAIGenerationStatus(participantId));
 
+      // Check initial loading state
       expect(result.current.status).toBe(null);
       expect(result.current.isLoading).toBe(true);
       expect(result.current.error).toBe(null);
+
+      // Wait for the fetch to complete
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
     });
   });
 
@@ -236,8 +255,10 @@ describe("useAIGenerationStatus", () => {
         expect(result.current.status?.remaining_generations).toBe(7);
       });
 
-      // Call refetch
-      result.current.refetch();
+      // Call refetch wrapped in act()
+      await act(async () => {
+        result.current.refetch();
+      });
 
       // Wait for refetch to complete
       await waitFor(() => {
