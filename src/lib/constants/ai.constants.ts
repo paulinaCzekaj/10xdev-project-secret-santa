@@ -16,10 +16,10 @@ export const AI_PROMPT_MAX_LENGTH = 2000;
 // === AI GENERATION LIMITS ===
 
 /** Maximum AI generations for unregistered users (per group) */
-export const AI_MAX_GENERATIONS_UNREGISTERED = 3;
+export const AI_MAX_GENERATIONS_UNREGISTERED = 5;
 
 /** Maximum AI generations for registered users (per group) */
-export const AI_MAX_GENERATIONS_REGISTERED = 5;
+export const AI_MAX_GENERATIONS_REGISTERED = 7;
 
 // === AI CONTENT LIMITS ===
 

@@ -34,8 +34,6 @@ const GroupIdParamSchema = z.object({
  * @note Authentication required - user must be a participant in the group
  */
 export const GET: APIRoute = async ({ params, locals }) => {
-  console.log("[GET /api/groups/:groupId/result] Endpoint hit", { groupId: params.groupId });
-
   let userId: string | undefined;
 
   try {

@@ -82,20 +82,57 @@ export class WishlistService {
 
       // Step 2: Validate access permissions
       // For wishlist editing, allow participants to edit their own wishlist
-      if (!authUserId && !participantToken) {
-        throw new Error("FORBIDDEN");
-      }
+      // Access is granted if either participant token is valid OR Bearer token permissions are satisfied
+      let hasAccess = false;
 
-      // If using participant token, validate it
+      // Check participant token validation
       if (participantToken) {
-        if (participantWithGroup.access_token !== participantToken) {
-          throw new Error("FORBIDDEN");
+        // Case 1: Token matches the participant being edited (standard case)
+        if (participantWithGroup.access_token === participantToken) {
+          hasAccess = true;
+          console.log("[WishlistService.createOrUpdateWishlist] Access granted via participant token");
+        } else {
+          // Case 2: Token belongs to an elf who is helping this participant
+          // First get the participant with the token
+          const { data: tokenParticipant, error: tokenError } = await this.supabase
+            .from("participants")
+            .select("id")
+            .eq("access_token", participantToken)
+            .eq("group_id", participantWithGroup.group_id)
+            .single();
+
+          // Then check if the target participant has this token participant as their elf
+          const { data: targetParticipant, error: elfError } = await this.supabase
+            .from("participants")
+            .select("elf_participant_id")
+            .eq("id", participantId)
+            .eq("group_id", participantWithGroup.group_id)
+            .single();
+
+          const isElfForParticipant =
+            !tokenError &&
+            !elfError &&
+            tokenParticipant !== null &&
+            targetParticipant !== null &&
+            targetParticipant.elf_participant_id === tokenParticipant.id;
+
+          if (isElfForParticipant) {
+            hasAccess = true;
+            console.log("[WishlistService.createOrUpdateWishlist] Access granted via elf participant token");
+          } else {
+            console.log("[WishlistService.createOrUpdateWishlist] Participant token validation failed", {
+              providedToken: participantToken.substring(0, 8) + "...",
+              storedToken: participantWithGroup.access_token?.substring(0, 8) + "...",
+            });
+          }
         }
       }
-      // If using Bearer token, check if user can access this participant
-      else if (authUserId) {
+
+      // Check Bearer token permissions (if not already granted access)
+      if (!hasAccess && authUserId) {
         // Allow access if user owns this participant OR if this participant belongs to the user
         // (participant may have user_id set, or may be linked by email)
+        // OR if the user is an elf for this participant
         const isOwner = participantWithGroup.user_id === authUserId;
 
         if (!isOwner) {
@@ -106,32 +143,52 @@ export class WishlistService {
             console.log("[WishlistService.createOrUpdateWishlist] Failed to get user profile", {
               error: userError.message,
             });
-            throw new Error("FORBIDDEN");
-          }
+            // Don't throw here - just continue checking
+          } else {
+            const userEmail = userProfile?.user?.email;
 
-          const userEmail = userProfile?.user?.email;
+            // Check if participant belongs to user via email (participant added by email before registration)
+            const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
 
-          // Check if participant belongs to user via email (participant added by email before registration)
-          const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
+            // Check if user is an elf for this participant
+            const { data: elfParticipant, error: elfError } = await this.supabase
+              .from("participants")
+              .select("id, elf_participant_id")
+              .eq("user_id", authUserId)
+              .eq("elf_participant_id", participantId)
+              .eq("group_id", participantWithGroup.group_id)
+              .single();
 
-          if (!belongsViaEmail) {
-            console.log(
-              "[WishlistService.createOrUpdateWishlist] Access denied - participant does not belong to user",
-              {
+            const isElfForParticipant = !elfError && elfParticipant !== null;
+
+            if (belongsViaEmail || isElfForParticipant) {
+              hasAccess = true;
+              if (belongsViaEmail) {
+                console.log("[WishlistService.createOrUpdateWishlist] Access granted via email matching");
+              } else if (isElfForParticipant) {
+                console.log("[WishlistService.createOrUpdateWishlist] Access granted via elf relationship");
+              }
+            } else {
+              console.log("[WishlistService.createOrUpdateWishlist] Bearer token permissions not satisfied", {
                 authUserId,
                 userEmail,
                 participantId,
                 participantUserId: participantWithGroup.user_id,
                 participantEmail: participantWithGroup.email,
-              }
-            );
-            throw new Error("FORBIDDEN");
+                isElfForParticipant,
+              });
+            }
           }
-
-          console.log("[WishlistService.createOrUpdateWishlist] Access granted via email matching");
         } else {
+          hasAccess = true;
           console.log("[WishlistService.createOrUpdateWishlist] Access granted via direct ownership");
         }
+      }
+
+      // Deny access if neither token nor Bearer permissions were satisfied
+      if (!hasAccess) {
+        console.log("[WishlistService.createOrUpdateWishlist] Access denied - no valid authentication method");
+        throw new Error("FORBIDDEN");
       }
 
       // Step 3: Check if group end date has passed (compare only dates, ignore time)
@@ -353,20 +410,44 @@ export class WishlistService {
 
       // Step 2: Validate access permissions
       // For wishlist reading, allow participants to read their own wishlist
-      if (!authUserId && !participantToken) {
-        throw new Error("FORBIDDEN");
-      }
+      // Access is granted if either participant token is valid OR Bearer token permissions are satisfied
+      let hasAccess = false;
 
-      // If using participant token, validate it
+      // Check participant token validation
       if (participantToken) {
-        if (participantWithGroup.access_token !== participantToken) {
-          throw new Error("FORBIDDEN");
+        // Case 1: Token matches the participant being read (standard case)
+        if (participantWithGroup.access_token === participantToken) {
+          hasAccess = true;
+          console.log("[WishlistService.getWishlist] Access granted via participant token");
+        } else {
+          // Case 2: Token belongs to an elf who is helping this participant
+          const { data: elfParticipant, error: elfError } = await this.supabase
+            .from("participants")
+            .select("id, elf_participant_id")
+            .eq("access_token", participantToken)
+            .eq("elf_participant_id", participantId)
+            .eq("group_id", participantWithGroup.group_id)
+            .single();
+
+          const isElfForParticipant = !elfError && elfParticipant !== null;
+
+          if (isElfForParticipant) {
+            hasAccess = true;
+            console.log("[WishlistService.getWishlist] Access granted via elf participant token");
+          } else {
+            console.log("[WishlistService.getWishlist] Participant token validation failed", {
+              providedToken: participantToken.substring(0, 8) + "...",
+              storedToken: participantWithGroup.access_token?.substring(0, 8) + "...",
+            });
+          }
         }
       }
-      // If using Bearer token, check if user can access this participant
-      else if (authUserId) {
+
+      // Check Bearer token permissions (if not already granted access)
+      if (!hasAccess && authUserId) {
         // Allow access if user owns this participant OR if this participant belongs to the user
         // (participant may have user_id set, or may be linked by email)
+        // OR if the user is an elf for this participant
         const isOwner = participantWithGroup.user_id === authUserId;
 
         if (!isOwner) {
@@ -375,29 +456,52 @@ export class WishlistService {
           const { data: userProfile, error: userError } = await this.supabase.auth.getUser();
           if (userError) {
             console.log("[WishlistService.getWishlist] Failed to get user profile", { error: userError.message });
-            throw new Error("FORBIDDEN");
+            // Don't throw here - just continue checking
+          } else {
+            const userEmail = userProfile?.user?.email;
+
+            // Check if participant belongs to user via email (participant added by email before registration)
+            const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
+
+            // Check if user is an elf for this participant
+            const { data: elfParticipant, error: elfError } = await this.supabase
+              .from("participants")
+              .select("id, elf_participant_id")
+              .eq("user_id", authUserId)
+              .eq("elf_participant_id", participantId)
+              .eq("group_id", participantWithGroup.group_id)
+              .single();
+
+            const isElfForParticipant = !elfError && elfParticipant !== null;
+
+            if (belongsViaEmail || isElfForParticipant) {
+              hasAccess = true;
+              if (belongsViaEmail) {
+                console.log("[WishlistService.getWishlist] Access granted via email matching");
+              } else if (isElfForParticipant) {
+                console.log("[WishlistService.getWishlist] Access granted via elf relationship");
+              }
+            } else {
+              console.log("[WishlistService.getWishlist] Bearer token permissions not satisfied", {
+                authUserId,
+                userEmail,
+                participantId,
+                participantUserId: participantWithGroup.user_id,
+                participantEmail: participantWithGroup.email,
+                isElfForParticipant,
+              });
+            }
           }
-
-          const userEmail = userProfile?.user?.email;
-
-          // Check if participant belongs to user via email (participant added by email before registration)
-          const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
-
-          if (!belongsViaEmail) {
-            console.log("[WishlistService.getWishlist] Access denied - participant does not belong to user", {
-              authUserId,
-              userEmail,
-              participantId,
-              participantUserId: participantWithGroup.user_id,
-              participantEmail: participantWithGroup.email,
-            });
-            throw new Error("FORBIDDEN");
-          }
-
-          console.log("[WishlistService.getWishlist] Access granted via email matching");
         } else {
+          hasAccess = true;
           console.log("[WishlistService.getWishlist] Access granted via direct ownership");
         }
+      }
+
+      // Deny access if neither token nor Bearer permissions were satisfied
+      if (!hasAccess) {
+        console.log("[WishlistService.getWishlist] Access denied - no valid authentication method");
+        throw new Error("FORBIDDEN");
       }
 
       // Step 3: Retrieve wishlist
@@ -503,20 +607,44 @@ export class WishlistService {
 
       // Step 2: Validate access permissions
       // For AI generation, allow participants to generate for their own status
-      if (!authUserId && !participantToken) {
-        throw new Error("FORBIDDEN");
-      }
+      // Access is granted if either participant token is valid OR Bearer token permissions are satisfied
+      let hasAccess = false;
 
-      // If using participant token, validate it
+      // Check participant token validation
       if (participantToken) {
-        if (participantWithGroup.access_token !== participantToken) {
-          throw new Error("FORBIDDEN");
+        // Case 1: Token matches the participant whose wishlist is being generated (standard case)
+        if (participantWithGroup.access_token === participantToken) {
+          hasAccess = true;
+          console.log("[WishlistService.generateSantaLetterFromWishlist] Access granted via participant token");
+        } else {
+          // Case 2: Token belongs to an elf who is helping this participant
+          const { data: elfParticipant, error: elfError } = await this.supabase
+            .from("participants")
+            .select("id, elf_participant_id")
+            .eq("access_token", participantToken)
+            .eq("elf_participant_id", participantId)
+            .eq("group_id", participantWithGroup.group_id)
+            .single();
+
+          const isElfForParticipant = !elfError && elfParticipant !== null;
+
+          if (isElfForParticipant) {
+            hasAccess = true;
+            console.log("[WishlistService.generateSantaLetterFromWishlist] Access granted via elf participant token");
+          } else {
+            console.log("[WishlistService.generateSantaLetterFromWishlist] Participant token validation failed", {
+              providedToken: participantToken.substring(0, 8) + "...",
+              storedToken: participantWithGroup.access_token?.substring(0, 8) + "...",
+            });
+          }
         }
       }
-      // If using Bearer token, check if user can access this participant
-      else if (authUserId) {
+
+      // Check Bearer token permissions (if not already granted access)
+      if (!hasAccess && authUserId) {
         // Allow access if user owns this participant OR if this participant belongs to the user
         // (participant may have user_id set, or may be linked by email)
+        // OR if the user is an elf for this participant
         const isOwner = participantWithGroup.user_id === authUserId;
 
         if (!isOwner) {
@@ -527,32 +655,52 @@ export class WishlistService {
             console.log("[WishlistService.generateSantaLetterFromWishlist] Failed to get user profile", {
               error: userError.message,
             });
-            throw new Error("FORBIDDEN");
-          }
+            // Don't throw here - just continue checking
+          } else {
+            const userEmail = userProfile?.user?.email;
 
-          const userEmail = userProfile?.user?.email;
+            // Check if participant belongs to user via email (participant added by email before registration)
+            const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
 
-          // Check if participant belongs to user via email (participant added by email before registration)
-          const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
+            // Check if user is an elf for this participant
+            const { data: elfParticipant, error: elfError } = await this.supabase
+              .from("participants")
+              .select("id, elf_participant_id")
+              .eq("user_id", authUserId)
+              .eq("elf_participant_id", participantId)
+              .eq("group_id", participantWithGroup.group_id)
+              .single();
 
-          if (!belongsViaEmail) {
-            console.log(
-              "[WishlistService.generateSantaLetterFromWishlist] Access denied - participant does not belong to user",
-              {
+            const isElfForParticipant = !elfError && elfParticipant !== null;
+
+            if (belongsViaEmail || isElfForParticipant) {
+              hasAccess = true;
+              if (belongsViaEmail) {
+                console.log("[WishlistService.generateSantaLetterFromWishlist] Access granted via email matching");
+              } else if (isElfForParticipant) {
+                console.log("[WishlistService.generateSantaLetterFromWishlist] Access granted via elf relationship");
+              }
+            } else {
+              console.log("[WishlistService.generateSantaLetterFromWishlist] Bearer token permissions not satisfied", {
                 authUserId,
                 userEmail,
                 participantId,
                 participantUserId: participantWithGroup.user_id,
                 participantEmail: participantWithGroup.email,
-              }
-            );
-            throw new Error("FORBIDDEN");
+                isElfForParticipant,
+              });
+            }
           }
-
-          console.log("[WishlistService.generateSantaLetterFromWishlist] Access granted via email matching");
         } else {
+          hasAccess = true;
           console.log("[WishlistService.generateSantaLetterFromWishlist] Access granted via direct ownership");
         }
+      }
+
+      // Deny access if neither token nor Bearer permissions were satisfied
+      if (!hasAccess) {
+        console.log("[WishlistService.generateSantaLetterFromWishlist] Access denied - no valid authentication method");
+        throw new Error("FORBIDDEN");
       }
 
       // Step 3: Check if group end date has passed
@@ -722,20 +870,44 @@ export class WishlistService {
 
       // Step 2: Validate access permissions
       // For wishlist deletion, allow participants to delete their own wishlist
-      if (!authUserId && !participantToken) {
-        throw new Error("FORBIDDEN");
-      }
+      // Access is granted if either participant token is valid OR Bearer token permissions are satisfied
+      let hasAccess = false;
 
-      // If using participant token, validate it
+      // Check participant token validation
       if (participantToken) {
-        if (participantWithGroup.access_token !== participantToken) {
-          throw new Error("FORBIDDEN");
+        // Case 1: Token matches the participant being deleted (standard case)
+        if (participantWithGroup.access_token === participantToken) {
+          hasAccess = true;
+          console.log("[WishlistService.deleteWishlist] Access granted via participant token");
+        } else {
+          // Case 2: Token belongs to an elf who is helping this participant
+          const { data: elfParticipant, error: elfError } = await this.supabase
+            .from("participants")
+            .select("id, elf_participant_id")
+            .eq("access_token", participantToken)
+            .eq("elf_participant_id", participantId)
+            .eq("group_id", participantWithGroup.group_id)
+            .single();
+
+          const isElfForParticipant = !elfError && elfParticipant !== null;
+
+          if (isElfForParticipant) {
+            hasAccess = true;
+            console.log("[WishlistService.deleteWishlist] Access granted via elf participant token");
+          } else {
+            console.log("[WishlistService.deleteWishlist] Participant token validation failed", {
+              providedToken: participantToken.substring(0, 8) + "...",
+              storedToken: participantWithGroup.access_token?.substring(0, 8) + "...",
+            });
+          }
         }
       }
-      // If using Bearer token, check if user can access this participant
-      else if (authUserId) {
+
+      // Check Bearer token permissions (if not already granted access)
+      if (!hasAccess && authUserId) {
         // Allow access if user owns this participant OR if this participant belongs to the user
         // (participant may have user_id set, or may be linked by email)
+        // OR if the user is an elf for this participant
         const isOwner = participantWithGroup.user_id === authUserId;
 
         if (!isOwner) {
@@ -744,29 +916,52 @@ export class WishlistService {
           const { data: userProfile, error: userError } = await this.supabase.auth.getUser();
           if (userError) {
             console.log("[WishlistService.deleteWishlist] Failed to get user profile", { error: userError.message });
-            throw new Error("FORBIDDEN");
+            // Don't throw here - just continue checking
+          } else {
+            const userEmail = userProfile?.user?.email;
+
+            // Check if participant belongs to user via email (participant added by email before registration)
+            const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
+
+            // Check if user is an elf for this participant
+            const { data: elfParticipant, error: elfError } = await this.supabase
+              .from("participants")
+              .select("id, elf_participant_id")
+              .eq("user_id", authUserId)
+              .eq("elf_participant_id", participantId)
+              .eq("group_id", participantWithGroup.group_id)
+              .single();
+
+            const isElfForParticipant = !elfError && elfParticipant !== null;
+
+            if (belongsViaEmail || isElfForParticipant) {
+              hasAccess = true;
+              if (belongsViaEmail) {
+                console.log("[WishlistService.deleteWishlist] Access granted via email matching");
+              } else if (isElfForParticipant) {
+                console.log("[WishlistService.deleteWishlist] Access granted via elf relationship");
+              }
+            } else {
+              console.log("[WishlistService.deleteWishlist] Bearer token permissions not satisfied", {
+                authUserId,
+                userEmail,
+                participantId,
+                participantUserId: participantWithGroup.user_id,
+                participantEmail: participantWithGroup.email,
+                isElfForParticipant,
+              });
+            }
           }
-
-          const userEmail = userProfile?.user?.email;
-
-          // Check if participant belongs to user via email (participant added by email before registration)
-          const belongsViaEmail = userEmail && participantWithGroup.email === userEmail;
-
-          if (!belongsViaEmail) {
-            console.log("[WishlistService.deleteWishlist] Access denied - participant does not belong to user", {
-              authUserId,
-              userEmail,
-              participantId,
-              participantUserId: participantWithGroup.user_id,
-              participantEmail: participantWithGroup.email,
-            });
-            throw new Error("FORBIDDEN");
-          }
-
-          console.log("[WishlistService.deleteWishlist] Access granted via email matching");
         } else {
+          hasAccess = true;
           console.log("[WishlistService.deleteWishlist] Access granted via direct ownership");
         }
+      }
+
+      // Deny access if neither token nor Bearer permissions were satisfied
+      if (!hasAccess) {
+        console.log("[WishlistService.deleteWishlist] Access denied - no valid authentication method");
+        throw new Error("FORBIDDEN");
       }
 
       // Step 3: Check if group end date has passed (DELETE is blocked after end_date)

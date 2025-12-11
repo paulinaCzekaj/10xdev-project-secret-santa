@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,14 +44,10 @@ export function EditParticipantModal({
   onSave,
   updateParticipant,
 }: EditParticipantModalProps) {
-  // Filter participants who are not already helping someone, sorted alphabetically
-  // These participants can become elves for the edited participant
+  // Filter participants who are not the participant being edited, sorted alphabetically
+  // Any participant can be chosen as an elf, even if they're already helping others
   const availableAsElf = participants
-    .filter(
-      (p) =>
-        p.id !== participant?.id && // participant can't be their own elf
-        (!p.isElfForSomeone || (participant?.hasElf && p.id === participant?.elfParticipantId)) // exclude those already helping someone, unless they're the current elf
-    )
+    .filter((p) => p.id !== participant?.id) // participant can't be their own elf
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const form = useForm<EditParticipantFormViewModel>({

@@ -118,6 +118,20 @@
     @apply bg-background text-foreground;
   }
 
+  /* Prevent horizontal scroll during confetti animation */
+  body.confetti-active {
+    overflow-x: hidden !important;
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  /* Ensure confetti container doesn't cause overflow */
+  body.confetti-active .confetti-container {
+    max-width: 100vw !important;
+    width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
   /* Toast notification styles - fix vertical alignment */
   [data-sonner-toast] {
     display: flex !important;
@@ -141,4 +155,26 @@
     flex-direction: column;
     justify-content: center;
   }
+}
+
+/* Fallback confetti animation */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  animation: confetti-fall linear infinite;
+  pointer-events: none;
 }

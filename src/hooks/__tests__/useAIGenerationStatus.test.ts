@@ -53,8 +53,8 @@ describe("useAIGenerationStatus", () => {
     it("should fetch status successfully", async () => {
       const mockResponse = {
         ai_generation_count: 2,
-        remaining_generations: 3,
-        max_generations: 5,
+        remaining_generations: 5,
+        max_generations: 7,
         can_generate: true,
         is_registered: true,
         last_generated_at: "2025-11-04T14:30:00Z",
@@ -203,8 +203,8 @@ describe("useAIGenerationStatus", () => {
     it("should refetch status when called", async () => {
       const mockResponse1 = {
         ai_generation_count: 0,
-        remaining_generations: 5,
-        max_generations: 5,
+        remaining_generations: 7,
+        max_generations: 7,
         can_generate: true,
         is_registered: true,
         last_generated_at: null,
@@ -212,8 +212,8 @@ describe("useAIGenerationStatus", () => {
 
       const mockResponse2 = {
         ai_generation_count: 1,
-        remaining_generations: 4,
-        max_generations: 5,
+        remaining_generations: 6,
+        max_generations: 7,
         can_generate: true,
         is_registered: true,
         last_generated_at: "2025-11-04T15:00:00Z",
@@ -233,7 +233,7 @@ describe("useAIGenerationStatus", () => {
 
       // Wait for initial load
       await waitFor(() => {
-        expect(result.current.status?.remaining_generations).toBe(5);
+        expect(result.current.status?.remaining_generations).toBe(7);
       });
 
       // Call refetch
@@ -241,7 +241,7 @@ describe("useAIGenerationStatus", () => {
 
       // Wait for refetch to complete
       await waitFor(() => {
-        expect(result.current.status?.remaining_generations).toBe(4);
+        expect(result.current.status?.remaining_generations).toBe(6);
       });
 
       expect(fetchMock).toHaveBeenCalledTimes(2);

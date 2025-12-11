@@ -58,17 +58,25 @@ export const GET: APIRoute = async ({ params, locals, url }) => {
     const queryParams = Object.fromEntries(urlSearchParams.entries());
     const { token: queryToken } = ParticipantTokenQuerySchema.parse(queryParams);
 
-    // Guard 3: Authentication - try Bearer token first, then participant token
-    const userIdOrResponse = requireApiAuth({ locals });
-
-    if (typeof userIdOrResponse === "string") {
-      // Bearer token authentication successful
-      authUserId = userIdOrResponse;
-      participantToken = null;
-      console.log("[GET /api/participants/:participantId/wishlist/ai-status] Bearer token authentication successful");
+    // Guard 3: Authentication - participant token in URL takes priority over Bearer token
+    if (queryToken) {
+      // PRIORITY: Use participant token from URL if provided
+      authUserId = null;
+      participantToken = queryToken;
+      console.log(
+        "[GET /api/participants/:participantId/wishlist/ai-status] Using participant token from URL (priority over Bearer)"
+      );
     } else {
-      // Bearer token failed, try participant token
-      if (!queryToken) {
+      // Fallback: Try Bearer token
+      const userIdOrResponse = requireApiAuth({ locals });
+
+      if (typeof userIdOrResponse === "string") {
+        // Bearer token authentication successful
+        authUserId = userIdOrResponse;
+        participantToken = null;
+        console.log("[GET /api/participants/:participantId/wishlist/ai-status] Using Bearer token authentication");
+      } else {
+        // No authentication provided
         console.log("[GET /api/participants/:participantId/wishlist/ai-status] No authentication provided");
         const errorResponse: ApiErrorResponse = {
           error: {
@@ -81,11 +89,6 @@ export const GET: APIRoute = async ({ params, locals, url }) => {
           headers: { "Content-Type": "application/json" },
         });
       }
-
-      // Use participant token
-      authUserId = null;
-      participantToken = queryToken;
-      console.log("[GET /api/participants/:participantId/wishlist/ai-status] Using participant token authentication");
     }
 
     // Initialize services

@@ -121,12 +121,12 @@ export const POST: APIRoute = async ({ params, locals }) => {
 
     if (isValid) {
       // Draw is possible - provide confirmation message
-      message = "Draw can be executed successfully";
+      message = "Losowanie może zostać wykonane pomyślnie";
     } else {
       // Draw is impossible - provide clear error message with actionable details
       message = "Losowanie jest niemożliwe z obecnymi regułami wykluczeń";
       details =
-        "Too many exclusions create an impossible scenario. Consider removing some exclusion rules to allow the draw to proceed.";
+        "Zbyt wiele wykluczeń tworzy niemożliwy scenariusz. Rozważ usunięcie niektórych reguł wykluczeń, aby umożliwić przeprowadzenie losowania.";
     }
 
     const response: DrawValidationDTO = {
@@ -166,7 +166,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
       const errorResponse: ApiErrorResponse = {
         error: {
           code: "INVALID_INPUT",
-          message: "Invalid group ID format",
+          message: "Nieprawidłowy format ID grupy",
           details: {
             field: firstError.path.join("."),
             message: firstError.message,
@@ -190,7 +190,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
     const errorResponse: ApiErrorResponse = {
       error: {
         code: "INTERNAL_ERROR",
-        message: "An unexpected error occurred while validating the draw",
+        message: "Wystąpił nieoczekiwany błąd podczas sprawdzania poprawności losowania",
       },
     };
     return new Response(JSON.stringify(errorResponse), {

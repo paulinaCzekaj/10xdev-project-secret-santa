@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, useOptimistic } from "react";
 import { GroupHeader } from "./GroupHeader";
 import { ParticipantsSection } from "./ParticipantsSection";
@@ -43,6 +45,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
     exclusions,
     loading: exclusionsLoading,
     refetch: refetchExclusions,
+    addExclusion,
     deleteExclusion,
   } = useExclusions(groupId);
   const { executeDraw } = useDraw(groupId);
@@ -81,6 +84,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
     refetchGroup,
     refetchParticipants,
     refetchExclusions,
+    addExclusion,
     deleteParticipant,
     deleteExclusion,
     setOptimisticParticipants,
@@ -148,6 +152,7 @@ export default function GroupView({ groupId }: GroupViewProps) {
           onExclusionAdded={handlers.handleExclusionAdded}
           onExclusionDeleted={handlers.handleExclusionDeleted}
           onDeleteExclusion={handlers.handleDeleteExclusion}
+          onAddExclusion={handlers.handleAddExclusion}
         />
 
         {/* Sekcja losowania lub wyników */}

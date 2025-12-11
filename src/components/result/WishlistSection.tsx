@@ -34,8 +34,8 @@ function WishlistSection({
   wishlistStats,
   isRevealed = false,
 }: WishlistSectionProps) {
-  // Show assigned person's wishlist if they have content OR if the present was revealed
-  const shouldShowTheirWishlist = theirWishlist.content || theirWishlist.contentHtml || isRevealed;
+  // Show assigned person's wishlist only if the present was revealed
+  const shouldShowTheirWishlist = isRevealed;
 
   return (
     <div className="space-y-6">

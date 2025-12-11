@@ -9,17 +9,33 @@ interface GiftBoxProps {
 }
 
 export function GiftBox({ isAnimating, onClick }: GiftBoxProps) {
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Prevent click if already animating
+    if (isAnimating) {
+      e.stopPropagation();
+      return;
+    }
+    onClick();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    // Prevent keypress if already animating
+    if (isAnimating) {
+      e.stopPropagation();
+      return;
+    }
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <div
       className={`relative cursor-pointer transform transition-all duration-700 ease-out
         ${isAnimating ? "scale-110 rotate-12 opacity-50" : "hover:scale-110 hover:-translate-y-2"}`}
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick();
-        }
-      }}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
       tabIndex={0}
       role="button"
       aria-label="Kliknij, aby odkryć wynik losowania"

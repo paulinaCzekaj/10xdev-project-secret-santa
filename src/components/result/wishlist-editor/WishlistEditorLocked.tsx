@@ -40,7 +40,7 @@ export function WishlistEditorLocked({ endDate, stats }: WishlistEditorLockedPro
             <div className="flex items-center justify-center w-10 h-10 bg-gray-400 rounded-lg">
               <Lock className="w-5 h-5 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-gray-700 dark:text-gray-300">🔒 Moja lista życzeń</h3>
+            <h3 className="text-xl font-bold text-gray-700 dark:text-gray-300">🔒 Lista życzeń</h3>
           </div>
 
           {/* Komunikat o blokadzie */}

@@ -16,8 +16,17 @@ const parsedGroupId = parseInt(groupId || "0", 10);
 if (isNaN(parsedGroupId) || parsedGroupId <= 0) {
   return Astro.redirect("/dashboard?error=invalid_group");
 }
+
+// Get helpedParticipantId from query parameters
+const helpedParticipantId = Astro.url.searchParams.get("helpedParticipantId");
+const parsedHelpedParticipantId = helpedParticipantId ? parseInt(helpedParticipantId, 10) : undefined;
 ---
 
 <Layout title="Widok Elfa - Secret Santa">
-  <ElfResultView groupId={parsedGroupId} isAuthenticated={true} client:load />
+  <ElfResultView
+    groupId={parsedGroupId}
+    isAuthenticated={true}
+    helpedParticipantId={parsedHelpedParticipantId}
+    client:load
+  />
 </Layout>
