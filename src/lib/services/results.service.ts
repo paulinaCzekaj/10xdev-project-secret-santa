@@ -318,15 +318,16 @@ export class ResultsService {
         } else {
           throw new Error("FORBIDDEN");
         }
+      } else {
+        participant = participantData;
       }
-      participant = participantData;
     } else {
       if (!token) {
         throw new Error("INVALID_ACCESS");
       }
       const { data: participantData, error: participantError } = await this.supabase
         .from("participants")
-        .select("id, group_id, user_id, name, email, result_viewed_at, elf_for_participant_id")
+        .select("id, group_id, user_id, name, email, result_viewed_at, elf_participant_id")
         .eq("access_token", token)
         .single();
 
