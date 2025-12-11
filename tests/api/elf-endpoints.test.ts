@@ -27,6 +27,8 @@ const mockElfResult: ElfResultResponseDTO = {
   helpedParticipant: {
     id: 2,
     name: "John Doe",
+    wishlist: "I wish for a new book",
+    canEditWishlist: true,
   },
 };
 
